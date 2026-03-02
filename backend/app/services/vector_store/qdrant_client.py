@@ -1,5 +1,9 @@
-from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct
+try:
+    from qdrant_client import QdrantClient
+    from qdrant_client.models import Distance, VectorParams, PointStruct
+except ImportError:
+    QdrantClient = None
+    Distance = VectorParams = PointStruct = None
 from app.config import get_settings
 
 
