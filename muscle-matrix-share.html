@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matrice Muscoli × Esercizi</title>
+  <style>
+    :root { color-scheme: light; }
+    body { margin: 0; font-family: "Segoe UI", system-ui, sans-serif; background: #f8fafc; color: #0f172a; font-size: 12px; min-height: 100vh; }
+    .wrap { max-width: 100%; padding: 12px 16px; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.06); padding: 8px; }
+    h1 { margin: 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #334155; }
+    .hint { margin: 4px 0 0; font-size: 10px; color: #64748b; line-height: 1.3; }
+    .controls { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; align-items: center; }
+    button { border: 1px solid #cbd5e1; background: #fff; color: #334155; border-radius: 5px; padding: 5px 9px; font-size: 10px; font-weight: 600; cursor: pointer; transition: background .15s, border-color .15s; }
+    button.primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+    button:hover { background: #f8fafc; border-color: #94a3b8; }
+    button.primary:hover { background: #1d4ed8; }
+    .table-wrap { overflow-x: auto; overflow-y: visible; border: 1px solid #e2e8f0; border-radius: 6px; }
+    table { border-collapse: collapse; table-layout: fixed; width: auto; font-size: 10px; }
+    thead th { position: sticky; top: 0; z-index: 20; border-bottom: 1px solid #e2e8f0; padding: 4px 4px; text-align: center; font-weight: 600; }
+    th, td { border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 1px 3px; text-align: center; vertical-align: middle; line-height: 1.15; }
+    th.sticky-left, td.sticky-left { position: sticky; left: 0; z-index: 15; background: #fff; text-align: left; width: 1%; white-space: nowrap; padding: 2px 4px; }
+    thead th.sticky-left { z-index: 30; background: #f8fafc; }
+    .ex-name-cell { font-size: 9px; font-weight: 500; color: #0f172a; line-height: 1.15; }
+    .ex-cat-badge { display: inline-block; font-size: 7px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em; padding: 1px 2px; border-radius: 2px; margin-right: 3px; vertical-align: middle; min-width: 26px; text-align: center; }
+    .badge-str { background: #3b82f6; color: #fff; }
+    .badge-hyp { background: #059669; color: #fff; }
+    .badge-aw { background: #d97706; color: #fff; }
+    .badge-aw-max { background: #ea580c; color: #fff; }
+    .badge-aw-light { background: #ca8a04; color: #fff; }
+    .badge-aw-heavy { background: #b45309; color: #fff; }
+    .badge-aw-speed { background: #be185d; color: #fff; }
+    .row-str { background: #eff6ff; }
+    .row-str td.sticky-left { background: #dbeafe; }
+    .row-hyp { background: #ecfdf5; }
+    .row-hyp td.sticky-left { background: #d1fae5; }
+    .row-aw { background: #fffbeb; }
+    .row-aw td.sticky-left { background: #fef3c7; }
+    .row-aw-max { background: #fff7ed; }
+    .row-aw-max td.sticky-left { background: #fed7aa; }
+    .row-aw-light { background: #fefce8; }
+    .row-aw-light td.sticky-left { background: #fef9c3; }
+    .row-aw-heavy { background: #fef9c3; }
+    .row-aw-heavy td.sticky-left { background: #fde68a; }
+    .row-aw-speed { background: #fdf2f8; }
+    .row-aw-speed td.sticky-left { background: #fce7f3; }
+    .col-gym { background: #dbeafe; }
+    thead th.col-gym { background: #93c5fd !important; }
+    .col-arm { background: #ede9fe; }
+    thead th.col-arm { background: #c4b5fd !important; }
+    .col-hand { background: #fef3c7; }
+    thead th.col-hand { background: #fde68a !important; }
+    .muscle-th { font-size: 8px; font-weight: 600; color: #334155; width: 50px; min-width: 50px; max-width: 50px; word-wrap: break-word; white-space: normal; line-height: 1.1; padding: 1px 2px; }
+    .cb-cell { width: 50px; min-width: 50px; max-width: 50px; padding: 2px !important; text-align: center; }
+    input[type="checkbox"] { width: 12px; height: 12px; cursor: pointer; accent-color: #2563eb; margin: 0; }
+    .legend-inline { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0; font-size: 9px; }
+    .leg { padding: 2px 6px; border-radius: 3px; font-weight: 600; }
+    .leg-str { background: #bfdbfe; color: #1e40af; }
+    .leg-hyp { background: #a7f3d0; color: #065f46; }
+    .leg-aw { background: #fde68a; color: #92400e; }
+    .leg-aw-max { background: #fdba74; color: #9a3412; }
+    .leg-aw-light { background: #fef08a; color: #854d0e; }
+    .leg-aw-heavy { background: #fcd34d; color: #b45309; }
+    .leg-aw-speed { background: #fbcfe8; color: #9d174d; }
+    .cat-header td { padding: 2px 4px !important; border-bottom: 2px solid #cbd5e1; }
+    .cat-header { cursor: pointer; user-select: none; font-weight: 700; font-size: 9px; }
+    .cat-header:hover { opacity: 0.9; }
+    .cat-header .toggler { margin-right: 4px; font-size: 8px; }
+    tr.cat-row-hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Matrice Muscoli × Esercizi</h1>
+      <p class="hint">Spunta i muscoli per ogni esercizio. Scarica o Copia per esportare. Importa per caricare. Reset svuota tutto.</p>
+
+      <div class="legend-inline">
+        <span class="leg leg-str">Forza</span>
+        <span class="leg leg-hyp">Ipertrofia</span>
+        <span class="leg leg-aw">AW</span>
+        <span class="leg leg-aw-max">AW Max</span>
+        <span class="leg leg-aw-light">Iso L</span>
+        <span class="leg leg-aw-heavy">Iso H</span>
+        <span class="leg leg-aw-speed">Speed</span>
+      </div>
+
+      <div class="controls">
+        <button class="primary" id="downloadBtn">Scarica JSON</button>
+        <button id="copyBtn">Copia JSON</button>
+        <button id="importBtn">Importa JSON</button>
+        <button id="resetBtn">Reset</button>
+        <span style="font-size:9px;color:#64748b;margin-left:4px;">Clicca le intestazioni per collassare/espandere</span>
+      </div>
+
+      <div class="table-wrap">
+        <table id="matrixTable"></table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const MUSCLE_CATEGORIES = [
+      {
+        id: "PALESTRA",
+        color: "cat-gym",
+        muscles: [
+          { key: "chest", label: "Petto" },
+          { key: "lats", label: "Laterali" },
+          { key: "rhomboids", label: "Romboidi" },
+          { key: "traps", label: "Trapezi" },
+          { key: "anterior_delts", label: "Deltoidi Ant" },
+          { key: "lateral_delts", label: "Deltoidi Lat" },
+          { key: "rear_delts", label: "Deltoidi Post" },
+          { key: "quads", label: "Quadricipiti" },
+          { key: "glutes", label: "Glutei" },
+          { key: "core", label: "Addominali" },
+          { key: "lower_back", label: "Lower Back" }
+        ]
+      },
+      {
+        id: "BRACCIO",
+        color: "cat-arm",
+        muscles: [
+          { key: "triceps", label: "Tricipiti" },
+          { key: "biceps", label: "Bicipiti" },
+          { key: "brachiale_brachioradiale", label: "Brachiale + Brachioradiale" },
+          { key: "side_pressure", label: "Side Pressure" },
+          { key: "reverse_side_pressure", label: "Reverse Side Pressure" }
+        ]
+      },
+      {
+        id: "MANO",
+        color: "cat-hand",
+        muscles: [
+          { key: "supinators", label: "Supinatori" },
+          { key: "pronators", label: "Pronatori" },
+          { key: "wrist_extensors", label: "Estensori Polso" },
+          { key: "wrist_flexors", label: "Flessori Polso" },
+          { key: "finger_flexors", label: "Flessori Dita" },
+          { key: "ulnar_deviation", label: "Dev. Ulnare" },
+          { key: "radial_deviation", label: "Dev. Radiale" }
+        ]
+      }
+    ];
+
+    const HAND_KEYS = MUSCLE_CATEGORIES.find(c => c.id === "MANO").muscles.map(m => m.key);
+    const ALL_MUSCLES = MUSCLE_CATEGORIES.flatMap(c => c.muscles);
+    const LABEL_BY_KEY = Object.fromEntries(ALL_MUSCLES.map(m => [m.key, m.label]));
+
+    const BRACHIAL_MAP = { brachialis: "brachiale_brachioradiale", brachioradialis: "brachiale_brachioradiale" };
+    const SIDE_MAP = { side: "side_pressure", "side pressure": "side_pressure", reverse_side: "reverse_side_pressure", "reverse side pressure": "reverse_side_pressure" };
+
+    const EXERCISES = [
+      {"id":"sq_str","name":"Squat","category":"STRENGTH","source":"training_seed","primary_muscles":["quads","glutes"]},
+      {"id":"sq_hypertrophy","name":"Squat Ipertrofia","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["quads","glutes"]},
+      {"id":"bp_str","name":"Panca Piana","category":"STRENGTH","source":"training_seed","primary_muscles":["chest","triceps"]},
+      {"id":"bp_el","name":"Panca con Elastico","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["chest","triceps"]},
+      {"id":"bp_pause","name":"Panca con Fermi","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["chest","triceps"]},
+      {"id":"mp_str","name":"Military Press","category":"STRENGTH","source":"training_seed","primary_muscles":["anterior_delts","triceps"]},
+      {"id":"pu_str","name":"Trazioni Zavorrate","category":"STRENGTH","source":"training_seed","primary_muscles":["lats","biceps"]},
+      {"id":"curl_str","name":"Curl EZ Bar Seduto (Arm Blaster)","category":"STRENGTH","source":"training_seed","primary_muscles":["biceps"]},
+      {"id":"curl_ez","name":"Curl EZ Bar","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["biceps"]},
+      {"id":"aw_max","name":"AW Max","category":"AW","source":"training_seed","primary_muscles":["forearms","biceps"]},
+      {"id":"aw_iso_l","name":"AW Isometria Leggera","category":"AW","source":"training_seed","primary_muscles":["forearms","biceps"]},
+      {"id":"aw_iso_h","name":"AW Isometria Pesante","category":"AW","source":"training_seed","primary_muscles":["forearms","biceps"]},
+      {"id":"aw_vol_1","name":"AW Vol.1 (Pressure & Chop)","category":"AW","source":"training_seed","primary_muscles":["forearms","pronators"]},
+      {"id":"aw_vol_2","name":"AW Vol.2 (Cupping & Supination)","category":"AW","source":"training_seed","primary_muscles":["forearms","wrist_flexors","supinators"]},
+      {"id":"aw_speed","name":"AW Speed","category":"AW","source":"training_seed","primary_muscles":["forearms","biceps"]},
+      {"id":"jm_press","name":"JM Press","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["triceps"]},
+      {"id":"lat_raise","name":"Spalle Laterali","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["lateral_delts"]},
+      {"id":"lat_raise_light","name":"Spalle Laterali Leggere","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["lateral_delts"]},
+      {"id":"front_raise","name":"Spalle Frontali","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["anterior_delts"]},
+      {"id":"rear_raise","name":"Spalle Posteriori","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["rear_delts"]},
+      {"id":"ez_bar_reverse_curl","name":"Ez Bar Reverse Curl","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["brachioradialis","forearms"]},
+      {"id":"inc_db_press","name":"Panca Inclinata con Manubri","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["upper_chest","anterior_delts","triceps"]},
+      {"id":"single_lat_pull","name":"Lat Pulldown Singolo","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["lats"]},
+      {"id":"pulley","name":"Pulley","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["lats","rhomboids"]},
+      {"id":"high_row","name":"Schiena Alta Presa Larga","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["rhomboids","rear_delts","traps"]},
+      {"id":"bulgarian","name":"Affondi Bulgari con Manubri","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["quads","glutes"]},
+      {"id":"single_pushdown","name":"Pushdown Singolo","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["triceps"]},
+      {"id":"dips","name":"Dips","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["chest","triceps","anterior_delts"]},
+      {"id":"lat_machine","name":"Lat Machine","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["lats"]},
+      {"id":"conc_curl","name":"Curl Concentrazione","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["biceps"]},
+      {"id":"overhead_ext","name":"Estensioni Oltre la Testa","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["triceps (long head)"]},
+      {"id":"flyes","name":"Croci","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["chest"]},
+      {"id":"mil_db","name":"Military Manubri","category":"HYPERTROPHY","source":"training_seed","primary_muscles":["anterior_delts","triceps"]},
+      {"id":"aw_v1_back_press","name":"V1 - Back Pressure","category":"AW","source":"training_seed","primary_muscles":["forearms","pronators"]},
+      {"id":"aw_v1_dita","name":"V1 - Dita (Finger Flexion)","category":"AW","source":"training_seed","primary_muscles":["forearms","wrist_flexors"]},
+      {"id":"aw_v1_side_press","name":"V1 - Sidepressure","category":"AW","source":"training_seed","primary_muscles":["forearms","pronators"]},
+      {"id":"aw_v1_ulnar_chop","name":"V1 - Ulnar Chop","category":"AW","source":"training_seed","primary_muscles":["forearms","pronators"]},
+      {"id":"aw_v1_wrist_wrench","name":"V1 - Wrist Wrench","category":"AW","source":"training_seed","primary_muscles":["forearms","wrist_extensors"]},
+      {"id":"aw_v2_cupping","name":"V2 - Cupping Fat Grip","category":"AW","source":"training_seed","primary_muscles":["forearms","wrist_flexors","brachialis"]},
+      {"id":"aw_v2_pronazione","name":"V2 - Pronazione","category":"AW","source":"training_seed","primary_muscles":["pronators","forearms"]},
+      {"id":"aw_v2_rev_pron","name":"V2 - Reverse Pronation","category":"AW","source":"training_seed","primary_muscles":["pronators","forearms","wrist_extensors"]},
+      {"id":"aw_v2_rising","name":"V2 - Rising","category":"AW","source":"training_seed","primary_muscles":["forearms","wrist_extensors","brachioradialis"]},
+      {"id":"aw_v2_supination","name":"V2 - Supination","category":"AW","source":"training_seed","primary_muscles":["supinators","forearms","biceps"]},
+      {"id":"aw_max_dita_mazurenko","name":"AW MAX - DITA MAZURENKO","category":"AW_MAX","source":"aw_program"},
+      {"id":"aw_max_rising_45","name":"AW MAX - RISING (45°)","category":"AW_MAX","source":"aw_program"},
+      {"id":"aw_max_low_multi_drag","name":"AW MAX - LOW MULTI DRAG","category":"AW_MAX","source":"aw_program"},
+      {"id":"aw_max_dita_maniglia","name":"AW MAX - DITA MANIGLIA","category":"AW_MAX","source":"aw_program"},
+      {"id":"aw_max_high_multi_side","name":"AW MAX - HIGH MULTI SIDE","category":"AW_MAX","source":"aw_program"},
+      {"id":"aw_max_press","name":"AW MAX - PRESS","category":"AW_MAX","source":"aw_program"},
+      {"id":"aw_max_pronation_45","name":"AW MAX - PRONATION 45°","category":"AW_MAX","source":"aw_program"},
+      {"id":"aw_max_defense_hook","name":"AW MAX - DEFENSE HOOK","category":"AW_MAX","source":"aw_program"},
+      {"id":"aw_max_high_multi_drag","name":"AW MAX - HIGH MULTI DRAG","category":"AW_MAX","source":"aw_program"},
+      {"id":"aw_max_low_pronation_45","name":"AW MAX - LOW PRONATION 45°","category":"AW_MAX","source":"aw_program"},
+      {"id":"aw_max_low_multi_side","name":"AW MAX - LOW MULTI SIDE","category":"AW_MAX","source":"aw_program"},
+      {"id":"aw_max_lat_drag","name":"AW MAX - LAT DRAG","category":"AW_MAX","source":"aw_program"},
+      {"id":"aw_light_rising_back","name":"AW LIGHT - Rising + back","category":"AW_LIGHT","source":"aw_program"},
+      {"id":"aw_light_cup_drag","name":"AW LIGHT - Cup + drag","category":"AW_LIGHT","source":"aw_program"},
+      {"id":"aw_light_pronation_45","name":"AW LIGHT - Pronation 45°","category":"AW_LIGHT","source":"aw_program"},
+      {"id":"aw_light_side_supination","name":"AW LIGHT - Side + supination","category":"AW_LIGHT","source":"aw_program"},
+      {"id":"aw_light_mazurenko_dita","name":"AW LIGHT - Mazurenko dita","category":"AW_LIGHT","source":"aw_program"},
+      {"id":"aw_light_press","name":"AW LIGHT - Press","category":"AW_LIGHT","source":"aw_program"},
+      {"id":"aw_light_bicipite","name":"AW LIGHT - Bicipite","category":"AW_LIGHT","source":"aw_program"},
+      {"id":"aw_heavy_rising_back","name":"AW HEAVY - Rising + back","category":"AW_HEAVY","source":"aw_program"},
+      {"id":"aw_heavy_cup_drag","name":"AW HEAVY - Cup + drag","category":"AW_HEAVY","source":"aw_program"},
+      {"id":"aw_heavy_pronation_45","name":"AW HEAVY - Pronation 45°","category":"AW_HEAVY","source":"aw_program"},
+      {"id":"aw_heavy_side_supination","name":"AW HEAVY - Side + supination","category":"AW_HEAVY","source":"aw_program"},
+      {"id":"aw_heavy_mazurenko_dita","name":"AW HEAVY - Mazurenko dita","category":"AW_HEAVY","source":"aw_program"},
+      {"id":"aw_heavy_press","name":"AW HEAVY - Press","category":"AW_HEAVY","source":"aw_program"},
+      {"id":"aw_heavy_bicipite","name":"AW HEAVY - Bicipite","category":"AW_HEAVY","source":"aw_program"},
+      {"id":"aw_speed_lat_cup","name":"AW SPEED - LAT + CUP","category":"AW_SPEED","source":"aw_program"},
+      {"id":"aw_speed_pronation_45","name":"AW SPEED - PRONATION 45°","category":"AW_SPEED","source":"aw_program"},
+      {"id":"aw_speed_low_multi_side","name":"AW SPEED - LOW MULTI SIDE","category":"AW_SPEED","source":"aw_program"},
+      {"id":"aw_speed_high_multi_side","name":"AW SPEED - HIGH MULTI SIDE","category":"AW_SPEED","source":"aw_program"}
+    ];
+
+    const CAT_ORDER = ["STRENGTH","HYPERTROPHY","AW","AW_MAX","AW_LIGHT","AW_HEAVY","AW_SPEED"];
+    const CAT_LABEL = {
+      STRENGTH: "Forza", HYPERTROPHY: "Ipertrofia", AW: "AW",
+      AW_MAX: "AW Max", AW_LIGHT: "AW Iso L", AW_HEAVY: "AW Iso H", AW_SPEED: "AW Speed"
+    };
+    function rowClass(cat) {
+      const map = { STRENGTH: "row-str", HYPERTROPHY: "row-hyp", AW: "row-aw", AW_MAX: "row-aw-max", AW_LIGHT: "row-aw-light", AW_HEAVY: "row-aw-heavy", AW_SPEED: "row-aw-speed" };
+      return map[cat] || "";
+    }
+    function badgeClass(cat) {
+      const map = { STRENGTH: "badge-str", HYPERTROPHY: "badge-hyp", AW: "badge-aw", AW_MAX: "badge-aw-max", AW_LIGHT: "badge-aw-light", AW_HEAVY: "badge-aw-heavy", AW_SPEED: "badge-aw-speed" };
+      return map[cat] || "";
+    }
+    function muscleColClass(muscleKey) {
+      const g = MUSCLE_CATEGORIES.find(c => c.muscles.some(m => m.key === muscleKey));
+      if (!g) return "";
+      if (g.id === "PALESTRA") return "col-gym";
+      if (g.id === "BRACCIO") return "col-arm";
+      if (g.id === "MANO") return "col-hand";
+      return "";
+    }
+    function wrapLabel(label) {
+      const w = {
+        "Brachiale + Brachioradiale": "Brachiale<br>+ Brachioradiale",
+        "Reverse Side Pressure": "Reverse<br>Side Pressure",
+        "Side Pressure": "Side<br>Pressure",
+        "Lower Back": "Lower<br>Back",
+        "Estensori Polso": "Estensori<br>Polso",
+        "Flessori Polso": "Flessori<br>Polso",
+        "Flessori Dita": "Flessori<br>Dita",
+        "Dev. Ulnare": "Dev.<br>Ulnare",
+        "Dev. Radiale": "Dev.<br>Radiale",
+        "Deltoidi Ant": "Deltoidi<br>Ant",
+        "Deltoidi Lat": "Deltoidi<br>Lat",
+        "Deltoidi Post": "Deltoidi<br>Post"
+      };
+      return w[label] || label;
+    }
+
+    function normalizeMuscle(raw) {
+      let k = String(raw || "").toLowerCase().replace(/\s*\([^)]*\)/g, "").trim();
+      if (!k) return null;
+      if (k === "upper_chest") k = "chest";
+      if (k === "abs" || k === "abdominals" || k === "addominali") k = "core";
+      if (k === "lower back" || k === "lowerback") k = "lower_back";
+      if (BRACHIAL_MAP[k]) k = BRACHIAL_MAP[k];
+      if (SIDE_MAP[k]) k = SIDE_MAP[k];
+      if (k === "forearms") return "__FOREARMS__";
+      return LABEL_BY_KEY[k] ? k : null;
+    }
+
+    let matrixState = {}; // { [exerciseId]: Set(muscleKey) }
+    const exercises = EXERCISES.slice().sort((a,b) => {
+      const ai = CAT_ORDER.indexOf(a.category), bi = CAT_ORDER.indexOf(b.category);
+      if (ai !== bi) return ai - bi;
+      return a.name.localeCompare(b.name);
+    });
+
+    function initState() {
+      matrixState = {};
+      exercises.forEach(ex => {
+        matrixState[ex.id] = new Set();
+      });
+    }
+
+    function render() {
+      const tbl = document.getElementById("matrixTable");
+      const muscleCols = ALL_MUSCLES;
+
+      const thead = document.createElement("thead");
+      const headerRow = document.createElement("tr");
+      const th0 = document.createElement("th");
+      th0.className = "sticky-left";
+      th0.textContent = "Esercizio";
+      headerRow.appendChild(th0);
+      muscleCols.forEach(m => {
+        const th = document.createElement("th");
+        th.className = "muscle-th " + muscleColClass(m.key);
+        th.innerHTML = wrapLabel(m.label);
+        th.title = m.label;
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+
+      const tbody = document.createElement("tbody");
+      const grouped = CAT_ORDER.map(cat => ({ cat, items: exercises.filter(e => e.category === cat) })).filter(g => g.items.length);
+
+      grouped.forEach(g => {
+        const headerTr = document.createElement("tr");
+        headerTr.className = "cat-header " + rowClass(g.cat);
+        headerTr.dataset.cat = g.cat;
+        const tdHeader = document.createElement("td");
+        tdHeader.className = "sticky-left";
+        tdHeader.colSpan = muscleCols.length + 1;
+        tdHeader.innerHTML = "<span class=\"toggler\">▼</span>" + (CAT_LABEL[g.cat] || g.cat) + " (" + g.items.length + ")";
+        headerTr.appendChild(tdHeader);
+        tbody.appendChild(headerTr);
+
+        g.items.forEach(ex => {
+          const tr = document.createElement("tr");
+          tr.className = "cat-row " + rowClass(ex.category);
+          tr.dataset.cat = ex.category;
+          const tdName = document.createElement("td");
+          tdName.className = "sticky-left";
+          tdName.innerHTML = "<span class=\"ex-cat-badge " + badgeClass(ex.category) + "\">" + (CAT_LABEL[ex.category] || ex.category) + "</span><span class=\"ex-name-cell\">" + ex.name + "</span>";
+          tr.appendChild(tdName);
+          muscleCols.forEach(m => {
+            const td = document.createElement("td");
+            td.className = "cb-cell " + muscleColClass(m.key);
+            const cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.checked = (matrixState[ex.id] || new Set()).has(m.key);
+            cb.addEventListener("change", () => {
+              if (!matrixState[ex.id]) matrixState[ex.id] = new Set();
+              if (cb.checked) matrixState[ex.id].add(m.key);
+              else matrixState[ex.id].delete(m.key);
+            });
+            td.appendChild(cb);
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      });
+
+      tbl.innerHTML = "";
+      tbl.appendChild(thead);
+      tbl.appendChild(tbody);
+
+      tbl.querySelectorAll(".cat-header").forEach(h => {
+        h.addEventListener("click", () => {
+          const cat = h.dataset.cat;
+          const rows = tbl.querySelectorAll("tr.cat-row[data-cat=\"" + cat + "\"]");
+          const isHidden = rows[0] && rows[0].classList.contains("cat-row-hidden");
+          const toggler = h.querySelector(".toggler");
+          rows.forEach(r => {
+            if (isHidden) r.classList.remove("cat-row-hidden");
+            else r.classList.add("cat-row-hidden");
+          });
+          if (toggler) toggler.textContent = isHidden ? "▼" : "▶";
+        });
+      });
+    }
+
+    function setOutput() {}
+    function buildExport() {
+      const out = {};
+      exercises.forEach(ex => {
+        const keys = Array.from(matrixState[ex.id] || []).sort();
+        if (keys.length > 0) out[ex.id] = keys;
+      });
+      return out;
+    }
+
+    document.getElementById("downloadBtn").addEventListener("click", () => {
+      const out = buildExport();
+      const blob = new Blob([JSON.stringify(out, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `mappatura_muscoli_esercizi_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+      await navigator.clipboard.writeText(JSON.stringify(buildExport(), null, 2));
+      alert("JSON copiato negli appunti.");
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      if (confirm("Svuotare tutte le spunte? (solo in questa pagina, nessun server/DB)")) {
+        initState();
+        render();
+        setOutput(buildExport());
+        alert("Tutte le spunte sono state svuotate.");
+      }
+    });
+
+    document.getElementById("importBtn").addEventListener("click", () => {
+      const raw = prompt("Incolla qui il JSON esportato:");
+      if (!raw) return;
+      try {
+        const data = JSON.parse(raw);
+        const src = data.map_by_exercise || data;
+        exercises.forEach(ex => {
+          const val = src[ex.id];
+          const keys = Array.isArray(val) ? val : (val?.muscle_keys || []);
+          matrixState[ex.id] = new Set(keys.filter(k => LABEL_BY_KEY[k]));
+        });
+        render();
+        alert("Mappatura importata.");
+      } catch (e) {
+        alert("JSON non valido.");
+      }
+    });
+
+    initState();
+    render();
+  </script>
+</body>
+</html>

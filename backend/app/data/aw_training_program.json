@@ -1,0 +1,80 @@
+{
+  "max_day": {
+    "title": "30-36 REP - ESERCIZI MAX DAY",
+    "weeks": [
+      {
+        "week": 1,
+        "exercises": [
+          { "name": "DITA MAZURENKO", "anas_1rm": 23, "flavio_1rm": 31 },
+          { "name": "RISING (45°)", "anas_1rm": 18, "flavio_1rm": 20 },
+          { "name": "LOW MULTI DRAG", "anas_1rm": 30, "flavio_1rm": 35 }
+        ]
+      },
+      {
+        "week": 2,
+        "exercises": [
+          { "name": "DITA MANIGLIA", "anas_1rm": 22, "flavio_1rm": 30 },
+          { "name": "HIGH MULTI SIDE", "anas_1rm": "Sx 15 dx 20", "flavio_1rm": "Sx 15 dx 22,5" },
+          { "name": "PRESS", "anas_1rm": 30, "flavio_1rm": 30 }
+        ]
+      },
+      {
+        "week": 3,
+        "exercises": [
+          { "name": "DITA MAZURENKO", "anas_1rm": 26.5, "flavio_1rm": 32 },
+          { "name": "PRONATION 45°", "anas_1rm": 26.5, "flavio_1rm": 30 },
+          { "name": "DEFENSE HOOK", "anas_1rm": 38, "flavio_1rm": 38 }
+        ]
+      },
+      {
+        "week": 4,
+        "exercises": [
+          { "name": "DITA MANIGLIA", "anas_1rm": null, "flavio_1rm": null },
+          { "name": "HIGH MULTI DRAG", "anas_1rm": "27(30)", "flavio_1rm": "27 sx 32 (35) dx" },
+          { "name": "LOW PRONATION 45°", "anas_1rm": 25, "flavio_1rm": 30 }
+        ]
+      },
+      {
+        "week": 5,
+        "exercises": [
+          { "name": "DITA MAZURENKO", "anas_1rm": null, "flavio_1rm": null },
+          { "name": "LOW MULTI SIDE", "anas_1rm": null, "flavio_1rm": null },
+          { "name": "LAT DRAG", "anas_1rm": null, "flavio_1rm": null }
+        ]
+      }
+    ]
+  },
+  "light": {
+    "title": "LIGHT (60% 1RM) - 2 serie 15 sec",
+    "exercises": [
+      { "name": "Rising + back", "w1": 12, "w2": null, "w3": null, "w4": null, "w5": null },
+      { "name": "Cup + drag", "w1": 18, "w2": null, "w3": null, "w4": null, "w5": null },
+      { "name": "Pronation 45°", "w1": 15, "w2": null, "w3": null, "w4": null, "w5": null },
+      { "name": "Side + supination", "w1": 9, "w2": null, "w3": null, "w4": null, "w5": null },
+      { "name": "Mazurenko dita", "w1": 15, "w2": null, "w3": null, "w4": null, "w5": null },
+      { "name": "Press", "w1": 15, "w2": null, "w3": null, "w4": null, "w5": null },
+      { "name": "Bicipite", "w1": 18, "w2": null, "w3": null, "w4": null, "w5": null }
+    ]
+  },
+  "heavy": {
+    "title": "HEAVY (85% 1RM) - 2 serie 5 sec",
+    "exercises": [
+      { "name": "Rising + back", "w1": 17, "w2": null, "w3": null, "w4": null, "w5": null },
+      { "name": "Cup + drag", "w1": 23, "w2": null, "w3": null, "w4": null, "w5": null },
+      { "name": "Pronation 45°", "w1": 20, "w2": null, "w3": null, "w4": null, "w5": null },
+      { "name": "Side + supination", "w1": 13, "w2": null, "w3": null, "w4": null, "w5": null },
+      { "name": "Mazurenko dita", "w1": 20, "w2": null, "w3": null, "w4": null, "w5": null },
+      { "name": "Press", "w1": 19, "w2": null, "w3": null, "w4": null, "w5": null },
+      { "name": "Bicipite", "w1": 23, "w2": null, "w3": null, "w4": null, "w5": null }
+    ]
+  },
+  "speed": {
+    "title": "SPEED AW - 50% 1RM + BANDS - 6x6",
+    "exercises": [
+      { "name": "LAT + CUP", "weight": 10 },
+      { "name": "PRONATION 45°", "weight": 10 },
+      { "name": "LOW MULTI SIDE", "weight": 10 },
+      { "name": "HIGH MULTI SIDE", "weight": 10 }
+    ]
+  }
+}
