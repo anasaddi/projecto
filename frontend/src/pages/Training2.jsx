@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../api/client';
 import WeeklyCalendar4 from '../components/WeeklyCalendar4';
 import StrengthTable2 from '../components/StrengthTable2';
-import { Dumbbell, Swords, Target, ChevronRight, Undo2, Redo2, CheckCircle2, ChevronDown, ChevronUp, History, User, Activity } from 'lucide-react';
+import { Dumbbell, Swords, Target, ChevronRight, Undo2, Redo2, CheckCircle2, ChevronDown, ChevronUp, History, User, Activity, Link2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Epley Formula
@@ -118,7 +118,7 @@ const AW_PROGRAM_FALLBACK = {
 
 // Piccole intestazioni per kg, r, s
 const ColHeader = ({ label, className = '' }) => (
-  <span className={`text-[9px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider ${className}`}>{label}</span>
+  <span className={`text-[10px] font-black text-gray-500 dark:text-zinc-400 uppercase tracking-[0.1em] ${className}`}>{label}</span>
 );
 
 // Shared UI Components
@@ -337,10 +337,10 @@ const StrengthTable = ({ exercise, onRowsChange }) => {
 
       {/* Table - compatto ma leggibile */}
       <div className="p-2">
-        <div className="rounded-xl border border-gray-200/80 dark:border-zinc-700/80 overflow-hidden shadow-sm bg-white dark:bg-zinc-900/50">
-          <table className="w-full text-[11px]">
-            <thead>
-              <tr className="bg-gray-100/80 dark:bg-zinc-800/80">
+        <div className="rounded-xl border border-gray-200/80 dark:border-zinc-700/80 overflow-auto shadow-sm bg-white dark:bg-zinc-900/50 max-h-[80vh]">
+          <table className="w-full text-[11px] relative">
+            <thead className="sticky top-0 z-10 bg-gray-100/95 dark:bg-zinc-800/95 backdrop-blur-sm shadow-sm">
+              <tr>
                 <th className="py-2 px-2 text-left font-bold text-gray-600 dark:text-gray-400 w-8">W</th>
                 <th className="py-2 px-2 text-left font-bold text-gray-600 dark:text-gray-400 w-14">Schema</th>
                 <th className="py-2 px-2 text-center font-bold text-gray-600 dark:text-gray-400 w-12">Int.</th>
@@ -593,10 +593,10 @@ const AWIsoTableGroup = ({ title, exercises, onRowsChange, programData }) => {
       </div>
 
       <div className="p-0 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse table-fixed">
-            <thead>
-              <tr className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter bg-gray-50/50 dark:bg-zinc-800/30 border-b border-gray-100 dark:border-zinc-800">
+        <div className="overflow-x-auto max-h-[60vh]">
+          <table className="w-full text-left border-collapse table-fixed relative">
+            <thead className="sticky top-0 z-10 bg-gray-50/95 dark:bg-zinc-800/95 backdrop-blur-sm shadow-sm">
+              <tr className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter border-b border-gray-100 dark:border-zinc-800">
                 <th className="py-2 px-2 w-[100px] text-center">Esercizio</th>
                 <th className="py-2 px-1 text-center w-8">W1</th>
                 <th className="py-2 px-1 text-center w-8">W2</th>
@@ -743,9 +743,9 @@ const AWIsoRow = ({ exercise, set, onRowsChange, isFirst, totalSets, progEx, cur
 };
 
 // --- EXERCISE TABLE (STANDARD AW) ---
-const ExerciseTable = ({ exercise, onRowsChange }) => {
+const ExerciseTable = ({ exercise, onRowsChange, expandedOverride = false }) => {
   const { exercise_id, exercise_name, base_sets = 4, base_reps, instruction } = exercise;
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(expandedOverride);
   const [currentSet, setCurrentSet] = useState(1);
   const [rows, setRows] = useState(Array.from({ length: base_sets }, (_, i) => ({
     id: i + 1, set: i + 1,
@@ -871,9 +871,9 @@ const ExerciseTable = ({ exercise, onRowsChange }) => {
 };
 
 // --- HYPERTROPHY TABLE ---
-const HypertrophyTable = ({ exercise, onRowsChange, initialRows }) => {
+const HypertrophyTable = ({ exercise, onRowsChange, initialRows, expandedOverride = false }) => {
   const { exercise_id, exercise_name, base_reps } = exercise;
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(expandedOverride);
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
@@ -939,52 +939,100 @@ const HypertrophyTable = ({ exercise, onRowsChange, initialRows }) => {
   };
 
   return (
-    <Card className="border-emerald-100 dark:border-emerald-900/30">
+    <Card className="border-0 bg-white dark:bg-[#151718] rounded-[24px] overflow-hidden shadow-sm dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
       <div
         onClick={() => setExpanded(!expanded)}
-        className="px-3 py-2.5 flex items-center justify-between cursor-pointer bg-gradient-to-r from-emerald-50/50 to-transparent dark:from-emerald-500/10 dark:to-transparent"
+        className="px-4 py-3.5 flex items-center justify-between cursor-pointer border-b border-transparent dark:border-white/5 transition-colors hover:bg-black/5 dark:hover:bg-white/[0.02]"
       >
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-6 bg-emerald-500 rounded-full"></div>
-          <h3 className="text-[11px] font-bold text-gray-900 dark:text-gray-100 line-clamp-2 break-words">{exercise_name}</h3>
+        <div className="flex items-center gap-3">
+          <div className="w-1.5 h-6 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
+          <h3 className="text-[13px] font-black tracking-tight text-gray-900 dark:text-zinc-100 line-clamp-1 break-words">{exercise_name}</h3>
         </div>
-        <button className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-gray-400">
-          {expanded ? <ChevronUp size={14} /> : <History size={14} />}
+        <button className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-gray-400">
+          {expanded ? <ChevronUp size={16} /> : <History size={16} />}
         </button>
       </div>
 
       <div className="p-3 pt-0">
         {!expanded ? (
-          <div className="space-y-2 mt-2">
-            {/* Header S | A/F | kg | r | ✓ */}
-            <div className="grid grid-cols-[2.5rem_2rem_3.5rem_2.75rem_2rem] gap-1.5 items-center px-1">
-              <ColHeader label="S" className="text-center" />
-              <div />
-              <ColHeader label="kg" className="text-center" />
-              <ColHeader label="r" className="text-center" />
-              <ColHeader label="✓" className="text-center" />
-            </div>
-            {/* Wrapper con S unificato */}
-            <div className="grid grid-cols-[2.5rem_1fr] gap-1.5">
-              {/* Colonna S unificata */}
-              <div className="flex items-center justify-center">
-                <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-900/30 rounded px-1.5 py-1 text-center">2x{base_reps || ''}</span>
-              </div>
-              {/* Colonna dati atleti */}
-              <div className="space-y-1.5">
-                {/* Anas */}
-                <div className="grid grid-cols-[2rem_3.5rem_2.75rem_2rem] gap-1.5 items-center bg-blue-50/30 dark:bg-blue-900/10 p-1.5 rounded-lg border border-blue-100/50 dark:border-blue-800/30">
-                  <AthleteAvatar initial="A" colorClass="bg-blue-500 shrink-0" />
-                  <ModernInput type="number" step="0.5" value={data.anas.w} onChange={e => upd('anas', 'w', e.target.value)} className="w-full py-1" placeholder="kg" />
-                  <ModernInput type="number" value={data.anas.r} onChange={e => upd('anas', 'r', e.target.value)} className="w-full py-1" placeholder="r" />
-                  <ModernCheckbox checked={data.anas.completed} onChange={() => tog('anas')} colorClass="accent-emerald-500 justify-self-center" />
+          <div className="mt-3 flex gap-3">
+            {/* Left Column: S Badge (Centered vertically between athlete rows) */}
+            <div className="w-[30px] flex flex-col pt-[26px]">
+              <div className="flex-1 flex items-center justify-center">
+                <div className="w-full h-8 bg-amber-500/10 dark:bg-[#422e1b] rounded-lg border border-amber-500/20 dark:border-[#eea75e]/10 flex items-center justify-center shadow-sm">
+                  <span className="text-[11px] font-black text-amber-600 dark:text-[#eea75e]">2x</span>
                 </div>
-                {/* Flavio */}
-                <div className="grid grid-cols-[2rem_3.5rem_2.75rem_2rem] gap-1.5 items-center bg-emerald-50/30 dark:bg-emerald-900/10 p-1.5 rounded-lg border border-emerald-100/50 dark:border-emerald-800/30">
-                  <AthleteAvatar initial="F" colorClass="bg-emerald-500 shrink-0" />
-                  <ModernInput type="number" step="0.5" value={data.flavio.w} onChange={e => upd('flavio', 'w', e.target.value)} className="w-full py-1" placeholder="kg" />
-                  <ModernInput type="number" value={data.flavio.r} onChange={e => upd('flavio', 'r', e.target.value)} className="w-full py-1" placeholder="r" />
-                  <ModernCheckbox checked={data.flavio.completed} onChange={() => tog('flavio')} colorClass="accent-emerald-500 justify-self-center" />
+              </div>
+            </div>
+
+            {/* Right Column: Headers & Data Rows */}
+            <div className="flex-1 space-y-1 relative">
+              {/* Header Row */}
+              <div className="sticky top-0 z-10 grid grid-cols-[2.2rem_1fr_1fr_2.2rem] gap-2 px-1 pb-1 bg-white/95 dark:bg-[#151718]/95 backdrop-blur-sm pt-1">
+                <div className="text-center"><ColHeader label="S" /></div>
+                <div className="text-center"><ColHeader label="KG" /></div>
+                <div className="text-center"><ColHeader label="R" /></div>
+                <div className="text-center"><ColHeader label="✓" /></div>
+              </div>
+
+              {/* Data Rows Container */}
+              <div className="space-y-1.5">
+                {/* Anas Row */}
+                <div className={`grid grid-cols-[2.2rem_1fr_1fr_2.2rem] gap-2 items-center p-1 rounded-2xl border transition-all h-11 
+                    ${data.anas.completed ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-500/30' : 'bg-gray-50/80 dark:bg-[#1a1b1e] border-gray-200/50 dark:border-white/5'}`}>
+                  <div className="flex justify-center">
+                    <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                      <span className="text-[10px] font-bold text-white">A</span>
+                    </div>
+                  </div>
+                  <ModernInput
+                    type="number" step="0.5" value={data.anas.w} onChange={e => upd('anas', 'w', e.target.value)}
+                    className="h-8 border-transparent bg-white/60 dark:bg-[#25262b] shadow-inner text-[13px]" placeholder="kg"
+                  />
+                  <div className="relative">
+                    <ModernInput
+                      type="number" value={data.anas.r} onChange={e => upd('anas', 'r', e.target.value)}
+                      className="h-8 border-transparent bg-white/60 dark:bg-[#25262b] shadow-inner text-[13px]" placeholder="r"
+                    />
+                    {base_reps && !data.anas.r && (
+                      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-medium text-gray-400/50 pointer-events-none">{base_reps}</span>
+                    )}
+                  </div>
+                  <div className="flex justify-center">
+                    <ModernCheckbox checked={data.anas.completed} onChange={(e) => {
+                      tog('anas');
+                      if (e.target.checked) import('canvas-confetti').then(m => m.default({ particleCount: 30, spread: 50, origin: { y: 0.8 } }));
+                    }} colorClass="accent-emerald-500" />
+                  </div>
+                </div>
+
+                {/* Flavio Row */}
+                <div className={`grid grid-cols-[2.2rem_1fr_1fr_2.2rem] gap-2 items-center p-1 rounded-2xl border transition-all h-11 
+                    ${data.flavio.completed ? 'bg-emerald-50/50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-500/30' : 'bg-gray-50/80 dark:bg-[#1a1b1e] border-gray-200/50 dark:border-white/5'}`}>
+                  <div className="flex justify-center">
+                    <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                      <span className="text-[10px] font-bold text-white">F</span>
+                    </div>
+                  </div>
+                  <ModernInput
+                    type="number" step="0.5" value={data.flavio.w} onChange={e => upd('flavio', 'w', e.target.value)}
+                    className="h-8 border-transparent bg-white/60 dark:bg-[#25262b] shadow-inner text-[13px]" placeholder="kg"
+                  />
+                  <div className="relative">
+                    <ModernInput
+                      type="number" value={data.flavio.r} onChange={e => upd('flavio', 'r', e.target.value)}
+                      className="h-8 border-transparent bg-white/60 dark:bg-[#25262b] shadow-inner text-[13px]" placeholder="r"
+                    />
+                    {base_reps && !data.flavio.r && (
+                      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-medium text-gray-400/50 pointer-events-none">{base_reps}</span>
+                    )}
+                  </div>
+                  <div className="flex justify-center">
+                    <ModernCheckbox checked={data.flavio.completed} onChange={(e) => {
+                      tog('flavio');
+                      if (e.target.checked) import('canvas-confetti').then(m => m.default({ particleCount: 30, spread: 50, origin: { y: 0.8 }, colors: ['#10b981', '#34d399'] }));
+                    }} colorClass="accent-emerald-500" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -998,22 +1046,59 @@ const HypertrophyTable = ({ exercise, onRowsChange, initialRows }) => {
             ) : history.length === 0 ? (
               <div className="py-4 text-center text-[10px] text-gray-400">Nessuno storico</div>
             ) : (
-              <div className="space-y-1 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
-                <div className="grid grid-cols-[3rem_1fr_1fr] gap-2 px-2 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+              <div className="space-y-3 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+
+                {/* SVG Mini Chart Trend */}
+                {history.length > 1 && (
+                  <div className="w-full h-12 relative px-2 mb-2 select-none pointer-events-none">
+                    <svg className="w-full h-full overflow-visible" preserveAspectRatio="none">
+                      {/* Genera PolyLine per Anas e Flavio basata sui pesi */}
+                      {(() => {
+                        const valid = [...history].reverse().slice(-10); // Usa ultimi 10
+                        if (valid.length < 2) return null;
+                        const maxW = Math.max(...valid.map(v => v.weight_kg || 1));
+                        const minW = Math.min(...valid.map(v => v.weight_kg || 0));
+                        const range = Math.max(maxW - minW, 1);
+
+                        const ptsAnas = valid.map((v, i) => {
+                          const x = (i / (valid.length - 1)) * 100;
+                          const y = 100 - (((v.weight_kg || 0) - minW) / range) * 80;
+                          return `${x}%,${y}%`;
+                        }).join(' ');
+
+                        // Assumiamo Flavio abbia pesi simili (nella stessa entry in history, noi tracciamo solo un array di entries dove i pesi in Hypertrophy non sono suddivisi tra A e F ma loggati genericamente come `weight_kg`). 
+                        // L'API training logs salva array piatto di set. In HyperTable attuale, logghiamo per la singola card.
+
+                        return (
+                          <>
+                            <polyline fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={ptsAnas} className="text-blue-500/50 dark:text-blue-400/50 drop-shadow-md" />
+                            {valid.map((v, i) => {
+                              const x = (i / (valid.length - 1)) * 100;
+                              const y = 100 - (((v.weight_kg || 0) - minW) / range) * 80;
+                              return <circle key={i} cx={`${x}%`} cy={`${y}%`} r="2.5" className="fill-blue-500 dark:fill-blue-400" />
+                            })}
+                          </>
+                        )
+                      })()}
+                    </svg>
+                    <div className="absolute inset-x-2 bottom-0 h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-zinc-700 to-transparent" />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-[4rem_1fr] gap-2 px-2 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-zinc-800">
                   <div>Data</div>
-                  <div className="w-[140px] text-center text-blue-500">Anas</div>
-                  <div className="w-[140px] text-center text-emerald-500">Flavio</div>
+                  <div className="flex justify-around text-center text-gray-500">
+                    <span>Performance (KG x R)</span>
+                  </div>
                 </div>
                 {history.map((e, i) => (
-                  <div key={i} className="grid grid-cols-[3rem_1fr_1fr] gap-2 items-center px-2 py-2 text-[10px] bg-gray-50/50 dark:bg-zinc-800/30 rounded-xl hover:bg-gray-100/50 dark:hover:bg-zinc-800/50 transition-colors">
+                  <div key={i} className="grid grid-cols-[4rem_1fr] gap-2 items-center px-2 py-2 text-[10px] bg-gray-50/50 dark:bg-zinc-800/30 rounded-xl hover:bg-gray-100/50 dark:hover:bg-zinc-800/50 transition-colors">
                     <div className="font-medium text-gray-500">{formatDate(e.date)}</div>
-                    <div className="w-[140px] flex gap-1.5 justify-center">
-                      <span className="w-12 py-1 bg-blue-50/50 dark:bg-blue-900/20 rounded font-semibold text-gray-700 dark:text-gray-300 text-center">{e.weight_kg ?? '-'} kg</span>
-                      <span className="w-10 py-1 bg-blue-50/50 dark:bg-blue-900/20 rounded font-semibold text-gray-700 dark:text-gray-300 text-center">{e.reps ?? '-'}</span>
-                    </div>
-                    <div className="w-[140px] flex gap-1.5 justify-center">
-                      <span className="w-12 py-1 bg-emerald-50/50 dark:bg-emerald-900/20 rounded font-semibold text-gray-700 dark:text-gray-300 text-center">{e.weight_kg ?? '-'} kg</span>
-                      <span className="w-10 py-1 bg-emerald-50/50 dark:bg-emerald-900/20 rounded font-semibold text-gray-700 dark:text-gray-300 text-center">{e.reps ?? '-'}</span>
+                    <div className="flex gap-2 justify-around">
+                      <div className="flex gap-1.5">
+                        <span className="w-12 py-1 bg-blue-50/50 dark:bg-blue-900/20 rounded font-semibold text-gray-700 dark:text-gray-300 text-center">{e.weight_kg ?? '-'} kg</span>
+                        <span className="w-10 py-1 bg-blue-50/50 dark:bg-blue-900/20 rounded font-semibold text-gray-700 dark:text-gray-300 text-center">{e.reps ?? '-'} r</span>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1465,6 +1550,11 @@ export default function Training2() {
   const [loadError, setLoadError] = useState(false);
   const [calendarVisible, setCalendarVisible] = useState(true);
 
+  // Focus Mode State
+  const [isFocusMode, setIsFocusMode] = useState(false);
+  const [focusExIndex, setFocusExIndex] = useState(0);
+  const [isSuperSetLinked, setIsSuperSetLinked] = useState({}); // { [index]: true/false }
+
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [lastSaved, setLastSaved] = useState(null);
@@ -1476,8 +1566,13 @@ export default function Training2() {
   useEffect(() => {
     setLoading(true);
     const ctrl = new AbortController();
+    const apiBase = import.meta.env.VITE_API_BASE || '/api';
+    console.log("Fetching from API Base:", apiBase);
     Promise.all([
-      fetch(`${import.meta.env.VITE_API_BASE || '/api'}/training/week`, { signal: ctrl.signal }).then(r => r.json()),
+      fetch(`${apiBase}/training/week`, { signal: ctrl.signal }).then(r => {
+        if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+        return r.json();
+      }),
       api.training.getAwProgram().catch(() => ({}))
     ])
       .then(([data, awData]) => {
@@ -1490,6 +1585,16 @@ export default function Training2() {
       .finally(() => setLoading(false));
     return () => ctrl.abort();
   }, []);
+
+  // Sync selectedDay if weekData changes (e.g. exercises added/removed)
+  useEffect(() => {
+    if (selectedDay) {
+      const fresh = weekData.find(d => d.template_id === selectedDay.template_id);
+      if (fresh && JSON.stringify(fresh.exercises) !== JSON.stringify(selectedDay.exercises)) {
+        setSelectedDay(fresh);
+      }
+    }
+  }, [weekData, selectedDay]);
 
   useEffect(() => {
     if (calendarVisible) {
@@ -1578,10 +1683,160 @@ export default function Training2() {
   const awEx = selectedDay?.exercises.filter(e => e.category === 'AW') || [];
   const hypEx = selectedDay?.exercises.filter(e => e.category === 'HYPERTROPHY') || [];
 
+  // Calcolo progresso sessione
+  const totalExpectedSets = selectedDay?.exercises.reduce((acc, ex) => {
+    if (ex.category === 'HYPERTROPHY') return acc + 2; // Default 2 per HYPERTROPHY
+    if (ex.category === 'AW') return acc + 5; // Approssimazione AW
+    if (ex.category === 'STRENGTH') return acc + (ex.base_sets || 4);
+    return acc + (ex.base_sets || 3);
+  }, 0) || 1; // Minimo 1 per evitare divisioni per zero
+
+  const totalCompletedSets = Object.values(setsByExercise).reduce((acc, rows) => {
+    return acc + (rows?.filter(r => r.checked)?.length || 0);
+  }, 0);
+
+  const progressPercent = Math.min(100, Math.round((totalCompletedSets / totalExpectedSets) * 100)) || 0;
+
+  // --- FOCUS MODE RENDER ---
+  if (isFocusMode) {
+    const flatExercises = [...strengthEx, ...awEx, ...hypEx];
+    const currentEx = flatExercises[focusExIndex];
+
+    // Determine if we show a Super Set
+    const showSuperSet = isSuperSetLinked[focusExIndex] && focusExIndex < flatExercises.length - 1;
+    const nextEx = showSuperSet ? flatExercises[focusExIndex + 1] : null;
+
+    if (!currentEx) {
+      setIsFocusMode(false); // Fallback
+      return null;
+    }
+
+    const nextExercise = () => {
+      // Avanza di 2 se siamo in SuperSet, altrimenti di 1
+      const step = showSuperSet ? 2 : 1;
+      if (focusExIndex + step < flatExercises.length) setFocusExIndex(i => i + step);
+    };
+    const prevExercise = () => {
+      // Se l'esercizio precedente era la seconda parte di un superset, dobbiamo tornare indietro di 2? 
+      // Più semplice: torna di 1 normalmente, a meno che il prev-1 non fosse flaggato come superset.
+      if (focusExIndex > 0) {
+        if (focusExIndex > 1 && isSuperSetLinked[focusExIndex - 2]) {
+          setFocusExIndex(i => i - 2);
+        } else {
+          setFocusExIndex(i => i - 1);
+        }
+      }
+    };
+
+    const renderCard = (exercise, index) => {
+      if (!exercise) return null;
+      return (
+        <div key={`focus-${exercise.exercise_id || index}`} className="w-full bg-zinc-900/50 border border-zinc-800 rounded-[2rem] p-6 sm:p-8 relative overflow-hidden mb-8 last:mb-0">
+          <div className="absolute top-4 right-4 z-20">
+            {index < flatExercises.length - 1 && (
+              <button
+                onClick={() => setIsSuperSetLinked(prev => ({ ...prev, [index]: !prev[index] }))}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold border transition-colors ${isSuperSetLinked[index]
+                  ? 'bg-purple-500/20 text-purple-400 border-purple-500/30'
+                  : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:text-white'
+                  }`}
+              >
+                <Link2 size={12} className={isSuperSetLinked[index] ? 'animate-pulse' : ''} />
+                {isSuperSetLinked[index] ? 'SUPERSET ATTIVO' : 'LEGA AL PROSSIMO'}
+              </button>
+            )}
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl font-black mb-8 text-center bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent px-20">
+            {exercise.exercise_name}
+          </h2>
+
+          <div className="relative z-10 scale-[1.02] sm:scale-105 origin-top mb-4 custom-scrollbar overflow-x-auto">
+            {exercise.category === 'STRENGTH' ? (
+              <div className="bg-zinc-950 p-2 rounded-2xl w-full mx-auto max-w-3xl">
+                <StrengthTable2 exercise={exercise} onRowsChange={handleRowsChange} />
+              </div>
+            ) : exercise.category === 'HYPERTROPHY' ? (
+              <div className="max-w-md mx-auto relative group">
+                <div className="absolute inset-0 bg-emerald-500/5 blur-xl transition-colors pointer-events-none rounded-[24px]" />
+                <div className="relative">
+                  <HypertrophyTable exercise={exercise} onRowsChange={handleRowsChange} initialRows={setsByExercise[exercise.exercise_id]} expandedOverride={true} />
+                </div>
+              </div>
+            ) : (
+              <div className="bg-zinc-950 p-2 rounded-2xl w-full mx-auto max-w-2xl border border-zinc-800">
+                <ExerciseTable exercise={exercise} onRowsChange={handleRowsChange} expandedOverride={true} />
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    return (
+      <div className="fixed inset-0 z-[100] bg-zinc-950 text-white flex flex-col items-center justify-between pointer-events-auto overflow-y-auto">
+        {/* Sfondo con gradiente radiale per profondità */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/10 via-transparent to-transparent pointer-events-none" />
+        {/* Top Header */}
+        <div className="w-full h-16 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between px-6 shrink-0 sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setIsFocusMode(false)} className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-bold transition-colors">
+              Esci
+            </button>
+            <div className="text-xs font-medium text-emerald-400">Day {selectedDay?.weekday + 1}</div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-bold">{focusExIndex + 1} / {flatExercises.length}</span>
+            <div className="w-32 h-2 bg-zinc-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 transition-all duration-300"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 w-full max-w-4xl px-4 py-8 flex flex-col justify-center min-h-[500px]">
+          <motion.div
+            key={focusExIndex}
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            className="w-full relative"
+          >
+            {renderCard(currentEx, focusExIndex)}
+            {showSuperSet && nextEx && renderCard(nextEx, focusExIndex + 1)}
+          </motion.div>
+        </div>
+
+        {/* Bottom Navigation */}
+        <div className="w-full h-24 bg-gradient-to-t from-black to-transparent flex items-center justify-between px-8 pb-6 shrink-0 sticky bottom-0 z-10">
+          <button
+            onClick={prevExercise}
+            disabled={focusExIndex === 0}
+            className="w-14 h-14 rounded-full bg-zinc-800 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-700 transition-colors"
+          >
+            <ChevronDown size={28} className="rotate-90 text-white" />
+          </button>
+
+          <button
+            onClick={nextExercise}
+            disabled={focusExIndex === flatExercises.length - 1}
+            className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-blue-500 shadow-lg shadow-blue-500/20 transition-all"
+          >
+            <ChevronDown size={28} className="-rotate-90 text-white" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#09090B] pb-24">
       {/* Top Navigation Bar */}
-      <header className="bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-zinc-800/60 supports-[backdrop-filter]:bg-white/60">
+      <header className="sticky top-0 z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-zinc-800/60 supports-[backdrop-filter]:bg-white/60">
         <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
@@ -1594,7 +1849,7 @@ export default function Training2() {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Auto Save Badge */}
+            {/* Solo Auto Save in header, progress bar sotto */}
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-zinc-800/50">
               {isSaving ? (
                 <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -1619,12 +1874,32 @@ export default function Training2() {
             </div>
           </div>
         </div>
+        {/* Progress Bar Sottilissima */}
+        <div className="w-full h-1 bg-gray-100 dark:bg-zinc-800 overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 transition-all duration-500 ease-out"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
       </header>
 
       <main className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
 
-        {/* Header with Calendar Toggle only */}
-        <div className="flex justify-end">
+        {/* Header with Calendar Toggle & FOCUS MODE START */}
+        <div className="flex justify-end gap-3">
+          {(strengthEx.length > 0 || awEx.length > 0 || hypEx.length > 0) && (
+            <button
+              onClick={() => {
+                setFocusExIndex(0);
+                setIsFocusMode(true);
+              }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black bg-blue-600 border border-blue-500 text-white shadow-lg shadow-blue-500/30 hover:bg-blue-500 hover:scale-105 transition-all"
+            >
+              <Activity size={16} />
+              INIZIA ALLENAMENTO
+            </button>
+          )}
+
           <button
             onClick={() => setCalendarVisible(!calendarVisible)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
@@ -1640,7 +1915,13 @@ export default function Training2() {
               <MuscleVolumeLegend days={weekData} />
 
               <div className="no-select-calendar overflow-x-hidden min-w-0">
-                <WeeklyCalendar4 onDaySelect={handleDaySelect} selectedDayId={selectedDay?.template_id} initialDays={weekData} availableExercises={allExercises} />
+                <WeeklyCalendar4
+                  onDaySelect={handleDaySelect}
+                  selectedDayId={selectedDay?.template_id}
+                  initialDays={weekData}
+                  availableExercises={allExercises}
+                  onWeekUpdate={setWeekData}
+                />
               </div>
 
               {false && <ExerciseMuscleMatrix exercises={allExercises} weekDays={weekData} awProgram={awProgram} />}
@@ -1902,6 +2183,6 @@ export default function Training2() {
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #3f3f46; }
       `}} />
-    </div >
+    </div>
   );
 }

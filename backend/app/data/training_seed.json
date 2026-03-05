@@ -1,315 +1,960 @@
 {
   "exercises": [
     {
-      "id": "sq_str", "name": "Squat", "category": "STRENGTH",
-      "primary_muscles": ["quads", "glutes"], "secondary_muscles": ["core", "lower_back"],
-      "cns_fatigue": 0.8, "joint_stress": { "knees": 0.8, "lower_back": 0.8 }
+      "id": "sq_str",
+      "name": "Squat",
+      "category": "STRENGTH",
+      "primary_muscles": [
+        "quads",
+        "glutes"
+      ],
+      "secondary_muscles": [
+        "core",
+        "lower_back"
+      ],
+      "cns_fatigue": 0.8,
+      "joint_stress": {
+        "knees": 0.8,
+        "lower_back": 0.8
+      }
     },
     {
-      "id": "plank", "name": "Plank", "category": "HYPERTROPHY",
-      "primary_muscles": ["core"], "secondary_muscles": ["lower_back"],
-      "cns_fatigue": 0.2, "joint_stress": {}
+      "id": "plank",
+      "name": "Plank",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "core"
+      ],
+      "secondary_muscles": [
+        "lower_back"
+      ],
+      "cns_fatigue": 0.2,
+      "joint_stress": {}
     },
     {
-      "id": "crunch", "name": "Crunch", "category": "HYPERTROPHY",
-      "primary_muscles": ["core"], "secondary_muscles": [],
-      "cns_fatigue": 0.2, "joint_stress": {}
+      "id": "addominali",
+      "name": "Addominali",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "core"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.2,
+      "joint_stress": {}
     },
     {
-      "id": "leg_raise", "name": "Leg Raise", "category": "HYPERTROPHY",
-      "primary_muscles": ["core"], "secondary_muscles": [],
-      "cns_fatigue": 0.2, "joint_stress": {}
+      "id": "crunch",
+      "name": "Crunch",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "core"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.2,
+      "joint_stress": {}
     },
     {
-      "id": "ab_wheel", "name": "Ab Wheel", "category": "STRENGTH",
-      "primary_muscles": ["core"], "secondary_muscles": ["lower_back"],
-      "cns_fatigue": 0.3, "joint_stress": {}
+      "id": "leg_raise",
+      "name": "Leg Raise",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "core"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.2,
+      "joint_stress": {}
     },
     {
-      "id": "cable_crunch", "name": "Cable Crunch", "category": "HYPERTROPHY",
-      "primary_muscles": ["core"], "secondary_muscles": [],
-      "cns_fatigue": 0.2, "joint_stress": {}
+      "id": "ab_wheel",
+      "name": "Ab Wheel",
+      "category": "STRENGTH",
+      "primary_muscles": [
+        "core"
+      ],
+      "secondary_muscles": [
+        "lower_back"
+      ],
+      "cns_fatigue": 0.3,
+      "joint_stress": {}
     },
     {
-      "id": "sq_hypertrophy", "name": "Squat Ipertrofia", "category": "HYPERTROPHY",
-      "primary_muscles": ["quads", "glutes"], "secondary_muscles": ["core", "lower_back"],
-      "cns_fatigue": 0.6, "joint_stress": { "knees": 0.7, "lower_back": 0.7 }
+      "id": "cable_crunch",
+      "name": "Cable Crunch",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "core"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.2,
+      "joint_stress": {}
     },
     {
-      "id": "bp_str", "name": "Panca Piana", "category": "STRENGTH",
-      "primary_muscles": ["chest", "triceps"], "secondary_muscles": ["anterior_delts"],
-      "cns_fatigue": 0.8, "joint_stress": { "elbow": 0.6, "wrist": 0.5, "shoulder": 0.7 }
+      "id": "sq_hypertrophy",
+      "name": "Squat Ipertrofia",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "quads",
+        "glutes"
+      ],
+      "secondary_muscles": [
+        "core",
+        "lower_back"
+      ],
+      "cns_fatigue": 0.6,
+      "joint_stress": {
+        "knees": 0.7,
+        "lower_back": 0.7
+      }
     },
     {
-      "id": "bp_el", "name": "Panca con Elastico", "category": "HYPERTROPHY",
-      "primary_muscles": ["chest", "triceps"], "secondary_muscles": ["anterior_delts"],
-      "cns_fatigue": 0.7, "joint_stress": { "elbow": 0.7, "wrist": 0.5, "shoulder": 0.6 }
+      "id": "bp_str",
+      "name": "Panca Piana",
+      "category": "STRENGTH",
+      "primary_muscles": [
+        "chest",
+        "triceps"
+      ],
+      "secondary_muscles": [
+        "anterior_delts"
+      ],
+      "cns_fatigue": 0.8,
+      "joint_stress": {
+        "elbow": 0.6,
+        "wrist": 0.5,
+        "shoulder": 0.7
+      }
     },
     {
-      "id": "bp_pause", "name": "Panca con Fermi", "category": "HYPERTROPHY",
-      "primary_muscles": ["chest", "triceps"], "secondary_muscles": ["anterior_delts"],
-      "cns_fatigue": 0.8, "joint_stress": { "elbow": 0.6, "wrist": 0.5, "shoulder": 0.6 }
+      "id": "bp_el",
+      "name": "Panca con Elastico",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "chest",
+        "triceps"
+      ],
+      "secondary_muscles": [
+        "anterior_delts"
+      ],
+      "cns_fatigue": 0.7,
+      "joint_stress": {
+        "elbow": 0.7,
+        "wrist": 0.5,
+        "shoulder": 0.6
+      }
     },
     {
-      "id": "mp_str", "name": "Military Press", "category": "STRENGTH",
-      "primary_muscles": ["anterior_delts", "triceps"], "secondary_muscles": ["core"],
-      "cns_fatigue": 0.7, "joint_stress": { "elbow": 0.5, "wrist": 0.6, "shoulder": 0.9 }
+      "id": "bp_pause",
+      "name": "Panca con Fermi",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "chest",
+        "triceps"
+      ],
+      "secondary_muscles": [
+        "anterior_delts"
+      ],
+      "cns_fatigue": 0.8,
+      "joint_stress": {
+        "elbow": 0.6,
+        "wrist": 0.5,
+        "shoulder": 0.6
+      }
     },
     {
-      "id": "pu_str", "name": "Trazioni Zavorrate", "category": "STRENGTH",
-      "primary_muscles": ["lats", "biceps"], "secondary_muscles": ["forearms", "rhomboids"],
-      "cns_fatigue": 0.7, "joint_stress": { "elbow": 0.6, "wrist": 0.4, "shoulder": 0.5 }
+      "id": "mp_str",
+      "name": "Military Press",
+      "category": "STRENGTH",
+      "primary_muscles": [
+        "anterior_delts",
+        "triceps"
+      ],
+      "secondary_muscles": [
+        "core"
+      ],
+      "cns_fatigue": 0.7,
+      "joint_stress": {
+        "elbow": 0.5,
+        "wrist": 0.6,
+        "shoulder": 0.9
+      }
     },
     {
-      "id": "curl_str", "name": "Curl EZ Bar Seduto (Arm Blaster)", "category": "STRENGTH",
-      "primary_muscles": ["biceps"], "secondary_muscles": ["brachialis", "forearms"],
-      "cns_fatigue": 0.5, "joint_stress": { "elbow": 0.8, "wrist": 0.7 }
+      "id": "pu_str",
+      "name": "Trazioni Zavorrate",
+      "category": "STRENGTH",
+      "primary_muscles": [
+        "lats",
+        "biceps"
+      ],
+      "secondary_muscles": [
+        "forearms",
+        "rhomboids"
+      ],
+      "cns_fatigue": 0.7,
+      "joint_stress": {
+        "elbow": 0.6,
+        "wrist": 0.4,
+        "shoulder": 0.5
+      }
     },
     {
-      "id": "curl_ez", "name": "Curl EZ Bar", "category": "HYPERTROPHY",
-      "primary_muscles": ["biceps"], "secondary_muscles": ["brachialis"],
-      "cns_fatigue": 0.4, "joint_stress": { "elbow": 0.6, "wrist": 0.6 }
+      "id": "curl_str",
+      "name": "Curl EZ Bar Seduto (Arm Blaster)",
+      "category": "STRENGTH",
+      "primary_muscles": [
+        "biceps"
+      ],
+      "secondary_muscles": [
+        "brachialis",
+        "forearms"
+      ],
+      "cns_fatigue": 0.5,
+      "joint_stress": {
+        "elbow": 0.8,
+        "wrist": 0.7
+      }
     },
     {
-      "id": "aw_max", "name": "AW Max", "category": "AW",
-      "primary_muscles": ["forearms", "biceps"], "secondary_muscles": ["lats"],
-      "cns_fatigue": 1.0, "joint_stress": { "elbow": 1.0, "wrist": 1.0, "shoulder": 0.6 }
+      "id": "curl_ez",
+      "name": "Curl EZ Bar",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "biceps"
+      ],
+      "secondary_muscles": [
+        "brachialis"
+      ],
+      "cns_fatigue": 0.4,
+      "joint_stress": {
+        "elbow": 0.6,
+        "wrist": 0.6
+      }
     },
     {
-      "id": "aw_iso_l", "name": "AW Isometria Leggera", "category": "AW",
-      "primary_muscles": ["forearms", "biceps"], "secondary_muscles": ["brachialis"],
-      "cns_fatigue": 0.4, "joint_stress": { "elbow": 0.4, "wrist": 0.4 }
+      "id": "aw_max",
+      "name": "AW Max",
+      "category": "AW",
+      "primary_muscles": [
+        "forearms",
+        "biceps"
+      ],
+      "secondary_muscles": [
+        "lats"
+      ],
+      "cns_fatigue": 1.0,
+      "joint_stress": {
+        "elbow": 1.0,
+        "wrist": 1.0,
+        "shoulder": 0.6
+      }
     },
     {
-      "id": "aw_iso_h", "name": "AW Isometria Pesante", "category": "AW",
-      "primary_muscles": ["forearms", "biceps"], "secondary_muscles": ["brachialis"],
-      "cns_fatigue": 0.8, "joint_stress": { "elbow": 0.9, "wrist": 0.9, "shoulder": 0.3 }
+      "id": "aw_iso_l",
+      "name": "AW Isometria Leggera",
+      "category": "AW",
+      "primary_muscles": [
+        "forearms",
+        "biceps"
+      ],
+      "secondary_muscles": [
+        "brachialis"
+      ],
+      "cns_fatigue": 0.4,
+      "joint_stress": {
+        "elbow": 0.4,
+        "wrist": 0.4
+      }
     },
     {
-      "id": "aw_vol_1", "name": "AW Vol.1 (Pressure & Chop)", "category": "AW",
-      "primary_muscles": ["forearms", "pronators"], "secondary_muscles": [],
-      "cns_fatigue": 0.4, "joint_stress": { "elbow": 0.6, "wrist": 0.8 }
+      "id": "aw_iso_h",
+      "name": "AW Isometria Pesante",
+      "category": "AW",
+      "primary_muscles": [
+        "forearms",
+        "biceps"
+      ],
+      "secondary_muscles": [
+        "brachialis"
+      ],
+      "cns_fatigue": 0.8,
+      "joint_stress": {
+        "elbow": 0.9,
+        "wrist": 0.9,
+        "shoulder": 0.3
+      }
     },
     {
-      "id": "aw_vol_2", "name": "AW Vol.2 (Cupping & Supination)", "category": "AW",
-      "primary_muscles": ["forearms", "wrist_flexors", "supinators"], "secondary_muscles": [],
-      "cns_fatigue": 0.4, "joint_stress": { "elbow": 0.5, "wrist": 0.9 }
+      "id": "aw_vol_1",
+      "name": "AW Vol.1 (Pressure & Chop)",
+      "category": "AW",
+      "primary_muscles": [
+        "forearms",
+        "pronators"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.4,
+      "joint_stress": {
+        "elbow": 0.6,
+        "wrist": 0.8
+      }
     },
     {
-      "id": "aw_speed", "name": "AW Speed", "category": "AW",
-      "primary_muscles": ["forearms", "biceps"], "secondary_muscles": [],
-      "cns_fatigue": 0.6, "joint_stress": { "elbow": 0.7, "wrist": 0.7 }
+      "id": "aw_vol_2",
+      "name": "AW Vol.2 (Cupping & Supination)",
+      "category": "AW",
+      "primary_muscles": [
+        "forearms",
+        "wrist_flexors",
+        "supinators"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.4,
+      "joint_stress": {
+        "elbow": 0.5,
+        "wrist": 0.9
+      }
     },
     {
-      "id": "jm_press", "name": "JM Press", "category": "HYPERTROPHY",
-      "primary_muscles": ["triceps"], "secondary_muscles": ["chest"],
-      "cns_fatigue": 0.3, "joint_stress": { "elbow": 1.0, "wrist": 0.6 }
+      "id": "aw_speed",
+      "name": "AW Speed",
+      "category": "AW",
+      "primary_muscles": [
+        "forearms",
+        "biceps"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.6,
+      "joint_stress": {
+        "elbow": 0.7,
+        "wrist": 0.7
+      }
     },
     {
-      "id": "lat_raise", "name": "Spalle Laterali", "category": "HYPERTROPHY",
-      "primary_muscles": ["lateral_delts"], "secondary_muscles": [],
-      "cns_fatigue": 0.1, "joint_stress": { "shoulder": 0.4 }
+      "id": "jm_press",
+      "name": "JM Press",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "triceps"
+      ],
+      "secondary_muscles": [
+        "chest"
+      ],
+      "cns_fatigue": 0.3,
+      "joint_stress": {
+        "elbow": 1.0,
+        "wrist": 0.6
+      }
     },
     {
-      "id": "lat_raise_light", "name": "Spalle Laterali Leggere", "category": "HYPERTROPHY",
-      "primary_muscles": ["lateral_delts"], "secondary_muscles": [],
-      "cns_fatigue": 0.1, "joint_stress": { "shoulder": 0.2 }
+      "id": "lat_raise",
+      "name": "Spalle Laterali",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "lateral_delts"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.1,
+      "joint_stress": {
+        "shoulder": 0.4
+      }
     },
     {
-      "id": "front_raise", "name": "Spalle Frontali", "category": "HYPERTROPHY",
-      "primary_muscles": ["anterior_delts"], "secondary_muscles": [],
-      "cns_fatigue": 0.1, "joint_stress": { "shoulder": 0.4 }
+      "id": "lat_raise_light",
+      "name": "Spalle Laterali Leggere",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "lateral_delts"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.1,
+      "joint_stress": {
+        "shoulder": 0.2
+      }
     },
     {
-      "id": "rear_raise", "name": "Spalle Posteriori", "category": "HYPERTROPHY",
-      "primary_muscles": ["rear_delts"], "secondary_muscles": [],
-      "cns_fatigue": 0.1, "joint_stress": { "shoulder": 0.3 }
+      "id": "front_raise",
+      "name": "Spalle Frontali",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "anterior_delts"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.1,
+      "joint_stress": {
+        "shoulder": 0.4
+      }
     },
     {
-      "id": "ez_bar_reverse_curl", "name": "Ez Bar Reverse Curl", "category": "HYPERTROPHY",
-      "primary_muscles": ["brachioradialis", "forearms"], "secondary_muscles": ["biceps"],
-      "cns_fatigue": 0.3, "joint_stress": { "elbow": 0.5, "wrist": 0.5 }
+      "id": "rear_raise",
+      "name": "Spalle Posteriori",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "rear_delts"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.1,
+      "joint_stress": {
+        "shoulder": 0.3
+      }
     },
     {
-      "id": "inc_db_press", "name": "Panca Inclinata con Manubri", "category": "HYPERTROPHY",
-      "primary_muscles": ["upper_chest", "anterior_delts", "triceps"], "secondary_muscles": [],
-      "cns_fatigue": 0.4, "joint_stress": { "elbow": 0.4, "shoulder": 0.6 }
+      "id": "ez_bar_reverse_curl",
+      "name": "Ez Bar Reverse Curl",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "brachioradialis",
+        "forearms"
+      ],
+      "secondary_muscles": [
+        "biceps"
+      ],
+      "cns_fatigue": 0.3,
+      "joint_stress": {
+        "elbow": 0.5,
+        "wrist": 0.5
+      }
     },
     {
-      "id": "single_lat_pull", "name": "Lat Pulldown Singolo", "category": "HYPERTROPHY",
-      "primary_muscles": ["lats"], "secondary_muscles": ["biceps"],
-      "cns_fatigue": 0.3, "joint_stress": { "shoulder": 0.3 }
+      "id": "inc_db_press",
+      "name": "Panca Inclinata con Manubri",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "upper_chest",
+        "anterior_delts",
+        "triceps"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.4,
+      "joint_stress": {
+        "elbow": 0.4,
+        "shoulder": 0.6
+      }
     },
     {
-      "id": "pulley", "name": "Pulley", "category": "HYPERTROPHY",
-      "primary_muscles": ["lats", "rhomboids"], "secondary_muscles": ["biceps"],
-      "cns_fatigue": 0.3, "joint_stress": { "lower_back": 0.3 }
+      "id": "single_lat_pull",
+      "name": "Lat Pulldown Singolo",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "lats"
+      ],
+      "secondary_muscles": [
+        "biceps"
+      ],
+      "cns_fatigue": 0.3,
+      "joint_stress": {
+        "shoulder": 0.3
+      }
     },
     {
-      "id": "high_row", "name": "Schiena Alta Presa Larga", "category": "HYPERTROPHY",
-      "primary_muscles": ["rhomboids", "rear_delts", "traps"], "secondary_muscles": ["biceps"],
-      "cns_fatigue": 0.3, "joint_stress": { "shoulder": 0.2 }
+      "id": "pulley",
+      "name": "Pulley",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "lats",
+        "rhomboids"
+      ],
+      "secondary_muscles": [
+        "biceps"
+      ],
+      "cns_fatigue": 0.3,
+      "joint_stress": {
+        "lower_back": 0.3
+      }
     },
     {
-      "id": "bulgarian", "name": "Affondi Bulgari con Manubri", "category": "HYPERTROPHY",
-      "primary_muscles": ["quads", "glutes"], "secondary_muscles": [],
-      "cns_fatigue": 0.5, "joint_stress": { "knees": 0.6 }
+      "id": "high_row",
+      "name": "Schiena Alta Presa Larga",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "rhomboids",
+        "rear_delts",
+        "traps"
+      ],
+      "secondary_muscles": [
+        "biceps"
+      ],
+      "cns_fatigue": 0.3,
+      "joint_stress": {
+        "shoulder": 0.2
+      }
     },
     {
-      "id": "single_pushdown", "name": "Pushdown Singolo", "category": "HYPERTROPHY",
-      "primary_muscles": ["triceps"], "secondary_muscles": [],
-      "cns_fatigue": 0.1, "joint_stress": { "elbow": 0.4 }
+      "id": "bulgarian",
+      "name": "Affondi Bulgari con Manubri",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "quads",
+        "glutes"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.5,
+      "joint_stress": {
+        "knees": 0.6
+      }
     },
     {
-      "id": "dips", "name": "Dips", "category": "HYPERTROPHY",
-      "primary_muscles": ["chest", "triceps", "anterior_delts"], "secondary_muscles": [],
-      "cns_fatigue": 0.4, "joint_stress": { "elbow": 0.6, "shoulder": 0.8 }
+      "id": "single_pushdown",
+      "name": "Pushdown Singolo",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "triceps"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.1,
+      "joint_stress": {
+        "elbow": 0.4
+      }
     },
     {
-      "id": "lat_machine", "name": "Lat Machine", "category": "HYPERTROPHY",
-      "primary_muscles": ["lats"], "secondary_muscles": ["biceps"],
-      "cns_fatigue": 0.3, "joint_stress": { "shoulder": 0.3 }
+      "id": "dips",
+      "name": "Dips",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "chest",
+        "triceps",
+        "anterior_delts"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.4,
+      "joint_stress": {
+        "elbow": 0.6,
+        "shoulder": 0.8
+      }
     },
     {
-      "id": "conc_curl", "name": "Curl Concentrazione", "category": "HYPERTROPHY",
-      "primary_muscles": ["biceps"], "secondary_muscles": [],
-      "cns_fatigue": 0.1, "joint_stress": { "elbow": 0.3 }
+      "id": "lat_machine",
+      "name": "Lat Machine",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "lats"
+      ],
+      "secondary_muscles": [
+        "biceps"
+      ],
+      "cns_fatigue": 0.3,
+      "joint_stress": {
+        "shoulder": 0.3
+      }
     },
     {
-      "id": "overhead_ext", "name": "Estensioni Oltre la Testa", "category": "HYPERTROPHY",
-      "primary_muscles": ["triceps (long head)"], "secondary_muscles": [],
-      "cns_fatigue": 0.2, "joint_stress": { "elbow": 0.6, "shoulder": 0.5 }
+      "id": "conc_curl",
+      "name": "Curl Concentrazione",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "biceps"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.1,
+      "joint_stress": {
+        "elbow": 0.3
+      }
     },
     {
-      "id": "flyes", "name": "Croci", "category": "HYPERTROPHY",
-      "primary_muscles": ["chest"], "secondary_muscles": ["anterior_delts"],
-      "cns_fatigue": 0.2, "joint_stress": { "shoulder": 0.6, "elbow": 0.3 }
+      "id": "overhead_ext",
+      "name": "Estensioni Oltre la Testa",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "triceps (long head)"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.2,
+      "joint_stress": {
+        "elbow": 0.6,
+        "shoulder": 0.5
+      }
     },
     {
-      "id": "mil_db", "name": "Military Manubri", "category": "HYPERTROPHY",
-      "primary_muscles": ["anterior_delts", "triceps"], "secondary_muscles": [],
-      "cns_fatigue": 0.3, "joint_stress": { "shoulder": 0.7, "elbow": 0.4 }
+      "id": "flyes",
+      "name": "Croci",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "chest"
+      ],
+      "secondary_muscles": [
+        "anterior_delts"
+      ],
+      "cns_fatigue": 0.2,
+      "joint_stress": {
+        "shoulder": 0.6,
+        "elbow": 0.3
+      }
     },
     {
-      "id": "aw_v1_dita", "name": "V1 - Dita (Finger Flexion)", "category": "AW",
-      "primary_muscles": ["forearms", "wrist_flexors"], "secondary_muscles": [],
-      "cns_fatigue": 0.2, "joint_stress": { "wrist": 0.6 },
+      "id": "mil_db",
+      "name": "Military Manubri",
+      "category": "HYPERTROPHY",
+      "primary_muscles": [
+        "anterior_delts",
+        "triceps"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.3,
+      "joint_stress": {
+        "shoulder": 0.7,
+        "elbow": 0.4
+      }
+    },
+    {
+      "id": "aw_v1_dita",
+      "name": "V1 - Dita (Finger Flexion)",
+      "category": "AW",
+      "primary_muscles": [
+        "forearms",
+        "wrist_flexors"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.2,
+      "joint_stress": {
+        "wrist": 0.6
+      },
       "instruction": "12kg - 2x10→6x7 (5 settimane)"
     },
     {
-      "id": "aw_v1_back_press", "name": "V1 - Back Pressure", "category": "AW",
-      "primary_muscles": ["forearms", "pronators"], "secondary_muscles": ["biceps"],
-      "cns_fatigue": 0.3, "joint_stress": { "elbow": 0.6, "wrist": 0.7 },
+      "id": "aw_v1_back_press",
+      "name": "V1 - Back Pressure",
+      "category": "AW",
+      "primary_muscles": [
+        "forearms",
+        "pronators"
+      ],
+      "secondary_muscles": [
+        "biceps"
+      ],
+      "cns_fatigue": 0.3,
+      "joint_stress": {
+        "elbow": 0.6,
+        "wrist": 0.7
+      },
       "instruction": "15kg - 2x10→6x7 (5 settimane)"
     },
     {
-      "id": "aw_v1_wrist_wrench", "name": "V1 - Wrist Wrench", "category": "AW",
-      "primary_muscles": ["forearms", "wrist_extensors"], "secondary_muscles": ["brachialis"],
-      "cns_fatigue": 0.3, "joint_stress": { "wrist": 0.8, "elbow": 0.5 },
+      "id": "aw_v1_wrist_wrench",
+      "name": "V1 - Wrist Wrench",
+      "category": "AW",
+      "primary_muscles": [
+        "forearms",
+        "wrist_extensors"
+      ],
+      "secondary_muscles": [
+        "brachialis"
+      ],
+      "cns_fatigue": 0.3,
+      "joint_stress": {
+        "wrist": 0.8,
+        "elbow": 0.5
+      },
       "instruction": "10kg - 2x8→3x12 (5 settimane)"
     },
     {
-      "id": "aw_v1_side_press", "name": "V1 - Sidepressure", "category": "AW",
-      "primary_muscles": ["forearms", "pronators"], "secondary_muscles": ["lats", "core"],
-      "cns_fatigue": 0.4, "joint_stress": { "elbow": 0.7, "wrist": 0.8, "shoulder": 0.4 },
+      "id": "aw_v1_side_press",
+      "name": "V1 - Sidepressure",
+      "category": "AW",
+      "primary_muscles": [
+        "forearms",
+        "pronators"
+      ],
+      "secondary_muscles": [
+        "lats",
+        "core"
+      ],
+      "cns_fatigue": 0.4,
+      "joint_stress": {
+        "elbow": 0.7,
+        "wrist": 0.8,
+        "shoulder": 0.4
+      },
       "instruction": "12kg - 2x10→6x7 (5 settimane)"
     },
     {
-      "id": "aw_v1_ulnar_chop", "name": "V1 - Ulnar Chop", "category": "AW",
-      "primary_muscles": ["forearms", "pronators"], "secondary_muscles": ["wrist_flexors"],
-      "cns_fatigue": 0.3, "joint_stress": { "elbow": 0.6, "wrist": 0.7 },
+      "id": "aw_v1_ulnar_chop",
+      "name": "V1 - Ulnar Chop",
+      "category": "AW",
+      "primary_muscles": [
+        "forearms",
+        "pronators"
+      ],
+      "secondary_muscles": [
+        "wrist_flexors"
+      ],
+      "cns_fatigue": 0.3,
+      "joint_stress": {
+        "elbow": 0.6,
+        "wrist": 0.7
+      },
       "instruction": "5-8kg - 2x10→6x7 (5 settimane)"
     },
     {
-      "id": "aw_v2_pronazione", "name": "V2 - Pronazione", "category": "AW",
-      "primary_muscles": ["pronators", "forearms"], "secondary_muscles": [],
-      "cns_fatigue": 0.2, "joint_stress": { "wrist": 0.6, "elbow": 0.4 },
+      "id": "aw_v2_pronazione",
+      "name": "V2 - Pronazione",
+      "category": "AW",
+      "primary_muscles": [
+        "pronators",
+        "forearms"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.2,
+      "joint_stress": {
+        "wrist": 0.6,
+        "elbow": 0.4
+      },
       "instruction": "10kg - 2x10→6x7 (5 settimane)"
     },
     {
-      "id": "aw_v2_cupping", "name": "V2 - Cupping Fat Grip", "category": "AW",
-      "primary_muscles": ["forearms", "wrist_flexors", "brachialis"], "secondary_muscles": ["biceps"],
-      "cns_fatigue": 0.3, "joint_stress": { "wrist": 0.9, "elbow": 0.5 },
+      "id": "aw_v2_cupping",
+      "name": "V2 - Cupping Fat Grip",
+      "category": "AW",
+      "primary_muscles": [
+        "forearms",
+        "wrist_flexors",
+        "brachialis"
+      ],
+      "secondary_muscles": [
+        "biceps"
+      ],
+      "cns_fatigue": 0.3,
+      "joint_stress": {
+        "wrist": 0.9,
+        "elbow": 0.5
+      },
       "instruction": "15kg - 2x8→3x12 (5 settimane)"
     },
     {
-      "id": "aw_v2_supination", "name": "V2 - Supination", "category": "AW",
-      "primary_muscles": ["supinators", "forearms", "biceps"], "secondary_muscles": [],
-      "cns_fatigue": 0.2, "joint_stress": { "wrist": 0.5, "elbow": 0.4 },
+      "id": "aw_v2_supination",
+      "name": "V2 - Supination",
+      "category": "AW",
+      "primary_muscles": [
+        "supinators",
+        "forearms",
+        "biceps"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.2,
+      "joint_stress": {
+        "wrist": 0.5,
+        "elbow": 0.4
+      },
       "instruction": "10kg - 2x10→6x7 (5 settimane)"
     },
     {
-      "id": "aw_v2_rising", "name": "V2 - Rising", "category": "AW",
-      "primary_muscles": ["forearms", "wrist_extensors", "brachioradialis"], "secondary_muscles": ["biceps"],
-      "cns_fatigue": 0.3, "joint_stress": { "wrist": 0.7, "elbow": 0.6 },
+      "id": "aw_v2_rising",
+      "name": "V2 - Rising",
+      "category": "AW",
+      "primary_muscles": [
+        "forearms",
+        "wrist_extensors",
+        "brachioradialis"
+      ],
+      "secondary_muscles": [
+        "biceps"
+      ],
+      "cns_fatigue": 0.3,
+      "joint_stress": {
+        "wrist": 0.7,
+        "elbow": 0.6
+      },
       "instruction": "10kg - 2x10→6x7 (5 settimane)"
     },
     {
-      "id": "aw_v2_rev_pron", "name": "V2 - Reverse Pronation", "category": "AW",
-      "primary_muscles": ["pronators", "forearms", "wrist_extensors"], "secondary_muscles": [],
-      "cns_fatigue": 0.2, "joint_stress": { "wrist": 0.5, "elbow": 0.4 },
+      "id": "aw_v2_rev_pron",
+      "name": "V2 - Reverse Pronation",
+      "category": "AW",
+      "primary_muscles": [
+        "pronators",
+        "forearms",
+        "wrist_extensors"
+      ],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.2,
+      "joint_stress": {
+        "wrist": 0.5,
+        "elbow": 0.4
+      },
       "instruction": "5kg - 2x10→6x7 (5 settimane)"
     }
   ],
   "day_templates": [
     {
-      "id": "day_1", "day_name": "Day 1", "weekday": 0,
+      "id": "day_1",
+      "day_name": "Day 1",
+      "weekday": 0,
       "exercises": [
-        {"exercise_id": "sq_str"}, {"exercise_id": "aw_max"},
-        {"exercise_id": "front_raise"}, {"exercise_id": "rear_raise"},
-        {"exercise_id": "lat_raise_light"}, {"exercise_id": "bp_el", "custom_name": "Panca Elastico/Panca Fermi"},
-        {"exercise_id": "inc_db_press"}
+        {
+          "exercise_id": "sq_str"
+        },
+        {
+          "exercise_id": "aw_max"
+        },
+        {
+          "exercise_id": "front_raise"
+        },
+        {
+          "exercise_id": "rear_raise"
+        },
+        {
+          "exercise_id": "lat_raise_light"
+        },
+        {
+          "exercise_id": "bp_el",
+          "custom_name": "Panca Elastico/Panca Fermi"
+        },
+        {
+          "exercise_id": "inc_db_press"
+        }
       ]
     },
     {
-      "id": "day_2", "day_name": "Day 2", "weekday": 1,
+      "id": "day_2",
+      "day_name": "Day 2",
+      "weekday": 1,
       "exercises": [
-        {"exercise_id": "pu_str"}, {"exercise_id": "aw_iso_l"},
-        {"exercise_id": "single_lat_pull"}, {"exercise_id": "pulley"},
-        {"exercise_id": "high_row", "custom_name": "FacePull"}, {"exercise_id": "curl_ez"}
+        {
+          "exercise_id": "pu_str"
+        },
+        {
+          "exercise_id": "aw_iso_l"
+        },
+        {
+          "exercise_id": "single_lat_pull"
+        },
+        {
+          "exercise_id": "pulley"
+        },
+        {
+          "exercise_id": "high_row",
+          "custom_name": "FacePull"
+        },
+        {
+          "exercise_id": "curl_ez"
+        }
       ]
     },
     {
-      "id": "day_3", "day_name": "Day 3", "weekday": 2,
+      "id": "day_3",
+      "day_name": "Day 3",
+      "weekday": 2,
       "exercises": [
-        {"exercise_id": "mp_str"},
-        {"exercise_id": "aw_v1_dita"},
-        {"exercise_id": "aw_v1_wrist_wrench"},
-        {"exercise_id": "aw_v1_side_press"},
-        {"exercise_id": "aw_v1_ulnar_chop"},
-        {"exercise_id": "bulgarian"}, {"exercise_id": "rear_raise"},
-        {"exercise_id": "ez_bar_reverse_curl"},
-        {"exercise_id": "lat_raise"}, {"exercise_id": "sq_hypertrophy"}
+        {
+          "exercise_id": "mp_str"
+        },
+        {
+          "exercise_id": "aw_v1_dita"
+        },
+        {
+          "exercise_id": "aw_v1_wrist_wrench"
+        },
+        {
+          "exercise_id": "aw_v1_side_press"
+        },
+        {
+          "exercise_id": "aw_v1_ulnar_chop"
+        },
+        {
+          "exercise_id": "bulgarian"
+        },
+        {
+          "exercise_id": "rear_raise"
+        },
+        {
+          "exercise_id": "ez_bar_reverse_curl"
+        },
+        {
+          "exercise_id": "lat_raise"
+        },
+        {
+          "exercise_id": "sq_hypertrophy"
+        }
       ]
     },
     {
-      "id": "day_4", "day_name": "Day 4", "weekday": 3,
+      "id": "day_4",
+      "day_name": "Day 4",
+      "weekday": 3,
       "exercises": [
-        {"exercise_id": "aw_v2_pronazione"},
-        {"exercise_id": "aw_v2_cupping"},
-        {"exercise_id": "aw_v2_supination"},
-        {"exercise_id": "aw_v2_rising"},
-        {"exercise_id": "aw_v2_rev_pron"},
-        {"exercise_id": "jm_press"},
-        {"exercise_id": "single_pushdown"}, {"exercise_id": "bp_pause", "custom_name": "Panca Elastico/Panca Fermi"},
-        {"exercise_id": "dips"}
+        {
+          "exercise_id": "aw_v2_pronazione"
+        },
+        {
+          "exercise_id": "aw_v2_cupping"
+        },
+        {
+          "exercise_id": "aw_v2_supination"
+        },
+        {
+          "exercise_id": "aw_v2_rising"
+        },
+        {
+          "exercise_id": "aw_v2_rev_pron"
+        },
+        {
+          "exercise_id": "jm_press"
+        },
+        {
+          "exercise_id": "single_pushdown"
+        },
+        {
+          "exercise_id": "bp_pause",
+          "custom_name": "Panca Elastico/Panca Fermi"
+        },
+        {
+          "exercise_id": "dips"
+        }
       ]
     },
     {
-      "id": "day_5", "day_name": "Day 5", "weekday": 4,
+      "id": "day_5",
+      "day_name": "Day 5",
+      "weekday": 4,
       "exercises": [
-        {"exercise_id": "curl_str"}, {"exercise_id": "aw_iso_h"},
-        {"exercise_id": "front_raise"}, {"exercise_id": "lat_raise"},
-        {"exercise_id": "lat_machine"}, {"exercise_id": "pulley"},
-        {"exercise_id": "high_row", "custom_name": "FacePull"}, {"exercise_id": "conc_curl"}
+        {
+          "exercise_id": "curl_str"
+        },
+        {
+          "exercise_id": "aw_iso_h"
+        },
+        {
+          "exercise_id": "front_raise"
+        },
+        {
+          "exercise_id": "lat_raise"
+        },
+        {
+          "exercise_id": "lat_machine"
+        },
+        {
+          "exercise_id": "pulley"
+        },
+        {
+          "exercise_id": "high_row",
+          "custom_name": "FacePull"
+        },
+        {
+          "exercise_id": "conc_curl"
+        }
       ]
     },
     {
-      "id": "day_6", "day_name": "Day 6", "weekday": 5,
+      "id": "day_6",
+      "day_name": "Day 6",
+      "weekday": 5,
       "exercises": [
-        {"exercise_id": "bp_str"}, {"exercise_id": "aw_speed"},
-        {"exercise_id": "overhead_ext"}, {"exercise_id": "single_pushdown"},
-        {"exercise_id": "flyes"}, {"exercise_id": "mil_db"}
+        {
+          "exercise_id": "bp_str"
+        },
+        {
+          "exercise_id": "aw_speed"
+        },
+        {
+          "exercise_id": "overhead_ext"
+        },
+        {
+          "exercise_id": "single_pushdown"
+        },
+        {
+          "exercise_id": "flyes"
+        },
+        {
+          "exercise_id": "mil_db"
+        }
       ]
     }
   ]

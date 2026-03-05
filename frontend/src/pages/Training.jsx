@@ -17,10 +17,10 @@ const StrengthTable = ({ exercise, onRowsChange }) => {
   const { exercise_id, exercise_name, instruction } = exercise;
   const [expanded, setExpanded] = useState(false);
   const [currentWeek, setCurrentWeek] = useState(1);
-  
+
   // Training Max condiviso
   const [trainingMax, setTrainingMax] = useState('');
-  
+
   // Schema 4 settimane con AMRAP alla settimana 3
   const weekConfigs = [
     { week: 1, sets: 5, targetReps: 5, percent: 0.75, label: '5x5', desc: 'Volume' },
@@ -28,7 +28,7 @@ const StrengthTable = ({ exercise, onRowsChange }) => {
     { week: 3, sets: 1, targetReps: 'AMRAP', percent: 0.90, label: '1xAMRAP', desc: 'Test PR' },
     { week: 4, sets: 3, targetReps: 5, percent: 0.60, label: '3x5', desc: 'Deload' },
   ];
-  
+
   // Dati per ogni settimana e atleta
   const [data, setData] = useState(
     weekConfigs.map(cfg => ({
@@ -45,16 +45,16 @@ const StrengthTable = ({ exercise, onRowsChange }) => {
   };
 
   const updateAthlete = (weekIdx, athlete, field, value) => {
-    setData(prev => prev.map((row, idx) => 
-      idx === weekIdx 
+    setData(prev => prev.map((row, idx) =>
+      idx === weekIdx
         ? { ...row, [athlete]: { ...row[athlete], [field]: value } }
         : row
     ));
   };
 
   const toggleComplete = (weekIdx, athlete) => {
-    setData(prev => prev.map((row, idx) => 
-      idx === weekIdx 
+    setData(prev => prev.map((row, idx) =>
+      idx === weekIdx
         ? { ...row, [athlete]: { ...row[athlete], completed: !row[athlete].completed } }
         : row
     ));
@@ -84,14 +84,14 @@ const StrengthTable = ({ exercise, onRowsChange }) => {
         <div className="flex items-center gap-2 flex-wrap min-w-0">
           <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100/90 dark:bg-blue-500/25 text-blue-700 dark:text-blue-300 shrink-0">STRENGTH</span>
           <h3 className="text-[12px] font-bold text-gray-900 dark:text-gray-100 truncate">{exercise_name}</h3>
-          <input type="number" step="0.5" value={trainingMax} onChange={e=>{e.stopPropagation(); setTrainingMax(e.target.value)}} placeholder="TM" className="w-12 px-1 py-0.5 text-xs font-bold text-center bg-white dark:bg-zinc-800 border border-blue-200 dark:border-zinc-600 rounded shrink-0" />
+          <input type="number" step="0.5" value={trainingMax} onChange={e => { e.stopPropagation(); setTrainingMax(e.target.value) }} placeholder="TM" className="w-12 px-1 py-0.5 text-xs font-bold text-center bg-white dark:bg-zinc-800 border border-blue-200 dark:border-zinc-600 rounded shrink-0" />
           {!expanded && row && (
             <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 shrink-0">
               W{currentWeek} {cfg?.label} {targetWeight ? `~${targetWeight}kg` : ''}
             </span>
           )}
         </div>
-        <button onClick={e=>{e.stopPropagation(); setExpanded(!expanded)}} className="flex items-center gap-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400 hover:underline shrink-0">
+        <button onClick={e => { e.stopPropagation(); setExpanded(!expanded) }} className="flex items-center gap-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400 hover:underline shrink-0">
           {expanded ? 'Nascondi' : 'Mostra storico'}
           {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
         </button>
@@ -102,155 +102,155 @@ const StrengthTable = ({ exercise, onRowsChange }) => {
         <div className="px-3 py-2 border-t border-blue-100/50 dark:border-zinc-700/50 flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-1">
             <span className="text-[9px] font-semibold text-gray-500 dark:text-gray-400">Sett:</span>
-            {[1,2,3,4].map(w => (
-              <button key={w} onClick={()=>setCurrentWeek(w)} className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${currentWeek===w ? 'bg-blue-600 text-white dark:bg-blue-500' : 'bg-blue-100 dark:bg-zinc-700 text-blue-700 dark:text-zinc-300'}`}>W{w}</button>
+            {[1, 2, 3, 4].map(w => (
+              <button key={w} onClick={() => setCurrentWeek(w)} className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${currentWeek === w ? 'bg-blue-600 text-white dark:bg-blue-500' : 'bg-blue-100 dark:bg-zinc-700 text-blue-700 dark:text-zinc-300'}`}>W{w}</button>
             ))}
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[9px] font-semibold text-blue-600 dark:text-blue-400">Anas</span>
-            <input type="number" step="0.5" value={row.anas.weight} onChange={e=>updateAthlete(currentWeek-1,'anas','weight',e.target.value)} className="w-11 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-blue-200 dark:border-zinc-600 rounded" placeholder="kg" />
-            <input type="number" value={row.anas.reps} onChange={e=>updateAthlete(currentWeek-1,'anas','reps',e.target.value)} className="w-9 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-blue-200 dark:border-zinc-600 rounded" placeholder={cfg?.targetReps === 'AMRAP' ? '∞' : cfg?.targetReps} />
-            <input type="checkbox" checked={row.anas.completed} onChange={()=>toggleComplete(currentWeek-1,'anas')} className="w-3.5 h-3.5 rounded accent-blue-500" />
+            <input type="number" step="0.5" value={row.anas.weight} onChange={e => updateAthlete(currentWeek - 1, 'anas', 'weight', e.target.value)} className="w-11 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-blue-200 dark:border-zinc-600 rounded" placeholder="kg" />
+            <input type="number" value={row.anas.reps} onChange={e => updateAthlete(currentWeek - 1, 'anas', 'reps', e.target.value)} className="w-9 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-blue-200 dark:border-zinc-600 rounded" placeholder={cfg?.targetReps === 'AMRAP' ? '∞' : cfg?.targetReps} />
+            <input type="checkbox" checked={row.anas.completed} onChange={() => toggleComplete(currentWeek - 1, 'anas')} className="w-3.5 h-3.5 rounded accent-blue-500" />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">Flavio</span>
-            <input type="number" step="0.5" value={row.flavio.weight} onChange={e=>updateAthlete(currentWeek-1,'flavio','weight',e.target.value)} className="w-11 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-emerald-200 dark:border-zinc-600 rounded" placeholder="kg" />
-            <input type="number" value={row.flavio.reps} onChange={e=>updateAthlete(currentWeek-1,'flavio','reps',e.target.value)} className="w-9 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-emerald-200 dark:border-zinc-600 rounded" placeholder={cfg?.targetReps === 'AMRAP' ? '∞' : cfg?.targetReps} />
-            <input type="checkbox" checked={row.flavio.completed} onChange={()=>toggleComplete(currentWeek-1,'flavio')} className="w-3.5 h-3.5 rounded accent-emerald-500" />
+            <input type="number" step="0.5" value={row.flavio.weight} onChange={e => updateAthlete(currentWeek - 1, 'flavio', 'weight', e.target.value)} className="w-11 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-emerald-200 dark:border-zinc-600 rounded" placeholder="kg" />
+            <input type="number" value={row.flavio.reps} onChange={e => updateAthlete(currentWeek - 1, 'flavio', 'reps', e.target.value)} className="w-9 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-emerald-200 dark:border-zinc-600 rounded" placeholder={cfg?.targetReps === 'AMRAP' ? '∞' : cfg?.targetReps} />
+            <input type="checkbox" checked={row.flavio.completed} onChange={() => toggleComplete(currentWeek - 1, 'flavio')} className="w-3.5 h-3.5 rounded accent-emerald-500" />
           </div>
         </div>
       ) : (
-      <div>
-      {/* Vista espansa: tabella completa */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs border-collapse">
-          <thead>
-            <tr className="border-b border-blue-100 dark:border-zinc-700/50 bg-blue-50/40 dark:bg-zinc-800/60">
-              <th className="py-2 px-1 text-[9px] font-bold text-blue-600/70 dark:text-blue-400/70 uppercase text-center w-10">Sett</th>
-              <th className="py-2 px-1 text-[9px] font-bold text-blue-600/70 dark:text-blue-400/70 uppercase text-center">Target</th>
-              <th className="py-2 px-1 text-[9px] font-bold text-blue-600/70 dark:text-blue-400 uppercase text-center bg-blue-100/40 dark:bg-blue-500/15 dark:border-r dark:border-zinc-700/40" colSpan="3">Anas</th>
-              <th className="py-2 px-1 text-[9px] font-bold text-emerald-600/70 dark:text-emerald-400 uppercase text-center bg-emerald-100/40 dark:bg-emerald-500/15" colSpan="3">Flavio</th>
-            </tr>
-            <tr className="border-b border-blue-100/50 dark:border-zinc-700/40 bg-blue-50/30 dark:bg-zinc-800/40">
-              <th className="py-1 px-1"></th>
-              <th className="py-1 px-1"></th>
-              <th className="py-1 px-1 text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase">Peso</th>
-              <th className="py-1 px-1 text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase">Reps</th>
-              <th className="py-1 px-1 text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase">✓</th>
-              <th className="py-1 px-1 text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase">Peso</th>
-              <th className="py-1 px-1 text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase">Reps</th>
-              <th className="py-1 px-1 text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase">✓</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-blue-50/50 dark:divide-zinc-700/40">
-            {data.map((row) => {
-              const idx = data.findIndex(r => r.week === row.week);
-              const cfg = weekConfigs[idx];
-              const targetWeight = getTargetWeight(cfg.percent);
-              const anasVol = getVolume(row.anas, cfg);
-              const flavioVol = getVolume(row.flavio, cfg);
-              
-              return (
-                <tr key={row.week} className="hover:bg-blue-50/20 dark:hover:bg-zinc-800/50 transition-colors">
-                  {/* Settimana */}
-                  <td className="py-2 px-1 text-center">
-                    <div className="flex flex-col items-center">
-                      <span className="text-[11px] font-bold text-blue-700 dark:text-blue-400">W{row.week}</span>
-                      <span className="text-[8px] text-gray-500 dark:text-gray-400">{cfg.desc}</span>
-                    </div>
-                  </td>
-                  
-                  {/* Target */}
-                  <td className="py-2 px-1 text-center">
-                    <div className="flex flex-col items-center">
-                      <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">{cfg.label}</span>
-                      {targetWeight && (
-                        <span className="text-[9px] text-gray-500 dark:text-gray-400">~{targetWeight}kg</span>
-                      )}
-                    </div>
-                  </td>
-                  
-                  {/* Anas */}
-                  <td className="py-2 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center">
-                    <input 
-                      type="number" 
-                      step="0.5"
-                      value={row.anas.weight}
-                      onChange={(e) => updateAthlete(idx, 'anas', 'weight', e.target.value)}
-                      className="w-12 px-1 py-0.5 text-xs font-bold text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border border-blue-200 dark:placeholder:text-zinc-500 rounded focus:ring-1 focus:ring-blue-500/30 dark:focus:ring-blue-400/20"
-                      placeholder="-"
-                    />
-                  </td>
-                  <td className="py-2 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center">
-                    <input 
-                      type="number"
-                      value={row.anas.reps}
-                      onChange={(e) => updateAthlete(idx, 'anas', 'reps', e.target.value)}
-                      className="w-10 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border border-blue-200 dark:placeholder:text-zinc-500 rounded focus:ring-1 focus:ring-blue-500/30 dark:focus:ring-blue-400/20"
-                      placeholder={cfg.targetReps === 'AMRAP' ? '∞' : cfg.targetReps}
-                    />
-                  </td>
-                  <td className="py-2 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center">
-                    <input 
-                      type="checkbox"
-                      checked={row.anas.completed}
-                      onChange={() => toggleComplete(idx, 'anas')}
-                      className="w-4 h-4 rounded border-blue-300 text-blue-600 dark:text-blue-400 dark:border-zinc-600 dark:bg-zinc-800 accent-blue-500"
-                    />
-                    {anasVol > 0 && (
-                      <div className="text-[8px] text-blue-600 dark:text-blue-400 mt-0.5">{anasVol.toFixed(0)}kg</div>
-                    )}
-                  </td>
-                  
-                  {/* Flavio */}
-                  <td className="py-2 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center">
-                    <input 
-                      type="number" 
-                      step="0.5"
-                      value={row.flavio.weight}
-                      onChange={(e) => updateAthlete(idx, 'flavio', 'weight', e.target.value)}
-                      className="w-12 px-1 py-0.5 text-xs font-bold text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border border-emerald-200 dark:placeholder:text-zinc-500 rounded focus:ring-1 focus:ring-emerald-500/30 dark:focus:ring-emerald-400/20"
-                      placeholder="-"
-                    />
-                  </td>
-                  <td className="py-2 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center">
-                    <input 
-                      type="number"
-                      value={row.flavio.reps}
-                      onChange={(e) => updateAthlete(idx, 'flavio', 'reps', e.target.value)}
-                      className="w-10 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border border-emerald-200 dark:placeholder:text-zinc-500 rounded focus:ring-1 focus:ring-emerald-500/30 dark:focus:ring-emerald-400/20"
-                      placeholder={cfg.targetReps === 'AMRAP' ? '∞' : cfg.targetReps}
-                    />
-                  </td>
-                  <td className="py-2 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center">
-                    <input 
-                      type="checkbox"
-                      checked={row.flavio.completed}
-                      onChange={() => toggleComplete(idx, 'flavio')}
-                      className="w-4 h-4 rounded border-emerald-300 text-emerald-600 dark:text-emerald-400 dark:border-zinc-600 dark:bg-zinc-800 accent-emerald-500"
-                    />
-                    {flavioVol > 0 && (
-                      <div className="text-[8px] text-emerald-600 dark:text-emerald-400 mt-0.5">{flavioVol.toFixed(0)}kg</div>
-                    )}
-                  </td>
+        <div>
+          {/* Vista espansa: tabella completa */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-blue-100 dark:border-zinc-700/50 bg-blue-50/40 dark:bg-zinc-800/60">
+                  <th className="py-2 px-1 text-[9px] font-bold text-blue-600/70 dark:text-blue-400/70 uppercase text-center w-10">Sett</th>
+                  <th className="py-2 px-1 text-[9px] font-bold text-blue-600/70 dark:text-blue-400/70 uppercase text-center">Target</th>
+                  <th className="py-2 px-1 text-[9px] font-bold text-blue-600/70 dark:text-blue-400 uppercase text-center bg-blue-100/40 dark:bg-blue-500/15 dark:border-r dark:border-zinc-700/40" colSpan="3">Anas</th>
+                  <th className="py-2 px-1 text-[9px] font-bold text-emerald-600/70 dark:text-emerald-400 uppercase text-center bg-emerald-100/40 dark:bg-emerald-500/15" colSpan="3">Flavio</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-      <div className="px-3 py-2 bg-blue-50/50 dark:bg-zinc-800/50 border-t border-blue-100 dark:border-zinc-700/50 flex items-center justify-between">
-        <span className="text-[9px] text-gray-500 dark:text-gray-400">4 settimane • 2 atleti</span>
-        <div className="flex items-center gap-3">
-          <span className="text-[9px] font-medium text-blue-600 dark:text-blue-400">
-            Anas: {data.reduce((acc, r) => acc + getVolume(r.anas, weekConfigs[r.week-1]), 0).toFixed(0)}kg
-          </span>
-          <span className="text-[9px] font-medium text-emerald-600 dark:text-emerald-400">
-            Flavio: {data.reduce((acc, r) => acc + getVolume(r.flavio, weekConfigs[r.week-1]), 0).toFixed(0)}kg
-          </span>
+                <tr className="border-b border-blue-100/50 dark:border-zinc-700/40 bg-blue-50/30 dark:bg-zinc-800/40">
+                  <th className="py-1 px-1"></th>
+                  <th className="py-1 px-1"></th>
+                  <th className="py-1 px-1 text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase">Peso</th>
+                  <th className="py-1 px-1 text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase">Reps</th>
+                  <th className="py-1 px-1 text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase">✓</th>
+                  <th className="py-1 px-1 text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase">Peso</th>
+                  <th className="py-1 px-1 text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase">Reps</th>
+                  <th className="py-1 px-1 text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase">✓</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-blue-50/50 dark:divide-zinc-700/40">
+                {data.map((row) => {
+                  const idx = data.findIndex(r => r.week === row.week);
+                  const cfg = weekConfigs[idx];
+                  const targetWeight = getTargetWeight(cfg.percent);
+                  const anasVol = getVolume(row.anas, cfg);
+                  const flavioVol = getVolume(row.flavio, cfg);
+
+                  return (
+                    <tr key={row.week} className="hover:bg-blue-50/20 dark:hover:bg-zinc-800/50 transition-colors">
+                      {/* Settimana */}
+                      <td className="py-2 px-1 text-center">
+                        <div className="flex flex-col items-center">
+                          <span className="text-[11px] font-bold text-blue-700 dark:text-blue-400">W{row.week}</span>
+                          <span className="text-[8px] text-gray-500 dark:text-gray-400">{cfg.desc}</span>
+                        </div>
+                      </td>
+
+                      {/* Target */}
+                      <td className="py-2 px-1 text-center">
+                        <div className="flex flex-col items-center">
+                          <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">{cfg.label}</span>
+                          {targetWeight && (
+                            <span className="text-[9px] text-gray-500 dark:text-gray-400">~{targetWeight}kg</span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Anas */}
+                      <td className="py-2 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center">
+                        <input
+                          type="number"
+                          step="0.5"
+                          value={row.anas.weight}
+                          onChange={(e) => updateAthlete(idx, 'anas', 'weight', e.target.value)}
+                          className="w-12 px-1 py-0.5 text-xs font-bold text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border border-blue-200 dark:placeholder:text-zinc-500 rounded focus:ring-1 focus:ring-blue-500/30 dark:focus:ring-blue-400/20"
+                          placeholder="-"
+                        />
+                      </td>
+                      <td className="py-2 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center">
+                        <input
+                          type="number"
+                          value={row.anas.reps}
+                          onChange={(e) => updateAthlete(idx, 'anas', 'reps', e.target.value)}
+                          className="w-10 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border border-blue-200 dark:placeholder:text-zinc-500 rounded focus:ring-1 focus:ring-blue-500/30 dark:focus:ring-blue-400/20"
+                          placeholder={cfg.targetReps === 'AMRAP' ? '∞' : cfg.targetReps}
+                        />
+                      </td>
+                      <td className="py-2 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center">
+                        <input
+                          type="checkbox"
+                          checked={row.anas.completed}
+                          onChange={() => toggleComplete(idx, 'anas')}
+                          className="w-4 h-4 rounded border-blue-300 text-blue-600 dark:text-blue-400 dark:border-zinc-600 dark:bg-zinc-800 accent-blue-500"
+                        />
+                        {anasVol > 0 && (
+                          <div className="text-[8px] text-blue-600 dark:text-blue-400 mt-0.5">{anasVol.toFixed(0)}kg</div>
+                        )}
+                      </td>
+
+                      {/* Flavio */}
+                      <td className="py-2 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center">
+                        <input
+                          type="number"
+                          step="0.5"
+                          value={row.flavio.weight}
+                          onChange={(e) => updateAthlete(idx, 'flavio', 'weight', e.target.value)}
+                          className="w-12 px-1 py-0.5 text-xs font-bold text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border border-emerald-200 dark:placeholder:text-zinc-500 rounded focus:ring-1 focus:ring-emerald-500/30 dark:focus:ring-emerald-400/20"
+                          placeholder="-"
+                        />
+                      </td>
+                      <td className="py-2 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center">
+                        <input
+                          type="number"
+                          value={row.flavio.reps}
+                          onChange={(e) => updateAthlete(idx, 'flavio', 'reps', e.target.value)}
+                          className="w-10 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border border-emerald-200 dark:placeholder:text-zinc-500 rounded focus:ring-1 focus:ring-emerald-500/30 dark:focus:ring-emerald-400/20"
+                          placeholder={cfg.targetReps === 'AMRAP' ? '∞' : cfg.targetReps}
+                        />
+                      </td>
+                      <td className="py-2 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center">
+                        <input
+                          type="checkbox"
+                          checked={row.flavio.completed}
+                          onChange={() => toggleComplete(idx, 'flavio')}
+                          className="w-4 h-4 rounded border-emerald-300 text-emerald-600 dark:text-emerald-400 dark:border-zinc-600 dark:bg-zinc-800 accent-emerald-500"
+                        />
+                        {flavioVol > 0 && (
+                          <div className="text-[8px] text-emerald-600 dark:text-emerald-400 mt-0.5">{flavioVol.toFixed(0)}kg</div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-3 py-2 bg-blue-50/50 dark:bg-zinc-800/50 border-t border-blue-100 dark:border-zinc-700/50 flex items-center justify-between">
+            <span className="text-[9px] text-gray-500 dark:text-gray-400">4 settimane • 2 atleti</span>
+            <div className="flex items-center gap-3">
+              <span className="text-[9px] font-medium text-blue-600 dark:text-blue-400">
+                Anas: {data.reduce((acc, r) => acc + getVolume(r.anas, weekConfigs[r.week - 1]), 0).toFixed(0)}kg
+              </span>
+              <span className="text-[9px] font-medium text-emerald-600 dark:text-emerald-400">
+                Flavio: {data.reduce((acc, r) => acc + getVolume(r.flavio, weekConfigs[r.week - 1]), 0).toFixed(0)}kg
+              </span>
+            </div>
+          </div>
         </div>
-      </div>
-      </div>
       )}
     </div>
   );
@@ -287,7 +287,7 @@ const AWVolumeTable = ({ exercise, onRowsChange }) => {
   const [currentWeek, setCurrentWeek] = useState(1);
   const cfg = AW_VOL_CONFIG[exercise_id] || { weight: 10, pattern: 'std' };
   const targets = cfg.pattern === 'alt' ? AW_ALT : AW_STD;
-  
+
   const [data, setData] = useState(
     targets.map((t, i) => ({
       week: i + 1,
@@ -308,13 +308,13 @@ const AWVolumeTable = ({ exercise, onRowsChange }) => {
 
   return (
     <div className={AW_CARD}>
-      <div onClick={()=>setExpanded(!expanded)} className={`${AW_HEADER} cursor-pointer hover:bg-amber-50/60 dark:hover:bg-zinc-800/40 transition-colors select-none`}>
+      <div onClick={() => setExpanded(!expanded)} className={`${AW_HEADER} cursor-pointer hover:bg-amber-50/60 dark:hover:bg-zinc-800/40 transition-colors select-none`}>
         <div className="flex items-center gap-2">
           <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100/90 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300"><Target size={10} className="inline mr-0.5" />AW</span>
           <h3 className="text-[12px] font-bold text-gray-900 dark:text-gray-100">{exercise_name}</h3>
           {!expanded && currentRow && <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">W{currentWeek} {currentRow.target}</span>}
         </div>
-        <button onClick={e=>{e.stopPropagation(); setExpanded(!expanded)}} className="flex items-center gap-0.5 text-[9px] font-medium text-amber-600 dark:text-amber-400 hover:underline">
+        <button onClick={e => { e.stopPropagation(); setExpanded(!expanded) }} className="flex items-center gap-0.5 text-[9px] font-medium text-amber-600 dark:text-amber-400 hover:underline">
           {expanded ? 'Nascondi' : 'Mostra storico'}
           {expanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
         </button>
@@ -322,61 +322,61 @@ const AWVolumeTable = ({ exercise, onRowsChange }) => {
       {!expanded && currentRow ? (
         <div className="px-3 py-2 border-t border-amber-100/50 dark:border-zinc-700/50 flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-0.5">
-            {[1,2,3,4,5].map(w => (
-              <button key={w} onClick={()=>setCurrentWeek(w)} className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${currentWeek===w ? 'bg-amber-600 text-white dark:bg-amber-500' : 'bg-amber-100 dark:bg-zinc-700 text-amber-700 dark:text-zinc-300'}`}>W{w}</button>
+            {[1, 2, 3, 4, 5].map(w => (
+              <button key={w} onClick={() => setCurrentWeek(w)} className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${currentWeek === w ? 'bg-amber-600 text-white dark:bg-amber-500' : 'bg-amber-100 dark:bg-zinc-700 text-amber-700 dark:text-zinc-300'}`}>W{w}</button>
             ))}
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[9px] font-semibold text-blue-600 dark:text-blue-400">Anas</span>
-            <input type="number" step="0.5" value={currentRow.anas.weight} onChange={e=>updateA(currentWeek-1,'anas','weight',e.target.value)} className="w-11 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-blue-200 dark:border-zinc-600 rounded" placeholder="kg" />
-            <input type="number" value={currentRow.anas.reps} onChange={e=>updateA(currentWeek-1,'anas','reps',e.target.value)} className="w-9 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-blue-200 dark:border-zinc-600 rounded" placeholder="r" />
-            <input type="checkbox" checked={currentRow.anas.completed} onChange={()=>toggleA(currentWeek-1,'anas')} className="w-3.5 h-3.5 rounded accent-amber-500" />
+            <input type="number" step="0.5" value={currentRow.anas.weight} onChange={e => updateA(currentWeek - 1, 'anas', 'weight', e.target.value)} className="w-11 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-blue-200 dark:border-zinc-600 rounded" placeholder="kg" />
+            <input type="number" value={currentRow.anas.reps} onChange={e => updateA(currentWeek - 1, 'anas', 'reps', e.target.value)} className="w-9 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-blue-200 dark:border-zinc-600 rounded" placeholder="r" />
+            <input type="checkbox" checked={currentRow.anas.completed} onChange={() => toggleA(currentWeek - 1, 'anas')} className="w-3.5 h-3.5 rounded accent-amber-500" />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">Flavio</span>
-            <input type="number" step="0.5" value={currentRow.flavio.weight} onChange={e=>updateA(currentWeek-1,'flavio','weight',e.target.value)} className="w-11 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-emerald-200 dark:border-zinc-600 rounded" placeholder="kg" />
-            <input type="number" value={currentRow.flavio.reps} onChange={e=>updateA(currentWeek-1,'flavio','reps',e.target.value)} className="w-9 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-emerald-200 dark:border-zinc-600 rounded" placeholder="r" />
-            <input type="checkbox" checked={currentRow.flavio.completed} onChange={()=>toggleA(currentWeek-1,'flavio')} className="w-3.5 h-3.5 rounded accent-amber-500" />
+            <input type="number" step="0.5" value={currentRow.flavio.weight} onChange={e => updateA(currentWeek - 1, 'flavio', 'weight', e.target.value)} className="w-11 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-emerald-200 dark:border-zinc-600 rounded" placeholder="kg" />
+            <input type="number" value={currentRow.flavio.reps} onChange={e => updateA(currentWeek - 1, 'flavio', 'reps', e.target.value)} className="w-9 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-emerald-200 dark:border-zinc-600 rounded" placeholder="r" />
+            <input type="checkbox" checked={currentRow.flavio.completed} onChange={() => toggleA(currentWeek - 1, 'flavio')} className="w-3.5 h-3.5 rounded accent-amber-500" />
           </div>
         </div>
       ) : (
-      <table className={AW_TABLE}>
-        <thead>
-          <tr className={AW_THEAD}>
-            <th className={`${AW_TH} text-center w-10`}>W</th>
-            <th className={`${AW_TH} text-center`}>Target</th>
-            <th colSpan="3" className={`${AW_TH} text-center bg-blue-100/40 dark:bg-blue-500/15 dark:border-r dark:border-zinc-700/40`}>Anas</th>
-            <th colSpan="3" className={`${AW_TH} text-center bg-emerald-100/40 dark:bg-emerald-500/15`}>Flavio</th>
-          </tr>
-          <tr className="border-b border-amber-100/50 dark:border-zinc-700/40 bg-amber-50/30 dark:bg-zinc-800/40">
-            <th className={`${AW_TD}`}></th>
-            <th className={`${AW_TD}`}></th>
-            <th className={`${AW_TD} text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase`}>Peso</th>
-            <th className={`${AW_TD} text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase`}>Reps</th>
-            <th className={`${AW_TD} text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase`}>✓</th>
-            <th className={`${AW_TD} text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase`}>Peso</th>
-            <th className={`${AW_TD} text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase`}>Reps</th>
-            <th className={`${AW_TD} text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase`}>✓</th>
-          </tr>
-        </thead>
-        <tbody className={AW_TBODY}>
-          {data.map((r) => {
-            const idx = data.findIndex(d => d.week === r.week);
-            return (
-            <tr key={r.week} className={AW_TR}>
-              <td className="py-2 px-1 text-center font-bold text-amber-600 dark:text-amber-400">{r.week}</td>
-              <td className="py-2 px-1 text-center text-amber-700 dark:text-amber-400">{r.target}</td>
-              <td className="py-2 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center"><input type="number" step="0.5" value={r.anas.weight} onChange={e=>updateA(idx,'anas','weight',e.target.value)} className="w-12 px-1 py-0.5 text-xs font-bold text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border border-blue-200 dark:placeholder:text-zinc-500 rounded focus:ring-1 focus:ring-blue-500/30 dark:focus:ring-blue-400/20" placeholder="-" /></td>
-              <td className="py-2 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center"><input type="number" value={r.anas.reps} onChange={e=>updateA(idx,'anas','reps',e.target.value)} className="w-10 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border border-blue-200 dark:placeholder:text-zinc-500 rounded focus:ring-1 focus:ring-blue-500/30 dark:focus:ring-blue-400/20" placeholder="-" /></td>
-              <td className="py-2 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center"><input type="checkbox" checked={r.anas.completed} onChange={()=>toggleA(idx,'anas')} className="w-4 h-4 rounded border-blue-300 text-blue-600 dark:text-blue-400 dark:border-zinc-600 dark:bg-zinc-800 accent-blue-500" /></td>
-              <td className="py-2 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center"><input type="number" step="0.5" value={r.flavio.weight} onChange={e=>updateA(idx,'flavio','weight',e.target.value)} className="w-12 px-1 py-0.5 text-xs font-bold text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border border-emerald-200 dark:placeholder:text-zinc-500 rounded focus:ring-1 focus:ring-emerald-500/30 dark:focus:ring-emerald-400/20" placeholder="-" /></td>
-              <td className="py-2 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center"><input type="number" value={r.flavio.reps} onChange={e=>updateA(idx,'flavio','reps',e.target.value)} className="w-10 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border border-emerald-200 dark:placeholder:text-zinc-500 rounded focus:ring-1 focus:ring-emerald-500/30 dark:focus:ring-emerald-400/20" placeholder="-" /></td>
-              <td className="py-2 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center"><input type="checkbox" checked={r.flavio.completed} onChange={()=>toggleA(idx,'flavio')} className="w-4 h-4 rounded border-emerald-300 text-emerald-600 dark:text-emerald-400 dark:border-zinc-600 dark:bg-zinc-800 accent-emerald-500" /></td>
+        <table className={AW_TABLE}>
+          <thead>
+            <tr className={AW_THEAD}>
+              <th className={`${AW_TH} text-center w-10`}>W</th>
+              <th className={`${AW_TH} text-center`}>Target</th>
+              <th colSpan="3" className={`${AW_TH} text-center bg-blue-100/40 dark:bg-blue-500/15 dark:border-r dark:border-zinc-700/40`}>Anas</th>
+              <th colSpan="3" className={`${AW_TH} text-center bg-emerald-100/40 dark:bg-emerald-500/15`}>Flavio</th>
             </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            <tr className="border-b border-amber-100/50 dark:border-zinc-700/40 bg-amber-50/30 dark:bg-zinc-800/40">
+              <th className={`${AW_TD}`}></th>
+              <th className={`${AW_TD}`}></th>
+              <th className={`${AW_TD} text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase`}>Peso</th>
+              <th className={`${AW_TD} text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase`}>Reps</th>
+              <th className={`${AW_TD} text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase`}>✓</th>
+              <th className={`${AW_TD} text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase`}>Peso</th>
+              <th className={`${AW_TD} text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase`}>Reps</th>
+              <th className={`${AW_TD} text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase`}>✓</th>
+            </tr>
+          </thead>
+          <tbody className={AW_TBODY}>
+            {data.map((r) => {
+              const idx = data.findIndex(d => d.week === r.week);
+              return (
+                <tr key={r.week} className={AW_TR}>
+                  <td className="py-2 px-1 text-center font-bold text-amber-600 dark:text-amber-400">{r.week}</td>
+                  <td className="py-2 px-1 text-center text-amber-700 dark:text-amber-400">{r.target}</td>
+                  <td className="py-2 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center"><input type="number" step="0.5" value={r.anas.weight} onChange={e => updateA(idx, 'anas', 'weight', e.target.value)} className="w-12 px-1 py-0.5 text-xs font-bold text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border border-blue-200 dark:placeholder:text-zinc-500 rounded focus:ring-1 focus:ring-blue-500/30 dark:focus:ring-blue-400/20" placeholder="-" /></td>
+                  <td className="py-2 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center"><input type="number" value={r.anas.reps} onChange={e => updateA(idx, 'anas', 'reps', e.target.value)} className="w-10 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border border-blue-200 dark:placeholder:text-zinc-500 rounded focus:ring-1 focus:ring-blue-500/30 dark:focus:ring-blue-400/20" placeholder="-" /></td>
+                  <td className="py-2 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center"><input type="checkbox" checked={r.anas.completed} onChange={() => toggleA(idx, 'anas')} className="w-4 h-4 rounded border-blue-300 text-blue-600 dark:text-blue-400 dark:border-zinc-600 dark:bg-zinc-800 accent-blue-500" /></td>
+                  <td className="py-2 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center"><input type="number" step="0.5" value={r.flavio.weight} onChange={e => updateA(idx, 'flavio', 'weight', e.target.value)} className="w-12 px-1 py-0.5 text-xs font-bold text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border border-emerald-200 dark:placeholder:text-zinc-500 rounded focus:ring-1 focus:ring-emerald-500/30 dark:focus:ring-emerald-400/20" placeholder="-" /></td>
+                  <td className="py-2 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center"><input type="number" value={r.flavio.reps} onChange={e => updateA(idx, 'flavio', 'reps', e.target.value)} className="w-10 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border border-emerald-200 dark:placeholder:text-zinc-500 rounded focus:ring-1 focus:ring-emerald-500/30 dark:focus:ring-emerald-400/20" placeholder="-" /></td>
+                  <td className="py-2 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center"><input type="checkbox" checked={r.flavio.completed} onChange={() => toggleA(idx, 'flavio')} className="w-4 h-4 rounded border-emerald-300 text-emerald-600 dark:text-emerald-400 dark:border-zinc-600 dark:bg-zinc-800 accent-emerald-500" /></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       )}
     </div>
   );
@@ -445,12 +445,12 @@ const HypertrophyTable = ({ exercise, onRowsChange }) => {
 
   return (
     <div className="rounded-lg border border-emerald-200/60 dark:border-zinc-700/60 bg-white/80 dark:bg-zinc-900/80 overflow-hidden shadow-sm hover:shadow dark:shadow-zinc-900/30">
-      <div onClick={()=>setExpanded(!expanded)} className="px-2.5 py-1.5 flex items-center justify-between cursor-pointer hover:bg-emerald-50/40 dark:hover:bg-zinc-800/40 transition-colors select-none border-b border-emerald-100/50 dark:border-zinc-700/50">
+      <div onClick={() => setExpanded(!expanded)} className="px-2.5 py-1.5 flex items-center justify-between cursor-pointer hover:bg-emerald-50/40 dark:hover:bg-zinc-800/40 transition-colors select-none border-b border-emerald-100/50 dark:border-zinc-700/50">
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-emerald-100/80 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 shrink-0">2s</span>
           <h3 className="text-[11px] font-semibold text-gray-800 dark:text-gray-200 truncate">{exercise_name}</h3>
         </div>
-        <button onClick={e=>{e.stopPropagation(); setExpanded(!expanded)}} className="flex items-center gap-0.5 text-[8px] font-medium text-emerald-600 dark:text-emerald-400 hover:underline shrink-0">
+        <button onClick={e => { e.stopPropagation(); setExpanded(!expanded) }} className="flex items-center gap-0.5 text-[8px] font-medium text-emerald-600 dark:text-emerald-400 hover:underline shrink-0">
           {expanded ? 'Nascondi' : 'Storico'}
           {expanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
         </button>
@@ -463,14 +463,14 @@ const HypertrophyTable = ({ exercise, onRowsChange }) => {
             </div>
             <div className="grid grid-cols-[1fr_1fr] gap-x-2 items-center">
               <div className="flex items-center gap-1">
-                <input type="number" step="0.5" value={data.anas.w} onChange={e=>upd('anas','w',e.target.value)} className={`${HYP_INPUT} border-blue-200/60`} placeholder="kg" />
-                <input type="number" value={data.anas.r} onChange={e=>upd('anas','r',e.target.value)} className={`${HYP_INPUT} w-8 border-blue-200/60`} placeholder="r" />
-                <input type="checkbox" checked={data.anas.completed} onChange={()=>tog('anas')} className="w-3 h-3 rounded accent-emerald-500 shrink-0" />
+                <input type="number" step="0.5" value={data.anas.w} onChange={e => upd('anas', 'w', e.target.value)} className={`${HYP_INPUT} border-blue-200/60`} placeholder="kg" />
+                <input type="number" value={data.anas.r} onChange={e => upd('anas', 'r', e.target.value)} className={`${HYP_INPUT} w-8 border-blue-200/60`} placeholder="r" />
+                <input type="checkbox" checked={data.anas.completed} onChange={() => tog('anas')} className="w-3 h-3 rounded accent-emerald-500 shrink-0" />
               </div>
               <div className="flex items-center gap-1">
-                <input type="number" step="0.5" value={data.flavio.w} onChange={e=>upd('flavio','w',e.target.value)} className={`${HYP_INPUT} border-emerald-200/60`} placeholder="kg" />
-                <input type="number" value={data.flavio.r} onChange={e=>upd('flavio','r',e.target.value)} className={`${HYP_INPUT} w-8 border-emerald-200/60`} placeholder="r" />
-                <input type="checkbox" checked={data.flavio.completed} onChange={()=>tog('flavio')} className="w-3 h-3 rounded accent-emerald-500 shrink-0" />
+                <input type="number" step="0.5" value={data.flavio.w} onChange={e => upd('flavio', 'w', e.target.value)} className={`${HYP_INPUT} border-emerald-200/60`} placeholder="kg" />
+                <input type="number" value={data.flavio.r} onChange={e => upd('flavio', 'r', e.target.value)} className={`${HYP_INPUT} w-8 border-emerald-200/60`} placeholder="r" />
+                <input type="checkbox" checked={data.flavio.completed} onChange={() => tog('flavio')} className="w-3 h-3 rounded accent-emerald-500 shrink-0" />
               </div>
             </div>
           </>
@@ -537,13 +537,13 @@ const ExerciseTable = ({ exercise, onRowsChange }) => {
 
   return (
     <div className={AW_CARD}>
-      <div onClick={()=>setExpanded(!expanded)} className={`${AW_HEADER} cursor-pointer hover:bg-amber-50/60 dark:hover:bg-zinc-800/40 transition-colors select-none`}>
+      <div onClick={() => setExpanded(!expanded)} className={`${AW_HEADER} cursor-pointer hover:bg-amber-50/60 dark:hover:bg-zinc-800/40 transition-colors select-none`}>
         <div className="flex items-center gap-2">
           <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100/90 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300"><Target size={10} className="inline mr-0.5" />AW</span>
           <h3 className="text-[12px] font-bold text-gray-900 dark:text-gray-100">{exercise_name}</h3>
           {instruction && <span className="text-[9px] text-amber-600 dark:text-amber-400 truncate max-w-[120px]">{instruction}</span>}
         </div>
-        <button onClick={e=>{e.stopPropagation(); setExpanded(!expanded)}} className="flex items-center gap-0.5 text-[9px] font-medium text-amber-600 dark:text-amber-400 hover:underline">
+        <button onClick={e => { e.stopPropagation(); setExpanded(!expanded) }} className="flex items-center gap-0.5 text-[9px] font-medium text-amber-600 dark:text-amber-400 hover:underline">
           {expanded ? 'Nascondi' : 'Mostra storico'}
           {expanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
         </button>
@@ -552,62 +552,62 @@ const ExerciseTable = ({ exercise, onRowsChange }) => {
         <div className="px-3 py-2 border-t border-amber-100/50 dark:border-zinc-700/50 flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-0.5">
             {rows.map(r => (
-              <button key={r.id} onClick={()=>setCurrentSet(r.set)} className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${currentSet===r.set ? 'bg-amber-600 text-white dark:bg-amber-500' : 'bg-amber-100 dark:bg-zinc-700 text-amber-700 dark:text-zinc-300'}`}>#{r.set}</button>
+              <button key={r.id} onClick={() => setCurrentSet(r.set)} className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${currentSet === r.set ? 'bg-amber-600 text-white dark:bg-amber-500' : 'bg-amber-100 dark:bg-zinc-700 text-amber-700 dark:text-zinc-300'}`}>#{r.set}</button>
             ))}
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <span className="text-[9px] font-semibold text-blue-600 dark:text-blue-400">Anas</span>
-              <input type="checkbox" checked={currentRow.anas.checked} onChange={()=>toggleCheck(currentRow.id,'anas')} className="w-3 h-3 rounded accent-amber-500" />
-              <input type="number" step="0.5" value={currentRow.anas.weight} onChange={e=>updateRow(currentRow.id,'anas','weight',e.target.value)} className="w-11 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-blue-200 dark:border-zinc-600 rounded" placeholder="kg" />
-              <input type="number" value={currentRow.anas.reps} onChange={e=>updateRow(currentRow.id,'anas','reps',e.target.value)} className="w-9 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-blue-200 dark:border-zinc-600 rounded" placeholder="r" />
+              <input type="checkbox" checked={currentRow.anas.checked} onChange={() => toggleCheck(currentRow.id, 'anas')} className="w-3 h-3 rounded accent-amber-500" />
+              <input type="number" step="0.5" value={currentRow.anas.weight} onChange={e => updateRow(currentRow.id, 'anas', 'weight', e.target.value)} className="w-11 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-blue-200 dark:border-zinc-600 rounded" placeholder="kg" />
+              <input type="number" value={currentRow.anas.reps} onChange={e => updateRow(currentRow.id, 'anas', 'reps', e.target.value)} className="w-9 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-blue-200 dark:border-zinc-600 rounded" placeholder="r" />
               <span className="text-[10px] font-medium text-amber-700 dark:text-amber-300">{calc1RM(currentRow.anas.weight, currentRow.anas.reps)}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">Flavio</span>
-              <input type="checkbox" checked={currentRow.flavio.checked} onChange={()=>toggleCheck(currentRow.id,'flavio')} className="w-3 h-3 rounded accent-amber-500" />
-              <input type="number" step="0.5" value={currentRow.flavio.weight} onChange={e=>updateRow(currentRow.id,'flavio','weight',e.target.value)} className="w-11 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-emerald-200 dark:border-zinc-600 rounded" placeholder="kg" />
-              <input type="number" value={currentRow.flavio.reps} onChange={e=>updateRow(currentRow.id,'flavio','reps',e.target.value)} className="w-9 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-emerald-200 dark:border-zinc-600 rounded" placeholder="r" />
+              <input type="checkbox" checked={currentRow.flavio.checked} onChange={() => toggleCheck(currentRow.id, 'flavio')} className="w-3 h-3 rounded accent-amber-500" />
+              <input type="number" step="0.5" value={currentRow.flavio.weight} onChange={e => updateRow(currentRow.id, 'flavio', 'weight', e.target.value)} className="w-11 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-emerald-200 dark:border-zinc-600 rounded" placeholder="kg" />
+              <input type="number" value={currentRow.flavio.reps} onChange={e => updateRow(currentRow.id, 'flavio', 'reps', e.target.value)} className="w-9 px-1 py-0.5 text-xs text-center bg-white dark:bg-zinc-800 border border-emerald-200 dark:border-zinc-600 rounded" placeholder="r" />
               <span className="text-[10px] font-medium text-amber-700 dark:text-amber-300">{calc1RM(currentRow.flavio.weight, currentRow.flavio.reps)}</span>
             </div>
           </div>
         </div>
       ) : (
-      <table className={AW_TABLE}>
-        <thead>
-          <tr className={AW_THEAD}>
-            <th className={`${AW_TH} text-center w-8`}>#</th>
-            <th colSpan="4" className={`${AW_TH} text-center bg-blue-100/40 dark:bg-blue-500/15 dark:border-r dark:border-zinc-700/40`}>Anas</th>
-            <th colSpan="4" className={`${AW_TH} text-center bg-emerald-100/40 dark:bg-emerald-500/15`}>Flavio</th>
-          </tr>
-          <tr className="border-b border-amber-100/50 dark:border-zinc-700/40 bg-amber-50/30 dark:bg-zinc-800/40">
-            <th className={`${AW_TD}`}></th>
-            <th className={`${AW_TD} text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase`}>✓</th>
-            <th className={`${AW_TD} text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase`}>Peso</th>
-            <th className={`${AW_TD} text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase`}>Reps</th>
-            <th className={`${AW_TD} text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase`}>1RM</th>
-            <th className={`${AW_TD} text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase`}>✓</th>
-            <th className={`${AW_TD} text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase`}>Peso</th>
-            <th className={`${AW_TD} text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase`}>Reps</th>
-            <th className={`${AW_TD} text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase`}>1RM</th>
-          </tr>
-        </thead>
-        <tbody className={AW_TBODY}>
-          {rows.map(row => (
-            <tr key={row.id} className={AW_TR}>
-              <td className="py-1 px-1 text-center font-bold text-amber-600 dark:text-amber-400">{row.set}</td>
-              <td className="py-1 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center"><input type="checkbox" checked={row.anas.checked} onChange={()=>toggleCheck(row.id,'anas')} className="w-3 h-3 rounded accent-amber-500 dark:accent-amber-400" /></td>
-              <td className="py-1 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center"><input type="number" step="0.5" value={row.anas.weight} onChange={e=>updateRow(row.id,'anas','weight',e.target.value)} className="w-12 px-0.5 py-0 text-[10px] text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border rounded dark:placeholder:text-zinc-500" /></td>
-              <td className="py-1 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center"><input type="number" value={row.anas.reps} onChange={e=>updateRow(row.id,'anas','reps',e.target.value)} className="w-10 px-0.5 py-0 text-[10px] text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border rounded dark:placeholder:text-zinc-500" /></td>
-              <td className="py-1 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center font-medium text-amber-700 dark:text-amber-300 text-[10px]">{calc1RM(row.anas.weight, row.anas.reps)}</td>
-              <td className="py-1 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center"><input type="checkbox" checked={row.flavio.checked} onChange={()=>toggleCheck(row.id,'flavio')} className="w-3 h-3 rounded accent-amber-500 dark:accent-amber-400" /></td>
-              <td className="py-1 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center"><input type="number" step="0.5" value={row.flavio.weight} onChange={e=>updateRow(row.id,'flavio','weight',e.target.value)} className="w-12 px-0.5 py-0 text-[10px] text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border rounded dark:placeholder:text-zinc-500" /></td>
-              <td className="py-1 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center"><input type="number" value={row.flavio.reps} onChange={e=>updateRow(row.id,'flavio','reps',e.target.value)} className="w-10 px-0.5 py-0 text-[10px] text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border rounded dark:placeholder:text-zinc-500" /></td>
-              <td className="py-1 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center font-medium text-amber-700 dark:text-amber-300 text-[10px]">{calc1RM(row.flavio.weight, row.flavio.reps)}</td>
+        <table className={AW_TABLE}>
+          <thead>
+            <tr className={AW_THEAD}>
+              <th className={`${AW_TH} text-center w-8`}>#</th>
+              <th colSpan="4" className={`${AW_TH} text-center bg-blue-100/40 dark:bg-blue-500/15 dark:border-r dark:border-zinc-700/40`}>Anas</th>
+              <th colSpan="4" className={`${AW_TH} text-center bg-emerald-100/40 dark:bg-emerald-500/15`}>Flavio</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+            <tr className="border-b border-amber-100/50 dark:border-zinc-700/40 bg-amber-50/30 dark:bg-zinc-800/40">
+              <th className={`${AW_TD}`}></th>
+              <th className={`${AW_TD} text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase`}>✓</th>
+              <th className={`${AW_TD} text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase`}>Peso</th>
+              <th className={`${AW_TD} text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase`}>Reps</th>
+              <th className={`${AW_TD} text-[8px] font-semibold text-blue-600/60 dark:text-blue-400/60 uppercase`}>1RM</th>
+              <th className={`${AW_TD} text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase`}>✓</th>
+              <th className={`${AW_TD} text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase`}>Peso</th>
+              <th className={`${AW_TD} text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase`}>Reps</th>
+              <th className={`${AW_TD} text-[8px] font-semibold text-emerald-600/60 dark:text-emerald-400/60 uppercase`}>1RM</th>
+            </tr>
+          </thead>
+          <tbody className={AW_TBODY}>
+            {rows.map(row => (
+              <tr key={row.id} className={AW_TR}>
+                <td className="py-1 px-1 text-center font-bold text-amber-600 dark:text-amber-400">{row.set}</td>
+                <td className="py-1 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center"><input type="checkbox" checked={row.anas.checked} onChange={() => toggleCheck(row.id, 'anas')} className="w-3 h-3 rounded accent-amber-500 dark:accent-amber-400" /></td>
+                <td className="py-1 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center"><input type="number" step="0.5" value={row.anas.weight} onChange={e => updateRow(row.id, 'anas', 'weight', e.target.value)} className="w-12 px-0.5 py-0 text-[10px] text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border rounded dark:placeholder:text-zinc-500" /></td>
+                <td className="py-1 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center"><input type="number" value={row.anas.reps} onChange={e => updateRow(row.id, 'anas', 'reps', e.target.value)} className="w-10 px-0.5 py-0 text-[10px] text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border rounded dark:placeholder:text-zinc-500" /></td>
+                <td className="py-1 px-1 bg-blue-50/30 dark:bg-zinc-800/40 text-center font-medium text-amber-700 dark:text-amber-300 text-[10px]">{calc1RM(row.anas.weight, row.anas.reps)}</td>
+                <td className="py-1 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center"><input type="checkbox" checked={row.flavio.checked} onChange={() => toggleCheck(row.id, 'flavio')} className="w-3 h-3 rounded accent-amber-500 dark:accent-amber-400" /></td>
+                <td className="py-1 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center"><input type="number" step="0.5" value={row.flavio.weight} onChange={e => updateRow(row.id, 'flavio', 'weight', e.target.value)} className="w-12 px-0.5 py-0 text-[10px] text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border rounded dark:placeholder:text-zinc-500" /></td>
+                <td className="py-1 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center"><input type="number" value={row.flavio.reps} onChange={e => updateRow(row.id, 'flavio', 'reps', e.target.value)} className="w-10 px-0.5 py-0 text-[10px] text-center bg-white dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-100 border rounded dark:placeholder:text-zinc-500" /></td>
+                <td className="py-1 px-1 bg-emerald-50/30 dark:bg-zinc-800/40 text-center font-medium text-amber-700 dark:text-amber-300 text-[10px]">{calc1RM(row.flavio.weight, row.flavio.reps)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );
@@ -620,7 +620,7 @@ export default function Training() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [calendarVisible, setCalendarVisible] = useState(true);
-  
+
   // Undo/Redo state
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -634,6 +634,7 @@ export default function Training() {
     const ctrl = new AbortController();
     const timeout = setTimeout(() => ctrl.abort(), 15000);
     const base = import.meta.env.VITE_API_BASE || '/api';
+    console.log("Loading training from:", base);
     fetch(base + '/training/week', { signal: ctrl.signal, headers: { 'Content-Type': 'application/json' } })
       .then(res => {
         if (!res.ok) throw new Error(res.statusText);
@@ -666,7 +667,7 @@ export default function Training() {
   const handleRowsChange = useCallback((exerciseId, rows) => {
     setSetsByExercise(prev => {
       const newState = { ...prev, [exerciseId]: rows };
-      
+
       // Add to history for undo/redo
       setHistory(h => {
         const newHistory = h.slice(0, historyIndex + 1);
@@ -676,10 +677,10 @@ export default function Training() {
         return newHistory;
       });
       setHistoryIndex(idx => Math.min(idx + 1, 49));
-      
+
       // Trigger auto-save
       setLastSaved(Date.now());
-      
+
       return newState;
     });
   }, [historyIndex]);
@@ -721,7 +722,7 @@ export default function Training() {
   // Auto-save when data changes
   useEffect(() => {
     if (!selectedDay || !lastSaved || isSaving) return;
-    
+
     const timeoutId = setTimeout(() => {
       const sets = [];
       Object.entries(setsByExercise).forEach(([exerciseId, rows]) => {
@@ -738,7 +739,7 @@ export default function Training() {
           }
         });
       });
-      
+
       if (sets.length > 0) {
         setIsSaving(true);
         api.training
@@ -751,7 +752,7 @@ export default function Training() {
           });
       }
     }, 2000); // Auto-save after 2 seconds of inactivity
-    
+
     return () => clearTimeout(timeoutId);
   }, [lastSaved, selectedDay, setsByExercise, isSaving]);
 
@@ -761,16 +762,16 @@ export default function Training() {
   const awExercises = selectedDay?.exercises.filter(e => e.category === 'AW') || [];
 
   // Verifica tipi specifici per tabelle speciali
-  const hasVolume1 = selectedDay?.exercises.some(e => 
-    e.exercise_name.toLowerCase().includes('volume 1') || 
+  const hasVolume1 = selectedDay?.exercises.some(e =>
+    e.exercise_name.toLowerCase().includes('volume 1') ||
     e.exercise_id === 'aw_vol_1'
   );
-  const hasVolume2 = selectedDay?.exercises.some(e => 
-    e.exercise_name.toLowerCase().includes('volume 2') || 
+  const hasVolume2 = selectedDay?.exercises.some(e =>
+    e.exercise_name.toLowerCase().includes('volume 2') ||
     e.exercise_id === 'aw_vol_2'
   );
-  const hasSpeedDay = selectedDay?.exercises.some(e => 
-    e.exercise_name.toLowerCase().includes('speed') || 
+  const hasSpeedDay = selectedDay?.exercises.some(e =>
+    e.exercise_name.toLowerCase().includes('speed') ||
     e.exercise_id === 'aw_speed'
   );
 
@@ -810,63 +811,63 @@ export default function Training() {
       {/* Header fisso in alto */}
       <header className="w-full sticky top-0 z-50 bg-white/90 dark:bg-zinc-950/95 backdrop-blur-xl border-b border-gray-200/80 dark:border-zinc-800/80 shadow-sm dark:shadow-zinc-900/50">
         <div className="w-full px-4 lg:px-8 py-3 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center shadow-sm dark:shadow-blue-500/20">
-            <Dumbbell size={16} />
-          </div>
-          <div>
-            <h1 className="text-[15px] font-bold text-gray-900 dark:text-white tracking-tight leading-tight">
-              Training
-            </h1>
-            <p className="hidden sm:block text-[11px] font-medium text-gray-500 dark:text-gray-400 leading-tight">
-              Seleziona un giorno per i dettagli
-            </p>
-          </div>
-        </div>
-        {selectedDay && (
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-zinc-800/60 border border-gray-200/60 dark:border-zinc-700/60">
-              <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{dayTitle}</span>
-              <ChevronRight size={12} className="text-gray-400 shrink-0" />
-              <span className="text-xs font-bold text-gray-900 dark:text-white">{selectedDay.exercises.length} es.</span>
+            <div className="w-8 h-8 rounded-lg bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center shadow-sm dark:shadow-blue-500/20">
+              <Dumbbell size={16} />
             </div>
-            
-            {/* Undo/Redo Buttons */}
-            <div className="flex items-center gap-1 bg-gray-100 dark:bg-zinc-800/60 rounded-lg p-1 border border-transparent dark:border-zinc-700/50">
-              <button
-                onClick={handleUndo}
-                disabled={historyIndex <= 0}
-                title="Undo (Ctrl+Z)"
-                className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-700 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-              >
-                <Undo2 size={16} className="text-gray-600 dark:text-gray-300" />
-              </button>
-              <button
-                onClick={handleRedo}
-                disabled={historyIndex >= history.length - 1}
-                title="Redo (Ctrl+Y)"
-                className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-700 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-              >
-                <Redo2 size={16} className="text-gray-600 dark:text-gray-300" />
-              </button>
-            </div>
-            
-            {/* Auto-save indicator */}
-            <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium transition-colors ${isSaving ? 'text-blue-600 dark:text-blue-400' : lastSaved ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'}`}>
-              {isSaving ? (
-                <>
-                  <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                  <span>Salvataggio...</span>
-                </>
-              ) : lastSaved ? (
-                <>
-                  <CheckCircle2 size={12} />
-                  <span>Salvato</span>
-                </>
-              ) : null}
+            <div>
+              <h1 className="text-[15px] font-bold text-gray-900 dark:text-white tracking-tight leading-tight">
+                Training
+              </h1>
+              <p className="hidden sm:block text-[11px] font-medium text-gray-500 dark:text-gray-400 leading-tight">
+                Seleziona un giorno per i dettagli
+              </p>
             </div>
           </div>
-        )}
+          {selectedDay && (
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-zinc-800/60 border border-gray-200/60 dark:border-zinc-700/60">
+                <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{dayTitle}</span>
+                <ChevronRight size={12} className="text-gray-400 shrink-0" />
+                <span className="text-xs font-bold text-gray-900 dark:text-white">{selectedDay.exercises.length} es.</span>
+              </div>
+
+              {/* Undo/Redo Buttons */}
+              <div className="flex items-center gap-1 bg-gray-100 dark:bg-zinc-800/60 rounded-lg p-1 border border-transparent dark:border-zinc-700/50">
+                <button
+                  onClick={handleUndo}
+                  disabled={historyIndex <= 0}
+                  title="Undo (Ctrl+Z)"
+                  className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-700 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                >
+                  <Undo2 size={16} className="text-gray-600 dark:text-gray-300" />
+                </button>
+                <button
+                  onClick={handleRedo}
+                  disabled={historyIndex >= history.length - 1}
+                  title="Redo (Ctrl+Y)"
+                  className="p-1.5 rounded hover:bg-white dark:hover:bg-gray-700 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                >
+                  <Redo2 size={16} className="text-gray-600 dark:text-gray-300" />
+                </button>
+              </div>
+
+              {/* Auto-save indicator */}
+              <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-medium transition-colors ${isSaving ? 'text-blue-600 dark:text-blue-400' : lastSaved ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'}`}>
+                {isSaving ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                    <span>Salvataggio...</span>
+                  </>
+                ) : lastSaved ? (
+                  <>
+                    <CheckCircle2 size={12} />
+                    <span>Salvato</span>
+                  </>
+                ) : null}
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
@@ -963,7 +964,7 @@ export default function Training() {
                   <div className="flex gap-1.5 text-[10px] text-center font-bold">
                     {['2×10→3×8', '3×8→4×8', '4×8→5×7', '5×7→6×7', '6×7'].map((label, i) => (
                       <div key={i} className="flex-1 py-1.5 px-1 rounded-md bg-white dark:bg-zinc-800/80 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-500/25 shadow-sm">
-                        S{i+1}
+                        S{i + 1}
                       </div>
                     ))}
                   </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../api/client';
 import {
@@ -29,6 +30,7 @@ const EXERCISE_MUSCLE_MAP = {
   bp_str: ['anterior_delts', 'chest', 'triceps'],
   sq_str: ['core', 'glutes', 'lower_back', 'quads'],
   plank: ['core', 'lower_back'],
+  addominali: ['core'],
   crunch: ['core'],
   leg_raise: ['core'],
   ab_wheel: ['core', 'lower_back'],
@@ -98,7 +100,7 @@ const EXERCISE_MUSCLE_MAP = {
   aw_speed_pronation_45: ['brachiale_brachioradiale', 'pronators', 'side_pressure'],
   aw_vol_1: ['brachiale_brachioradiale', 'finger_flexors', 'side_pressure', 'ulnar_deviation', 'wrist_flexors'],
   aw_vol_2: ['wrist_flexors', 'pronators', 'radial_deviation', 'supinators'],
-  aw_max:   ['biceps', 'brachiale_brachioradiale', 'finger_flexors', 'lats', 'pronators', 'radial_deviation', 'side_pressure', 'supinators', 'triceps', 'ulnar_deviation', 'wrist_flexors'],
+  aw_max: ['biceps', 'brachiale_brachioradiale', 'finger_flexors', 'lats', 'pronators', 'radial_deviation', 'side_pressure', 'supinators', 'triceps', 'ulnar_deviation', 'wrist_flexors'],
   aw_iso_l: ['biceps', 'brachiale_brachioradiale', 'finger_flexors', 'side_pressure', 'supinators', 'triceps', 'wrist_flexors'],
   aw_iso_h: ['biceps', 'brachiale_brachioradiale', 'side_pressure', 'supinators', 'triceps', 'wrist_flexors'],
   aw_speed: ['brachiale_brachioradiale', 'lats', 'pronators', 'radial_deviation', 'side_pressure', 'supinators', 'ulnar_deviation', 'wrist_flexors'],
@@ -111,7 +113,7 @@ const MUSCLE_LABELS = {
   triceps: 'Tricipiti', forearms: 'Avambracci', pronators: 'Pronat', supinators: 'Supinat',
   wrist_extensors: 'Est. Polso', wrist_flexors: 'Fles. Polso', finger_flexors: 'Fles. Dita',
   ulnar_deviation: 'Dev. Uln', radial_deviation: 'Dev. Rad', side_pressure: 'Side P.',
-  quads: 'Quad', glutes: 'Glutei', core: 'Core', lower_back: 'L. Back'
+  quads: 'Quad', glutes: 'Glutei', core: 'Addominali', lower_back: 'L. Back'
 };
 
 const MUSCLE_GROUP_MAP = {
@@ -146,15 +148,15 @@ const GROUP_PRIORITY = { schiena: 1, petto: 2, gambe: 3, spalle: 4, bicipiti: 5,
 const GROUP_SOLID = { petto: 'bg-rose-500', schiena: 'bg-emerald-500', spalle: 'bg-violet-500', bicipiti: 'bg-blue-500', tricipiti: 'bg-cyan-500', avambracci: 'bg-amber-500', gambe: 'bg-pink-500', core: 'bg-teal-500' };
 // Tag: sfondo 20% opacità + testo brillante per contrasto WCAG
 const GROUP_BADGE = { petto: 'bg-rose-500/20 text-rose-600 dark:text-rose-300', schiena: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300', spalle: 'bg-violet-500/20 text-violet-600 dark:text-violet-300', bicipiti: 'bg-blue-500/20 text-blue-600 dark:text-blue-300', tricipiti: 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-300', avambracci: 'bg-amber-500/20 text-amber-600 dark:text-amber-300', gambe: 'bg-pink-500/20 text-pink-600 dark:text-pink-300', core: 'bg-teal-500/20 text-teal-600 dark:text-teal-300' };
-const GROUP_TEXT  = { petto: 'text-rose-500', schiena: 'text-emerald-500', spalle: 'text-violet-500', bicipiti: 'text-blue-500', tricipiti: 'text-cyan-500', avambracci: 'text-amber-500', gambe: 'text-pink-500', core: 'text-teal-500' };
-const GROUP_NAMES = { petto: 'Petto', schiena: 'Schiena', spalle: 'Spalle', bicipiti: 'Bicipiti', tricipiti: 'Tricipiti', avambracci: 'Avambracci', gambe: 'Gambe', core: 'Core' };
-const GROUP_ABBR  = { petto: 'Pet', schiena: 'Sch', spalle: 'Sp', bicipiti: 'Bic', tricipiti: 'Tri', avambracci: 'Av', gambe: 'Gam', core: 'Core' };
+const GROUP_TEXT = { petto: 'text-rose-500', schiena: 'text-emerald-500', spalle: 'text-violet-500', bicipiti: 'text-blue-500', tricipiti: 'text-cyan-500', avambracci: 'text-amber-500', gambe: 'text-pink-500', core: 'text-teal-500' };
+const GROUP_NAMES = { petto: 'Petto', schiena: 'Schiena', spalle: 'Spalle', bicipiti: 'Bicipiti', tricipiti: 'Tricipiti', avambracci: 'Avambracci', gambe: 'Gambe', core: 'Addominali' };
+const GROUP_ABBR = { petto: 'Pet', schiena: 'Sch', spalle: 'Sp', bicipiti: 'Bic', tricipiti: 'Tri', avambracci: 'Av', gambe: 'Gam', core: 'Add' };
 
 const AW_VOL_MUSCLE_ORDER = ['brachiale_brachioradiale', 'biceps', 'side_pressure', 'pronators', 'supinators', 'wrist_flexors', 'finger_flexors', 'radial_deviation', 'ulnar_deviation'];
-const AW_VOL_ABBR  = { brachiale_brachioradiale: 'Brachio', biceps: 'Bic', side_pressure: 'Side', pronators: 'Pron', supinators: 'Sup', wrist_flexors: 'Polso', finger_flexors: 'Dita', radial_deviation: 'Rad', ulnar_deviation: 'Uln' };
+const AW_VOL_ABBR = { brachiale_brachioradiale: 'Brachio', biceps: 'Bic', side_pressure: 'Side', pronators: 'Pron', supinators: 'Sup', wrist_flexors: 'Polso', finger_flexors: 'Dita', radial_deviation: 'Rad', ulnar_deviation: 'Uln' };
 const AW_VOL_NAMES = { brachiale_brachioradiale: 'Brachiale', biceps: 'Bicipiti', side_pressure: 'Side pressure', pronators: 'Pronatori', supinators: 'Supinatori', wrist_flexors: 'Flessori polso', finger_flexors: 'Flessori dita', radial_deviation: 'Dev. radiale', ulnar_deviation: 'Dev. ulnare' };
-const AW_VOL_DOT   = { brachiale_brachioradiale: 'bg-blue-500', biceps: 'bg-blue-400', side_pressure: 'bg-pink-600', pronators: 'bg-orange-400', supinators: 'bg-orange-600', wrist_flexors: 'bg-amber-600', finger_flexors: 'bg-amber-400', radial_deviation: 'bg-pink-400', ulnar_deviation: 'bg-pink-500' };
-const AW_VOL_TEXT  = { brachiale_brachioradiale: 'text-blue-600', biceps: 'text-blue-500', side_pressure: 'text-pink-600', pronators: 'text-orange-500', supinators: 'text-orange-600', wrist_flexors: 'text-amber-600', finger_flexors: 'text-amber-500', radial_deviation: 'text-pink-500', ulnar_deviation: 'text-pink-600' };
+const AW_VOL_DOT = { brachiale_brachioradiale: 'bg-blue-500', biceps: 'bg-blue-400', side_pressure: 'bg-pink-600', pronators: 'bg-orange-400', supinators: 'bg-orange-600', wrist_flexors: 'bg-amber-600', finger_flexors: 'bg-amber-400', radial_deviation: 'bg-pink-400', ulnar_deviation: 'bg-pink-500' };
+const AW_VOL_TEXT = { brachiale_brachioradiale: 'text-blue-600', biceps: 'text-blue-500', side_pressure: 'text-pink-600', pronators: 'text-orange-500', supinators: 'text-orange-600', wrist_flexors: 'text-amber-600', finger_flexors: 'text-amber-500', radial_deviation: 'text-pink-500', ulnar_deviation: 'text-pink-600' };
 
 function getDominantGroup(muscles) {
   let best = null, bestP = 99;
@@ -244,7 +246,7 @@ function CompactExerciseCard({ exercise, dayTemplateId, onEdit, onDelete, isOver
     >
       {/* Mesh gradient accent bar */}
       <div className={`absolute top-0 ${showMuscleNames ? 'left-4 right-4 h-1.5' : 'left-2 right-2 h-1'} ${accentDot} rounded-b-xl opacity-100`} />
-      
+
       <div className={`relative flex flex-col items-center w-full overflow-hidden ${showMuscleNames ? 'px-3 pt-5 pb-0.5 h-[84px]' : 'px-2 pt-3.5 pb-0 h-[48px]'}`}>
         {/* Nome esercizio: distanza fissa dal bordo superiore */}
         <div className="font-bold text-[9px] tracking-tight text-gray-800 dark:text-gray-100 text-center leading-tight w-full shrink-0 line-clamp-2" title={exercise.exercise_name}>
@@ -288,8 +290,8 @@ function CompactExerciseCard({ exercise, dayTemplateId, onEdit, onDelete, isOver
       {!isOverlay && (onEdit || onDelete) && (
         <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
           {onEdit && (
-            <motion.button 
-              whileHover={{ scale: 1.1 }} 
+            <motion.button
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={(e) => { e.stopPropagation(); onEdit(exercise, dayTemplateId); }}
               className="p-1.5 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-md shadow-lg rounded-lg text-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-colors"
@@ -298,7 +300,7 @@ function CompactExerciseCard({ exercise, dayTemplateId, onEdit, onDelete, isOver
             </motion.button>
           )}
           {onDelete && (
-            <motion.button 
+            <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={(e) => { e.stopPropagation(); onDelete(exercise, dayTemplateId); }}
@@ -316,7 +318,7 @@ function CompactExerciseCard({ exercise, dayTemplateId, onEdit, onDelete, isOver
 // ── Droppable Cell con effetto glass ──────────────────────────────────────────
 function DroppableCell({ id, isSelected, onClick, children, compact }) {
   const { setNodeRef, isOver } = useDroppable({ id });
-  
+
   return (
     <motion.div
       ref={setNodeRef}
@@ -335,7 +337,7 @@ function DroppableCell({ id, isSelected, onClick, children, compact }) {
       {/* Ghost effect quando è over */}
       <AnimatePresence>
         {isOver && (
-          <motion.span 
+          <motion.span
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
@@ -343,7 +345,7 @@ function DroppableCell({ id, isSelected, onClick, children, compact }) {
           />
         )}
       </AnimatePresence>
-      
+
       {/* Subtle grid pattern per celle vuote */}
       <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.05] pointer-events-none"
         style={{
@@ -351,7 +353,7 @@ function DroppableCell({ id, isSelected, onClick, children, compact }) {
           backgroundSize: '8px 8px'
         }}
       />
-      
+
       <div className={`relative flex flex-col h-full ${compact ? 'gap-0.5 min-h-[36px]' : 'gap-2 min-h-[60px]'}`}>{children}</div>
     </motion.div>
   );
@@ -391,91 +393,172 @@ const ADD_CATEGORY_COLOR = {
 
 function AddExerciseModal({ dayName, category, availableExercises, onAdd, onClose }) {
   const [search, setSearch] = useState('');
+
   const filtered = (availableExercises || [])
     .filter(ex => {
       if (category === 'AW') return ex.category === 'AW' || (typeof ex.category === 'string' && ex.category.startsWith('AW'));
       return ex.category === category;
     })
-    .filter(ex => !search || (ex.name || '').toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    .filter(ex => !search ||
+      (ex.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (ex.exercise_name || '').toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => (a.name || a.exercise_name || '').localeCompare(b.name || b.exercise_name || ''));
+
+  const getCategoryTheme = () => {
+    switch (category) {
+      case 'AW': return {
+        bg: 'from-amber-600 to-amber-700',
+        accent: 'text-amber-500',
+        light: 'bg-amber-50 dark:bg-amber-900/20',
+        ring: 'focus:ring-amber-500/30'
+      };
+      case 'HYPERTROPHY': return {
+        bg: 'from-emerald-600 to-emerald-700',
+        accent: 'text-emerald-500',
+        light: 'bg-emerald-50 dark:bg-emerald-900/20',
+        ring: 'focus:ring-emerald-500/30'
+      };
+      default: return {
+        bg: 'from-blue-600 to-blue-700',
+        accent: 'text-blue-500',
+        light: 'bg-blue-50 dark:bg-blue-900/20',
+        ring: 'focus:ring-blue-500/30'
+      };
+    }
+  };
+
+  const theme = getCategoryTheme();
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={onClose}>
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-zinc-950/60 backdrop-blur-md"
+      />
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-        className="w-full max-w-sm rounded-3xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/10 overflow-hidden max-h-[80vh] flex flex-col" 
+        exit={{ opacity: 0, scale: 0.9, y: 30 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        className="relative w-full max-w-md rounded-[2.5rem] bg-white dark:bg-zinc-900 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] border border-white/20 dark:border-white/5 overflow-hidden flex flex-col max-h-[85vh]"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header con gradient */}
-        <div className={`flex items-center justify-between px-6 py-5 ${ADD_CATEGORY_COLOR[category] || ADD_CATEGORY_COLOR.STRENGTH}`}>
-          <div>
-            <h2 className="text-[16px] font-black text-white tracking-tight">Aggiungi esercizio</h2>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-[11px] text-white/80 font-medium">Day {dayName}</span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white uppercase tracking-wider">
-                {ADD_CATEGORY_LABEL[category] || category}
-              </span>
+        {/* Header Section */}
+        <div className={`relative px-8 pt-8 pb-6 bg-gradient-to-br ${theme.bg}`}>
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <h2 className="text-2xl font-black text-white tracking-tight leading-none">
+                Nuovo Esercizio
+              </h2>
+              <p className="text-white/70 text-[11px] font-bold uppercase tracking-[0.15em]">
+                {dayName} • {ADD_CATEGORY_LABEL[category] || category}
+              </p>
             </div>
+            <button
+              onClick={onClose}
+              className="p-2.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white transition-all hover:rotate-90 duration-300"
+            >
+              <X size={20} />
+            </button>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors">
-            <X size={18} />
-          </button>
-        </div>
-        
-        {/* Search glassmorphism */}
-        <div className="px-4 py-3 border-b border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/30">
-          <div className="relative">
-            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+
+          {/* Search Bar Integrated in Header */}
+          <div className="mt-6 relative group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 group-focus-within:text-white transition-colors">
+              <Search size={16} />
+            </div>
             <input
               autoFocus
               type="text"
-              placeholder="Cerca esercizio..."
+              placeholder="Cerca per nome o muscolo..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border-0 bg-white dark:bg-zinc-800 shadow-sm text-gray-900 dark:text-zinc-100 text-sm focus:ring-2 focus:ring-blue-500/30 outline-none"
+              className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-white/10 hover:bg-white/15 focus:bg-white/20 border-0 text-white placeholder:text-white/40 text-sm outline-none ring-2 ring-transparent focus:ring-white/20 transition-all"
             />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
         </div>
-        
-        {/* Exercise list con animazioni */}
-        <div className="overflow-y-auto flex-1 p-2 space-y-1">
-          <AnimatePresence>
+
+        {/* Scrollable list Section */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1.5 min-h-[300px]">
+          <AnimatePresence mode="popLayout">
             {filtered.length === 0 ? (
-              <motion.div 
-                initial={{ opacity: 0 }} 
+              <motion.div
+                initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-center py-10 text-[12px] text-gray-400"
+                className="flex flex-col items-center justify-center py-20 text-gray-400 dark:text-zinc-500"
               >
-                Nessun esercizio trovato
+                <div className="w-12 h-12 rounded-full bg-gray-50 dark:bg-zinc-800 flex items-center justify-center mb-3">
+                  <Search size={20} className="opacity-20" />
+                </div>
+                <p className="text-xs font-bold uppercase tracking-widest">Nessun risultato</p>
               </motion.div>
             ) : (
               filtered.map((ex, idx) => {
                 const muscles = EXERCISE_MUSCLE_MAP[ex.id] || [];
-                const dom = getDominantGroup(muscles);
+                const dominantGroup = getDominantGroup(muscles);
+
                 return (
                   <motion.button
                     key={ex.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ delay: idx * 0.03 }}
-                    whileHover={{ x: 4, backgroundColor: 'rgba(59, 130, 246, 0.05)' }}
+                    layout="position"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: Math.min(idx * 0.02, 0.2) }}
+                    whileHover={{ scale: 1.01, x: 4 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => onAdd(ex)}
-                    className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center justify-between gap-3 group transition-colors"
+                    className="w-full text-left p-4 rounded-3xl bg-gray-50/50 dark:bg-zinc-800/30 hover:bg-white dark:hover:bg-zinc-800 border border-transparent hover:border-gray-100 dark:hover:border-zinc-700 hover:shadow-xl hover:shadow-gray-200/20 dark:hover:shadow-black/20 flex items-center justify-between gap-4 group transition-all"
                   >
-                    <span className="truncate leading-tight">{ex.name}</span>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {dom && <span className={`w-2.5 h-2.5 rounded-full ${GROUP_SOLID[dom] || 'bg-gray-300'} shadow-sm`} />}
-                      <Plus size={14} className="text-gray-300 group-hover:text-blue-500 transition-colors" />
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dominantGroup ? GROUP_SOLID[dominantGroup] : 'bg-gray-300'}`} />
+                        <h4 className="text-sm font-bold text-gray-800 dark:text-zinc-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          {ex.name || ex.exercise_name}
+                        </h4>
+                      </div>
+
+                      {/* Muscles Chips */}
+                      <div className="flex flex-wrap gap-1">
+                        {muscles.slice(0, 3).map(m => (
+                          <span key={m} className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-white dark:bg-zinc-700/50 border border-gray-100 dark:border-zinc-600/30 text-gray-500 dark:text-zinc-400`}>
+                            {MUSCLE_LABELS[m] || m}
+                          </span>
+                        ))}
+                        {muscles.length > 3 && (
+                          <span className="text-[8px] font-black text-gray-300 dark:text-zinc-600 self-center">
+                            +{muscles.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="w-10 h-10 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm flex items-center justify-center text-gray-300 group-hover:text-blue-500 group-hover:scale-110 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-all">
+                      <Plus size={20} />
                     </div>
                   </motion.button>
                 );
               })
             )}
           </AnimatePresence>
+        </div>
+
+        {/* Footer Hint */}
+        <div className="px-8 py-4 bg-gray-50/50 dark:bg-zinc-950/30 border-t border-gray-100 dark:border-zinc-800">
+          <p className="text-[10px] text-gray-400 text-center font-medium">
+            Seleziona un esercizio per aggiungerlo al tuo programma settimanale
+          </p>
         </div>
       </motion.div>
     </div>
@@ -491,7 +574,7 @@ function VolumeRow({ days, showVolume, setShowVolume, compact }) {
       <div className={`w-[100px] shrink-0 border-r border-gray-200/30 dark:border-zinc-800/30 flex flex-col items-center justify-center bg-gray-50/30 dark:bg-zinc-900/20 ${compact ? 'py-1 min-h-[28px]' : 'py-1.5 min-h-[36px]'}`}>
         <button onClick={() => setShowVolume(v => !v)} className="flex flex-col items-center gap-0.5 group" title={showVolume ? 'Nascondi volume' : 'Mostra volume'}>
           <span className="text-[8px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500 group-hover:text-gray-700 dark:group-hover:text-zinc-300">VOL</span>
-          <svg width="8" height="5" viewBox="0 0 10 6" fill="currentColor" className={`text-gray-400 dark:text-zinc-600 transition-transform ${showVolume ? '' : 'rotate-180'}`}><path d="M0 5.5L5 .5l5 5H0z"/></svg>
+          <svg width="8" height="5" viewBox="0 0 10 6" fill="currentColor" className={`text-gray-400 dark:text-zinc-600 transition-transform ${showVolume ? '' : 'rotate-180'}`}><path d="M0 5.5L5 .5l5 5H0z" /></svg>
         </button>
       </div>
       {showVolume && (
@@ -532,7 +615,7 @@ function VolumeRow({ days, showVolume, setShowVolume, compact }) {
 
 // ── Skeleton ─────────────────────────────────────────────────────────────────
 function SkeletonCalendar() {
-  const cols = [1,2,3,4,5,6,7];
+  const cols = [1, 2, 3, 4, 5, 6, 7];
   return (
     <div className="w-full rounded-3xl border border-gray-200/30 dark:border-zinc-700/30 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm shadow-xl overflow-hidden">
       <div className="flex border-b border-gray-200/30 dark:border-zinc-800/30 bg-gradient-to-r from-gray-50/50 to-transparent dark:from-zinc-900/30">
@@ -578,10 +661,10 @@ function DayHeaderCompact({ day, isSelected, onClick, compact }) {
       <span className={`text-[12px] font-black uppercase tracking-widest ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`}>
         Day {day.weekday + 1}
       </span>
-      
+
       <div className={`flex items-center gap-1.5 ${compact ? 'mt-1' : 'mt-2'}`}>
         {strengthCount > 0 && (
-          <motion.div 
+          <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20"
@@ -591,7 +674,7 @@ function DayHeaderCompact({ day, isSelected, onClick, compact }) {
           </motion.div>
         )}
         {awCount > 0 && (
-          <motion.div 
+          <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20"
@@ -601,7 +684,7 @@ function DayHeaderCompact({ day, isSelected, onClick, compact }) {
           </motion.div>
         )}
         {hypCount > 0 && (
-          <motion.div 
+          <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20"
@@ -622,16 +705,16 @@ function RowLabelCompact({ label, color, icon: Icon, isHyperGroup = false, compa
     amber: 'from-amber-500/10 to-amber-600/5 text-amber-600 dark:text-amber-400',
     emerald: 'from-emerald-500/10 to-emerald-600/5 text-emerald-600 dark:text-emerald-400',
   };
-  
+
   return (
     <div className={`w-[100px] shrink-0 flex flex-col items-center justify-center gap-0.5 bg-gradient-to-br ${colorMap[color] || colorMap.blue} border-r border-gray-200/20 dark:border-zinc-800/20 ${compact ? 'px-1 py-1' : 'px-2 py-4'}`}>
       {Icon && (
-        <motion.div 
+        <motion.div
           whileHover={{ scale: 1.1, rotate: 5 }}
           className={`flex items-center justify-center backdrop-blur-md
             ${compact ? 'p-1.5 rounded-xl' : 'p-3 rounded-2xl mb-2'}
-            ${isHyperGroup 
-              ? 'bg-emerald-600 text-white shadow-md' 
+            ${isHyperGroup
+              ? 'bg-emerald-600 text-white shadow-md'
               : 'bg-white/80 dark:bg-zinc-800/80 shadow-md border border-white/30 dark:border-white/10'}
         `}
         >
@@ -644,7 +727,7 @@ function RowLabelCompact({ label, color, icon: Icon, isHyperGroup = false, compa
 }
 
 // ── Main Component WeeklyCalendar4 ────────────────────────────────────────────
-export default function WeeklyCalendar4({ onDaySelect, selectedDayId, initialDays, availableExercises }) {
+export default function WeeklyCalendar4({ onDaySelect, selectedDayId, initialDays, availableExercises, onWeekUpdate }) {
   const [days, setDays] = useState(() => (initialDays?.length ? addUniqueIds(initialDays) : []));
   const [loading, setLoading] = useState(!initialDays?.length);
   const [activeExercise, setActiveExercise] = useState(null);
@@ -697,6 +780,7 @@ export default function WeeklyCalendar4({ onDaySelect, selectedDayId, initialDay
       });
       setDays(newDays);
       api.training.updateWeek(newDays.map(d => ({ template_id: d.template_id, exercises: d.exercises.map(e => ({ exercise_id: e.exercise_id, custom_name: e.exercise_name?.trim() || null, instruction: e.instruction ?? null, base_sets: e.category === 'HYPERTROPHY' ? 2 : (e.base_sets ?? 4), base_reps: e.base_reps ?? null })) })));
+      onWeekUpdate?.(newDays);
     }
   };
 
@@ -719,6 +803,7 @@ export default function WeeklyCalendar4({ onDaySelect, selectedDayId, initialDay
     const newDays = days.map(d => d.template_id === activeDay.template_id ? { ...d, exercises: [...otherExercises, ...reordered] } : d);
     setDays(newDays);
     api.training.updateWeek(newDays.map(d => ({ template_id: d.template_id, exercises: d.exercises.map(e => ({ exercise_id: e.exercise_id, custom_name: e.exercise_name?.trim() || null, instruction: e.instruction ?? null, base_sets: e.category === 'HYPERTROPHY' ? 2 : (e.base_sets ?? 4), base_reps: e.base_reps ?? null })) })));
+    onWeekUpdate?.(newDays);
   };
 
   const handleDelete = (exercise, dayTemplateId) => {
@@ -726,6 +811,7 @@ export default function WeeklyCalendar4({ onDaySelect, selectedDayId, initialDay
     setDays(prev => {
       const newDays = prev.map(d => d.template_id === dayTemplateId ? { ...d, exercises: d.exercises.filter(e => e.unique_id !== exercise.unique_id) } : d);
       api.training.updateWeek(newDays.map(d => ({ template_id: d.template_id, exercises: d.exercises.map(e => ({ exercise_id: e.exercise_id, custom_name: e.exercise_name?.trim() || null, instruction: e.instruction ?? null, base_sets: e.category === 'HYPERTROPHY' ? 2 : (e.base_sets ?? 4), base_reps: e.base_reps ?? null })) })));
+      onWeekUpdate?.(newDays);
       return newDays;
     });
   };
@@ -738,8 +824,22 @@ export default function WeeklyCalendar4({ onDaySelect, selectedDayId, initialDay
   const handleEditSave = (updated) => {
     if (!editModal) return;
     const { exercise, dayTemplateId } = editModal;
-    setDays(prev => prev.map(d => ({ ...d, exercises: d.exercises.map(e => e.unique_id === exercise.unique_id && d.template_id === dayTemplateId ? { ...e, exercise_name: updated.name, instruction: updated.instruction } : e) })));
-    api.training.updateDayExercise({ template_id: dayTemplateId, exercise_id: exercise.exercise_id, custom_name: updated.name?.trim() || null, instruction: updated.instruction?.trim() || null });
+    setDays(prev => {
+      const newDays = prev.map(d => ({
+        ...d,
+        exercises: d.exercises.map(e => (e.unique_id === exercise.unique_id && d.template_id === dayTemplateId)
+          ? { ...e, exercise_name: updated.name, instruction: updated.instruction }
+          : e)
+      }));
+      onWeekUpdate?.(newDays);
+      return newDays;
+    });
+    api.training.updateDayExercise({
+      template_id: dayTemplateId,
+      exercise_id: exercise.exercise_id,
+      custom_name: updated.name?.trim() || null,
+      instruction: updated.instruction?.trim() || null
+    });
     setEditModal(null);
   };
 
@@ -759,6 +859,7 @@ export default function WeeklyCalendar4({ onDaySelect, selectedDayId, initialDay
     setDays(prev => {
       const newDays = prev.map(d => d.template_id === dayTemplateId ? { ...d, exercises: [...d.exercises, newExercise] } : d);
       api.training.updateWeek(newDays.map(d => ({ template_id: d.template_id, exercises: d.exercises.map(e => ({ exercise_id: e.exercise_id, custom_name: e.exercise_name?.trim() || null, instruction: e.instruction ?? null, base_sets: e.category === 'HYPERTROPHY' ? 2 : (e.base_sets ?? 4), base_reps: e.base_reps ?? null })) })));
+      onWeekUpdate?.(newDays);
       return newDays;
     });
     setAddModal(null);
@@ -783,222 +884,227 @@ export default function WeeklyCalendar4({ onDaySelect, selectedDayId, initialDay
     <div className="no-select-calendar w-full min-w-0 overflow-x-hidden" onSelectStart={(e) => e.preventDefault()}>
       {/* Barra superiore fissa: toggle + header + volume */}
       <div className="sticky top-14 z-30 bg-[#F8FAFC] dark:bg-[#09090B] pb-2 -mx-1 px-1">
-      {/* Toggle nomi muscoli - stile Apple */}
-      <div className="flex justify-end mb-3">
-        <motion.button 
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setShowMuscleNames(v => !v)} 
-          className={`
+        {/* Toggle nomi muscoli - stile Apple */}
+        <div className="flex justify-end mb-3">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowMuscleNames(v => !v)}
+            className={`
             flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-semibold
             transition-all duration-300 backdrop-blur-md
-            ${showMuscleNames 
-              ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 ring-1 ring-blue-500/30' 
-              : 'bg-gray-100/50 dark:bg-zinc-800/50 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}
+            ${showMuscleNames
+                ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400 ring-1 ring-blue-500/30'
+                : 'bg-gray-100/50 dark:bg-zinc-800/50 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}
           `}
-        >
-          {showMuscleNames ? <Eye size={12} /> : <EyeOff size={12} />}
-          <span>{showMuscleNames ? 'Nomi muscoli' : 'Solo colori'}</span>
-        </motion.button>
-      </div>
-
-      {/* Container principale con glassmorphism */}
-      <div className="no-select-calendar w-full rounded-3xl border border-white/20 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl shadow-[0_8px_32px_-8px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)] overflow-x-hidden flex flex-col min-w-0" onSelectStart={(e) => e.preventDefault()}>
-        {/* Header Row */}
-        <div className="flex border-b border-gray-200/30 dark:border-zinc-800/30 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md">
-          <div className="w-[100px] shrink-0 border-r border-gray-200/30 dark:border-zinc-800/30" />
-          <div className="flex-1 grid divide-x divide-gray-200/30 dark:divide-zinc-800/30" style={{ gridTemplateColumns: `repeat(${Math.max(days.length, 1)}, minmax(0, 1fr))` }}>
-            {days.map(day => (
-              <DayHeaderCompact key={day.template_id} day={day} isSelected={selectedDayId === day.template_id} onClick={onDaySelect} compact={!showMuscleNames} />
-            ))}
-          </div>
+          >
+            {showMuscleNames ? <Eye size={12} /> : <EyeOff size={12} />}
+            <span>{showMuscleNames ? 'Nomi muscoli' : 'Solo colori'}</span>
+          </motion.button>
         </div>
 
-        {/* Volume Row con Data Viz */}
-        <VolumeRow days={days} showVolume={showVolume} setShowVolume={setShowVolume} compact={!showMuscleNames} />
-
-        {/* Main Grid */}
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
-          <div className="flex flex-col">
-            {mainRows.map((row) => (
-              <div key={row.key} className="flex border-b border-gray-200/20 dark:border-zinc-800/20">
-                <RowLabelCompact label={row.label} color={row.color} icon={row.icon} compact={!showMuscleNames} />
-                <div className="flex-1 grid divide-x divide-gray-200/20 dark:divide-zinc-800/20 items-stretch" style={{ gridTemplateColumns: `repeat(${Math.max(days.length, 1)}, minmax(0, 1fr))` }}>
-                  {days.map(day => {
-                    const exercises = day.exercises.filter(row.filter);
-                    const isSelected = selectedDayId === day.template_id;
-                    return (
-                      <DroppableCell key={`cell-${day.template_id}-${row.key}`} id={`cell-day-${day.weekday}-${row.key}`} isSelected={isSelected} onClick={() => onDaySelect?.(day)} compact={!showMuscleNames}>
-                        <SortableContext items={exercises.map(e => e.unique_id)} strategy={horizontalListSortingStrategy}>
-                          <div className={`flex flex-col ${showMuscleNames ? 'gap-2' : 'gap-1'}`}>
-                            {row.key === 'aw' ? (() => {
-                              const groups = [];
-                              const processed = new Set();
-                              const vol1 = exercises.filter(e => e.exercise_id?.startsWith('aw_v1_'));
-                              if (vol1.length > 0) {
-                                groups.push({ id: `${day.template_id}-vol1`, exercise: { unique_id: `${day.template_id}-vol1`, exercise_id: 'aw_vol_1', exercise_name: 'AW Vol.1 (P&C)', category: 'AW' } });
-                                vol1.forEach(e => processed.add(e.unique_id));
-                              }
-                              const vol2 = exercises.filter(e => e.exercise_id?.startsWith('aw_v2_'));
-                              if (vol2.length > 0) {
-                                groups.push({ id: `${day.template_id}-vol2`, exercise: { unique_id: `${day.template_id}-vol2`, exercise_id: 'aw_vol_2', exercise_name: 'AW Vol.2 (C&S)', category: 'AW' } });
-                                vol2.forEach(e => processed.add(e.unique_id));
-                              }
-                              exercises.forEach(ex => { if (!processed.has(ex.unique_id)) groups.push({ id: ex.unique_id, exercise: ex }); });
-                              return groups.map(g => <CompactExerciseCard key={g.id} exercise={g.exercise} dayTemplateId={day.template_id} showMuscleNames={showMuscleNames} />);
-                            })() : (
-                              exercises.map(ex => <CompactExerciseCard key={ex.unique_id} exercise={ex} dayTemplateId={day.template_id} onEdit={handleEdit} onDelete={handleDelete} showMuscleNames={showMuscleNames} />)
-                            )}
-                            {exercises.length === 0 && (
-                              <InteractiveAddButton 
-                                onClick={(e) => { e.stopPropagation(); setAddModal({ dayTemplateId: day.template_id, category: row.key === 'aw' ? 'AW' : 'STRENGTH', dayWeekday: day.weekday }); }}
-                                color="blue"
-                                compact={!showMuscleNames}
-                              />
-                            )}
-                          </div>
-                        </SortableContext>
-                      </DroppableCell>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-
-            {/* Hypertrophy */}
-            <div className="flex bg-gradient-to-b from-emerald-500/5 to-emerald-600/5">
-              <RowLabelCompact label="IPER" color="emerald" icon={Dumbbell} isHyperGroup={true} compact={!showMuscleNames} />
-              <div className="flex-1 flex flex-col">
-                {hyperSlots.map((row, idx) => (
-                  <div key={row.key} className={`flex flex-1 ${idx < hyperSlots.length - 1 ? 'border-b border-emerald-500/10' : ''}`}>
-                    <div className="flex-1 grid divide-x divide-gray-200/20 dark:divide-zinc-800/20 items-stretch" style={{ gridTemplateColumns: `repeat(${Math.max(days.length, 1)}, minmax(0, 1fr))` }}>
-                      {days.map(day => {
-                        const hyperExercises = day.exercises.filter(e => e.category === 'HYPERTROPHY');
-                        const exercises = hyperExercises.filter((e, i) => row.filter(e, i));
-                        const isSelected = selectedDayId === day.template_id;
-                        return (
-                          <DroppableCell key={`cell-${day.template_id}-${row.key}`} id={`cell-day-${day.weekday}-${row.key}`} isSelected={isSelected} onClick={() => onDaySelect?.(day)} compact={!showMuscleNames}>
-                            <SortableContext items={exercises.map(e => e.unique_id)} strategy={horizontalListSortingStrategy}>
-                              <div className={`flex flex-col ${showMuscleNames ? 'gap-2' : 'gap-1'}`}>
-                                {exercises.map(ex => <CompactExerciseCard key={ex.unique_id} exercise={ex} dayTemplateId={day.template_id} onEdit={handleEdit} onDelete={handleDelete} showMuscleNames={showMuscleNames} />)}
-                                {exercises.length === 0 && (
-                                  <InteractiveAddButton 
-                                    onClick={(e) => { e.stopPropagation(); setAddModal({ dayTemplateId: day.template_id, category: 'HYPERTROPHY', dayWeekday: day.weekday }); }}
-                                    color="emerald"
-                                    compact={!showMuscleNames}
-                                  />
-                                )}
-                              </div>
-                            </SortableContext>
-                          </DroppableCell>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
+        {/* Container principale con glassmorphism */}
+        <div className="no-select-calendar w-full rounded-3xl border border-white/20 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl shadow-[0_8px_32px_-8px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_-8px_rgba(0,0,0,0.3)] overflow-x-hidden flex flex-col min-w-0" onSelectStart={(e) => e.preventDefault()}>
+          {/* Header Row */}
+          <div className="flex border-b border-gray-200/30 dark:border-zinc-800/30 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md">
+            <div className="w-[100px] shrink-0 border-r border-gray-200/30 dark:border-zinc-800/30" />
+            <div className="flex-1 grid divide-x divide-gray-200/30 dark:divide-zinc-800/30" style={{ gridTemplateColumns: `repeat(${Math.max(days.length, 1)}, minmax(0, 1fr))` }}>
+              {days.map(day => (
+                <DayHeaderCompact key={day.template_id} day={day} isSelected={selectedDayId === day.template_id} onClick={onDaySelect} compact={!showMuscleNames} />
+              ))}
             </div>
           </div>
 
-          {/* Drag Overlay con spring animation */}
-          <DragOverlay modifiers={[snapCenterToCursor]} dropAnimation={{ sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: '0.4' } } }) }}>
-            {activeExercise ? (
-              <motion.div
-                initial={{ rotate: 0, scale: 1 }}
-                animate={{ rotate: 3, scale: 1.08 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                style={{ filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.2))' }}
-              >
-                <CompactExerciseCard exercise={activeExercise} isOverlay showMuscleNames={showMuscleNames} />
-              </motion.div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+          {/* Volume Row con Data Viz */}
+          <VolumeRow days={days} showVolume={showVolume} setShowVolume={setShowVolume} compact={!showMuscleNames} />
 
-        {/* Add Exercise Modal */}
-        <AnimatePresence>
-          {addModal && (
-            <AddExerciseModal
-              dayName={addModal.dayWeekday + 1}
-              category={addModal.category}
-              availableExercises={availableExercises}
-              onAdd={handleAddExercise}
-              onClose={() => setAddModal(null)}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Edit Modal */}
-        <AnimatePresence>
-          {editModal && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" 
-              onClick={() => setEditModal(null)}
-            >
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                className="w-full max-w-sm rounded-3xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/10 overflow-hidden" 
-                onClick={e => e.stopPropagation()}
-              >
-                <div className="px-6 py-5 bg-gradient-to-r from-blue-500 to-blue-600">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-[16px] font-black text-white tracking-tight">Modifica esercizio</h2>
-                    <button onClick={() => setEditModal(null)} className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors">
-                      <X size={18} />
-                    </button>
+          {/* Main Grid */}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
+            <div className="flex flex-col">
+              {mainRows.map((row) => (
+                <div key={row.key} className="flex border-b border-gray-200/20 dark:border-zinc-800/20">
+                  <RowLabelCompact label={row.label} color={row.color} icon={row.icon} compact={!showMuscleNames} />
+                  <div className="flex-1 grid divide-x divide-gray-200/20 dark:divide-zinc-800/20 items-stretch" style={{ gridTemplateColumns: `repeat(${Math.max(days.length, 1)}, minmax(0, 1fr))` }}>
+                    {days.map(day => {
+                      const exercises = day.exercises.filter(row.filter);
+                      const isSelected = selectedDayId === day.template_id;
+                      return (
+                        <DroppableCell key={`cell-${day.template_id}-${row.key}`} id={`cell-day-${day.weekday}-${row.key}`} isSelected={isSelected} onClick={() => onDaySelect?.(day)} compact={!showMuscleNames}>
+                          <SortableContext items={exercises.map(e => e.unique_id)} strategy={horizontalListSortingStrategy}>
+                            <div className={`flex flex-col ${showMuscleNames ? 'gap-2' : 'gap-1'}`}>
+                              {row.key === 'aw' ? (() => {
+                                const groups = [];
+                                const processed = new Set();
+                                const vol1 = exercises.filter(e => e.exercise_id?.startsWith('aw_v1_'));
+                                if (vol1.length > 0) {
+                                  groups.push({ id: `${day.template_id}-vol1`, exercise: { unique_id: `${day.template_id}-vol1`, exercise_id: 'aw_vol_1', exercise_name: 'AW Vol.1 (P&C)', category: 'AW' } });
+                                  vol1.forEach(e => processed.add(e.unique_id));
+                                }
+                                const vol2 = exercises.filter(e => e.exercise_id?.startsWith('aw_v2_'));
+                                if (vol2.length > 0) {
+                                  groups.push({ id: `${day.template_id}-vol2`, exercise: { unique_id: `${day.template_id}-vol2`, exercise_id: 'aw_vol_2', exercise_name: 'AW Vol.2 (C&S)', category: 'AW' } });
+                                  vol2.forEach(e => processed.add(e.unique_id));
+                                }
+                                exercises.forEach(ex => { if (!processed.has(ex.unique_id)) groups.push({ id: ex.unique_id, exercise: ex }); });
+                                return groups.map(g => <CompactExerciseCard key={g.id} exercise={g.exercise} dayTemplateId={day.template_id} showMuscleNames={showMuscleNames} />);
+                              })() : (
+                                exercises.map(ex => <CompactExerciseCard key={ex.unique_id} exercise={ex} dayTemplateId={day.template_id} onEdit={handleEdit} onDelete={handleDelete} showMuscleNames={showMuscleNames} />)
+                              )}
+                              {exercises.length === 0 && (
+                                <InteractiveAddButton
+                                  onClick={(e) => { e.stopPropagation(); setAddModal({ dayTemplateId: day.template_id, category: row.key === 'aw' ? 'AW' : 'STRENGTH', dayWeekday: day.weekday }); }}
+                                  color="blue"
+                                  compact={!showMuscleNames}
+                                />
+                              )}
+                            </div>
+                          </SortableContext>
+                        </DroppableCell>
+                      );
+                    })}
                   </div>
                 </div>
-                <div className="p-5 space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 dark:text-zinc-400 mb-1.5 uppercase tracking-wider">Nome</label>
-                    <input
-                      type="text"
-                      defaultValue={editModal.exercise.exercise_name}
-                      id="edit-name"
-                      className="w-full px-4 py-2.5 rounded-xl border-0 bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 text-sm focus:ring-2 focus:ring-blue-500/30 outline-none"
-                      autoFocus
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 dark:text-zinc-400 mb-1.5 uppercase tracking-wider">Istruzione</label>
-                    <input
-                      type="text"
-                      defaultValue={editModal.exercise.instruction || ''}
-                      id="edit-instruction"
-                      className="w-full px-4 py-2.5 rounded-xl border-0 bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 text-sm focus:ring-2 focus:ring-blue-500/30 outline-none"
-                      placeholder="es. Wendler 5/3/1"
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2 pt-2">
-                    <motion.button 
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setEditModal(null)} 
-                      className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
-                    >
-                      Annulla
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handleEditSave({ name: document.getElementById('edit-name').value, instruction: document.getElementById('edit-instruction').value })}
-                      className="px-5 py-2 text-sm font-bold text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-xl shadow-lg shadow-blue-500/25 transition-all"
-                    >
-                      Salva
-                    </motion.button>
-                  </div>
+              ))}
+
+              {/* Hypertrophy */}
+              <div className="flex bg-gradient-to-b from-emerald-500/5 to-emerald-600/5">
+                <RowLabelCompact label="IPER" color="emerald" icon={Dumbbell} isHyperGroup={true} compact={!showMuscleNames} />
+                <div className="flex-1 flex flex-col">
+                  {hyperSlots.map((row, idx) => (
+                    <div key={row.key} className={`flex flex-1 ${idx < hyperSlots.length - 1 ? 'border-b border-emerald-500/10' : ''}`}>
+                      <div className="flex-1 grid divide-x divide-gray-200/20 dark:divide-zinc-800/20 items-stretch" style={{ gridTemplateColumns: `repeat(${Math.max(days.length, 1)}, minmax(0, 1fr))` }}>
+                        {days.map(day => {
+                          const hyperExercises = day.exercises.filter(e => e.category === 'HYPERTROPHY');
+                          const exercises = hyperExercises.filter((e, i) => row.filter(e, i));
+                          const isSelected = selectedDayId === day.template_id;
+                          return (
+                            <DroppableCell key={`cell-${day.template_id}-${row.key}`} id={`cell-day-${day.weekday}-${row.key}`} isSelected={isSelected} onClick={() => onDaySelect?.(day)} compact={!showMuscleNames}>
+                              <SortableContext items={exercises.map(e => e.unique_id)} strategy={horizontalListSortingStrategy}>
+                                <div className={`flex flex-col ${showMuscleNames ? 'gap-2' : 'gap-1'}`}>
+                                  {exercises.map(ex => <CompactExerciseCard key={ex.unique_id} exercise={ex} dayTemplateId={day.template_id} onEdit={handleEdit} onDelete={handleDelete} showMuscleNames={showMuscleNames} />)}
+                                  {exercises.length === 0 && (
+                                    <InteractiveAddButton
+                                      onClick={(e) => { e.stopPropagation(); setAddModal({ dayTemplateId: day.template_id, category: 'HYPERTROPHY', dayWeekday: day.weekday }); }}
+                                      color="emerald"
+                                      compact={!showMuscleNames}
+                                    />
+                                  )}
+                                </div>
+                              </SortableContext>
+                            </DroppableCell>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
+
+            {/* Drag Overlay con spring animation */}
+            <DragOverlay modifiers={[snapCenterToCursor]} dropAnimation={{ sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: '0.4' } } }) }}>
+              {activeExercise ? (
+                <motion.div
+                  initial={{ rotate: 0, scale: 1 }}
+                  animate={{ rotate: 3, scale: 1.08 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  style={{ filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.2))' }}
+                >
+                  <CompactExerciseCard exercise={activeExercise} isOverlay showMuscleNames={showMuscleNames} />
+                </motion.div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+
+          {/* Portals for Modals to break out of layout constraints */}
+          {typeof document !== 'undefined' && createPortal(
+            <>
+              <AnimatePresence>
+                {addModal && (
+                  <AddExerciseModal
+                    dayName={addModal.dayWeekday + 1}
+                    category={addModal.category}
+                    availableExercises={availableExercises}
+                    onAdd={handleAddExercise}
+                    onClose={() => setAddModal(null)}
+                  />
+                )}
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {editModal && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    style={{ position: 'fixed', inset: 0, zIndex: 100 }}
+                    className="flex items-center justify-center p-4 bg-black/40 backdrop-blur-md"
+                    onClick={() => setEditModal(null)}
+                  >
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                      className="w-full max-w-sm rounded-3xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl shadow-2xl border border-white/20 dark:border-white/10 overflow-hidden"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <div className="px-6 py-5 bg-gradient-to-r from-blue-500 to-blue-600">
+                        <div className="flex items-center justify-between">
+                          <h2 className="text-[16px] font-black text-white tracking-tight">Modifica esercizio</h2>
+                          <button onClick={() => setEditModal(null)} className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors">
+                            <X size={18} />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="p-5 space-y-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 dark:text-zinc-400 mb-1.5 uppercase tracking-wider">Nome</label>
+                          <input
+                            type="text"
+                            defaultValue={editModal.exercise.exercise_name}
+                            id="edit-name"
+                            className="w-full px-4 py-2.5 rounded-xl border-0 bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 text-sm focus:ring-2 focus:ring-blue-500/30 outline-none"
+                            autoFocus
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-500 dark:text-zinc-400 mb-1.5 uppercase tracking-wider">Istruzione</label>
+                          <input
+                            type="text"
+                            defaultValue={editModal.exercise.instruction || ''}
+                            id="edit-instruction"
+                            className="w-full px-4 py-2.5 rounded-xl border-0 bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 text-sm focus:ring-2 focus:ring-blue-500/30 outline-none"
+                            placeholder="es. Wendler 5/3/1"
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2 pt-2">
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => setEditModal(null)}
+                            className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
+                          >
+                            Annulla
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => handleEditSave({ name: document.getElementById('edit-name').value, instruction: document.getElementById('edit-instruction').value })}
+                            className="px-5 py-2 text-sm font-bold text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-xl shadow-lg shadow-blue-500/25 transition-all"
+                          >
+                            Salva
+                          </motion.button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>,
+            document.body
           )}
-        </AnimatePresence>
-      </div>
+        </div>
       </div>
     </div>
   );

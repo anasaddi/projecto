@@ -411,16 +411,31 @@ export default function StrengthTable2({ exercise, onRowsChange }) {
 
                     {/* Anas Check */}
                     <td className="py-1.5 px-1 text-center">
-                      <input
-                        type="checkbox"
-                        checked={r.anas.completed}
-                        onChange={() => toggleComplete(currentMonth - 1, idx, 'anas')}
-                        className="w-4 h-4 rounded border-2 border-blue-300 dark:border-blue-700 accent-blue-500 cursor-pointer"
-                      />
+                      <div className="flex flex-col items-center gap-1">
+                        <input
+                          type="checkbox"
+                          checked={r.anas.completed}
+                          onChange={(e) => {
+                            toggleComplete(currentMonth - 1, idx, 'anas');
+                            if (e.target.checked) import('canvas-confetti').then(m => m.default({ particleCount: 40, spread: 60, origin: { y: 0.8 } }));
+                          }}
+                          className="w-4 h-4 rounded border-2 border-blue-300 dark:border-blue-700 accent-blue-500 cursor-pointer"
+                        />
+                        {r.anas.completed && (
+                          <input
+                            type="number"
+                            min="1" max="10"
+                            placeholder="RPE"
+                            value={r.anas.rpe || ''}
+                            onChange={e => updateAthlete(currentMonth - 1, idx, 'anas', 'rpe', e.target.value)}
+                            className="w-8 text-[8px] text-center bg-gray-100 dark:bg-zinc-800 rounded outline-none text-gray-500 font-medium"
+                          />
+                        )}
+                      </div>
                     </td>
 
                     {/* Flavio kg */}
-                    <td className="py-1.5 px-1 text-center">
+                    <td className="py-1.5 px-1 text-center border-l border-gray-100 dark:border-zinc-700/50">
                       <ModernInput
                         type="number"
                         step="0.5"
@@ -456,12 +471,27 @@ export default function StrengthTable2({ exercise, onRowsChange }) {
 
                     {/* Flavio Check */}
                     <td className="py-1.5 px-1 text-center">
-                      <input
-                        type="checkbox"
-                        checked={r.flavio.completed}
-                        onChange={() => toggleComplete(currentMonth - 1, idx, 'flavio')}
-                        className="w-4 h-4 rounded border-2 border-emerald-300 dark:border-emerald-700 accent-emerald-500 cursor-pointer"
-                      />
+                      <div className="flex flex-col items-center gap-1">
+                        <input
+                          type="checkbox"
+                          checked={r.flavio.completed}
+                          onChange={(e) => {
+                            toggleComplete(currentMonth - 1, idx, 'flavio');
+                            if (e.target.checked) import('canvas-confetti').then(m => m.default({ particleCount: 40, spread: 60, origin: { y: 0.8 }, colors: ['#10b981', '#34d399'] }));
+                          }}
+                          className="w-4 h-4 rounded border-2 border-emerald-300 dark:border-emerald-700 accent-emerald-500 cursor-pointer"
+                        />
+                        {r.flavio.completed && (
+                          <input
+                            type="number"
+                            min="1" max="10"
+                            placeholder="RPE"
+                            value={r.flavio.rpe || ''}
+                            onChange={e => updateAthlete(currentMonth - 1, idx, 'flavio', 'rpe', e.target.value)}
+                            className="w-8 text-[8px] text-center bg-gray-100 dark:bg-zinc-800 rounded outline-none text-gray-500 font-medium"
+                          />
+                        )}
+                      </div>
                     </td>
                   </motion.tr>
                 );
