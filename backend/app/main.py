@@ -61,12 +61,12 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.include_router(training.router, prefix="/api/training", tags=["training"])
     app.include_router(sources.router, prefix="/api/sources", tags=["sources"])
     app.include_router(content.router, prefix="/api/content", tags=["content"])
     app.include_router(insights.router, prefix="/api/insights", tags=["insights"])
     app.include_router(search.router, prefix="/api/search", tags=["search"])
     app.include_router(youtube.router, prefix="/api/youtube", tags=["youtube"])
-    app.include_router(training.router, prefix="/api/training", tags=["training"])
     return app
 
 
