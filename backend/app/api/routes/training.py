@@ -164,19 +164,19 @@ def recommendation(body: schemas.RecommendationRequest, db: Session = Depends(ge
 
 # --- Training Progression (StrengthTable2) ---
 
-@router.get("/progression", response_model=list[schemas.TrainingProgressionOut], dependencies=[Depends(check_admin_access)])
+@router.get("/progression", response_model=list[schemas.TrainingProgressionOut])
 def get_all_progressions(db: Session = Depends(get_db)):
     """Fetch all progression data for all exercises."""
     return crud_training.get_all_progressions(db)
 
 
-@router.get("/progression/{exercise_id}", response_model=Optional[schemas.TrainingProgressionOut], dependencies=[Depends(check_admin_access)])
+@router.get("/progression/{exercise_id}", response_model=Optional[schemas.TrainingProgressionOut])
 def get_progression(exercise_id: str, db: Session = Depends(get_db)):
     """Fetch 6-month progression data for an exercise."""
     return crud_training.get_training_progression(db, exercise_id)
 
 
-@router.post("/progression/{exercise_id}", response_model=schemas.TrainingProgressionOut, dependencies=[Depends(check_admin_access)])
+@router.post("/progression/{exercise_id}", response_model=schemas.TrainingProgressionOut)
 def update_progression(exercise_id: str, body: schemas.TrainingProgressionUpdate, db: Session = Depends(get_db)):
     """Save 6-month progression data for an exercise."""
     return crud_training.update_training_progression(db, exercise_id, body.data)
@@ -184,7 +184,7 @@ def update_progression(exercise_id: str, body: schemas.TrainingProgressionUpdate
 
 # --- Daily Schedule ---
 
-@router.get("/schedule", response_model=list[schemas.DailyScheduleOut], dependencies=[Depends(check_admin_access)])
+@router.get("/schedule", response_model=list[schemas.DailyScheduleOut])
 def get_schedule(
     start_date: Optional[date] = None, 
     days_count: int = 14, 
@@ -195,7 +195,7 @@ def get_schedule(
     return crud_training.get_daily_schedule(db, target_date, days_count)
 
 
-@router.patch("/schedule/{schedule_date}", response_model=schemas.DailyScheduleOut, dependencies=[Depends(check_admin_access)])
+@router.patch("/schedule/{schedule_date}", response_model=schemas.DailyScheduleOut)
 def update_schedule_completion(
     schedule_date: date, 
     body: schemas.DailyScheduleUpdate, 
