@@ -19,6 +19,10 @@ def check_admin_access(x_km_access: Optional[str] = Header(None)):
         raise HTTPException(status_code=403, detail="Accesso negato: sezione privata.")
     return True
 
+@router.get("/ping")
+def ping():
+    return {"status": "pong"}
+
 @router.get("/exercises", response_model=list[schemas.ExerciseOut])
 def get_exercises(db: Session = Depends(get_db)):
     """Public route for the muscle-exercise matrix."""
