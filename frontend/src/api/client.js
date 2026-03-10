@@ -1,9 +1,15 @@
 const BASE = import.meta.env.VITE_API_BASE || '/api'
 
 async function request(path, options = {}) {
+  const token = localStorage.getItem('km-admin-token')
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { 'x-km-access': token } : {}),
+    ...options.headers,
+  }
   const res = await fetch(BASE + path, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
     ...options,
+    headers,
   })
   if (!res.ok) {
     const err = new Error(res.statusText)
@@ -81,6 +87,11 @@ export const api = {
     updateWeek: (days) => request('/training/week', { method: 'PUT', body: JSON.stringify({ days }) }),
     updateDayExercise: (data) =>
       request('/training/day-exercise', { method: 'PATCH', body: JSON.stringify(data) }),
+    updateExerciseActive: (exerciseId, isActive) =>
+      request('/training/exercise/active', {
+        method: 'PATCH',
+        body: JSON.stringify({ exercise_id: exerciseId, is_active: isActive ? 1 : 0 }),
+      }),
     log: (data) =>
       request('/training/log', { method: 'POST', body: JSON.stringify(data) }),
     getHistory: (exerciseId, limit = 15) =>
@@ -91,6 +102,43 @@ export const api = {
       request(`/training/exercises/${encodeURIComponent(exerciseId)}`, {
         method: 'PATCH',
         body: JSON.stringify({ primary_muscles: primaryMuscles }),
+      }),
+    getAllProgressions: () => request('/training/progression'),
+    getProgression: (exerciseId) => request(`/training/progression/${encodeURIComponent(exerciseId)}`),
+    updateProgression: (exerciseId, data) =>
+      request(`/training/progression/${encodeURIComponent(exerciseId)}`, {
+        method: 'POST',
+        body: JSON.stringify({ data }),
+      }),
+    getSchedule: (startDate, daysCount) => {
+      let url = '/training/schedule';
+      const params = new URLSearchParams();
+      if (startDate) params.append('start_date', startDate);
+      if (daysCount) params.append('days_count', daysCount);
+      if (params.toString()) url += `?${params.toString()}`;
+      return request(url);
+    },
+    updateSchedule: (date, isCompleted) =>
+      request(`/training/schedule/${date}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ is_completed: isCompleted }),
+      }),
+    skipToday: () =>
+      request('/training/schedule/skip-today', {
+        method: 'POST'
+      }),
+    // --- Dashboard ---
+    getDashboardState: () => request('/training/dashboard-state'),
+    updateDashboardState: (data) =>
+      request('/training/dashboard-state', {
+        method: 'PUT',
+        body: JSON.stringify({ data }),
+      }),
+    getSharedDashboard: (shareId) => request(`/training/shared-dashboard/${encodeURIComponent(shareId)}`),
+    updateSharedDashboard: (shareId, data, title) =>
+      request(`/training/shared-dashboard/${encodeURIComponent(shareId)}`, {
+        method: 'PUT',
+        body: JSON.stringify({ data, title }),
       }),
   },
 }

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useDashboardStats } from '../context/DashboardStatsContext';
+import { api } from '../api/client';
 
 /**
  * ----------------------------------------------------------------------
@@ -71,14 +72,21 @@ function formatCountdown(ms) {
 
 function buildDefaultState() {
   const DEFAULT_HABITS = [
-    { id: uid('daily'), title: '🚫 No nut', locked: false },
-    { id: uid('daily'), title: '💪 Workout', locked: false },
-    { id: uid('daily'), title: '🕌 Pray', locked: false },
-    { id: uid('daily'), title: '😴 Sleep 7.5h+', locked: false },
-    { id: uid('daily'), title: '🚭 No smoke', locked: true },
-    { id: uid('daily'), title: '📖 Read', locked: true },
-    { id: uid('daily'), title: '📓 Journaling', locked: true },
-    { id: uid('daily'), title: '✋ No nail biting', locked: true },
+    { id: uid('daily'), title: '💎 Retention', locked: false },
+    { id: uid('daily'), title: '⚔️ Allenamento', locked: false },
+    { id: uid('daily'), title: '💤 Sonno 7.5h+', locked: false },
+    { id: uid('daily'), title: '🚭 No Fumo', locked: true },
+    { id: uid('daily'), title: '📚 Lettura', locked: true },
+    { id: uid('daily'), title: '✍️ Journaling', locked: true },
+    { id: uid('daily'), title: '💅 Cura Mani', locked: true },
+    { id: uid('daily'), title: '💧 Idratazione 3L', locked: true },
+    { id: uid('daily'), title: '🍎 No Junk Food', locked: true },
+    { id: uid('daily'), title: '🧊 Doccia Fredda', locked: true },
+    { id: uid('daily'), title: '🧠 Deep Work 2h', locked: true },
+    { id: uid('daily'), title: '🧴 Skincare', locked: true },
+    { id: uid('daily'), title: '🦵 Mobilità/Stretch', locked: true },
+    { id: uid('daily'), title: '🤝 Grip Training', locked: true },
+    { id: uid('daily'), title: '📵 Social < 1h', locked: true },
   ];
   const mk = (title, done = false) => ({ id: uid('task'), title, done, children: [], deadline: undefined });
   const mkChild = (parent, ...children) => ({ ...parent, children });
@@ -508,7 +516,7 @@ const accentBorder = (a) => ({
   rose: 'border-l-rose-300 dark:border-l-rose-600',
 }[a] || 'border-l-indigo-300 dark:border-l-indigo-600');
 
-function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDelete, onRename, onDeadline, onAddChild, onAddToTop3, hasFreeTop3Slot = true }) {
+function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDelete, onRename, onDeadline, onAddChild, onAddToTop3, onMove, hasFreeTop3Slot = true, parentId = null }) {
   const [draft, setDraft] = useState('');
   const [openAdd, setOpenAdd] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -528,12 +536,27 @@ function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDele
   useEffect(() => { if (showDeadline) setDeadlineInput(node.deadline || ''); }, [showDeadline, node.deadline]);
 
   const handleDragStart = (e) => {
-    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'project', projectId, taskId: node.id }));
+    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'project-task', projectId, taskId: node.id, parentId }));
     e.dataTransfer.effectAllowed = 'move';
   };
 
   return (
-    <div className="group/task flex flex-col w-full select-text">
+    <div 
+      className="group/task flex flex-col w-full select-text"
+      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.add('bg-indigo-50/50', 'dark:bg-indigo-500/5'); }}
+      onDragLeave={(e) => { e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-500/5'); }}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-500/5');
+        try {
+          const payload = JSON.parse(e.dataTransfer.getData('application/json'));
+          if (payload.type === 'project-task' && payload.projectId === projectId && payload.parentId === parentId) {
+            onMove(payload.taskId);
+          }
+        } catch (_) {}
+      }}
+    >
       <div 
         draggable
         onDragStart={handleDragStart}
@@ -633,10 +656,11 @@ function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDele
 
       {expanded && hasChildren && (
         <div className={`ml-5 pl-2 border-l-2 ${accentBorder(projectAccent)} flex flex-col`}>
-          {node.children.map((child) => (
+          {node.children.map((child, cIdx) => (
             <DenseTaskNode
               key={child.id} node={child} depth={depth + 1} projectId={projectId} projectAccent={projectAccent}
-              onToggle={onToggle} onDelete={onDelete} onRename={onRename} onDeadline={onDeadline} onAddChild={onAddChild} onAddToTop3={onAddToTop3} hasFreeTop3Slot={hasFreeTop3Slot}
+              onToggle={onToggle} onDelete={onDelete} onRename={onRename} onDeadline={onDeadline} onAddChild={onAddChild} onAddToTop3={onAddToTop3} 
+              onMove={(tid) => onMove(tid, cIdx, node.id)} hasFreeTop3Slot={hasFreeTop3Slot} parentId={node.id}
             />
           ))}
         </div>
@@ -661,7 +685,11 @@ export default function DashboardV2() {
   const [top3Manual, setTop3Manual] = useState(initial.top3Manual);
   const [quickTasks, setQuickTasks] = useState(initial.quickTasks);
   const [quickTaskDraft, setQuickTaskDraft] = useState('');
+  const [quickTaskEditingId, setQuickTaskEditingId] = useState(null);
+  const [quickTaskEditingTitle, setQuickTaskEditingTitle] = useState('');
   const [habitDraft, setHabitDraft] = useState('');
+  const [habitEditingId, setHabitEditingId] = useState(null);
+  const [habitEditingTitle, setHabitEditingTitle] = useState('');
   const [projectTaskDrafts, setProjectTaskDrafts] = useState({});
   const [projectDeadlineEditing, setProjectDeadlineEditing] = useState(null);
   const [projectDeadlineInput, setProjectDeadlineInput] = useState('');
@@ -669,17 +697,60 @@ export default function DashboardV2() {
   const [quickTaskDeadlineInput, setQuickTaskDeadlineInput] = useState('');
   const [dailyCompletionLog, setDailyCompletionLog] = useState(initial.dailyCompletionLog || {});
   
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // 1. Initial Load from DB
+  useEffect(() => {
+    async function fetchDB() {
+      try {
+        const res = await api.training.getDashboardState();
+        if (res && res.data) {
+          const d = res.data;
+          if (d.dailyTaskTemplates) setDailyTaskTemplates(d.dailyTaskTemplates);
+          if (d.dailyTaskLogs) setDailyTaskLogs(d.dailyTaskLogs);
+          if (d.projects) setProjects(d.projects);
+          if (d.prayerLogs) setPrayerLogs(d.prayerLogs);
+          if (d.top3Manual) setTop3Manual(d.top3Manual);
+          if (d.quickTasks) setQuickTasks(d.quickTasks);
+          if (d.dailyCompletionLog) setDailyCompletionLog(d.dailyCompletionLog);
+        }
+      } catch (err) {
+        console.error("Failed to load dashboard from DB:", err);
+      } finally {
+        setIsLoaded(true);
+      }
+    }
+    fetchDB();
+  }, []);
+
   const [now, setNow] = useState(new Date());
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
+  // 2. Sync to LocalStorage (Fallback) and DB (Primary)
+  const syncTimeoutRef = useRef(null);
   useEffect(() => {
+    if (!isLoaded) return;
+
+    const state = { dailyTaskTemplates, dailyTaskLogs, projects, prayerLogs, top3Manual, quickTasks, dailyCompletionLog };
+    
+    // LocalStorage Sync
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ dailyTaskTemplates, dailyTaskLogs, projects, prayerLogs, top3Manual, quickTasks, dailyCompletionLog }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (_) {}
-  }, [dailyTaskTemplates, dailyTaskLogs, projects, prayerLogs, top3Manual, quickTasks, dailyCompletionLog]);
+
+    // DB Sync (Debounced)
+    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+    syncTimeoutRef.current = setTimeout(async () => {
+      try {
+        await api.training.updateDashboardState(state);
+      } catch (err) {
+        console.error("Failed to sync dashboard to DB:", err);
+      }
+    }, 2000);
+  }, [isLoaded, dailyTaskTemplates, dailyTaskLogs, projects, prayerLogs, top3Manual, quickTasks, dailyCompletionLog]);
 
   const todayKey = toDateKey(now);
   const todayTaskLog = dailyTaskLogs[todayKey] || {};
@@ -719,6 +790,9 @@ export default function DashboardV2() {
 
   // Actions
   const toggleDailyTask = (id, val) => setDailyTaskLogs(p => ({ ...p, [todayKey]: { ...p[todayKey], [id]: val } }));
+  const toggleHabitLock = (id) => {
+    setDailyTaskTemplates(p => p.map(t => t.id === id ? { ...t, locked: !t.locked } : t));
+  };
   const reorderHabits = (fromIdx, toIdx) => {
     if (fromIdx === toIdx) return;
     setDailyTaskTemplates(p => {
@@ -802,6 +876,31 @@ export default function DashboardV2() {
       return { ...p, tasks: next };
     });
   };
+  const moveProjectTask = (projectId, taskId, targetIndex) => {
+    updateProject(projectId, p => {
+      const next = [...(p.tasks || [])];
+      const fromIndex = next.findIndex(t => t.id === taskId);
+      if (fromIndex === -1) return p;
+      const [removed] = next.splice(fromIndex, 1);
+      next.splice(targetIndex, 0, removed);
+      return { ...p, tasks: next };
+    });
+  };
+
+  const moveSubtask = (projectId, parentId, taskId, targetIndex) => {
+    updateProject(projectId, p => {
+      const tasks = updateNodeInTree(p.tasks, parentId, parent => {
+        const next = [...(parent.children || [])];
+        const fromIndex = next.findIndex(t => t.id === taskId);
+        if (fromIndex === -1) return parent;
+        const [removed] = next.splice(fromIndex, 1);
+        next.splice(targetIndex, 0, removed);
+        return { ...parent, children: next };
+      });
+      return { ...p, tasks };
+    });
+  };
+
   const toggleProjectTask = (projectId, taskId, val) => {
     updateProject(projectId, p => ({ ...p, tasks: updateNodeInTree(p.tasks, taskId, n => ({ ...n, done: val })) }));
     setDailyCompletionLog(prev => {
@@ -972,23 +1071,57 @@ export default function DashboardV2() {
               className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-700/50 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-rose-400 mb-2.5 transition-colors"
             />
             <div className="overflow-y-auto custom-scrollbar flex flex-col gap-1.5 pr-1 max-h-28">
-              {quickTasks.filter(t => !t.parentId).map(task => {
+              {quickTasks.filter(t => !t.parentId).map((task, idx) => {
                 const showDeadline = task.deadline || quickTaskDeadlineEditing === task.id;
                 return (
                   <div 
                     key={task.id} 
                     draggable
                     onDragStart={(e) => {
-                      e.dataTransfer.setData('application/json', JSON.stringify({ type: 'quick', quickTaskId: task.id }));
+                      e.dataTransfer.setData('application/json', JSON.stringify({ type: 'quick', quickTaskId: task.id, fromIndex: idx }));
                       e.dataTransfer.effectAllowed = 'move';
                     }}
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-rose-50', 'dark:bg-rose-500/5'); }}
+                    onDragLeave={(e) => { e.currentTarget.classList.remove('bg-rose-50', 'dark:bg-rose-500/5'); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove('bg-rose-50', 'dark:bg-rose-500/5');
+                      try {
+                        const payload = JSON.parse(e.dataTransfer.getData('application/json'));
+                        if (payload.type === 'quick') reorderQuickTasks(payload.fromIndex, idx);
+                      } catch (_) {}
+                    }}
                     onClick={() => toggleQuickTask(task.id, !task.done)}
+                    onDoubleClick={(e) => { e.stopPropagation(); setQuickTaskEditingId(task.id); setQuickTaskEditingTitle(task.title); }}
                     className="group/qt flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 cursor-grab active:cursor-grabbing select-text"
                   >
                     <span className={`shrink-0 transition-colors pointer-events-none ${task.done ? 'text-rose-500' : 'text-gray-300 dark:text-gray-600'}`}>
                       {task.done ? <Icons.CheckCircle className="w-3.5 h-3.5" /> : <Icons.Circle className="w-3.5 h-3.5" />}
                     </span>
-                    <span className={`text-xs font-medium min-w-0 flex-1 truncate ${task.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-200'}`}>{task.title}</span>
+                    {quickTaskEditingId === task.id ? (
+                      <input
+                        autoFocus
+                        value={quickTaskEditingTitle}
+                        onChange={(e) => setQuickTaskEditingTitle(e.target.value)}
+                        onBlur={() => {
+                          const t = quickTaskEditingTitle.trim();
+                          if (t) updateQuickTask(task.id, qt => ({ ...qt, title: t }));
+                          setQuickTaskEditingId(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const t = quickTaskEditingTitle.trim();
+                            if (t) updateQuickTask(task.id, qt => ({ ...qt, title: t }));
+                            setQuickTaskEditingId(null);
+                          }
+                          if (e.key === 'Escape') setQuickTaskEditingId(null);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex-1 bg-white dark:bg-gray-800 border border-rose-400 rounded px-1 text-xs outline-none py-0 select-text"
+                      />
+                    ) : (
+                      <span className={`text-xs font-medium min-w-0 flex-1 truncate ${task.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-200'}`}>{task.title}</span>
+                    )}
                     {/* Deadline - visibile solo se impostata */}
                     {showDeadline && (
                       <div className="flex justify-end min-w-[4rem] shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -1179,6 +1312,7 @@ export default function DashboardV2() {
                     tabIndex={0}
                     onClick={() => !isLocked && toggleDailyTask(task.id, !isDone)}
                     onKeyDown={(e) => !isLocked && (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), toggleDailyTask(task.id, !isDone))}
+                    onDoubleClick={(e) => { e.stopPropagation(); setHabitEditingId(task.id); setHabitEditingTitle(task.title); }}
                     className={`group/hab flex items-center gap-2.5 px-3 py-2.5 rounded-lg border transition-all select-text ${isLocked ? 'opacity-60 bg-gray-50 dark:bg-gray-800/40 border-gray-100 dark:border-gray-800 cursor-default' : isDone ? 'bg-sky-50/50 dark:bg-sky-500/5 border-sky-100 dark:border-sky-500/20 cursor-pointer' : 'bg-white dark:bg-white/5 border-gray-100 dark:border-gray-700/50 hover:border-sky-200 dark:hover:border-sky-500/30 cursor-pointer'} ${!isLocked ? 'cursor-grab active:cursor-grabbing' : ''}`}
                   >
                     {isLocked ? (
@@ -1188,10 +1322,49 @@ export default function DashboardV2() {
                         {isDone ? <Icons.CheckCircle className="w-4 h-4" /> : <Icons.Circle className="w-4 h-4" />}
                       </span>
                     )}
-                    <span className={`text-xs font-medium truncate flex-1 ${isDone ? 'text-gray-400 line-through' : 'text-gray-800 dark:text-gray-200'}`}>{task.title}</span>
-                    <button type="button" onClick={(e) => { e.stopPropagation(); removeDailyTask(task.id); }} className="shrink-0 p-0.5 text-gray-400 hover:text-red-500 rounded opacity-0 group-hover/hab:opacity-100 transition-opacity" title="Rimuovi" aria-label="Rimuovi">
-                      <Icons.X className="w-3 h-3" />
-                    </button>
+                    {habitEditingId === task.id ? (
+                      <input
+                        autoFocus
+                        value={habitEditingTitle}
+                        onChange={(e) => setHabitEditingTitle(e.target.value)}
+                        onBlur={() => {
+                          const t = habitEditingTitle.trim();
+                          if (t) setDailyTaskTemplates(p => p.map(h => h.id === task.id ? { ...h, title: t } : h));
+                          setHabitEditingId(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const t = habitEditingTitle.trim();
+                            if (t) setDailyTaskTemplates(p => p.map(h => h.id === task.id ? { ...h, title: t } : h));
+                            setHabitEditingId(null);
+                          }
+                          if (e.key === 'Escape') setHabitEditingId(null);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex-1 bg-white dark:bg-gray-800 border border-sky-400 rounded px-1 text-xs outline-none py-0 select-text"
+                      />
+                    ) : (
+                      <span className={`text-xs font-medium truncate flex-1 ${isDone ? 'text-gray-400 line-through' : 'text-gray-800 dark:text-gray-200'}`}>{task.title}</span>
+                    )}
+                    
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover/hab:opacity-100 transition-opacity">
+                      <button 
+                        type="button" 
+                        onClick={(e) => { e.stopPropagation(); toggleHabitLock(task.id); }} 
+                        className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-white/10 transition-colors ${isLocked ? 'text-amber-500' : 'text-gray-400'}`}
+                        title={isLocked ? "Sblocca abitudine" : "Blocca abitudine"}
+                      >
+                        {isLocked ? <Icons.Lock className="w-3 h-3" /> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>}
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={(e) => { e.stopPropagation(); removeDailyTask(task.id); }} 
+                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors" 
+                        title="Rimuovi"
+                      >
+                        <Icons.X className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -1295,7 +1468,7 @@ export default function DashboardV2() {
                   </div>
                   
                   <div className={`flex flex-col gap-1 pl-3.5 border-l-2 ${accentBorderClass} ml-3.5 mt-1`}>
-                    {project.tasks?.map(node => (
+                    {project.tasks?.map((node, tIdx) => (
                       <DenseTaskNode
                         key={node.id} node={node} depth={0} projectId={project.id} projectAccent={accent}
                         onToggle={(tid, val) => toggleProjectTask(project.id, tid, val)}
@@ -1320,6 +1493,7 @@ export default function DashboardV2() {
                           const free = top3Manual.findIndex(s => !s);
                           if (free !== -1) setTop3SlotAtIndex(free, { projectId: pid, taskId: tid });
                         }}
+                        onMove={(tid, targetIdx, pid) => pid ? moveSubtask(project.id, pid, tid, targetIdx) : moveProjectTask(project.id, tid, tIdx)}
                         hasFreeTop3Slot={top3Manual.some(s => !s)}
                       />
                     ))}

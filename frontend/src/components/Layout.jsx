@@ -7,7 +7,8 @@ export default function Layout({ children }) {
   const isYouTube = pathname === '/youtube'
   const isDashboard = pathname === '/dashboard'
   const isTraining = pathname === '/training'
-  const isWorkspace = isYouTube || isDashboard || isTraining
+  const isShared = pathname.startsWith('/shared/')
+  const isWorkspace = isYouTube || isDashboard || isTraining || isShared
   const { stats } = useDashboardStats()
 
   const [isDark, setIsDark] = useState(() => localStorage.getItem('km-theme') === 'dark')
@@ -15,6 +16,27 @@ export default function Layout({ children }) {
     document.documentElement.classList.toggle('dark', isDark)
     localStorage.setItem('km-theme', isDark ? 'dark' : 'light')
   }, [isDark])
+
+  // Se è una pagina condivisa o l'utente è un guest, mostriamo un layout minimale
+  const isGuest = localStorage.getItem('km-user-role') === 'guest'
+  
+  if (isShared || isGuest) {
+    return (
+      <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors flex flex-col">
+        <main className="flex-1 overflow-auto">
+          {children}
+        </main>
+        <button
+          type="button"
+          onClick={() => setIsDark((d) => !d)}
+          className="fixed bottom-4 right-4 z-50 rounded-full p-3 bg-white dark:bg-stone-800 shadow-lg text-stone-400 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300 transition-all border border-stone-200 dark:border-stone-700"
+          aria-label={isDark ? 'Tema chiaro' : 'Tema scuro'}
+        >
+          {isDark ? '☀️' : '🌙'}
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className={`min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors ${isWorkspace ? 'flex flex-col' : ''}`}>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../api/client';
 import WeeklyCalendar4 from '../components/WeeklyCalendar4';
 import StrengthTable2 from '../components/StrengthTable2';
-import { Dumbbell, Swords, Target, ChevronRight, Undo2, Redo2, CheckCircle2, ChevronDown, ChevronUp, History, User, Activity, Link2 } from 'lucide-react';
+import { Dumbbell, Swords, Target, ChevronRight, Undo2, Redo2, CheckCircle2, ChevronDown, ChevronUp, History as HistoryIcon, User, Activity, Link2, X, Calendar as CalendarIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Epley Formula
@@ -11,12 +11,68 @@ const calc1RM = (weight, reps) => {
   const r = parseInt(reps, 10);
   if (!w || !r) return null;
   if (r === 1) return w;
-  return w * (1 + r / 30);
+  // Formula Epley conservativa (divisore 35 invece di 30)
+  return w * (1 + r / 35);
 };
 const roundToHalf = (n) => (Math.round(n * 2) / 2).toFixed(1);
 const format1RM = (weight, reps) => {
   const rm = calc1RM(weight, reps);
   return rm != null ? `${roundToHalf(rm)} kg` : '-';
+};
+
+// Helper to find the active month (1-6) for a progression
+const getActiveMonth = (progressionData) => {
+  if (!progressionData || !progressionData.dataByMonth) return 1;
+  
+  let activeMonthIdx = [...progressionData.dataByMonth].reverse().findIndex(m => 
+    m.some(r => r.anas.completed || r.flavio.completed)
+  );
+  
+  if (activeMonthIdx !== -1) {
+    activeMonthIdx = (progressionData.dataByMonth.length - 1) - activeMonthIdx;
+    
+    const currentMonth = progressionData.dataByMonth[activeMonthIdx];
+    if (currentMonth) {
+      const lastCheckedIdx = [...currentMonth].reverse().findIndex(row => row.anas.completed || row.flavio.completed);
+      let activeWeekIdx = -1;
+      
+      if (lastCheckedIdx !== -1) {
+        const realLastIdx = (currentMonth.length - 1) - lastCheckedIdx;
+        activeWeekIdx = realLastIdx + 1;
+      } else {
+        activeWeekIdx = 0;
+      }
+      
+      if (activeWeekIdx >= currentMonth.length && activeMonthIdx < progressionData.dataByMonth.length - 1) {
+        activeMonthIdx++;
+      }
+    }
+    return activeMonthIdx + 1;
+  }
+  
+  return 1;
+};
+
+// Helper to find the active week (1-5) for AW progressions
+const getActiveWeek = (progressionData, exerciseId) => {
+  if (!progressionData) return 1;
+  
+  // Per AW Volume, i dati sono salvati con chiavi tipo w1_s1, w2_s1, ecc.
+  // Cerchiamo l'ultima settimana che ha ALMENO un completato
+  let maxWeek = 0;
+  
+  Object.keys(progressionData).forEach(key => {
+    if (key.startsWith('w')) {
+      const parts = key.substring(1).split('_');
+      const w = parseInt(parts[0]);
+      if (!isNaN(w) && (progressionData[key]?.anas?.completed || progressionData[key]?.flavio?.completed)) {
+        if (w > maxWeek) maxWeek = w;
+      }
+    }
+  });
+
+  if (maxWeek === 0) return 1;
+  return Math.min(maxWeek, 5); 
 };
 
 // AW Volume 1/2 Config
@@ -25,7 +81,7 @@ const AW_VOL_CONFIG = {
   aw_v1_back_press: { weight: 15, pattern: 'std' },
   aw_v1_wrist_wrench: { weight: 10, pattern: 'alt' },
   aw_v1_side_press: { weight: 12, pattern: 'std' },
-  aw_v1_ulnar_chop: { weight: '5-8', pattern: 'std' },
+  aw_v1_ulnar_chop: { weight: 7, pattern: 'std' }, // Sostituito "5-8" con 7
   aw_v2_pronazione: { weight: 10, pattern: 'std' },
   aw_v2_cupping: { weight: 15, pattern: 'alt' },
   aw_v2_supination: { weight: 10, pattern: 'std' },
@@ -147,16 +203,22 @@ const AthleteAvatar = ({ initial, colorClass }) => (
 );
 
 // Form Input UI
-const ModernInput = ({ value, onChange, placeholder, type = 'text', step, className = '' }) => (
-  <input
-    type={type}
-    step={step}
-    value={value}
-    onChange={onChange}
-    placeholder={placeholder}
-    className={`w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700/60 rounded-lg text-xs text-center font-semibold text-gray-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all placeholder:text-gray-400 dark:placeholder:text-zinc-500 ${className}`}
-  />
-);
+const ModernInput = ({ value, onChange, placeholder, type = 'text', step, className = '' }) => {
+  // Determiniamo il tipo effettivo dell'input per evitare errori HTML5 con valori non numerici (es. "5-8")
+  const isNumericValue = value === '' || value === null || (!isNaN(parseFloat(value)) && isFinite(value));
+  const actualType = (type === 'number' && value && !isNumericValue) ? 'text' : type;
+
+  return (
+    <input
+      type={actualType}
+      step={step}
+      value={value ?? ''}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className={`w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700/60 rounded-lg text-xs text-center font-semibold text-gray-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all placeholder:text-gray-400 dark:placeholder:text-zinc-500 ${className}`}
+    />
+  );
+};
 
 const ModernCheckbox = ({ checked, onChange, colorClass = 'accent-blue-500' }) => (
   <input
@@ -414,8 +476,14 @@ const StrengthTable = ({ exercise, onRowsChange }) => {
 
 // --- AW VOLUME TABLE ---
 // --- AW VOLUME TABLE ---
-const AWVolumeTableGroup = ({ title, exercises, onRowsChange }) => {
-  const [currentWeek, setCurrentWeek] = useState(1);
+const AWVolumeTableGroup = ({ title, exercises, onRowsChange, progressions, initialWeek, resetTrigger }) => {
+  const [currentWeek, setCurrentWeek] = useState(initialWeek || 1);
+
+  useEffect(() => {
+    if (initialWeek) {
+      setCurrentWeek(initialWeek);
+    }
+  }, [initialWeek, resetTrigger]);
 
   return (
     <Card className="border-amber-100 dark:border-amber-900/30">
@@ -468,6 +536,7 @@ const AWVolumeTableGroup = ({ title, exercises, onRowsChange }) => {
                     onRowsChange={onRowsChange}
                     isFirst={s === 0}
                     totalSets={sets}
+                    initialData={progressions[ex.exercise_id]}
                   />
                 ));
               })}
@@ -479,13 +548,14 @@ const AWVolumeTableGroup = ({ title, exercises, onRowsChange }) => {
   );
 };
 
-const AWVolumeRow = ({ exercise, week, set, onRowsChange, isFirst, totalSets }) => {
+const AWVolumeRow = ({ exercise, week, set, onRowsChange, isFirst, totalSets, initialData }) => {
   const { exercise_id, exercise_name } = exercise;
   const cfg = AW_VOL_CONFIG[exercise_id] || { weight: 10, pattern: 'std' };
   const targets = cfg.pattern === 'alt' ? AW_ALT : AW_STD;
   const targetStr = targets[week - 1] || '—';
 
   const [data, setData] = useState(() => {
+    if (initialData?.[`w${week}_s${set}`]) return initialData[`w${week}_s${set}`];
     const defaultReps = targetStr.includes('x') ? targetStr.split('x')[1] : '';
     return {
       anas: { weight: String(cfg.weight), reps: defaultReps, completed: false },
@@ -493,7 +563,24 @@ const AWVolumeRow = ({ exercise, week, set, onRowsChange, isFirst, totalSets }) 
     };
   });
 
-  const update = (athlete, field, value) => setData(prev => ({ ...prev, [athlete]: { ...prev[athlete], [field]: value } }));
+  // Persistenza a livello di riga (debounced)
+  useEffect(() => {
+    if (!initialData) return; // Non sovrascrivere se stiamo ancora caricando
+    const timeout = setTimeout(() => {
+      api.training.updateProgression(exercise_id, {
+        ...initialData,
+        [`w${week}_s${set}`]: data
+      });
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [data, exercise_id, week, set]);
+
+  const update = (athlete, field, value) => setData(prev => {
+    const next = { ...prev, [athlete]: { ...prev[athlete], [field]: value } };
+    // Notifica parent per log history
+    // (opzionale, Training2 già gestisce handleRowsChange ma qui è a livello di set singolo)
+    return next;
+  });
   const toggle = (athlete) => setData(prev => ({ ...prev, [athlete]: { ...prev[athlete], completed: !prev[athlete].completed } }));
 
   return (
@@ -566,8 +653,14 @@ const AWVolumeRow = ({ exercise, week, set, onRowsChange, isFirst, totalSets }) 
 };
 
 // --- AW ISO TABLE ---
-const AWIsoTableGroup = ({ title, exercises, onRowsChange, programData }) => {
-  const [currentWeek, setCurrentWeek] = useState(1);
+const AWIsoTableGroup = ({ title, exercises, onRowsChange, programData, progressions, initialWeek, resetTrigger }) => {
+  const [currentWeek, setCurrentWeek] = useState(initialWeek || 1);
+
+  useEffect(() => {
+    if (initialWeek) {
+      setCurrentWeek(initialWeek);
+    }
+  }, [initialWeek, resetTrigger]);
 
   return (
     <Card className="border-amber-100 dark:border-amber-900/30">
@@ -630,6 +723,7 @@ const AWIsoTableGroup = ({ title, exercises, onRowsChange, programData }) => {
                     totalSets={sets}
                     progEx={progEx}
                     currentWeek={currentWeek}
+                    initialData={progressions[ex.exercise_id]}
                   />
                 ));
               })}
@@ -641,7 +735,7 @@ const AWIsoTableGroup = ({ title, exercises, onRowsChange, programData }) => {
   );
 };
 
-const AWIsoRow = ({ exercise, set, onRowsChange, isFirst, totalSets, progEx, currentWeek }) => {
+const AWIsoRow = ({ exercise, set, onRowsChange, isFirst, totalSets, progEx, currentWeek, initialData }) => {
   const { exercise_id, exercise_name } = exercise;
   const nameLower = exercise_name.toLowerCase();
 
@@ -654,6 +748,7 @@ const AWIsoRow = ({ exercise, set, onRowsChange, isFirst, totalSets, progEx, cur
   const targetStr = cfg.target;
 
   const [data, setData] = useState(() => {
+    if (initialData?.[`s${set}`]) return initialData[`s${set}`];
     const defaultTime = targetStr.includes('x') ? targetStr.split('x')[1].replace('s', '') : '';
     const initialWeight = progEx ? (progEx[`w${currentWeek}`] || '') : (cfg.weight || '');
     return {
@@ -661,6 +756,18 @@ const AWIsoRow = ({ exercise, set, onRowsChange, isFirst, totalSets, progEx, cur
       flavio: { weight: String(initialWeight), reps: defaultTime, completed: false }
     };
   });
+
+  // Persistenza (debounced)
+  useEffect(() => {
+    if (!initialData) return;
+    const timeout = setTimeout(() => {
+      api.training.updateProgression(exercise_id, {
+        ...initialData,
+        [`s${set}`]: data
+      });
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [data, exercise_id, set]);
 
   // Update effect if currentWeek changes
   useEffect(() => {
@@ -743,15 +850,28 @@ const AWIsoRow = ({ exercise, set, onRowsChange, isFirst, totalSets, progEx, cur
 };
 
 // --- EXERCISE TABLE (STANDARD AW) ---
-const ExerciseTable = ({ exercise, onRowsChange, expandedOverride = false }) => {
+const ExerciseTable = ({ exercise, onRowsChange, expandedOverride = false, initialData }) => {
   const { exercise_id, exercise_name, base_sets = 4, base_reps, instruction } = exercise;
   const [expanded, setExpanded] = useState(expandedOverride);
   const [currentSet, setCurrentSet] = useState(1);
-  const [rows, setRows] = useState(Array.from({ length: base_sets }, (_, i) => ({
-    id: i + 1, set: i + 1,
-    anas: { weight: '', reps: base_reps ? String(base_reps) : '', checked: false },
-    flavio: { weight: '', reps: base_reps ? String(base_reps) : '', checked: false },
-  })));
+  const [rows, setRows] = useState(() => {
+    if (initialData?.rows) return initialData.rows;
+    return Array.from({ length: base_sets }, (_, i) => ({
+      id: i + 1, set: i + 1,
+      anas: { weight: '', reps: base_reps ? String(base_reps) : '', checked: false },
+      flavio: { weight: '', reps: base_reps ? String(base_reps) : '', checked: false },
+    }));
+  });
+
+  // Persistenza
+  useEffect(() => {
+    if (!initialData) return;
+    const timeout = setTimeout(() => {
+      api.training.updateProgression(exercise_id, { rows });
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [rows, exercise_id]);
+
   const updateRow = (id, athlete, field, value) => setRows(prev => prev.map(r => r.id === id ? { ...r, [athlete]: { ...r[athlete], [field]: value } } : r));
   const toggleCheck = (id, athlete) => setRows(prev => prev.map(r => r.id === id ? { ...r, [athlete]: { ...r[athlete], checked: !r[athlete].checked } } : r));
 
@@ -771,7 +891,7 @@ const ExerciseTable = ({ exercise, onRowsChange, expandedOverride = false }) => 
           </div>
         </div>
         <button className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-gray-400">
-          {expanded ? <ChevronUp size={16} /> : <History size={16} />}
+          {expanded ? <ChevronUp size={16} /> : <HistoryIcon size={16} />}
         </button>
       </div>
 
@@ -871,7 +991,7 @@ const ExerciseTable = ({ exercise, onRowsChange, expandedOverride = false }) => 
 };
 
 // --- HYPERTROPHY TABLE ---
-const HypertrophyTable = ({ exercise, onRowsChange, initialRows, expandedOverride = false }) => {
+const HypertrophyTable = ({ exercise, onRowsChange, onProgressionChange, initialRows, expandedOverride = false, initialData }) => {
   const { exercise_id, exercise_name, base_reps } = exercise;
   const [expanded, setExpanded] = useState(expandedOverride);
   const [history, setHistory] = useState([]);
@@ -890,7 +1010,20 @@ const HypertrophyTable = ({ exercise, onRowsChange, initialRows, expandedOverrid
       flavio: { w: flavio?.weight ?? '', r: flavio?.reps ?? (base_reps ? String(base_reps) : ''), completed: !!flavio?.checked },
     };
   };
-  const [data, setData] = useState(() => parseInitial(initialRows) || defaultData());
+  const [data, setData] = useState(() => {
+    if (initialData) return initialData;
+    return parseInitial(initialRows) || defaultData();
+  });
+
+  // Persistenza
+  useEffect(() => {
+    if (!initialData) return;
+    const timeout = setTimeout(() => {
+      api.training.updateProgression(exercise_id, data);
+      onProgressionChange?.(exercise_id, data);
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [data, exercise_id]);
 
   useEffect(() => {
     if (initialRows?.length) {
@@ -900,8 +1033,11 @@ const HypertrophyTable = ({ exercise, onRowsChange, initialRows, expandedOverrid
   }, [exercise_id, initialRows]);
 
   const upd = (athlete, field, value) => {
+    // Gestione placeholder tipo "5-8" per input numerici
+    const numericValue = (field === 'w' || field === 'r') && value === '5-8' ? '7' : value;
+    
     setData(prev => {
-      const next = { ...prev, [athlete]: { ...prev[athlete], [field]: value } };
+      const next = { ...prev, [athlete]: { ...prev[athlete], [field]: numericValue } };
       const rows = [
         { set: 1, weight: next.anas.w, reps: next.anas.r, checked: next.anas.completed },
         { set: 2, weight: next.flavio.w, reps: next.flavio.r, checked: next.flavio.completed },
@@ -949,7 +1085,7 @@ const HypertrophyTable = ({ exercise, onRowsChange, initialRows, expandedOverrid
           <h3 className="text-[13px] font-black tracking-tight text-gray-900 dark:text-zinc-100 line-clamp-1 break-words">{exercise_name}</h3>
         </div>
         <button className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-gray-400">
-          {expanded ? <ChevronUp size={16} /> : <History size={16} />}
+          {expanded ? <ChevronUp size={16} /> : <HistoryIcon size={16} />}
         </button>
       </div>
 
@@ -1544,11 +1680,13 @@ function ExerciseMuscleMatrix({ exercises, weekDays, awProgram }) {
 // --- MAIN PAGE ---
 export default function Training2() {
   const [selectedDay, setSelectedDay] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
   const [weekData, setWeekData] = useState([]);
   const [setsByExercise, setSetsByExercise] = useState({});
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [calendarVisible, setCalendarVisible] = useState(true);
+  const [dayButtonsVisible, setDayButtonsVisible] = useState(false);
 
   // Focus Mode State
   const [isFocusMode, setIsFocusMode] = useState(false);
@@ -1562,50 +1700,172 @@ export default function Training2() {
 
   const [awProgram, setAwProgram] = useState(AW_PROGRAM_FALLBACK);
   const [allExercises, setAllExercises] = useState([]);
+  const [allProgressions, setAllProgressions] = useState({});
 
-  useEffect(() => {
-    setLoading(true);
-    const ctrl = new AbortController();
-    const apiBase = import.meta.env.VITE_API_BASE || '/api';
-    console.log("Fetching from API Base:", apiBase);
-    Promise.all([
-      fetch(`${apiBase}/training/week`, { signal: ctrl.signal }).then(r => {
-        if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
-        return r.json();
-      }),
-      api.training.getAwProgram().catch(() => ({}))
-    ])
-      .then(([data, awData]) => {
-        setWeekData(data);
-        setAwProgram(awData && Object.keys(awData).length ? awData : AW_PROGRAM_FALLBACK);
-        const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
-        setSelectedDay(data.find(d => d.weekday === todayIdx) || data[0]);
-      })
-      .catch(() => setLoadError(true))
-      .finally(() => setLoading(false));
-    return () => ctrl.abort();
+  const loadWeekData = useCallback(async (isInitial = false) => {
+    if (isInitial) setLoading(true);
+    try {
+      const [templates, scheduleData, awData, progressions] = await Promise.all([
+        api.training.getWeek(),
+        api.training.getSchedule(null, 21).catch(() => []), // 3 settimane per scorrere bene
+        api.training.getAwProgram().catch(() => ({})),
+        api.training.getAllProgressions().catch(() => [])
+      ]);
+
+      if (!templates || !Array.isArray(templates)) {
+        throw new Error("Template settimanali non validi o mancanti");
+      }
+
+      // Merge schedule con i template (per avere esercizi e date reali)
+      const mergedData = (scheduleData || []).map(day => {
+        const template = templates.find(t => t.template_id === day.template_id);
+        return {
+          ...day,
+          template: template || { exercises: [], day_name: 'Riposo', weekday: new Date(day.date || day.date_).getDay() }
+        };
+      });
+
+      setWeekData(mergedData);
+      setAwProgram(awData && Object.keys(awData).length ? awData : AW_PROGRAM_FALLBACK);
+      
+      const progMap = {};
+      (progressions || []).forEach(p => { progMap[p.exercise_id] = p.data; });
+      setAllProgressions(progMap);
+
+      if (isInitial) {
+        // Seleziona il giorno corrente nello schedule
+        const todayStr = new Date().toDateString();
+        const todayDay = mergedData.find(d => new Date(d.date || d.date_).toDateString() === todayStr) || mergedData[0];
+        
+        if (todayDay) {
+          setSelectedDay(todayDay.template);
+          setSelectedDate(todayDay.date || todayDay.date_);
+        }
+      } else {
+        // Aggiorna il giorno selezionato se i suoi dati sono cambiati
+        setSelectedDay(prev => {
+          if (!prev) return null;
+          const freshDay = mergedData.find(d => d.template_id === prev.template_id);
+          return freshDay ? freshDay.template : prev;
+        });
+      }
+    } catch (err) {
+      console.error("Errore caricamento dati:", err);
+      if (isInitial) setLoadError(true);
+    } finally {
+      if (isInitial) setLoading(false);
+    }
   }, []);
 
-  // Sync selectedDay if weekData changes (e.g. exercises added/removed)
   useEffect(() => {
-    if (selectedDay) {
-      const fresh = weekData.find(d => d.template_id === selectedDay.template_id);
-      if (fresh && JSON.stringify(fresh.exercises) !== JSON.stringify(selectedDay.exercises)) {
-        setSelectedDay(fresh);
-      }
-    }
-  }, [weekData, selectedDay]);
+    loadWeekData(true);
+  }, [loadWeekData]);
+
+  // --- DERIVED STATE (HOOKS FIRST) ---
+  // Esercizi filtrati (solo attivi)
+  const activeExercises = useMemo(() => {
+    if (!selectedDay?.exercises) return [];
+    return selectedDay.exercises.filter(ex => ex.is_active !== 0);
+  }, [selectedDay]);
+
+  const strengthEx = useMemo(() => activeExercises.filter(e => e.category === 'STRENGTH'), [activeExercises]);
+  const awEx = useMemo(() => activeExercises.filter(e => e.category === 'AW'), [activeExercises]);
+  const hypEx = useMemo(() => activeExercises.filter(e => e.category === 'HYPERTROPHY'), [activeExercises]);
+
+  // Calcolo progresso sessione
+  const totalExpectedSets = useMemo(() => activeExercises.reduce((acc, ex) => {
+    if (ex.category === 'HYPERTROPHY') return acc + 2; // Default 2 per HYPERTROPHY
+    if (ex.category === 'AW') return acc + 5; // Approssimazione AW
+    if (ex.category === 'STRENGTH') return acc + (ex.base_sets || 4);
+    return acc + (ex.base_sets || 3);
+  }, 0) || 1, [activeExercises]);
+
+  const totalCompletedSets = useMemo(() => Object.values(setsByExercise).reduce((acc, rows) => {
+    return acc + (rows?.filter(r => r.checked)?.length || 0);
+  }, 0), [setsByExercise]);
+
+  const progressPercent = useMemo(() => Math.min(100, Math.round((totalCompletedSets / totalExpectedSets) * 100)) || 0, [totalCompletedSets, totalExpectedSets]);
 
   useEffect(() => {
     if (calendarVisible) {
-      api.training.getExercises().then(setAllExercises).catch(() => setAllExercises([]));
+      api.training.getExercises().then(setAllExercises).catch(err => {
+        console.error("[Training2] Error fetching exercises:", err);
+        setAllExercises([]);
+      });
+      api.training.getAllProgressions().then(progressions => {
+        const progMap = {};
+        (progressions || []).forEach(p => { progMap[p.exercise_id] = p.data; });
+        setAllProgressions(progMap);
+      }).catch(err => {
+        console.error("[Training2] Error fetching progressions:", err);
+      });
     }
   }, [calendarVisible]);
 
-  const handleDaySelect = useCallback((day) => {
+  const handleDaySelect = useCallback((day, date) => {
     setSelectedDay(day);
+    setSelectedDate(date);
     setSetsByExercise({});
   }, []);
+
+  const handleToggleDayComplete = useCallback(async (date, completed) => {
+    try {
+      // Ottimisticamente aggiorniamo lo stato locale
+      setWeekData(prev => prev.map(day => {
+        const d = day.date || day.date_;
+        return d === date ? { ...day, is_completed: completed } : day;
+      }));
+      
+      await api.training.updateSchedule(date, completed);
+    } catch (err) {
+      console.error("Errore completamento giorno:", err);
+      // In caso di errore, ripristiniamo lo stato precedente (rollback)
+      setWeekData(prev => prev.map(day => {
+        const d = day.date || day.date_;
+        return d === date ? { ...day, is_completed: !completed } : day;
+      }));
+    }
+  }, []);
+
+  const handleProgressionChange = useCallback((exerciseId, data) => {
+    setAllProgressions(prev => ({
+      ...prev,
+      [exerciseId]: data
+    }));
+  }, []);
+
+  const handleUpdateTemplate = useCallback(async (updatedTemplate) => {
+    try {
+      // Otteniamo il piano settimanale aggiornato (stato locale)
+      const newWeekData = weekData.map(d => 
+        d.template_id === updatedTemplate.template_id ? updatedTemplate : d
+      );
+      
+      setWeekData(newWeekData);
+      
+      // Se il giorno selezionato è quello che abbiamo aggiornato, aggiorniamo anche lui
+      if (selectedDay?.template_id === updatedTemplate.template_id) {
+        setSelectedDay(updatedTemplate);
+      }
+
+      // Chiamata API per salvare tutto il piano
+      // Nota: salviamo solo i campi necessari per WorkoutDayExercise
+      await api.training.updateWeek(
+        newWeekData.map(d => ({
+          template_id: d.template_id,
+          exercises: d.exercises.map(ex => ({
+            exercise_id: ex.exercise_id,
+            custom_name: ex.exercise_name,
+            instruction: ex.instruction,
+            base_sets: ex.base_sets,
+            base_reps: ex.base_reps
+          }))
+        }))
+      );
+    } catch (err) {
+      console.error("Errore aggiornamento template:", err);
+    }
+  }, [weekData, selectedDay]);
 
   const handleRowsChange = useCallback((exerciseId, rows) => {
     setSetsByExercise(prev => {
@@ -1679,23 +1939,25 @@ export default function Training2() {
     );
   }
 
-  const strengthEx = selectedDay?.exercises.filter(e => e.category === 'STRENGTH') || [];
-  const awEx = selectedDay?.exercises.filter(e => e.category === 'AW') || [];
-  const hypEx = selectedDay?.exercises.filter(e => e.category === 'HYPERTROPHY') || [];
-
-  // Calcolo progresso sessione
-  const totalExpectedSets = selectedDay?.exercises.reduce((acc, ex) => {
-    if (ex.category === 'HYPERTROPHY') return acc + 2; // Default 2 per HYPERTROPHY
-    if (ex.category === 'AW') return acc + 5; // Approssimazione AW
-    if (ex.category === 'STRENGTH') return acc + (ex.base_sets || 4);
-    return acc + (ex.base_sets || 3);
-  }, 0) || 1; // Minimo 1 per evitare divisioni per zero
-
-  const totalCompletedSets = Object.values(setsByExercise).reduce((acc, rows) => {
-    return acc + (rows?.filter(r => r.checked)?.length || 0);
-  }, 0);
-
-  const progressPercent = Math.min(100, Math.round((totalCompletedSets / totalExpectedSets) * 100)) || 0;
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-gray-50/50 dark:bg-zinc-950 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+          <X className="text-red-600 w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Errore di Caricamento</h2>
+        <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
+          Non è stato possibile caricare il tuo protocollo di allenamento. Controlla la connessione al backend.
+        </p>
+        <button
+          onClick={() => loadWeekData(true)}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all"
+        >
+          Riprova
+        </button>
+      </div>
+    );
+  }
 
   // --- FOCUS MODE RENDER ---
   if (isFocusMode) {
@@ -1754,18 +2016,36 @@ export default function Training2() {
           <div className="relative z-10 scale-[1.02] sm:scale-105 origin-top mb-4 custom-scrollbar overflow-x-auto">
             {exercise.category === 'STRENGTH' ? (
               <div className="bg-zinc-950 p-2 rounded-2xl w-full mx-auto max-w-3xl">
-                <StrengthTable2 exercise={exercise} onRowsChange={handleRowsChange} />
+                <StrengthTable2 
+                  exercise={exercise} 
+                  onRowsChange={handleRowsChange} 
+                  onProgressionChange={handleProgressionChange}
+                  initialMonth={getActiveMonth(allProgressions[exercise.exercise_id])}
+                  resetTrigger={selectedDate}
+                />
               </div>
             ) : exercise.category === 'HYPERTROPHY' ? (
               <div className="max-w-md mx-auto relative group">
                 <div className="absolute inset-0 bg-emerald-500/5 blur-xl transition-colors pointer-events-none rounded-[24px]" />
                 <div className="relative">
-                  <HypertrophyTable exercise={exercise} onRowsChange={handleRowsChange} initialRows={setsByExercise[exercise.exercise_id]} expandedOverride={true} />
+                  <HypertrophyTable 
+                    exercise={exercise} 
+                    onRowsChange={handleRowsChange} 
+                    onProgressionChange={handleProgressionChange}
+                    initialRows={setsByExercise[exercise.exercise_id]} 
+                    expandedOverride={true} 
+                    initialData={allProgressions[exercise.exercise_id]}
+                  />
                 </div>
               </div>
             ) : (
               <div className="bg-zinc-950 p-2 rounded-2xl w-full mx-auto max-w-2xl border border-zinc-800">
-                <ExerciseTable exercise={exercise} onRowsChange={handleRowsChange} expandedOverride={true} />
+                <ExerciseTable 
+                  exercise={exercise} 
+                  onRowsChange={handleRowsChange} 
+                  expandedOverride={true} 
+                  initialData={allProgressions[exercise.exercise_id]}
+                />
               </div>
             )}
           </div>
@@ -1837,7 +2117,7 @@ export default function Training2() {
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#09090B] pb-24">
       {/* Top Navigation Bar */}
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-zinc-800/60 supports-[backdrop-filter]:bg-white/60">
-        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-[95vw] mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
               <Activity className="text-white" size={20} />
@@ -1849,119 +2129,80 @@ export default function Training2() {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Solo Auto Save in header, progress bar sotto */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-zinc-800/50">
-              {isSaving ? (
-                <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-              ) : lastSaved ? (
-                <CheckCircle2 size={14} className="text-emerald-500" />
-              ) : (
-                <div className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-zinc-600" />
-              )}
-              <span className="text-[10px] font-semibold text-gray-500 dark:text-gray-400">
-                {isSaving ? 'Saving...' : lastSaved ? 'Saved' : 'Ready'}
-              </span>
-            </div>
-
-            {/* Undo/Redo */}
-            <div className="flex bg-gray-100 dark:bg-zinc-800/80 rounded-xl p-1">
-              <button onClick={handleUndo} disabled={historyIndex <= 0} className="p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 disabled:opacity-30 transition-all text-gray-700 dark:text-gray-300">
-                <Undo2 size={16} />
-              </button>
-              <button onClick={handleRedo} disabled={historyIndex >= history.length - 1} className="p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 disabled:opacity-30 transition-all text-gray-700 dark:text-gray-300">
-                <Redo2 size={16} />
-              </button>
-            </div>
+            {isSaving && (
+              <div className="flex items-center gap-1.5 bg-blue-500/10 px-2 py-0.5 rounded-full">
+                <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
+                <span className="text-[8px] font-black text-blue-600 uppercase">Saving...</span>
+              </div>
+            )}
+            
+            <button 
+              onClick={() => setIsFocusMode(true)}
+              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              <Target size={14} />
+              Focus Mode
+            </button>
           </div>
         </div>
-        {/* Progress Bar Sottilissima */}
         <div className="w-full h-1 bg-gray-100 dark:bg-zinc-800 overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 transition-all duration-500 ease-out"
+            className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 transition-all duration-500"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
       </header>
 
-      <main className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
-
-        {/* Header with Calendar Toggle & FOCUS MODE START */}
-        <div className="flex justify-end gap-3">
-          {(strengthEx.length > 0 || awEx.length > 0 || hypEx.length > 0) && (
-            <button
-              onClick={() => {
-                setFocusExIndex(0);
-                setIsFocusMode(true);
-              }}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black bg-blue-600 border border-blue-500 text-white shadow-lg shadow-blue-500/30 hover:bg-blue-500 hover:scale-105 transition-all"
-            >
-              <Activity size={16} />
-              INIZIA ALLENAMENTO
-            </button>
-          )}
-
-          <button
-            onClick={() => setCalendarVisible(!calendarVisible)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
-          >
-            {calendarVisible ? 'Hide Schedule' : 'Edit Schedule'}
-            <ChevronDown size={14} className={`transform transition-transform ${calendarVisible ? 'rotate-180' : ''}`} />
-          </button>
-        </div>
-
-        <AnimatePresence>
-          {calendarVisible && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden space-y-4">
-              <MuscleVolumeLegend days={weekData} />
-
-              <div className="no-select-calendar overflow-x-hidden min-w-0">
-                <WeeklyCalendar4
-                  onDaySelect={handleDaySelect}
-                  selectedDayId={selectedDay?.template_id}
-                  initialDays={weekData}
-                  availableExercises={allExercises}
-                  onWeekUpdate={setWeekData}
-                />
-              </div>
-
-              {false && <ExerciseMuscleMatrix exercises={allExercises} weekDays={weekData} awProgram={awProgram} />}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Day Selector - Modern, Minimal & Precision Aligned */}
-        <div className="w-full mb-12 border-b border-gray-200/50 dark:border-zinc-800/50">
-          <div className="flex w-full overflow-hidden">
-            <div className="w-[100px] shrink-0 hidden sm:block" /> { /* 100px spacer for calendar line-up */}
-            <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${weekData.length}, minmax(0, 1fr))` }}>
-              {weekData.map(day => (
-                <button
-                  key={day.template_id}
-                  onClick={() => handleDaySelect(day)}
-                  className={`group relative py-6 text-[10px] font-black uppercase tracking-[0.25em] transition-all
-                    ${selectedDay?.template_id === day.template_id
-                      ? 'text-blue-600 dark:text-blue-400'
-                      : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
-                >
-                  <span className="relative z-10">Day {day.weekday + 1}</span>
-                  {selectedDay?.template_id === day.template_id && (
-                    <>
-                      <motion.div
-                        layoutId="nav-pill"
-                        className="absolute inset-x-2 inset-y-2 bg-blue-50 dark:bg-blue-500/10 rounded-2xl -z-0"
-                        transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                      />
-                      <motion.div
-                        layoutId="nav-bar"
-                        className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500 rounded-t-full z-20"
-                      />
-                    </>
-                  )}
-                </button>
-              ))}
+      <main className="max-w-[95vw] mx-auto px-4 py-8 space-y-8">
+        {/* Quick Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="p-5 flex items-center gap-4 bg-gradient-to-br from-blue-500 to-indigo-600 border-none shadow-xl shadow-blue-500/20">
+            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+              <Target className="text-white w-6 h-6" />
             </div>
-          </div>
+            <div>
+              <p className="text-[10px] font-black text-blue-100 uppercase tracking-widest mb-1">Session Progress</p>
+              <h3 className="text-2xl font-black text-white">{progressPercent}%</h3>
+            </div>
+          </Card>
+          
+          <Card className="p-5 flex items-center gap-4 border-zinc-200 dark:border-zinc-800">
+            <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+              <User className="text-zinc-400 w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Active Day</p>
+              <h3 className="text-lg font-black text-zinc-900 dark:text-zinc-100">{selectedDay?.day_name || 'Rest Day'}</h3>
+            </div>
+          </Card>
+
+          <Card className="p-5 flex items-center gap-4 border-zinc-200 dark:border-zinc-800">
+            <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+              <HistoryIcon className="text-zinc-400 w-6 h-6" />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={handleUndo} disabled={historyIndex <= 0} className="p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 text-zinc-400 hover:text-blue-500 disabled:opacity-30"><Undo2 size={16} /></button>
+              <button onClick={handleRedo} disabled={historyIndex >= history.length - 1} className="p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 text-zinc-400 hover:text-blue-500 disabled:opacity-30"><Redo2 size={16} /></button>
+            </div>
+          </Card>
         </div>
+
+        {/* Calendar Section */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <CalendarIcon size={16} className="text-zinc-400" />
+            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500">Weekly Schedule</h2>
+          </div>
+          <WeeklyCalendar4
+            schedule={weekData}
+            progressions={allProgressions}
+            onSelectDay={handleDaySelect}
+            onEditAction={handleUpdateTemplate}
+            onToggleComplete={handleToggleDayComplete}
+            onRefreshWeek={() => loadWeekData(false)}
+            loading={loading}
+          />
+        </section>
 
         {/* Exercises Grid - Strength e AW affiancati - Spaced and separated */}
         <div className="pt-8 border-t border-gray-200/50 dark:border-zinc-800/50">
@@ -1975,7 +2216,16 @@ export default function Training2() {
                 {strengthEx.length === 0 ? (
                   <div className="h-32 rounded-2xl border-2 border-dashed border-gray-200 dark:border-zinc-800 flex items-center justify-center text-xs font-semibold text-gray-400 uppercase tracking-widest">No Exercises</div>
                 ) : (
-                  strengthEx.map(ex => <StrengthTable2 key={`v2-${ex.exercise_id}`} exercise={ex} onRowsChange={handleRowsChange} />)
+                  strengthEx.map(ex => (
+                    <StrengthTable2 
+                      key={`v2-${ex.exercise_id}`} 
+                      exercise={ex} 
+                      onRowsChange={handleRowsChange} 
+                      onProgressionChange={handleProgressionChange}
+                      initialMonth={getActiveMonth(allProgressions[ex.exercise_id])}
+                      resetTrigger={selectedDate}
+                    />
+                  ))
                 )}
               </div>
             </section>
@@ -2019,12 +2269,12 @@ export default function Training2() {
 
                   return (
                     <>
-                      {vol1.length > 0 && <AWVolumeTableGroup title="Volume 1" exercises={vol1} onRowsChange={handleRowsChange} />}
-                      {vol2.length > 0 && <AWVolumeTableGroup title="Volume 2" exercises={vol2} onRowsChange={handleRowsChange} />}
-                      {isoLight.length > 0 && <AWIsoTableGroup title="AW Isometria Leggera" exercises={isoLight} onRowsChange={handleRowsChange} programData={awProgram?.light} />}
-                      {isoHeavy.length > 0 && <AWIsoTableGroup title="AW Isometria Pesante" exercises={isoHeavy} onRowsChange={handleRowsChange} programData={awProgram?.heavy} />}
+                      {vol1.length > 0 && <AWVolumeTableGroup title="Volume 1" exercises={vol1} onRowsChange={handleRowsChange} progressions={allProgressions} initialWeek={getActiveWeek(allProgressions[vol1[0]?.exercise_id])} resetTrigger={selectedDate} />}
+                      {vol2.length > 0 && <AWVolumeTableGroup title="Volume 2" exercises={vol2} onRowsChange={handleRowsChange} progressions={allProgressions} initialWeek={getActiveWeek(allProgressions[vol2[0]?.exercise_id])} resetTrigger={selectedDate} />}
+                      {isoLight.length > 0 && <AWIsoTableGroup title="AW Isometria Leggera" exercises={isoLight} onRowsChange={handleRowsChange} programData={awProgram?.light} progressions={allProgressions} initialWeek={getActiveWeek(allProgressions[isoLight[0]?.exercise_id])} resetTrigger={selectedDate} />}
+                      {isoHeavy.length > 0 && <AWIsoTableGroup title="AW Isometria Pesante" exercises={isoHeavy} onRowsChange={handleRowsChange} programData={awProgram?.heavy} progressions={allProgressions} initialWeek={getActiveWeek(allProgressions[isoHeavy[0]?.exercise_id])} resetTrigger={selectedDate} />}
                       {others.map(ex => (
-                        <ExerciseTable key={ex.exercise_id} exercise={ex} onRowsChange={handleRowsChange} />
+                        <ExerciseTable key={ex.exercise_id} exercise={ex} onRowsChange={handleRowsChange} initialData={allProgressions[ex.exercise_id]} />
                       ))}
                     </>
                   );
@@ -2167,11 +2417,18 @@ export default function Training2() {
             <section className="pt-8 mt-8 border-t border-gray-200/60 dark:border-zinc-800/60">
               <SectionHeader icon={Dumbbell} title="Hypertrophy & Accessories" subtitle="Isolation and Volume" colorClass="bg-emerald-500" />
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {hypEx.map(ex => <HypertrophyTable key={ex.exercise_id} exercise={ex} onRowsChange={handleRowsChange} initialRows={setsByExercise[ex.exercise_id]} />)}
+                {hypEx.map(ex => (
+                  <HypertrophyTable 
+                    key={ex.exercise_id} 
+                    exercise={ex} 
+                    onRowsChange={handleRowsChange} 
+                    initialRows={setsByExercise[ex.exercise_id]} 
+                    initialData={allProgressions[ex.exercise_id]}
+                  />
+                ))}
               </div>
             </section>
           )}
-
         </div>
       </main>
 

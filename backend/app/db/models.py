@@ -103,6 +103,29 @@ class Insight(Base):
     content = relationship("Content", back_populates="insights")
 
 
+class TrainingProgression(Base):
+    __tablename__ = "training_progressions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    exercise_id = Column(String(32), ForeignKey("exercises.id"), nullable=False, index=True)
+    # Blob JSON per tmAnas, tmFlavio, tmByMonth, dataByMonth
+    data = Column(JSON, nullable=False, default=dict)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    exercise = relationship("Exercise")
+
+
+class DailySchedule(Base):
+    __tablename__ = "daily_schedules"
+
+    id = Column(Integer, primary_key=True, index=True)
+    date_ = Column("date", DateTime, nullable=False, index=True, unique=True)
+    template_id = Column(String(64), ForeignKey("workout_day_templates.id"), nullable=True)
+    is_completed = Column(Integer, default=0, nullable=False)  # 1 = completed, 0 = pending
+    
+    template = relationship("WorkoutDayTemplate")
+
+
 # --- Training (Powerbuilding + AW + Hypertrophy) ---
 
 class ExerciseCategory(str, enum.Enum):
@@ -121,6 +144,7 @@ class Exercise(Base):
     secondary_muscles = Column(JSON, nullable=True, default=list)
     cns_fatigue = Column(Float, default=0.0, nullable=False)
     joint_stress = Column(JSON, nullable=True, default=dict)  # { "elbow": 0.6, "wrist": 0.5, ... }
+    is_active = Column(Integer, default=1, nullable=False)  # 1 = active, 0 = disabled
 
     template_exercises = relationship("WorkoutDayExercise", back_populates="exercise")
     set_logs = relationship("SetLog", back_populates="exercise")
@@ -177,6 +201,31 @@ class SetLog(Base):
 
     workout_log = relationship("WorkoutLog", back_populates="sets")
     exercise = relationship("Exercise", back_populates="set_logs")
+
+
+# --- Dashboard & Habits ---
+
+class DashboardState(Base):
+    __tablename__ = "dashboard_states"
+
+    id = Column(Integer, primary_key=True, index=True)
+    # Identificativo unico per lo stato (es. 'current_user_state')
+    key = Column(String(64), unique=True, index=True, nullable=False)
+    # L'intero oggetto JSON della dashboard (abitudini, progetti, logs)
+    data = Column(JSON, nullable=False, default=dict)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class SharedDashboard(Base):
+    __tablename__ = "shared_dashboards"
+
+    id = Column(Integer, primary_key=True, index=True)
+    # Identificativo unico per l'accesso (es. 'progetti-amico')
+    share_id = Column(String(64), unique=True, index=True, nullable=False)
+    title = Column(String(256), nullable=False, default="Progetti Condivisi")
+    # Lista di progetti (JSON)
+    data = Column(JSON, nullable=False, default=list)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class DailyReadiness(Base):

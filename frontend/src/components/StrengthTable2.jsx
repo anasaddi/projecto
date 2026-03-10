@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { api } from '../api/client';
 
 // --- Utility Functions ---
 const calc1RM = (weight, reps) => {
@@ -7,13 +8,20 @@ const calc1RM = (weight, reps) => {
   const r = parseInt(reps, 10);
   if (!w || !r) return null;
   if (r === 1) return w;
-  return w * (1 + r / 30);
+  // Formula Epley conservativa (divisore 35 invece di 30 per essere più "safe")
+  return w * (1 + r / 35);
 };
 
 const roundToHalf = (n) => (Math.round(n * 2) / 2).toFixed(1);
 const format1RM = (weight, reps) => {
   const rm = calc1RM(weight, reps);
   return rm != null ? `${roundToHalf(rm)}` : '-';
+};
+
+// --- Bodyweights for special exercises ---
+const BODYWEIGHTS = {
+  anas: 60,
+  flavio: 68
 };
 
 // --- Configuration ---
@@ -61,11 +69,11 @@ const Checkbox = ({ checked, onChange, colorClass = 'accent-blue-500' }) => (
 );
 
 // --- Main Component ---
-export default function StrengthTable2({ exercise, onRowsChange }) {
+export default function StrengthTable2({ exercise, onRowsChange, onProgressionChange, initialMonth, resetTrigger }) {
   const { exercise_id, exercise_name } = exercise;
   const storageKey = STORAGE_KEY(exercise_id);
 
-  const [currentMonth, setCurrentMonth] = useState(1);
+  const [currentMonth, setCurrentMonth] = useState(initialMonth || 1);
   const [tmAnas, setTmAnas] = useState('');
   const [tmFlavio, setTmFlavio] = useState('');
   // TM per mesi 2-6 (calcolati da AMRAP del mese precedente, ma modificabili)
@@ -74,40 +82,108 @@ export default function StrengthTable2({ exercise, onRowsChange }) {
     Array.from({ length: 6 }, () => createMonthData())
   );
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const saveTimeoutRef = useRef(null);
 
-  // Load from storage
+  // Sync currentMonth if initialMonth prop changes or resetTrigger (like selectedDate) changes
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed.tmAnas != null) setTmAnas(String(parsed.tmAnas));
-        if (parsed.tmFlavio != null) setTmFlavio(String(parsed.tmFlavio));
-        if (parsed.tmByMonth?.length === 5) setTmByMonth(parsed.tmByMonth);
-        if (parsed.dataByMonth?.length === 6) setDataByMonth(parsed.dataByMonth);
-      }
-    } catch (_) { }
-    setIsLoaded(true);
-  }, [storageKey]);
+    if (initialMonth) {
+      setCurrentMonth(initialMonth);
+    }
+  }, [initialMonth, resetTrigger]);
 
-  // Persist to storage
+  // Load from Backend (with localStorage migration)
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const backendData = await api.training.getProgression(exercise_id);
+        
+        if (backendData?.data) {
+          const { tmAnas, tmFlavio, tmByMonth, dataByMonth } = backendData.data;
+          if (tmAnas != null) setTmAnas(String(tmAnas));
+          if (tmFlavio != null) setTmFlavio(String(tmFlavio));
+          if (tmByMonth?.length === 5) setTmByMonth(tmByMonth);
+          if (dataByMonth?.length === 6) setDataByMonth(dataByMonth);
+        } else {
+          // Fallback/Migrazione da localStorage
+          const raw = localStorage.getItem(storageKey);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.tmAnas != null) setTmAnas(String(parsed.tmAnas));
+            if (parsed.tmFlavio != null) setTmFlavio(String(parsed.tmFlavio));
+            if (parsed.tmByMonth?.length === 5) setTmByMonth(parsed.tmByMonth);
+            if (parsed.dataByMonth?.length === 6) setDataByMonth(parsed.dataByMonth);
+            
+            // Salva subito nel backend per migrare
+            await api.training.updateProgression(exercise_id, parsed);
+          }
+        }
+      } catch (err) {
+        console.error("Errore caricamento progressione:", err);
+      } finally {
+        setIsLoaded(true);
+      }
+    }
+    loadData();
+  }, [exercise_id, storageKey]);
+
+  // Auto-save to Backend (debounced)
   useEffect(() => {
     if (!isLoaded) return;
-    try {
-      localStorage.setItem(storageKey, JSON.stringify({ tmAnas, tmFlavio, tmByMonth, dataByMonth }));
-    } catch (_) { }
-  }, [storageKey, tmAnas, tmFlavio, tmByMonth, dataByMonth, isLoaded]);
+
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      setIsSaving(true);
+      const payload = {
+        tmAnas,
+        tmFlavio,
+        tmByMonth,
+        dataByMonth
+      };
+      try {
+        await api.training.updateProgression(exercise_id, payload);
+        // Sincronizza anche localStorage come backup locale
+        localStorage.setItem(storageKey, JSON.stringify(payload));
+        // Notifica il genitore per aggiornare il calendario
+        if (onProgressionChange) onProgressionChange(exercise_id, payload);
+      } catch (err) {
+        console.error("Errore salvataggio progressione:", err);
+      } finally {
+        setIsSaving(false);
+      }
+    }, 1000);
+
+    return () => clearTimeout(saveTimeoutRef.current);
+  }, [tmAnas, tmFlavio, tmByMonth, dataByMonth, exercise_id, storageKey, isLoaded]);
 
   // Month 1: TM auto-calculates weights
   const setTmAnasWithSync = (val) => {
     setTmAnas(val);
     const tm = parseFloat(val);
-    if (!isNaN(tm) && tm > 0) {
+    if (!isNaN(tm) && tm >= 0) {
+      const isPullup = exercise_id === 'pu_str';
+      const bw = BODYWEIGHTS.anas;
+      
       setDataByMonth(prev => prev.map((month, mi) =>
-        mi === 0 ? month.map((row, wi) => ({
-          ...row,
-          anas: { ...row.anas, weight: String(Math.round(tm * WEEK_CONFIGS[wi].percent)) }
-        })) : month
+        mi === 0 ? month.map((row, wi) => {
+          const percent = WEEK_CONFIGS[wi].percent;
+          let weightVal;
+          if (isPullup) {
+            // Se sono trazioni, il TM inserito è il sovraccarico
+            // TargetTotal = (TM + BW) * Percent
+            // TargetAdded = TargetTotal - BW
+            const totalTm = tm + bw;
+            const targetTotal = totalTm * percent;
+            weightVal = String(roundToHalf(targetTotal) - bw);
+          } else {
+            weightVal = String(roundToHalf(tm * percent));
+          }
+          return {
+            ...row,
+            anas: { ...row.anas, weight: weightVal }
+          };
+        }) : month
       ));
     }
   };
@@ -115,17 +191,31 @@ export default function StrengthTable2({ exercise, onRowsChange }) {
   const setTmFlavioWithSync = (val) => {
     setTmFlavio(val);
     const tm = parseFloat(val);
-    if (!isNaN(tm) && tm > 0) {
+    if (!isNaN(tm) && tm >= 0) {
+      const isPullup = exercise_id === 'pu_str';
+      const bw = BODYWEIGHTS.flavio;
+
       setDataByMonth(prev => prev.map((month, mi) =>
-        mi === 0 ? month.map((row, wi) => ({
-          ...row,
-          flavio: { ...row.flavio, weight: String(Math.round(tm * WEEK_CONFIGS[wi].percent)) }
-        })) : month
+        mi === 0 ? month.map((row, wi) => {
+          const percent = WEEK_CONFIGS[wi].percent;
+          let weightVal;
+          if (isPullup) {
+            const totalTm = tm + bw;
+            const targetTotal = totalTm * percent;
+            weightVal = String(roundToHalf(targetTotal) - bw);
+          } else {
+            weightVal = String(roundToHalf(tm * percent));
+          }
+          return {
+            ...row,
+            flavio: { ...row.flavio, weight: weightVal }
+          };
+        }) : month
       ));
     }
   };
 
-  // Months 2-6: TM comes from AMRAP 1RM of previous month (auto-calculate if not set)
+  // Months 2-6: TM comes from AMRAP 1RM of previous month (auto-calculate only IF NOT already set)
   useEffect(() => {
     setDataByMonth(prev => {
       let changed = false;
@@ -133,23 +223,45 @@ export default function StrengthTable2({ exercise, onRowsChange }) {
         if (monthIdx === 0) return month;
         const amrapRow = prev[monthIdx - 1][2]; // Week 3 (AMRAP)
         const tmIndex = monthIdx - 1;
+        const isPullup = exercise_id === 'pu_str';
+
         return month.map((row, weekIdx) => {
           const cfg = WEEK_CONFIGS[weekIdx];
           const updates = {};
           for (const athlete of ['anas', 'flavio']) {
-            // Use manual TM if set, otherwise calculate from AMRAP
+            // Se l'utente ha già inserito un peso manualmente per questa settimana, non sovrascriverlo
+            if (row[athlete].weight && row[athlete].weight !== '' && row[athlete].weight !== '0') {
+              continue;
+            }
+
+            const bw = BODYWEIGHTS[athlete];
             const manualTm = tmByMonth[tmIndex]?.[athlete];
             let tm;
-            if (manualTm && !isNaN(parseFloat(manualTm))) {
+
+            // Se c'è un TM manuale inserito per questo mese, usalo sempre (anche se AMRAP non è checkato)
+            if (manualTm && !isNaN(parseFloat(manualTm)) && manualTm !== '') {
               tm = parseFloat(manualTm);
-            } else {
-              const rm = calc1RM(amrapRow[athlete].weight, amrapRow[athlete].reps);
+            } 
+            // Altrimenti calcola da AMRAP, ma SOLO se l'AMRAP è stato completato (checkato)
+            else if (amrapRow[athlete].completed) {
+              const tableWeight = parseFloat(amrapRow[athlete].weight) || 0;
+              const totalWeight = isPullup ? (tableWeight + bw) : tableWeight;
+              const rm = calc1RM(totalWeight, amrapRow[athlete].reps);
               if (rm != null) {
-                tm = parseFloat(roundToHalf(rm));
+                const totalRm = parseFloat(roundToHalf(rm));
+                tm = isPullup ? (totalRm - bw) : totalRm;
               }
             }
+
             if (tm != null) {
-              const targetKg = String(Math.round(tm * cfg.percent));
+              let targetKg;
+              if (isPullup) {
+                const totalTm = tm + bw;
+                const targetTotal = totalTm * cfg.percent;
+                targetKg = String(roundToHalf(targetTotal) - bw);
+              } else {
+                targetKg = String(roundToHalf(tm * cfg.percent));
+              }
               if (row[athlete].weight !== targetKg) {
                 updates[athlete] = { ...row[athlete], weight: targetKg };
                 changed = true;
@@ -161,19 +273,33 @@ export default function StrengthTable2({ exercise, onRowsChange }) {
       });
       return changed ? next : prev;
     });
-  }, [dataByMonth, tmByMonth]);
+  }, [dataByMonth, tmByMonth, exercise_id]);
 
   // Update TM for months 2-6 and sync weights
   const updateTmForMonth = (monthIdx, athlete, val) => {
     const tmIndex = monthIdx - 1;
     setTmByMonth(prev => prev.map((tm, i) => i === tmIndex ? { ...tm, [athlete]: val } : tm));
     const tm = parseFloat(val);
-    if (!isNaN(tm) && tm > 0) {
+    if (!isNaN(tm) && tm >= 0) {
+      const isPullup = exercise_id === 'pu_str';
+      const bw = BODYWEIGHTS[athlete];
+
       setDataByMonth(prev => prev.map((month, mi) =>
-        mi === monthIdx ? month.map((row, wi) => ({
-          ...row,
-          [athlete]: { ...row[athlete], weight: String(Math.round(tm * WEEK_CONFIGS[wi].percent)) }
-        })) : month
+        mi === monthIdx ? month.map((row, wi) => {
+          const percent = WEEK_CONFIGS[wi].percent;
+          let weightVal;
+          if (isPullup) {
+            const totalTm = tm + bw;
+            const targetTotal = totalTm * percent;
+            weightVal = String(roundToHalf(targetTotal) - bw);
+          } else {
+            weightVal = String(roundToHalf(tm * percent));
+          }
+          return {
+            ...row,
+            [athlete]: { ...row[athlete], weight: weightVal }
+          };
+        }) : month
       ));
     }
   };
@@ -197,18 +323,21 @@ export default function StrengthTable2({ exercise, onRowsChange }) {
   const getDefaultReps = (weekCfg) =>
     weekCfg.targetReps === 'AMRAP' ? 1 : (typeof weekCfg.targetReps === 'number' ? weekCfg.targetReps : weekCfg.sets || 5);
 
-  const getVolume = (athleteData, weekCfg) => {
+  const getVolume = (athlete, athleteData, weekCfg) => {
+    const isPullup = exercise_id === 'pu_str';
+    const bw = BODYWEIGHTS[athlete];
     const w = parseFloat(athleteData.weight) || 0;
+    const totalW = isPullup ? (w + bw) : w;
     const r = parseInt(athleteData.reps, 10) || getDefaultReps(weekCfg);
-    if (!w) return 0;
+    if (!totalW) return 0;
     const totalReps = weekCfg.targetReps === 'AMRAP' ? r : weekCfg.sets * r;
-    return w * totalReps;
+    return totalW * totalReps;
   };
 
   const data = dataByMonth[currentMonth - 1] || [];
 
-  const totalVolumeA = data.reduce((a, r, i) => a + getVolume(r.anas, WEEK_CONFIGS[i]), 0);
-  const totalVolumeF = data.reduce((a, r, i) => a + getVolume(r.flavio, WEEK_CONFIGS[i]), 0);
+  const totalVolumeA = data.reduce((a, r, i) => a + getVolume('anas', r.anas, WEEK_CONFIGS[i]), 0);
+  const totalVolumeF = data.reduce((a, r, i) => a + getVolume('flavio', r.flavio, WEEK_CONFIGS[i]), 0);
 
   return (
     <Card className="overflow-hidden border-blue-100/60 dark:border-blue-900/20">
@@ -220,6 +349,9 @@ export default function StrengthTable2({ exercise, onRowsChange }) {
           </div>
           <div className="min-w-0">
             <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{exercise_name}</h3>
+            {isSaving && (
+              <span className="text-[8px] text-blue-500 animate-pulse font-bold uppercase tracking-tighter">Saving...</span>
+            )}
           </div>
         </div>
 
@@ -264,7 +396,16 @@ export default function StrengthTable2({ exercise, onRowsChange }) {
                   className="w-10 text-center"
                   placeholder={(() => {
                     const prevAmrap = dataByMonth[currentMonth - 2]?.[2];
-                    return prevAmrap ? format1RM(prevAmrap.anas.weight, prevAmrap.anas.reps) : 'TM';
+                    if (!prevAmrap) return 'TM';
+                    
+                    const isPullup = exercise_id === 'pu_str';
+                    const bw = BODYWEIGHTS.anas;
+                    const w = parseFloat(prevAmrap.anas.weight) || 0;
+                    const totalW = isPullup ? (w + bw) : w;
+                    const rmTotal = calc1RM(totalW, prevAmrap.anas.reps || getDefaultReps(WEEK_CONFIGS[2]));
+                    if (rmTotal == null) return 'TM';
+                    const displayRM = isPullup ? (rmTotal - bw) : rmTotal;
+                    return roundToHalf(displayRM);
                   })()}
                   small
                 />
@@ -279,7 +420,16 @@ export default function StrengthTable2({ exercise, onRowsChange }) {
                   className="w-10 text-center"
                   placeholder={(() => {
                     const prevAmrap = dataByMonth[currentMonth - 2]?.[2];
-                    return prevAmrap ? format1RM(prevAmrap.flavio.weight, prevAmrap.flavio.reps) : 'TM';
+                    if (!prevAmrap) return 'TM';
+                    
+                    const isPullup = exercise_id === 'pu_str';
+                    const bw = BODYWEIGHTS.flavio;
+                    const w = parseFloat(prevAmrap.flavio.weight) || 0;
+                    const totalW = isPullup ? (w + bw) : w;
+                    const rmTotal = calc1RM(totalW, prevAmrap.flavio.reps || getDefaultReps(WEEK_CONFIGS[2]));
+                    if (rmTotal == null) return 'TM';
+                    const displayRM = isPullup ? (rmTotal - bw) : rmTotal;
+                    return roundToHalf(displayRM);
                   })()}
                   small
                 />
@@ -349,8 +499,20 @@ export default function StrengthTable2({ exercise, onRowsChange }) {
                 const cfg = WEEK_CONFIGS[idx];
                 const isAmrap = cfg.targetReps === 'AMRAP';
                 const defaultReps = getDefaultReps(cfg);
-                const rmA = format1RM(r.anas.weight, r.anas.reps || defaultReps);
-                const rmF = format1RM(r.flavio.weight, r.flavio.reps || defaultReps);
+                const isPullup = exercise_id === 'pu_str';
+
+                const getDisplayRM = (athlete, weight, reps) => {
+                  const bw = BODYWEIGHTS[athlete];
+                  const w = parseFloat(weight) || 0;
+                  const totalW = isPullup ? (w + bw) : w;
+                  const rmTotal = calc1RM(totalW, reps || defaultReps);
+                  if (rmTotal == null) return '-';
+                  const displayRM = isPullup ? (rmTotal - bw) : rmTotal;
+                  return roundToHalf(displayRM);
+                };
+
+                const rmA = getDisplayRM('anas', r.anas.weight, r.anas.reps);
+                const rmF = getDisplayRM('flavio', r.flavio.weight, r.flavio.reps);
 
                 return (
                   <motion.tr
@@ -389,16 +551,23 @@ export default function StrengthTable2({ exercise, onRowsChange }) {
                     {/* Anas r / 1RM */}
                     <td className="py-1.5 px-1 text-center">
                       {isAmrap ? (
-                        <input
-                          type="number"
-                          value={r.anas.reps}
-                          onChange={e => updateAthlete(currentMonth - 1, idx, 'anas', 'reps', e.target.value)}
-                          className={`w-10 border rounded text-center text-[11px] py-1 font-semibold transition-all mx-auto block ${r.anas.reps
-                            ? 'bg-amber-100 dark:bg-amber-900/60 border-amber-400 dark:border-amber-600'
-                            : 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40'
-                            }`}
-                          placeholder="r"
-                        />
+                        <div className="flex flex-col items-center gap-0.5">
+                          <input
+                            type="number"
+                            value={r.anas.reps}
+                            onChange={e => updateAthlete(currentMonth - 1, idx, 'anas', 'reps', e.target.value)}
+                            className={`w-10 border rounded text-center text-[11px] py-1 font-semibold transition-all mx-auto block ${r.anas.reps
+                              ? 'bg-amber-100 dark:bg-amber-900/60 border-amber-400 dark:border-amber-600'
+                              : 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40'
+                              }`}
+                            placeholder="r"
+                          />
+                          {r.anas.reps && rmA !== '-' && (
+                            <span className="text-[8px] font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1 rounded">
+                              {rmA}
+                            </span>
+                          )}
+                        </div>
                       ) : (
                         <span className={`inline-block w-10 py-1 rounded text-[10px] font-bold ${rmA !== '-'
                           ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700'
@@ -449,16 +618,23 @@ export default function StrengthTable2({ exercise, onRowsChange }) {
                     {/* Flavio r / 1RM */}
                     <td className="py-1.5 px-1 text-center">
                       {isAmrap ? (
-                        <input
-                          type="number"
-                          value={r.flavio.reps}
-                          onChange={e => updateAthlete(currentMonth - 1, idx, 'flavio', 'reps', e.target.value)}
-                          className={`w-10 border rounded text-center text-[11px] py-1 font-semibold transition-all mx-auto block ${r.flavio.reps
-                            ? 'bg-amber-100 dark:bg-amber-900/60 border-amber-400 dark:border-amber-600'
-                            : 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40'
-                            }`}
-                          placeholder="r"
-                        />
+                        <div className="flex flex-col items-center gap-0.5">
+                          <input
+                            type="number"
+                            value={r.flavio.reps}
+                            onChange={e => updateAthlete(currentMonth - 1, idx, 'flavio', 'reps', e.target.value)}
+                            className={`w-10 border rounded text-center text-[11px] py-1 font-semibold transition-all mx-auto block ${r.flavio.reps
+                              ? 'bg-amber-100 dark:bg-amber-900/60 border-amber-400 dark:border-amber-600'
+                              : 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40'
+                              }`}
+                            placeholder="r"
+                          />
+                          {r.flavio.reps && rmF !== '-' && (
+                            <span className="text-[8px] font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1 rounded">
+                              {rmF}
+                            </span>
+                          )}
+                        </div>
                       ) : (
                         <span className={`inline-block w-10 py-1 rounded text-[10px] font-bold ${rmF !== '-'
                           ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700'

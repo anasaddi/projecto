@@ -26,6 +26,7 @@ class ExerciseCreate(ExerciseBase):
 
 class ExerciseOut(ExerciseBase):
     id: str
+    is_active: int = 1
 
     class Config:
         from_attributes = True
@@ -51,6 +52,7 @@ class TemplateExerciseOut(BaseModel):
     secondary_muscles: list[str] = []
     cns_fatigue: float = 0.0
     joint_stress: dict = {}
+    is_active: int = 1
 
     class Config:
         from_attributes = True
@@ -100,6 +102,45 @@ class DayExerciseUpdate(BaseModel):
     base_sets: Optional[int] = None
     base_reps: Optional[int] = None
 
+
+class ExerciseActiveUpdate(BaseModel):
+    exercise_id: str
+    is_active: int
+
+
+# --- Dashboard ---
+
+class DashboardStateOut(BaseModel):
+    key: str
+    data: dict
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class DashboardStateUpdate(BaseModel):
+    data: dict
+
+
+# --- Shared Dashboard ---
+
+class SharedDashboardOut(BaseModel):
+    share_id: str
+    title: str
+    data: list
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class SharedDashboardUpdate(BaseModel):
+    data: list
+    title: Optional[str] = None
+
+
+# --- Workout Logs ---
 
 class ExercisePrimaryMusclesUpdate(BaseModel):
     primary_muscles: list[str] = []
@@ -152,3 +193,33 @@ class RecommendationRequest(BaseModel):
 class RecommendationResponse(BaseModel):
     message: str
     recommended_template_id: Optional[str] = None
+
+
+# --- Training Progression (StrengthTable2) ---
+
+class TrainingProgressionOut(BaseModel):
+    exercise_id: str
+    data: dict
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TrainingProgressionUpdate(BaseModel):
+    data: dict
+
+
+# --- Daily Schedule ---
+
+class DailyScheduleOut(BaseModel):
+    date: datetime = Field(validation_alias="date_")
+    template_id: Optional[str] = None
+    is_completed: bool
+
+    class Config:
+        from_attributes = True
+
+
+class DailyScheduleUpdate(BaseModel):
+    is_completed: bool

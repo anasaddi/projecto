@@ -11,12 +11,16 @@ venv/
 *.egg-info/
 dist/
 build/
-*.db
-backend/*.db
 
 # Node
 node_modules/
 frontend/dist/
+
+# Databases
+*.db
+db.sqlite
+backend/km.db
+backend/test.db
 
 # Cache
 backend/.cache/

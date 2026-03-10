@@ -9,7 +9,8 @@ const calc1RM = (weight, reps) => {
   const r = parseInt(reps, 10);
   if (!w || !r) return '-';
   if (r === 1) return w.toFixed(1);
-  return (w * (1 + r / 30)).toFixed(1);
+  // Formula Epley conservativa (divisore 35 invece di 30)
+  return (w * (1 + r / 35)).toFixed(1);
 };
 
 // Tabella esercizio STRENGTH - collassata: 1 riga (settimana corrente), espansa: tutte

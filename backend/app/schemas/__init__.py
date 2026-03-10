@@ -10,6 +10,7 @@ from app.schemas.training import (
     WeekDayUpdateData,
     WeekUpdateRequest,
     DayExerciseUpdate,
+    ExerciseActiveUpdate,
     WorkoutLogCreate,
     SetLogItem,
     WorkoutLogOut,
@@ -17,6 +18,14 @@ from app.schemas.training import (
     ExerciseHistoryResponse,
     RecommendationRequest,
     RecommendationResponse,
+    TrainingProgressionOut,
+    TrainingProgressionUpdate,
+    DailyScheduleOut,
+    DailyScheduleUpdate,
+    DashboardStateOut,
+    DashboardStateUpdate,
+    SharedDashboardOut,
+    SharedDashboardUpdate,
 )
 
 __all__ = [
@@ -36,6 +45,7 @@ __all__ = [
     "WeekDayUpdateData",
     "WeekUpdateRequest",
     "DayExerciseUpdate",
+    "ExerciseActiveUpdate",
     "WorkoutLogCreate",
     "SetLogItem",
     "WorkoutLogOut",
@@ -43,4 +53,12 @@ __all__ = [
     "ExerciseHistoryResponse",
     "RecommendationRequest",
     "RecommendationResponse",
+    "TrainingProgressionOut",
+    "TrainingProgressionUpdate",
+    "DailyScheduleOut",
+    "DailyScheduleUpdate",
+    "DashboardStateOut",
+    "DashboardStateUpdate",
+    "SharedDashboardOut",
+    "SharedDashboardUpdate",
 ]
