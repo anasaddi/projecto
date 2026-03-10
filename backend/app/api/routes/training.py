@@ -20,8 +20,34 @@ def check_admin_access(x_km_access: Optional[str] = Header(None)):
     return True
 
 @router.get("/ping")
-def ping():
-    return {"status": "pong"}
+def ping(db: Session = Depends(get_db)):
+    from app.db.models import Exercise, WorkoutDayTemplate, DailySchedule
+    ex_count = db.query(Exercise).count()
+    tmpl_count = db.query(WorkoutDayTemplate).count()
+    sched_count = db.query(DailySchedule).count()
+    return {
+        "status": "pong",
+        "db_stats": {
+            "exercises": ex_count,
+            "templates": tmpl_count,
+            "schedule_entries": sched_count
+        }
+    }
+
+@router.post("/reseed", dependencies=[Depends(check_admin_access)])
+def reseed_db(db: Session = Depends(get_db)):
+    """Force re-seeding of training data."""
+    from app.db.seed_training import seed_training_if_empty
+    from app.db.models import Exercise, WorkoutDayTemplate, WorkoutDayExercise
+    
+    # Pulizia cauta (solo se vuoi forzare)
+    # db.query(WorkoutDayExercise).delete()
+    # db.query(WorkoutDayTemplate).delete()
+    # db.query(Exercise).delete()
+    # db.commit()
+    
+    n = seed_training_if_empty(db)
+    return {"status": "ok", "seeded": n}
 
 @router.get("/exercises", response_model=list[schemas.ExerciseOut])
 def get_exercises(db: Session = Depends(get_db)):

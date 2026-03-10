@@ -296,10 +296,16 @@ def get_daily_schedule(db: Session, start_date: date, days_count: int = 14):
         # 1. Recupera i template ordinati
         templates = db.query(WorkoutDayTemplate).order_by(WorkoutDayTemplate.weekday).all()
         if not templates:
-            logger.warning("Nessun template trovato nel database.")
-            return []
+            logger.warning("Nessun template trovato nel database. Genero dati vuoti per evitare crash.")
+            # Restituiamo un array vuoto o generiamo dati placeholder se preferibile
+            # In questo caso, torniamo una lista di Rest Days virtuali
+            final_schedule = []
+            for i in range(days_count):
+                curr_date = start_date + timedelta(days=i)
+                curr_dt = datetime.combine(curr_date, time.min)
+                final_schedule.append(DailySchedule(date_=curr_dt, template_id=None, is_completed=0))
+            return final_schedule
 
-        # 2. Trova l'ultimo giorno completato
         # 2. Trova l'ultimo completato (per data) e l'ultimo template completato (per sequenza)
         last_completed = (
             db.query(DailySchedule)
