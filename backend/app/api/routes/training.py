@@ -38,13 +38,14 @@ def ping(db: Session = Depends(get_db)):
 def reseed_db(db: Session = Depends(get_db)):
     """Force re-seeding of training data."""
     from app.db.seed_training import seed_training_if_empty
-    from app.db.models import Exercise, WorkoutDayTemplate, WorkoutDayExercise
+    from app.db.models import Exercise, WorkoutDayTemplate, WorkoutDayExercise, DailySchedule
     
-    # Pulizia cauta (solo se vuoi forzare)
-    # db.query(WorkoutDayExercise).delete()
-    # db.query(WorkoutDayTemplate).delete()
-    # db.query(Exercise).delete()
-    # db.commit()
+    # Pulizia totale per forzare il caricamento di TUTTI i dati locali
+    db.query(DailySchedule).delete()
+    db.query(WorkoutDayExercise).delete()
+    db.query(WorkoutDayTemplate).delete()
+    db.query(Exercise).delete()
+    db.commit()
     
     n = seed_training_if_empty(db)
     return {"status": "ok", "seeded": n}
