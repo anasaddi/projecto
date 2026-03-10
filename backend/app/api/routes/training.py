@@ -68,7 +68,7 @@ def get_today(db: Session = Depends(get_db), for_date: Optional[date] = None):
     )
 
 
-@router.get("/week", response_model=list[schemas.WeekDayData], dependencies=[Depends(check_admin_access)])
+@router.get("/week", response_model=list[schemas.WeekDayData])
 def get_week(db: Session = Depends(get_db)):
     """Fetch the full week's templates for the drag & drop calendar."""
     return crud_training.get_week_templates(db)
