@@ -1716,6 +1716,9 @@ export default function Training2() {
         throw new Error("Template settimanali non validi o mancanti");
       }
 
+      console.log("[Training2] Raw templates:", templates);
+      console.log("[Training2] Raw scheduleData:", scheduleData);
+
       // Merge schedule con i template (per avere esercizi e date reali)
       const mergedData = (scheduleData || []).map(day => {
         const template = templates.find(t => t.template_id === day.template_id);
@@ -1725,6 +1728,7 @@ export default function Training2() {
         };
       });
 
+      console.log("[Training2] Merged data:", mergedData);
       setWeekData(mergedData);
       setAwProgram(awData && Object.keys(awData).length ? awData : AW_PROGRAM_FALLBACK);
       
