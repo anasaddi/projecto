@@ -197,8 +197,6 @@ async def migrate_json_to_relational(db: AsyncSession):
         await update_dashboard_from_json(db, data, key="default")
         
         # --- NEW: Extract Progressions (Strength Table / TMs) ---
-        # The old system stored TMs in a dictionary inside DashboardState
-        # We need to find the key. Usually it was "trainingProgressions"
         progressions = data.get("trainingProgressions", {})
         if progressions:
             logger.info(f"Found {len(progressions)} progressions to migrate.")
@@ -213,6 +211,40 @@ async def migrate_json_to_relational(db: AsyncSession):
         data = _parse_json(sd.data, {})
         # update_shared_dashboard_from_json handles projects and chat
         await update_shared_dashboard_from_json(db, sd.share_id, data, sd.title)
+
+    # 3. Training Logs (Historical Data)
+    # If the old JSON had a key for historical workout logs, we would migrate it here.
+    # Currently, WorkoutLog and SetLog are already relational. 
+    # If there's a 'workoutLogs' key in DashboardState, we can extract it.
+    if ds:
+        old_logs = data.get("workoutLogs", [])
+        if isinstance(old_logs, list) and old_logs:
+            logger.info(f"Found {len(old_logs)} workout logs to migrate.")
+            for log_entry in old_logs:
+                # Basic structure check to avoid crashes
+                tmpl_id = log_entry.get("template_id")
+                log_date_str = log_entry.get("logged_at")
+                sets_data = log_entry.get("sets", [])
+                
+                # Convert string date if needed
+                log_date = datetime.now(timezone.utc)
+                if log_date_str:
+                    try: log_date = datetime.fromisoformat(log_date_str.replace("Z", "+00:00"))
+                    except: pass
+                
+                new_log = WorkoutLog(template_id=tmpl_id, logged_at=log_date)
+                db.add(new_log)
+                await db.flush()
+                
+                for s in sets_data:
+                    db.add(SetLog(
+                        workout_log_id=new_log.id,
+                        exercise_id=s.get("exercise_id"),
+                        set_number=s.get("set_number", 1),
+                        weight_kg=float(s.get("weight_kg", 0)),
+                        reps=int(s.get("reps", 0)),
+                        completed=1 if s.get("completed") else 0
+                    ))
 
     await db.commit()
     return {"status": "ok", "message": "Migration completed"}
