@@ -8,7 +8,6 @@ from app.api.routes import sources, content, insights, search, youtube, training
 from app.config import get_settings
 from app.db.session import Base, engine
 from app.db import models
-from app.db.seed_training import seed_training_if_empty, seed_fake_history
 
 
 def _cors_origins_list(settings) -> list:
