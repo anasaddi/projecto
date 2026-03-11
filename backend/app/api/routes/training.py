@@ -54,6 +54,11 @@ async def reseed_db(db: AsyncSession = Depends(get_db)):
     n = await seed_training_if_empty(db)
     return {"status": "ok", "seeded": n}
 
+@router.post("/migrate", dependencies=[Depends(check_admin_access)])
+async def migrate_data(db: AsyncSession = Depends(get_db)):
+    """Migrate data from old JSON blobs to relational tables."""
+    return await crud_training.migrate_json_to_relational(db)
+
 @router.get("/exercises", response_model=list[schemas.ExerciseOut])
 async def get_exercises(db: AsyncSession = Depends(get_db)):
     """Public route for the muscle-exercise matrix."""

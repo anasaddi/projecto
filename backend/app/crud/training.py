@@ -181,7 +181,32 @@ async def get_all_shared_dashboards_aggregated(db: AsyncSession):
     res = await db.execute(select(SharedDashboard).order_by(SharedDashboard.updated_at.desc()))
     return [await get_shared_dashboard_aggregated(db, sd.share_id) for sd in res.scalars().all()]
 
-# --- Training Async CRUD ---
+# --- Migration Logic ---
+
+async def migrate_json_to_relational(db: AsyncSession):
+    """
+    Migrates data from old JSON blobs (DashboardState and SharedDashboard)
+    to the new relational tables.
+    """
+    # 1. Personal Dashboard
+    res_ds = await db.execute(select(DashboardState).filter(DashboardState.key == "default"))
+    ds = res_ds.scalar_one_or_none()
+    if ds:
+        data = _parse_json(ds.data, {})
+        logger.info("Migrating personal dashboard...")
+        await update_dashboard_from_json(db, data, key="default")
+
+    # 2. Shared Dashboards
+    res_sd = await db.execute(select(SharedDashboard))
+    shared_dashboards = res_sd.scalars().all()
+    for sd in shared_dashboards:
+        logger.info(f"Migrating shared dashboard: {sd.share_id}")
+        data = _parse_json(sd.data, {})
+        # update_shared_dashboard_from_json handles projects and chat
+        await update_shared_dashboard_from_json(db, sd.share_id, data, sd.title)
+
+    await db.commit()
+    return {"status": "ok", "message": "Migration completed"}
 
 async def get_all_exercises(db: AsyncSession):
     try:
