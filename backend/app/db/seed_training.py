@@ -1,7 +1,8 @@
 import json
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from sqlalchemy.orm import Session
+from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models import Exercise, WorkoutDayTemplate, WorkoutDayExercise, WorkoutLog, SetLog
 
 
@@ -9,9 +10,10 @@ def _seed_path() -> Path:
     return Path(__file__).resolve().parent.parent / "data" / "training_seed.json"
 
 
-def seed_training_if_empty(db: Session) -> int:
+async def seed_training_if_empty(db: AsyncSession) -> int:
     """Seed exercises and day templates from training_seed.json if no exercises exist. Returns number of exercises seeded."""
-    if db.query(Exercise).count() > 0:
+    count_res = await db.execute(select(func.count(Exercise.id)))
+    if count_res.scalar() > 0:
         return 0
     path = _seed_path()
     if not path.exists():
@@ -36,7 +38,7 @@ def seed_training_if_empty(db: Session) -> int:
             weekday=tmpl.get("weekday"),
         ))
 
-    db.commit()
+    await db.commit()
 
     ex_categories = {e["id"]: e.get("category") for e in data.get("exercises", [])}
     for tmpl in data.get("day_templates", []):
@@ -55,19 +57,24 @@ def seed_training_if_empty(db: Session) -> int:
                 ordinal=ord_val,
             ))
 
-    db.commit()
+    await db.commit()
     return len(data.get("exercises", []))
 
 
-def seed_fake_history(db: Session, *, force: bool = False) -> int:
+async def seed_fake_history(db: AsyncSession, *, force: bool = False) -> int:
     """Seed fake workout history for HYPERTROPHY exercises. Returns number of logs created.
     If force=False (default), skips when WorkoutLog already exists. Use force=True to add anyway."""
-    if not force and db.query(WorkoutLog).count() > 0:
+    count_res = await db.execute(select(func.count(WorkoutLog.id)))
+    if not force and count_res.scalar() > 0:
         return 0
-    hyp_ids = [r[0] for r in db.query(Exercise.id).filter(Exercise.category == "HYPERTROPHY").all()]
+    
+    hyp_res = await db.execute(select(Exercise.id).filter(Exercise.category == "HYPERTROPHY"))
+    hyp_ids = [r[0] for r in hyp_res.all()]
     if not hyp_ids:
         return 0
-    template = db.query(WorkoutDayTemplate).first()
+    
+    tmpl_res = await db.execute(select(WorkoutDayTemplate))
+    template = tmpl_res.scalars().first()
     template_id = template.id if template else None
 
     # Fake data: exercise_id -> list of (weight, reps) for ~10 sessions
@@ -90,7 +97,7 @@ def seed_fake_history(db: Session, *, force: bool = False) -> int:
         log_date = now - timedelta(days=i * 3)  # ogni 3 giorni
         log = WorkoutLog(template_id=template_id, logged_at=log_date)
         db.add(log)
-        db.flush()
+        await db.flush()
         count += 1
         for ex_id in hyp_ids[:6]:
             data = fake_data.get(ex_id, [(10, 12)])
@@ -105,5 +112,5 @@ def seed_fake_history(db: Session, *, force: bool = False) -> int:
                     completed=1,
                 ))
 
-    db.commit()
+    await db.commit()
     return count

@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Text, Float, ForeignKey, DateTime, Enum, JSON
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from app.db.session import Base
 import enum
 
@@ -205,27 +205,77 @@ class SetLog(Base):
 
 # --- Dashboard & Habits ---
 
+# --- Dashboard & Habits (Relational Refactor) ---
+
+class Habit(Base):
+    __tablename__ = "habits"
+    id = Column(String(64), primary_key=True)
+    title = Column(String(256), nullable=False)
+    locked = Column(Integer, default=0) # 0 = unlocked, 1 = locked
+    ordinal = Column(Integer, default=0)
+
+class HabitLog(Base):
+    __tablename__ = "habit_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    habit_id = Column(String(64), ForeignKey("habits.id"), nullable=False)
+    date = Column(String(10), nullable=False, index=True) # YYYY-MM-DD
+    status = Column(Integer, default=0) # 0 = not done, 1 = done
+
+class Project(Base):
+    __tablename__ = "projects"
+    id = Column(String(64), primary_key=True)
+    title = Column(String(256), nullable=False)
+    # Se share_id è presente, il progetto è condiviso
+    share_id = Column(String(64), ForeignKey("shared_dashboards.share_id"), nullable=True, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
+
+class Task(Base):
+    __tablename__ = "tasks"
+    id = Column(String(64), primary_key=True)
+    project_id = Column(String(64), ForeignKey("projects.id"), nullable=False, index=True)
+    parent_id = Column(String(64), ForeignKey("tasks.id"), nullable=True)
+    title = Column(String(512), nullable=False)
+    done = Column(Integer, default=0)
+    deadline = Column(String(10), nullable=True) # YYYY-MM-DD
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    project = relationship("Project", back_populates="tasks")
+    children = relationship("Task", backref=backref("parent", remote_side=[id]), cascade="all, delete-orphan", single_parent=True)
+
+class QuickTask(Base):
+    __tablename__ = "quick_tasks"
+    id = Column(String(64), primary_key=True)
+    title = Column(String(512), nullable=False)
+    done = Column(Integer, default=0)
+    deadline = Column(String(10), nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    id = Column(String(64), primary_key=True)
+    share_id = Column(String(64), ForeignKey("shared_dashboards.share_id"), nullable=False, index=True)
+    sender_id = Column(String(64), nullable=False)
+    text = Column(Text, nullable=False)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
 class DashboardState(Base):
     __tablename__ = "dashboard_states"
-
     id = Column(Integer, primary_key=True, index=True)
-    # Identificativo unico per lo stato (es. 'current_user_state')
     key = Column(String(64), unique=True, index=True, nullable=False)
-    # L'intero oggetto JSON della dashboard (abitudini, progetti, logs)
     data = Column(JSON, nullable=False, default=dict)
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
-
 class SharedDashboard(Base):
     __tablename__ = "shared_dashboards"
-
     id = Column(Integer, primary_key=True, index=True)
-    # Identificativo unico per l'accesso (es. 'progetti-amico')
     share_id = Column(String(64), unique=True, index=True, nullable=False)
     title = Column(String(256), nullable=False, default="Progetti Condivisi")
-    # Lista di progetti (JSON)
     data = Column(JSON, nullable=False, default=list)
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    projects = relationship("Project", backref="shared_dashboard")
 
 
 class DailyReadiness(Base):

@@ -17,7 +17,7 @@ class ExerciseBase(BaseModel):
     primary_muscles: list[str] = []
     secondary_muscles: list[str] = []
     cns_fatigue: float = 0.0
-    joint_stress: dict = Field(default_factory=dict)
+    joint_stress: Optional[dict] = Field(default_factory=dict)
 
 
 class ExerciseCreate(ExerciseBase):
@@ -28,8 +28,7 @@ class ExerciseOut(ExerciseBase):
     id: str
     is_active: int = 1
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 # --- Template & day ---
@@ -51,11 +50,10 @@ class TemplateExerciseOut(BaseModel):
     primary_muscles: list[str] = []
     secondary_muscles: list[str] = []
     cns_fatigue: float = 0.0
-    joint_stress: dict = {}
+    joint_stress: Optional[dict] = {}
     is_active: int = 1
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class TodayResponse(BaseModel):
@@ -72,8 +70,7 @@ class WeekDayData(BaseModel):
     weekday: int
     exercises: list[TemplateExerciseOut] = []
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class DayExerciseItem(BaseModel):
@@ -115,8 +112,7 @@ class DashboardStateOut(BaseModel):
     data: dict
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class DashboardStateUpdate(BaseModel):
@@ -131,8 +127,7 @@ class SharedDashboardOut(BaseModel):
     data: dict | list
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class SharedDashboardUpdate(BaseModel):
@@ -166,8 +161,7 @@ class WorkoutLogOut(BaseModel):
     template_id: Optional[str] = None
     logged_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class ExerciseHistoryEntry(BaseModel):
@@ -202,8 +196,7 @@ class TrainingProgressionOut(BaseModel):
     data: dict
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class TrainingProgressionUpdate(BaseModel):
@@ -217,8 +210,7 @@ class DailyScheduleOut(BaseModel):
     template_id: Optional[str] = None
     is_completed: bool
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class DailyScheduleUpdate(BaseModel):

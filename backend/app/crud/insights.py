@@ -1,9 +1,9 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, delete
 from app.db.models import Insight
 from app.schemas.insights import InsightCreate, InsightUpdate
 
-
-def create_insight(db: Session, data: InsightCreate):
+async def create_insight(db: AsyncSession, data: InsightCreate):
     insight = Insight(
         content_id=data.content_id,
         text=data.text[:2000],
@@ -13,24 +13,23 @@ def create_insight(db: Session, data: InsightCreate):
         session_intent=data.session_intent,
     )
     db.add(insight)
-    db.commit()
-    db.refresh(insight)
+    await db.commit()
+    await db.refresh(insight)
     return insight
 
-
-def list_insights(db: Session, content_id=None, skip=0, limit=100):
-    q = db.query(Insight)
+async def list_insights(db: AsyncSession, content_id=None, skip=0, limit=100):
+    stmt = select(Insight)
     if content_id is not None:
-        q = q.filter(Insight.content_id == content_id)
-    return q.order_by(Insight.created_at.desc()).offset(skip).limit(limit).all()
+        stmt = stmt.filter(Insight.content_id == content_id)
+    res = await db.execute(stmt.order_by(Insight.created_at.desc()).offset(skip).limit(limit))
+    return res.scalars().all()
 
+async def get_insight(db: AsyncSession, insight_id: int):
+    res = await db.execute(select(Insight).filter(Insight.id == insight_id))
+    return res.scalar_one_or_none()
 
-def get_insight(db: Session, insight_id: int):
-    return db.query(Insight).filter(Insight.id == insight_id).first()
-
-
-def update_insight(db: Session, insight_id: int, data: InsightUpdate):
-    insight = get_insight(db, insight_id)
+async def update_insight(db: AsyncSession, insight_id: int, data: InsightUpdate):
+    insight = await get_insight(db, insight_id)
     if not insight:
         return None
     if data.text is not None:
@@ -41,13 +40,12 @@ def update_insight(db: Session, insight_id: int, data: InsightUpdate):
         insight.applicability_contexts = data.applicability_contexts
     if data.user_rating is not None:
         insight.user_rating = data.user_rating
-    db.commit()
-    db.refresh(insight)
+    await db.commit()
+    await db.refresh(insight)
     return insight
 
-
-def delete_insight(db: Session, insight_id: int):
-    insight = get_insight(db, insight_id)
+async def delete_insight(db: AsyncSession, insight_id: int):
+    insight = await get_insight(db, insight_id)
     if insight:
-        db.delete(insight)
-        db.commit()
+        await db.delete(insight)
+        await db.commit()

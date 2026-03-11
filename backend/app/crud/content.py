@@ -1,10 +1,11 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.db.models import Content
 
+async def get_content_by_source(db: AsyncSession, source_id: int):
+    res = await db.execute(select(Content).filter(Content.source_id == source_id))
+    return res.scalar_one_or_none()
 
-def get_content_by_source(db: Session, source_id: int):
-    return db.query(Content).filter(Content.source_id == source_id).first()
-
-
-def get_content(db: Session, content_id: int):
-    return db.query(Content).filter(Content.id == content_id).first()
+async def get_content(db: AsyncSession, content_id: int):
+    res = await db.execute(select(Content).filter(Content.id == content_id))
+    return res.scalar_one_or_none()

@@ -1,10 +1,10 @@
 import json
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime, timezone, time
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Header, WebSocket, WebSocketDisconnect
-from fastapi.concurrency import run_in_threadpool
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
 
 from app.db.session import get_db
 from app import schemas
@@ -16,17 +16,16 @@ router = APIRouter()
 # --- Security Dependency ---
 def check_admin_access(x_km_access: Optional[str] = Header(None)):
     """Simple header check to block unauthorized access to private routes."""
-    # 'master-key' è la chiave predefinita per Anas. Il "friend" non la avrà.
     if x_km_access != "master-key":
         raise HTTPException(status_code=403, detail="Accesso negato: sezione privata.")
     return True
 
 @router.get("/ping")
-def ping(db: Session = Depends(get_db)):
+async def ping(db: AsyncSession = Depends(get_db)):
     from app.db.models import Exercise, WorkoutDayTemplate, DailySchedule
-    ex_count = db.query(Exercise).count()
-    tmpl_count = db.query(WorkoutDayTemplate).count()
-    sched_count = db.query(DailySchedule).count()
+    ex_count = (await db.execute(select(func.count(Exercise.id)))).scalar()
+    tmpl_count = (await db.execute(select(func.count(WorkoutDayTemplate.id)))).scalar()
+    sched_count = (await db.execute(select(func.count(DailySchedule.id)))).scalar()
     return {
         "status": "pong",
         "db_stats": {
@@ -36,174 +35,60 @@ def ping(db: Session = Depends(get_db)):
         }
     }
 
-@router.post("/reseed", dependencies=[Depends(check_admin_access)])
-def reseed_db(db: Session = Depends(get_db)):
-    """Force re-seeding of training data."""
-    from app.db.seed_training import seed_training_if_empty
-    from app.db.models import Exercise, WorkoutDayTemplate, WorkoutDayExercise, DailySchedule
-    
-    # 2. Pulizia totale per forzare il caricamento di TUTTI i dati locali
-    try:
-        db.query(DailySchedule).delete()
-        db.query(WorkoutDayExercise).delete()
-        db.query(WorkoutDayTemplate).delete()
-        db.query(Exercise).delete()
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        print(f"Cleanup error: {e}")
-    
-    n = seed_training_if_empty(db)
-    return {"status": "ok", "seeded": n}
-
-@router.get("/exercises", response_model=list[schemas.ExerciseOut])
-def get_exercises(db: Session = Depends(get_db)):
-    """Public route for the muscle-exercise matrix."""
-    exercises = crud_training.get_all_exercises(db)
-    return [schemas.ExerciseOut.model_validate(ex) for ex in exercises]
-
-
-_AW_PROGRAM_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "aw_training_program.json"
-
-
-@router.get("/aw-program", dependencies=[Depends(check_admin_access)])
-def get_aw_program():
-    """Return AW training program data (max_day, light, heavy, speed) from aw_training_program.json."""
-    if not _AW_PROGRAM_PATH.exists():
-        return {}
-    try:
-        return json.loads(_AW_PROGRAM_PATH.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
-
-
-@router.get("/today", response_model=schemas.TodayResponse, dependencies=[Depends(check_admin_access)])
-def get_today(db: Session = Depends(get_db), for_date: Optional[date] = None):
-    """Fetch the template for today (or for_date)."""
-    from datetime import date as date_type
-    target = for_date or date_type.today()
-    template = crud_training.get_today_template(db, for_date)
-    if not template:
-        return schemas.TodayResponse(
-            template_id="",
-            day_name="Nessun template per oggi",
-            hypertrophy_exercises=[],
-            strength_aw_exercises=[],
-        )
-    hyp, strength_aw = crud_training.get_today_exercises_grouped(db, for_date)
-    is_fallback = template.weekday is not None and template.weekday != target.weekday()
-    return schemas.TodayResponse(
-        template_id=template.id,
-        day_name=template.day_name,
-        hypertrophy_exercises=hyp,
-        strength_aw_exercises=strength_aw,
-        is_fallback=is_fallback,
-    )
-
-
-@router.get("/week", response_model=list[schemas.WeekDayData])
-def get_week(db: Session = Depends(get_db)):
-    """Fetch the full week's templates for the drag & drop calendar."""
-    return crud_training.get_week_templates(db)
-
-@router.put("/week", response_model=dict, dependencies=[Depends(check_admin_access)])
-def update_week(body: schemas.WeekUpdateRequest, db: Session = Depends(get_db)):
-    """Update the full week's exercises."""
-    crud_training.update_week_templates(db, body.days)
-    return {"status": "ok"}
-
-
-@router.patch("/exercise/active", response_model=dict, dependencies=[Depends(check_admin_access)])
-def update_exercise_active(body: schemas.ExerciseActiveUpdate, db: Session = Depends(get_db)):
-    """Enable or disable an exercise globally."""
-    ok = crud_training.update_exercise_active(db, body.exercise_id, body.is_active)
-    return {"status": "ok" if ok else "not_found"}
-
-
-@router.patch("/day-exercise", response_model=dict, dependencies=[Depends(check_admin_access)])
-def update_day_exercise(body: schemas.DayExerciseUpdate, db: Session = Depends(get_db)):
-    """Update instruction/base_sets/base_reps for an exercise in a day template."""
-    ok = crud_training.update_day_exercise(
-        db,
-        template_id=body.template_id,
-        exercise_id=body.exercise_id,
-        custom_name=body.custom_name,
-        instruction=body.instruction,
-        base_sets=body.base_sets,
-        base_reps=body.base_reps,
-    )
-    return {"status": "ok" if ok else "not_found"}
-
-@router.get("/history", response_model=schemas.ExerciseHistoryResponse, dependencies=[Depends(check_admin_access)])
-def get_exercise_history_route(
-    exercise_id: str,
-    limit: int = 15,
-    db: Session = Depends(get_db),
-):
-    """Get workout history for an exercise (past sessions with weight/reps)."""
-    return crud_training.get_exercise_history(db, exercise_id, limit=limit)
-
-
 # --- Dashboard ---
 
 @router.get("/dashboard-state", response_model=schemas.DashboardStateOut | None, dependencies=[Depends(check_admin_access)])
-def get_dashboard_state(db: Session = Depends(get_db)):
+async def get_dashboard_state(db: AsyncSession = Depends(get_db)):
     """Fetch the dashboard state (habits, projects, etc.) from DB."""
-    return crud_training.get_dashboard_state(db)
+    data = await crud_training.get_dashboard_state_aggregated(db)
+    return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
 
 
 @router.put("/dashboard-state", response_model=schemas.DashboardStateOut, dependencies=[Depends(check_admin_access)])
-def update_dashboard_state(body: schemas.DashboardStateUpdate, db: Session = Depends(get_db)):
+async def update_dashboard_state(body: schemas.DashboardStateUpdate, db: AsyncSession = Depends(get_db)):
     """Save the dashboard state to DB."""
-    return crud_training.update_dashboard_state(db, body.data)
+    data = await crud_training.update_dashboard_from_json(db, body.data)
+    return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
 
 
 # --- Shared Dashboard ---
 
 @router.get("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut | None)
-def get_shared_dashboard(share_id: str, db: Session = Depends(get_db)):
+async def get_shared_dashboard(share_id: str, db: AsyncSession = Depends(get_db)):
     """Fetch a shared dashboard by its share_id. PUBLIC ROUTE."""
-    return crud_training.get_shared_dashboard(db, share_id)
+    return await crud_training.get_shared_dashboard_aggregated(db, share_id)
 
 
 @router.get("/shared-dashboards", response_model=list[schemas.SharedDashboardOut])
-def list_shared_dashboards(db: Session = Depends(get_db)):
+async def list_shared_dashboards(db: AsyncSession = Depends(get_db)):
     """Fetch all shared dashboards. PUBLIC ROUTE."""
-    return crud_training.get_all_shared_dashboards(db)
+    return await crud_training.get_all_shared_dashboards_aggregated(db)
 
 
 @router.put("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut)
-async def update_shared_dashboard(share_id: str, body: schemas.SharedDashboardUpdate, db: Session = Depends(get_db)):
+async def update_shared_dashboard(share_id: str, body: schemas.SharedDashboardUpdate, db: AsyncSession = Depends(get_db)):
     """Update or create a shared dashboard by its share_id. PUBLIC ROUTE."""
-    # 1. Update in DB
-    dashboard = crud_training.update_shared_dashboard(db, share_id, body.data, body.title)
+    dashboard = await crud_training.update_shared_dashboard_from_json(db, share_id, body.data, body.title)
     
-    # 2. Broadcast to all WebSocket listeners for this share_id
-    # We send the same format as the WebSocket sync message
     payload = {
         "type": "sync",
         "share_id": share_id,
-        "title": body.title or dashboard.title,
+        "title": body.title or dashboard["title"],
         "data": body.data
     }
     await manager.broadcast(payload, share_id)
-    
     return dashboard
 
 
 @router.websocket("/ws/shared-dashboard/{share_id}")
-async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: Session = Depends(get_db)):
+async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: AsyncSession = Depends(get_db)):
     await manager.connect(websocket, share_id)
     try:
-        # 1. Send initial state
-        dashboard = await run_in_threadpool(crud_training.get_shared_dashboard, db, share_id)
+        dashboard = await crud_training.get_shared_dashboard_aggregated(db, share_id)
         if dashboard:
-            # Serialize using Pydantic
-            data_out = schemas.SharedDashboardOut.model_validate(dashboard).model_dump(mode='json')
-            data_out["type"] = "sync"
-            await websocket.send_json(data_out)
+            dashboard["type"] = "sync"
+            await websocket.send_json(dashboard)
         else:
-            # Default empty state
             await websocket.send_json({
                 "type": "sync",
                 "share_id": share_id, 
@@ -212,23 +97,11 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: Se
                 "updated_at": None
             })
 
-        # 2. Listen for updates
         while True:
             payload = await websocket.receive_json()
-            
-            # Ora gestiamo tutto come un unico stato sincronizzato (projects, quickTasks, chat)
-            # Il frontend invia sempre lo stato completo aggiornato
-            
-            # Broadcast to others immediately (Optimistic)
             await manager.broadcast(payload, share_id, exclude=websocket)
-            
-            # Save to DB
-            await run_in_threadpool(
-                crud_training.update_shared_dashboard, 
-                db, 
-                share_id, 
-                payload.get("data"), 
-                payload.get("title")
+            await crud_training.update_shared_dashboard_from_json(
+                db, share_id, payload.get("data"), payload.get("title")
             )
             
     except WebSocketDisconnect:
@@ -237,97 +110,91 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: Se
         print(f"WebSocket error: {e}")
         manager.disconnect(websocket, share_id)
 
+# --- Legacy (Need Async Refactor if used) ---
 
-@router.post("/log", response_model=schemas.WorkoutLogOut, dependencies=[Depends(check_admin_access)])
-def log_workout(body: schemas.WorkoutLogCreate, db: Session = Depends(get_db)):
-    """Receive completed sets from the React ExerciseTable and save them."""
-    log = crud_training.create_workout_log(db, body.template_id, body.sets)
-    return log
+@router.get("/exercises", response_model=list[schemas.ExerciseOut])
+async def get_exercises(db: AsyncSession = Depends(get_db)):
+    exercises = await crud_training.get_all_exercises(db)
+    return [schemas.ExerciseOut.model_validate(ex) for ex in exercises]
 
-
-@router.post("/recommendation", response_model=schemas.RecommendationResponse, dependencies=[Depends(check_admin_access)])
-def recommendation(body: schemas.RecommendationRequest, db: Session = Depends(get_db)):
-    """Dummy endpoint for future recommendation logic."""
-    target = body.date or date.today()
-    template = crud_training.get_today_template(db, target)
-    if template:
-        return schemas.RecommendationResponse(
-            message="Placeholder: recommendation logic.",
-            recommended_template_id=template.id,
-        )
-    return schemas.RecommendationResponse(
-        message="No template for this day.",
-        recommended_template_id=None,
+@router.get("/today", response_model=schemas.TodayResponse, dependencies=[Depends(check_admin_access)])
+async def get_today(db: AsyncSession = Depends(get_db), for_date: Optional[date] = None):
+    target = for_date or date.today()
+    template = await crud_training.get_today_template(db, for_date)
+    if not template:
+        return schemas.TodayResponse(template_id="", day_name="Nessun template per oggi")
+    hyp, strength_aw = await crud_training.get_today_exercises_grouped(db, for_date)
+    is_fallback = template.weekday is not None and template.weekday != target.weekday()
+    return schemas.TodayResponse(
+        template_id=template.id, day_name=template.day_name,
+        hypertrophy_exercises=hyp, strength_aw_exercises=strength_aw,
+        is_fallback=is_fallback,
     )
 
+@router.get("/week", response_model=list[schemas.WeekDayData])
+async def get_week(db: AsyncSession = Depends(get_db)):
+    return await crud_training.get_week_templates(db)
 
-# --- Training Progression (StrengthTable2) ---
+@router.put("/week", response_model=dict, dependencies=[Depends(check_admin_access)])
+async def update_week(body: schemas.WeekUpdateRequest, db: AsyncSession = Depends(get_db)):
+    await crud_training.update_week_templates(db, body.days)
+    return {"status": "ok"}
+
+@router.patch("/exercise/active", response_model=dict, dependencies=[Depends(check_admin_access)])
+async def update_exercise_active(body: schemas.ExerciseActiveUpdate, db: AsyncSession = Depends(get_db)):
+    ok = await crud_training.update_exercise_active(db, body.exercise_id, body.is_active)
+    return {"status": "ok" if ok else "not_found"}
+
+@router.patch("/day-exercise", response_model=dict, dependencies=[Depends(check_admin_access)])
+async def update_day_exercise(body: schemas.DayExerciseUpdate, db: AsyncSession = Depends(get_db)):
+    ok = await crud_training.update_day_exercise(
+        db, template_id=body.template_id, exercise_id=body.exercise_id,
+        custom_name=body.custom_name, instruction=body.instruction,
+        base_sets=body.base_sets, base_reps=body.base_reps,
+    )
+    return {"status": "ok" if ok else "not_found"}
+
+@router.get("/history", response_model=schemas.ExerciseHistoryResponse, dependencies=[Depends(check_admin_access)])
+async def get_exercise_history_route(exercise_id: str, limit: int = 15, db: AsyncSession = Depends(get_db)):
+    return await crud_training.get_exercise_history(db, exercise_id, limit=limit)
+
+@router.post("/log", response_model=schemas.WorkoutLogOut, dependencies=[Depends(check_admin_access)])
+async def log_workout(body: schemas.WorkoutLogCreate, db: AsyncSession = Depends(get_db)):
+    return await crud_training.create_workout_log(db, body.template_id, body.sets)
 
 @router.get("/progression", response_model=list[schemas.TrainingProgressionOut])
-def get_all_progressions(db: Session = Depends(get_db)):
-    """Fetch all progression data for all exercises."""
-    return crud_training.get_all_progressions(db)
-
+async def get_all_progressions(db: AsyncSession = Depends(get_db)):
+    return await crud_training.get_all_progressions(db)
 
 @router.get("/progression/{exercise_id}", response_model=Optional[schemas.TrainingProgressionOut])
-def get_progression(exercise_id: str, db: Session = Depends(get_db)):
-    """Fetch 6-month progression data for an exercise."""
-    return crud_training.get_training_progression(db, exercise_id)
-
+async def get_progression(exercise_id: str, db: AsyncSession = Depends(get_db)):
+    return await crud_training.get_training_progression(db, exercise_id)
 
 @router.post("/progression/{exercise_id}", response_model=schemas.TrainingProgressionOut)
-def update_progression(exercise_id: str, body: schemas.TrainingProgressionUpdate, db: Session = Depends(get_db)):
-    """Save 6-month progression data for an exercise."""
-    return crud_training.update_training_progression(db, exercise_id, body.data)
-
-
-# --- Daily Schedule ---
+async def update_progression(exercise_id: str, body: schemas.TrainingProgressionUpdate, db: AsyncSession = Depends(get_db)):
+    return await crud_training.update_training_progression(db, exercise_id, body.data)
 
 @router.get("/schedule", response_model=list[schemas.DailyScheduleOut])
-def get_schedule(
-    start_date: Optional[date] = None, 
-    days_count: int = 14, 
-    db: Session = Depends(get_db)
-):
-    """Get the sliding schedule for training days."""
+async def get_schedule(start_date: Optional[date] = None, days_count: int = 14, db: AsyncSession = Depends(get_db)):
     target_date = start_date or date.today()
-    return crud_training.get_daily_schedule(db, target_date, days_count)
-
+    return await crud_training.get_daily_schedule(db, target_date, days_count)
 
 @router.patch("/schedule/{schedule_date}", response_model=schemas.DailyScheduleOut)
-def update_schedule_completion(
-    schedule_date: date, 
-    body: schemas.DailyScheduleUpdate, 
-    db: Session = Depends(get_db)
-):
-    """Toggle completion for a specific date in the schedule."""
-    sched = crud_training.update_daily_schedule_completion(db, schedule_date, body.is_completed)
-    return sched
+async def update_schedule_completion(schedule_date: date, body: schemas.DailyScheduleUpdate, db: AsyncSession = Depends(get_db)):
+    return await crud_training.update_daily_schedule_completion(db, schedule_date, body.is_completed)
 
 @router.post("/schedule/skip-today", response_model=dict, dependencies=[Depends(check_admin_access)])
-def skip_today(db: Session = Depends(get_db)):
-    """Manually skip today's workout and slide everything by one day."""
+async def skip_today(db: AsyncSession = Depends(get_db)):
     from app.db.models import DailySchedule
-    from datetime import datetime, date, time
-    
-    today_date = date.today()
-    today_dt = datetime.combine(today_date, time.min)
-    
-    # Cerchiamo se esiste già un record per oggi
-    today_sched = db.query(DailySchedule).filter(DailySchedule.date_ == today_dt).first()
-    
+    today_dt = datetime.combine(date.today(), time.min)
+    res = await db.execute(select(DailySchedule).filter(DailySchedule.date_ == today_dt))
+    today_sched = res.scalar_one_or_none()
     if today_sched:
-        # Se oggi era già completato, ignoriamo
         if today_sched.is_completed:
             return {"status": "ignored", "message": "Oggi è già completato."}
-        
-        # Altrimenti lo trasformiamo in un Rest Day completato (saltato)
         today_sched.template_id = None
         today_sched.is_completed = 1
     else:
-        # Se non esiste, lo creiamo come Rest Day saltato
-        new_rest = DailySchedule(date_=today_dt, template_id=None, is_completed=1)
-        db.add(new_rest)
-        
-    db.commit()
+        db.add(DailySchedule(date_=today_dt, template_id=None, is_completed=1))
+    await db.commit()
     return {"status": "ok", "message": "Oggi saltato, la sequenza slitterà a domani."}

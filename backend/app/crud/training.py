@@ -1,466 +1,286 @@
-from datetime import datetime, date, time, timezone
-from typing import Optional
-from sqlalchemy.orm import Session
+from datetime import datetime, timezone, date, timedelta, time
 import logging
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update, delete, func
+from app.db.models import (
+    DashboardState, SharedDashboard, Project, Task, QuickTask, 
+    Habit, HabitLog, ChatMessage, WorkoutLog, SetLog, TrainingProgression,
+    Exercise, WorkoutDayTemplate, WorkoutDayExercise, DailySchedule
+)
+from app.schemas.training import SetLogItem, WeekDayUpdateData
 
 logger = logging.getLogger(__name__)
 
-from app.db.models import (
-    Exercise,
-    WorkoutDayTemplate,
-    WorkoutDayExercise,
-    WorkoutLog,
-    SetLog,
-)
-from app.schemas.training import TemplateExerciseOut, SetLogItem
+# --- Dashboard (Aggregated View for Frontend) ---
 
+async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default"):
+    # 1. Habits
+    habits_result = await db.execute(select(Habit).order_by(Habit.ordinal))
+    habits = habits_result.scalars().all()
+    dailyTaskTemplates = [{"id": h.id, "title": h.title, "locked": bool(h.locked), "ordinal": h.ordinal} for h in habits]
 
-def get_today_template(db: Session, for_date: Optional[date] = None) -> Optional[WorkoutDayTemplate]:
-    """Return the template for the given weekday (0=Monday .. 6=Sunday). Default: today. If none, returns first available (fallback)."""
-    d = for_date or date.today()
-    weekday = d.weekday()
-    template = db.query(WorkoutDayTemplate).filter(WorkoutDayTemplate.weekday == weekday).first()
-    if template:
-        return template
-    # Fallback: mostra comunque un template così la pagina non è vuota
-    return db.query(WorkoutDayTemplate).order_by(WorkoutDayTemplate.id).first()
+    # 2. Habit Logs
+    logs_result = await db.execute(select(HabitLog))
+    logs = logs_result.scalars().all()
+    dailyTaskLogs = {}
+    for l in logs:
+        if l.date not in dailyTaskLogs: dailyTaskLogs[l.date] = []
+        dailyTaskLogs[l.date].append({"id": l.habit_id, "done": bool(l.status)})
 
+    # 3. Quick Tasks
+    qt_result = await db.execute(select(QuickTask).order_by(QuickTask.created_at.desc()))
+    quickTasks = [{"id": q.id, "title": q.title, "done": bool(q.done), "deadline": q.deadline} for q in qt_result.scalars().all()]
 
-def get_today_exercises_grouped(db: Session, for_date: Optional[date] = None):
-    """Returns (hypertrophy_exercises, strength_aw_exercises) for the frontend grid."""
-    template = get_today_template(db, for_date)
-    if not template:
-        return [], []
+    # 4. Personal Projects
+    projs_result = await db.execute(select(Project).filter(Project.share_id == None).order_by(Project.created_at.desc()))
+    projs = projs_result.scalars().all()
+    
+    async def get_task_tree(project_id, parent_id=None):
+        res = await db.execute(select(Task).filter(Task.project_id == project_id, Task.parent_id == parent_id).order_by(Task.created_at))
+        tree = []
+        for t in res.scalars().all():
+            tree.append({"id": t.id, "title": t.title, "done": bool(t.done), "deadline": t.deadline, "children": await get_task_tree(project_id, t.id)})
+        return tree
 
-    hypertrophy = []
-    strength_aw = []
-    for wde in template.exercises:
-        ex = wde.exercise
-        out = TemplateExerciseOut(
-            exercise_id=ex.id,
-            exercise_name=(wde.custom_name or ex.name),
-            category=ex.category,
-            instruction=wde.instruction,
-            base_sets=wde.base_sets,
-            base_reps=wde.base_reps,
-            primary_muscles=ex.primary_muscles or [],
-            secondary_muscles=ex.secondary_muscles or [],
-            cns_fatigue=ex.cns_fatigue,
-            joint_stress=ex.joint_stress or {},
-            is_active=ex.is_active,
-        )
-        if ex.category == "HYPERTROPHY":
-            hypertrophy.append(out)
-        else:
-            strength_aw.append(out)
+    projects = []
+    for p in projs:
+        projects.append({"id": p.id, "title": p.title, "tasks": await get_task_tree(p.id)})
 
-    return hypertrophy, strength_aw
+    return {
+        "dailyTaskTemplates": dailyTaskTemplates,
+        "dailyTaskLogs": dailyTaskLogs,
+        "projects": projects,
+        "quickTasks": quickTasks,
+        "prayerLogs": {}, "top3Manual": [None, None, None], "dailyCompletionLog": {}
+    }
 
+async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "default"):
+    if "dailyTaskTemplates" in data:
+        await db.execute(delete(Habit))
+        for h in data["dailyTaskTemplates"]:
+            db.add(Habit(id=h["id"], title=h["title"], locked=1 if h.get("locked") else 0, ordinal=h.get("ordinal", 0)))
+    if "dailyTaskLogs" in data:
+        await db.execute(delete(HabitLog))
+        for d_str, logs in data["dailyTaskLogs"].items():
+            for l in logs: db.add(HabitLog(habit_id=l["id"], date=d_str, status=1 if l.get("done") else 0))
+    if "quickTasks" in data:
+        await db.execute(delete(QuickTask))
+        for q in data["quickTasks"]:
+            db.add(QuickTask(id=q["id"], title=q["title"], done=1 if q.get("done") else 0, deadline=q.get("deadline")))
+    if "projects" in data:
+        await db.execute(delete(Project).filter(Project.share_id == None))
+        for p in data["projects"]:
+            db.add(Project(id=p["id"], title=p["title"], share_id=None))
+            async def add_t(tasks, pid, parent=None):
+                for t in tasks:
+                    db.add(Task(id=t["id"], project_id=pid, parent_id=parent, title=t["title"], done=1 if t.get("done") else 0, deadline=t.get("deadline")))
+                    if t.get("children"): await add_t(t["children"], pid, t["id"])
+            await add_t(p.get("tasks", []), p["id"])
+    await db.commit()
+    return await get_dashboard_state_aggregated(db, key)
 
-def get_all_exercises(db: Session):
-    """Return all exercises for the muscle-exercise matrix."""
-    return db.query(Exercise).order_by(Exercise.category, Exercise.name).all()
+# --- Shared Dashboards ---
 
+async def get_shared_dashboard_aggregated(db: AsyncSession, share_id: str):
+    res = await db.execute(select(SharedDashboard).filter(SharedDashboard.share_id == share_id))
+    shared = res.scalar_one_or_none()
+    if not shared: return None
+    projs_res = await db.execute(select(Project).filter(Project.share_id == share_id))
+    async def get_t(pid, parent=None):
+        r = await db.execute(select(Task).filter(Task.project_id == pid, Task.parent_id == parent).order_by(Task.created_at))
+        return [{"id": t.id, "title": t.title, "done": bool(t.done), "deadline": t.deadline, "children": await get_t(pid, t.id)} for t in r.scalars().all()]
+    projects = [{"id": p.id, "title": p.title, "tasks": await get_t(p.id)} for p in projs_res.scalars().all()]
+    chat_res = await db.execute(select(ChatMessage).filter(ChatMessage.share_id == share_id).order_by(ChatMessage.timestamp))
+    chat = [{"id": m.id, "senderId": m.sender_id, "text": m.text, "timestamp": int(m.timestamp.timestamp()*1000)} for m in chat_res.scalars().all()]
+    return {"share_id": shared.share_id, "title": shared.title, "data": {"projects": projects, "quickTasks": [], "chat": chat}, "updated_at": shared.updated_at}
 
-def update_exercise_primary_muscles(db: Session, exercise_id: str, primary_muscles: list[str]) -> bool:
-    """Update primary_muscles for an exercise."""
-    ex = db.query(Exercise).filter(Exercise.id == exercise_id).first()
-    if not ex:
-        return False
-    ex.primary_muscles = primary_muscles or []
-    db.commit()
+async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, data: dict, title: str | None = None):
+    res = await db.execute(select(SharedDashboard).filter(SharedDashboard.share_id == share_id))
+    shared = res.scalar_one_or_none()
+    if not shared:
+        shared = SharedDashboard(share_id=share_id, title=title or "Progetti Condivisi")
+        db.add(shared)
+    elif title: shared.title = title
+    await db.execute(delete(Project).filter(Project.share_id == share_id))
+    p_data = data.get("projects", []) if isinstance(data, dict) else (data if isinstance(data, list) else [])
+    for p in p_data:
+        db.add(Project(id=p["id"], title=p["title"], share_id=share_id))
+        async def add_t(tasks, pid, parent=None):
+            for t in tasks:
+                db.add(Task(id=t["id"], project_id=pid, parent_id=parent, title=t["title"], done=1 if t.get("done") else 0, deadline=t.get("deadline")))
+                if t.get("children"): await add_t(t["children"], pid, t["id"])
+        await add_t(p.get("tasks", []), p["id"])
+    if isinstance(data, dict) and "chat" in data:
+        await db.execute(delete(ChatMessage).filter(ChatMessage.share_id == share_id))
+        for msg in data["chat"]:
+            db.add(ChatMessage(id=msg["id"], share_id=share_id, sender_id=msg["senderId"], text=msg["text"], 
+                               timestamp=datetime.fromtimestamp(msg["timestamp"]/1000, tz=timezone.utc) if msg.get("timestamp") else datetime.now(timezone.utc)))
+    await db.commit()
+    return await get_shared_dashboard_aggregated(db, share_id)
+
+async def get_all_shared_dashboards_aggregated(db: AsyncSession):
+    res = await db.execute(select(SharedDashboard).order_by(SharedDashboard.updated_at.desc()))
+    return [await get_shared_dashboard_aggregated(db, sd.share_id) for sd in res.scalars().all()]
+
+# --- Training Async CRUD ---
+
+async def get_all_exercises(db: AsyncSession):
+    res = await db.execute(select(Exercise))
+    return res.scalars().all()
+
+async def get_today_template(db: AsyncSession, for_date: date | None = None):
+    target = for_date or date.today()
+    dt = datetime.combine(target, time.min)
+    res = await db.execute(select(DailySchedule).filter(DailySchedule.date_ == dt))
+    sched = res.scalar_one_or_none()
+    if sched and sched.template_id:
+        r = await db.execute(select(WorkoutDayTemplate).filter(WorkoutDayTemplate.id == sched.template_id))
+        return r.scalar_one_or_none()
+    return None
+
+async def get_today_exercises_grouped(db: AsyncSession, for_date: date | None = None):
+    template = await get_today_template(db, for_date)
+    if not template: return [], []
+    res = await db.execute(select(WorkoutDayExercise).filter(WorkoutDayExercise.template_id == template.id).order_by(WorkoutDayExercise.ordinal))
+    exercises = res.scalars().all()
+    hyp, str_aw = [], []
+    for we in exercises:
+        ex_res = await db.execute(select(Exercise).filter(Exercise.id == we.exercise_id))
+        ex = ex_res.scalar_one_or_none()
+        if not ex: continue
+        d = {
+            "exercise_id": ex.id, "exercise_name": we.custom_name or ex.name, "category": ex.category,
+            "instruction": we.instruction, "base_sets": we.base_sets, "base_reps": we.base_reps,
+            "primary_muscles": ex.primary_muscles, "secondary_muscles": ex.secondary_muscles,
+            "cns_fatigue": ex.cns_fatigue, "joint_stress": ex.joint_stress, "is_active": ex.is_active
+        }
+        if ex.category == "HYPERTROPHY": hyp.append(d)
+        else: str_aw.append(d)
+    return hyp, str_aw
+
+async def get_week_templates(db: AsyncSession):
+    res = await db.execute(select(WorkoutDayTemplate).order_by(WorkoutDayTemplate.weekday))
+    days = []
+    for t in res.scalars().all():
+        ex_res = await db.execute(select(WorkoutDayExercise).filter(WorkoutDayExercise.template_id == t.id).order_by(WorkoutDayExercise.ordinal))
+        exercises = []
+        for we in ex_res.scalars().all():
+            e_res = await db.execute(select(Exercise).filter(Exercise.id == we.exercise_id))
+            e = e_res.scalar_one_or_none()
+            if e: exercises.append({
+                "exercise_id": e.id, "exercise_name": we.custom_name or e.name, "category": e.category,
+                "instruction": we.instruction, "base_sets": we.base_sets, "base_reps": we.base_reps
+            })
+        days.append({"template_id": t.id, "day_name": t.day_name, "weekday": t.weekday, "exercises": exercises})
+    return days
+
+async def update_week_templates(db: AsyncSession, days: list[WeekDayUpdateData]):
+    for d in days:
+        await db.execute(delete(WorkoutDayExercise).filter(WorkoutDayExercise.template_id == d.template_id))
+        for i, ex in enumerate(d.exercises):
+            db.add(WorkoutDayExercise(template_id=d.template_id, exercise_id=ex.exercise_id, custom_name=ex.custom_name, 
+                                      instruction=ex.instruction, base_sets=ex.base_sets or 4, base_reps=ex.base_reps, ordinal=i))
+    await db.commit()
+
+async def update_exercise_active(db: AsyncSession, ex_id: str, active: int):
+    await db.execute(update(Exercise).where(Exercise.id == ex_id).values(is_active=active))
+    await db.commit()
     return True
 
-
-def update_exercise_active(db: Session, exercise_id: str, is_active: int) -> bool:
-    """Enable/disable an exercise globally."""
-    ex = db.query(Exercise).filter(Exercise.id == exercise_id).first()
-    if not ex:
-        return False
-    ex.is_active = is_active
-    db.commit()
+async def update_day_exercise(db: AsyncSession, template_id: str, exercise_id: str, **kwargs):
+    filtered = {k: v for k, v in kwargs.items() if v is not None}
+    if filtered:
+        await db.execute(update(WorkoutDayExercise).where(WorkoutDayExercise.template_id == template_id, 
+                                                         WorkoutDayExercise.exercise_id == exercise_id).values(**filtered))
+        await db.commit()
     return True
 
-
-def get_week_templates(db: Session):
-    """Returns all templates ordered by weekday."""
-    db.expire_all()  # Forza ricaricamento dei dati dal DB per evitare cache obsoleta
-    templates = db.query(WorkoutDayTemplate).order_by(WorkoutDayTemplate.weekday).all()
-    week_data = []
-    for tmpl in templates:
-        exercises_out = []
-        for wde in tmpl.exercises:
-            ex = wde.exercise
-            exercises_out.append(
-                TemplateExerciseOut(
-                    exercise_id=ex.id,
-                    exercise_name=(wde.custom_name or ex.name),
-                    category=ex.category,
-                    instruction=wde.instruction,
-                    base_sets=wde.base_sets,
-                    base_reps=wde.base_reps,
-                    primary_muscles=ex.primary_muscles or [],
-                    secondary_muscles=ex.secondary_muscles or [],
-                    cns_fatigue=ex.cns_fatigue,
-                    joint_stress=ex.joint_stress or {},
-                    is_active=ex.is_active,
-                )
-            )
-        week_data.append({
-            "template_id": tmpl.id,
-            "day_name": tmpl.day_name,
-            "weekday": tmpl.weekday,
-            "exercises": exercises_out
-        })
-    return week_data
-
-def update_day_exercise(
-    db: Session,
-    template_id: str,
-    exercise_id: str,
-    custom_name: str | None = None,
-    instruction: str | None = None,
-    base_sets: int | None = None,
-    base_reps: int | None = None,
-) -> bool:
-    """Update custom_name/instruction/base_sets/base_reps for an exercise in a day template."""
-    wde = (
-        db.query(WorkoutDayExercise)
-        .filter(
-            WorkoutDayExercise.template_id == template_id,
-            WorkoutDayExercise.exercise_id == exercise_id,
-        )
-        .first()
-    )
-    if not wde:
-        return False
-    if custom_name is not None:
-        wde.custom_name = custom_name.strip() or None
-    if instruction is not None:
-        wde.instruction = instruction
-    if base_sets is not None:
-        wde.base_sets = base_sets
-    if base_reps is not None:
-        wde.base_reps = base_reps
-    db.commit()
-    return True
-
-
-def update_week_templates(db: Session, updates: list):
-    """Updates the exercises for each template, preserving custom_name/instruction/base_sets/base_reps."""
-    for update in updates:
-        template_id = update.template_id
-        db.query(WorkoutDayExercise).filter(WorkoutDayExercise.template_id == template_id).delete()
-        for ordinal, item in enumerate(update.exercises):
-            ex = db.query(Exercise).filter(Exercise.id == item.exercise_id).first()
-            default_sets = 2 if ex and ex.category == "HYPERTROPHY" else 4
-            base_sets = item.base_sets if item.base_sets is not None else default_sets
-            db.add(WorkoutDayExercise(
-                template_id=template_id,
-                exercise_id=item.exercise_id,
-                ordinal=ordinal,
-                custom_name=None if item.custom_name is None else (item.custom_name.strip() or None),
-                instruction=item.instruction,
-                base_sets=base_sets,
-                base_reps=item.base_reps,
-            ))
-    db.commit()
-
-
-def get_exercise_history(db: Session, exercise_id: str, limit: int = 20):
-    """Return past workout entries for an exercise, one per session (date)."""
-    from sqlalchemy import func
-    from app.schemas.training import ExerciseHistoryEntry
-
-    rows = (
-        db.query(
-            func.date(WorkoutLog.logged_at).label("log_date"),
-            SetLog.weight_kg,
-            SetLog.reps,
-            SetLog.completed,
-        )
-        .join(SetLog, SetLog.workout_log_id == WorkoutLog.id)
-        .filter(SetLog.exercise_id == exercise_id)
-        .order_by(WorkoutLog.logged_at.desc())
-        .all()
-    )
-    seen = set()
+async def get_exercise_history(db: AsyncSession, exercise_id: str, limit: int = 15):
+    res = await db.execute(select(WorkoutLog).order_by(WorkoutLog.logged_at.desc()))
     entries = []
-    for r in rows:
-        d = r.log_date.isoformat() if hasattr(r.log_date, "isoformat") else str(r.log_date)
-        if d in seen:
-            continue
-        seen.add(d)
-        entries.append(
-            ExerciseHistoryEntry(
-                date=d,
-                weight_kg=r.weight_kg,
-                reps=r.reps,
-                completed=bool(r.completed),
-            )
-        )
-        if len(entries) >= limit:
-            break
+    for log in res.scalars().all():
+        s_res = await db.execute(select(SetLog).filter(SetLog.workout_log_id == log.id, SetLog.exercise_id == exercise_id).order_by(SetLog.set_number))
+        sets = s_res.scalars().all()
+        for s in sets:
+            entries.append({"date": log.logged_at.strftime("%Y-%m-%d"), "weight_kg": s.weight_kg, "reps": s.reps, "completed": bool(s.completed)})
+        if len(entries) >= limit: break
     return {"exercise_id": exercise_id, "entries": entries}
 
-
-# --- Dashboard ---
-
-def get_dashboard_state(db: Session, key: str = "default"):
-    from app.db.models import DashboardState
-    return db.query(DashboardState).filter(DashboardState.key == key).first()
-
-
-def update_dashboard_state(db: Session, data: dict, key: str = "default"):
-    from app.db.models import DashboardState
-    state = db.query(DashboardState).filter(DashboardState.key == key).first()
-    if not state:
-        state = DashboardState(key=key, data=data)
-        db.add(state)
-    else:
-        state.data = data
-    db.commit()
-    db.refresh(state)
-    return state
-
-
-def get_shared_dashboard(db: Session, share_id: str):
-    from app.db.models import SharedDashboard
-    return db.query(SharedDashboard).filter(SharedDashboard.share_id == share_id).first()
-
-
-def get_all_shared_dashboards(db: Session):
-    from app.db.models import SharedDashboard
-    return db.query(SharedDashboard).order_by(SharedDashboard.updated_at.desc()).all()
-
-
-def update_shared_dashboard(db: Session, share_id: str, data: dict | list, title: str | None = None):
-    from app.db.models import SharedDashboard
-    shared = db.query(SharedDashboard).filter(SharedDashboard.share_id == share_id).first()
-    if not shared:
-        # Se è la prima volta, assicuriamoci che data sia nel formato nuovo se possibile,
-        # ma rispettiamo ciò che ci viene passato.
-        if isinstance(data, list):
-            # Migrazione al volo: se ci passano una lista (vecchio frontend?), la incapsuliamo
-            data = {"projects": data, "quickTasks": [], "chat": []}
-            
-        shared = SharedDashboard(share_id=share_id, data=data, title=title or "Progetti Condivisi")
-        db.add(shared)
-    else:
-        # Se il DB ha una lista e noi stiamo salvando un dict, perfetto (migrazione).
-        # Se il DB ha un dict e noi stiamo salvando una lista (vecchio frontend?),
-        # dovremmo stare attenti, ma assumiamo che il frontend sia aggiornato.
-        if isinstance(data, list) and isinstance(shared.data, dict):
-             # Caso strano: frontend vecchio su backend nuovo? Manteniamo la struttura nuova
-             # e aggiorniamo solo i projects.
-             new_data = shared.data.copy()
-             new_data["projects"] = data
-             shared.data = new_data
-        else:
-             shared.data = data
-             
-        if title:
-            shared.title = title
-    db.commit()
-    db.refresh(shared)
-    return shared
-
-
-def create_workout_log(db: Session, template_id: str | None, sets: list[SetLogItem]) -> WorkoutLog:
+async def create_workout_log(db: AsyncSession, template_id: str | None, sets: list[SetLogItem]):
     log = WorkoutLog(template_id=template_id, logged_at=datetime.now(timezone.utc))
     db.add(log)
-    db.flush()
+    await db.flush()
     for s in sets:
-        db.add(SetLog(
-            workout_log_id=log.id,
-            exercise_id=s.exercise_id,
-            set_number=s.set_number,
-            weight_kg=s.weight_kg,
-            reps=s.reps,
-            completed=1 if s.completed else 0,
-        ))
-    db.commit()
-    db.refresh(log)
+        db.add(SetLog(workout_log_id=log.id, exercise_id=s.exercise_id, set_number=s.set_number, 
+                      weight_kg=s.weight_kg, reps=s.reps, completed=1 if s.completed else 0))
+    await db.commit()
     return log
 
+async def get_all_progressions(db: AsyncSession):
+    res = await db.execute(select(TrainingProgression))
+    return res.scalars().all()
 
-def get_all_progressions(db: Session):
-    from app.db.models import TrainingProgression
-    return db.query(TrainingProgression).all()
+async def get_training_progression(db: AsyncSession, ex_id: str):
+    res = await db.execute(select(TrainingProgression).filter(TrainingProgression.exercise_id == ex_id))
+    return res.scalar_one_or_none()
 
-
-def get_training_progression(db: Session, exercise_id: str):
-    from app.db.models import TrainingProgression
-    return db.query(TrainingProgression).filter(TrainingProgression.exercise_id == exercise_id).first()
-
-
-def update_training_progression(db: Session, exercise_id: str, data: dict):
-    from app.db.models import TrainingProgression
-    prog = db.query(TrainingProgression).filter(TrainingProgression.exercise_id == exercise_id).first()
+async def update_training_progression(db: AsyncSession, ex_id: str, data: dict):
+    res = await db.execute(select(TrainingProgression).filter(TrainingProgression.exercise_id == ex_id))
+    prog = res.scalar_one_or_none()
     if not prog:
-        prog = TrainingProgression(exercise_id=exercise_id, data=data)
+        prog = TrainingProgression(exercise_id=ex_id, data=data)
         db.add(prog)
-    else:
-        prog.data = data
-    db.commit()
-    db.refresh(prog)
+    else: prog.data = data
+    await db.commit()
     return prog
 
-
-def get_daily_schedule(db: Session, start_date: date, days_count: int = 14):
-    from app.db.models import DailySchedule, WorkoutDayTemplate
-    from datetime import timedelta, datetime, time
-    import logging
-
-    logger = logging.getLogger(__name__)
-
-    try:
-        # 1. Recupera i template ordinati
-        templates = db.query(WorkoutDayTemplate).order_by(WorkoutDayTemplate.weekday).all()
-        if not templates:
-            logger.warning("Nessun template trovato nel database. Genero dati vuoti per evitare crash.")
-            # Restituiamo un array vuoto o generiamo dati placeholder se preferibile
-            # In questo caso, torniamo una lista di Rest Days virtuali
-            final_schedule = []
-            for i in range(days_count):
-                curr_date = start_date + timedelta(days=i)
-                curr_dt = datetime.combine(curr_date, time.min)
-                final_schedule.append(DailySchedule(date_=curr_dt, template_id=None, is_completed=0))
-            return final_schedule
-
-        # 2. Trova l'ultimo completato (per data) e l'ultimo template completato (per sequenza)
-        last_completed = (
-            db.query(DailySchedule)
-            .filter(DailySchedule.is_completed == 1)
-            .order_by(DailySchedule.date_.desc())
-            .first()
-        )
-        
-        last_workout = (
-            db.query(DailySchedule)
-            .filter(DailySchedule.is_completed == 1, DailySchedule.template_id.is_not(None))
-            .order_by(DailySchedule.date_.desc())
-            .first()
-        )
-
-        # 3. Determina da quale template dobbiamo ripartire
-        today_date = date.today()
-        next_template_idx = 0
-        base_date = today_date
-
-        if last_workout:
-            try:
-                last_idx = next(i for i, t in enumerate(templates) if t.id == last_workout.template_id)
-                next_template_idx = (last_idx + 1) % len(templates)
-            except (StopIteration, ValueError):
-                next_template_idx = 0
-                
-        if last_completed:
-            try:
-                last_date = last_completed.date_
-                if isinstance(last_date, datetime):
-                    last_date = last_date.date()
-                base_date = max(last_date + timedelta(days=1), today_date)
-            except (StopIteration, ValueError):
-                base_date = today_date
-
-        # 4. Genera o aggiorna lo schedule basato sullo sliding
-        # Puliamo i giorni non completati (così diventano "Rest Days" se non rigenerati)
-        # Ripartiamo da OGGI per pulire eventuali residui non completati
-        # NON puliamo più il passato (giorni < oggi) perché devono rimanere come sono (vuoti se non fatti)
-        today_dt = datetime.combine(today_date, time.min)
-        db.query(DailySchedule).filter(
-            DailySchedule.date_ >= today_dt,
-            DailySchedule.is_completed == 0
-        ).delete(synchronize_session='fetch')
-        
-        # Generiamo lo schedule a partire da base_date
-        # Se base_date > today_date, significa che i giorni tra today e base_date rimarranno "vuoti" (Rest)
-        template_pointer = 0
-        for i in range(days_count * 3): # Generiamo un range più ampio per coprire i buchi (domeniche)
-            curr_date = base_date + timedelta(days=i)
-            
-            # Se è domenica, saltiamo l'assegnazione del template (rimane Rest Day)
-            if curr_date.weekday() == 6: # 6 = Domenica in Python date.weekday()
-                continue
-                
-            curr_dt = datetime.combine(curr_date, time.min)
-            
-            # Evitiamo duplicati
-            existing = db.query(DailySchedule).filter(DailySchedule.date_ == curr_dt).first()
-            if existing:
-                continue
-                
-            template = templates[(next_template_idx + template_pointer) % len(templates)]
-            new_sched = DailySchedule(date_=curr_dt, template_id=template.id, is_completed=0)
-            db.add(new_sched)
-            template_pointer += 1
-            
-            # Fermiamoci quando abbiamo generato abbastanza giorni futuri
-            if template_pointer >= days_count * 2:
-                break
-        
-        db.commit()
-        
-        # 5. Restituisci lo schedule
-        # Assicuriamoci che tutte le date nel range richiesto esistano (anche le domeniche/vuoti)
-        start_dt = datetime.combine(start_date, time.min)
-        
-        # Recuperiamo quelli esistenti nel DB
-        existing_schedules = db.query(DailySchedule).filter(
-            DailySchedule.date_ >= start_dt,
-            DailySchedule.date_ < start_dt + timedelta(days=days_count)
-        ).all()
-        
-        # Mappa per data
-        sched_map = {s.date_.date(): s for s in existing_schedules}
-        
-        # Costruiamo la lista completa di giorni (7 giorni o days_count)
-        final_schedule = []
-        for i in range(days_count):
-            curr_date = start_date + timedelta(days=i)
-            if curr_date in sched_map:
-                final_schedule.append(sched_map[curr_date])
-            else:
-                # Se non esiste nel DB, creiamo un oggetto "virtuale" (Rest Day)
-                # senza salvarlo nel DB per ora, o possiamo salvarlo se preferiamo.
-                # Lo salviamo per coerenza.
-                curr_dt = datetime.combine(curr_date, time.min)
-                new_rest = DailySchedule(date_=curr_dt, template_id=None, is_completed=0)
-                # Se è nel passato rispetto a oggi, lo segnamo come vuoto ma non lo rigeneriamo
-                final_schedule.append(new_rest)
-
-        return final_schedule
-    except Exception as e:
-        db.rollback()
-        logger.exception(f"Errore critico in get_daily_schedule: {e}")
-        raise e
-
-
-def update_daily_schedule_completion(db: Session, schedule_date: date, is_completed: bool):
-    from app.db.models import DailySchedule, WorkoutDayTemplate
-    from datetime import timedelta, datetime, time
+async def get_daily_schedule(db: AsyncSession, start_date: date, days_count: int = 14):
+    t_res = await db.execute(select(WorkoutDayTemplate).order_by(WorkoutDayTemplate.weekday))
+    templates = t_res.scalars().all()
+    if not templates:
+        return [DailySchedule(date_=datetime.combine(start_date + timedelta(days=i), time.min), template_id=None, is_completed=0) for i in range(days_count)]
     
-    dt = datetime.combine(schedule_date, time.min)
-    sched = db.query(DailySchedule).filter(DailySchedule.date_ == dt).first()
+    last_c_res = await db.execute(select(DailySchedule).filter(DailySchedule.is_completed == 1).order_by(DailySchedule.date_.desc()))
+    last_completed = last_c_res.scalar_one_or_none()
+    last_w_res = await db.execute(select(DailySchedule).filter(DailySchedule.is_completed == 1, DailySchedule.template_id.is_not(None)).order_by(DailySchedule.date_.desc()))
+    last_workout = last_w_res.scalar_one_or_none()
+
+    today = date.today()
+    next_t_idx, base_date = 0, today
+    if last_workout:
+        try:
+            l_idx = next(i for i, t in enumerate(templates) if t.id == last_workout.template_id)
+            next_t_idx = (l_idx + 1) % len(templates)
+        except StopIteration: pass
+    if last_completed:
+        base_date = max(last_completed.date_.date() + timedelta(days=1), today)
+
+    today_dt = datetime.combine(today, time.min)
+    await db.execute(delete(DailySchedule).filter(DailySchedule.date_ >= today_dt, DailySchedule.is_completed == 0))
     
-    if not sched:
-        return None
-        
-    old_completed = bool(sched.is_completed)
-    sched.is_completed = 1 if is_completed else 0
-    
-    # Se stiamo de-completando un giorno o se lo stiamo completando, 
-    # potrebbe innescare uno slittamento dei giorni successivi.
-    # LOGICA SLIDING:
-    # Se completiamo un giorno, i giorni successivi rimangono come sono.
-    # Se NON completiamo un giorno (lo saltiamo), i template slittano.
-    
-    if old_completed != is_completed and not is_completed:
-        # Se abbiamo annullato un completamento, i giorni successivi devono slittare
-        # per riprendere questo template.
-        pass # Implementazione complessa, per ora facciamo update semplice
-        
-    db.commit()
-    db.refresh(sched)
+    t_ptr = 0
+    for i in range(days_count * 3):
+        curr_d = base_date + timedelta(days=i)
+        if curr_d.weekday() == 6: continue
+        curr_dt = datetime.combine(curr_d, time.min)
+        ex_res = await db.execute(select(DailySchedule).filter(DailySchedule.date_ == curr_dt))
+        if ex_res.scalar_one_or_none(): continue
+        t = templates[(next_t_idx + t_ptr) % len(templates)]
+        db.add(DailySchedule(date_=curr_dt, template_id=t.id, is_completed=0))
+        t_ptr += 1
+        if t_ptr >= days_count * 2: break
+    await db.commit()
+
+    s_dt = datetime.combine(start_date, time.min)
+    res = await db.execute(select(DailySchedule).filter(DailySchedule.date_ >= s_dt, DailySchedule.date_ < s_dt + timedelta(days=days_count)))
+    s_map = {s.date_.date(): s for s in res.scalars().all()}
+    return [s_map.get(start_date + timedelta(days=i), DailySchedule(date_=datetime.combine(start_date + timedelta(days=i), time.min), template_id=None, is_completed=0)) for i in range(days_count)]
+
+async def update_daily_schedule_completion(db: AsyncSession, s_date: date, completed: bool):
+    dt = datetime.combine(s_date, time.min)
+    res = await db.execute(select(DailySchedule).filter(DailySchedule.date_ == dt))
+    sched = res.scalar_one_or_none()
+    if sched:
+        sched.is_completed = 1 if completed else 0
+        await db.commit()
     return sched

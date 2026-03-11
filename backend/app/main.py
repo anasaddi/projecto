@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.routes import sources, content, insights, search, youtube, training
 from app.config import get_settings
-from app.db.session import SessionLocal, Base, engine
+from app.db.session import Base, engine
 from app.db import models
 from app.db.seed_training import seed_training_if_empty, seed_fake_history
 
@@ -19,15 +19,15 @@ def _cors_origins_list(settings) -> list:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Ensure all tables exist (important for SQLite and first Postgres run)
-    # We add a retry loop because PostgreSQL/DNS might take a few seconds to be ready on Railway
-    import time
+    import asyncio
     max_retries = 5
     retry_delay = 5
     
     db_ready = False
     for i in range(max_retries):
         try:
-            Base.metadata.create_all(bind=engine)
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
             db_ready = True
             print(f"Database connection successful on attempt {i+1}")
             break
@@ -35,33 +35,22 @@ async def lifespan(app: FastAPI):
             print(f"Database connection attempt {i+1} failed: {e}")
             if i < max_retries - 1:
                 print(f"Retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)
+                await asyncio.sleep(retry_delay)
             else:
                 print("Max retries reached. Database initialization failed.")
 
+    # Seeding
     if db_ready:
-        # Seed training data if DB is empty (run after migrations)
-        try:
-            db = SessionLocal()
-            
-            # Manual migration for SQLite (adding is_active to exercises if it doesn't exist)
-            if "sqlite" in str(engine.url):
-                from sqlalchemy import text
-                try:
-                    db.execute(text("ALTER TABLE exercises ADD COLUMN is_active INTEGER DEFAULT 1"))
-                    db.commit()
-                except Exception:
-                    db.rollback() 
-
-            n = seed_training_if_empty(db)
-            if n:
-                print(f"Training seed: inserted {n} exercises and day templates.")
-            m = seed_fake_history(db)
-            if m:
-                print(f"Fake history: inserted {m} workout logs.")
-            db.close()
-        except Exception as e:
-            print(f"Training seed skipped or failed: {e}")
+        from app.db.session import AsyncSessionLocal
+        from app.db.seed_training import seed_training_if_empty, seed_fake_history
+        async with AsyncSessionLocal() as db:
+            try:
+                n = await seed_training_if_empty(db)
+                if n: print(f"Seeded {n} exercises.")
+                m = await seed_fake_history(db)
+                if m: print(f"Seeded {m} history logs.")
+            except Exception as e:
+                print(f"Seed error: {e}")
     
     yield
     # shutdown cleanup if needed
