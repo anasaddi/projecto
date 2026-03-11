@@ -3,7 +3,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.models import Exercise, WorkoutDayTemplate, WorkoutDayExercise, WorkoutLog, SetLog
+from app.db.models import Exercise, WorkoutDayTemplate, WorkoutDayExercise, WorkoutLog, SetLog, TrainingProgression
 
 
 def _seed_path() -> Path:
@@ -112,5 +112,35 @@ async def seed_fake_history(db: AsyncSession, *, force: bool = False) -> int:
                     completed=1,
                 ))
 
+    await db.commit()
+    return count
+
+
+async def seed_fake_progressions(db: AsyncSession, *, force: bool = False) -> int:
+    """Seed fake training progressions (Strength Table) for STRENGTH exercises. Returns number of progressions created."""
+    count_res = await db.execute(select(func.count(TrainingProgression.id)))
+    if not force and count_res.scalar() > 0:
+        return 0
+    
+    str_res = await db.execute(select(Exercise.id).filter(Exercise.category == "STRENGTH"))
+    str_ids = [r[0] for r in str_res.all()]
+    if not str_ids:
+        return 0
+    
+    # Example data for StrengthTable2 (5/3/1 or similar TMs)
+    # The frontend expects a 'data' blob that might contain tmAnas, tmFlavio, etc.
+    fake_prog = {
+        "sq_str": {"tmAnas": 80, "tmFlavio": 70, "tmByMonth": {"2026-03": 80}, "dataByMonth": {"2026-03": {"tmAnas": 80, "tmFlavio": 70}}},
+        "bp_str": {"tmAnas": 60, "tmFlavio": 50, "tmByMonth": {"2026-03": 60}, "dataByMonth": {"2026-03": {"tmAnas": 60, "tmFlavio": 50}}},
+        "dl_str": {"tmAnas": 100, "tmFlavio": 90, "tmByMonth": {"2026-03": 100}, "dataByMonth": {"2026-03": {"tmAnas": 100, "tmFlavio": 90}}},
+        "ohp_str": {"tmAnas": 40, "tmFlavio": 35, "tmByMonth": {"2026-03": 40}, "dataByMonth": {"2026-03": {"tmAnas": 40, "tmFlavio": 35}}},
+    }
+
+    count = 0
+    for ex_id in str_ids:
+        data = fake_prog.get(ex_id, {"tmAnas": 50, "tmFlavio": 50})
+        db.add(TrainingProgression(exercise_id=ex_id, data=data))
+        count += 1
+    
     await db.commit()
     return count

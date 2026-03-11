@@ -207,7 +207,8 @@ async def migrate_json_to_relational(db: AsyncSession):
         await update_dashboard_from_json(db, data, key="default")
         
         # --- NEW: Extract Progressions (Strength Table / TMs) ---
-        progressions = data.get("trainingProgressions", {})
+        # Try both common keys used in older versions
+        progressions = data.get("trainingProgressions") or data.get("progressions") or {}
         if progressions:
             logger.info(f"Found {len(progressions)} progressions to migrate.")
             for ex_id, prog_data in progressions.items():

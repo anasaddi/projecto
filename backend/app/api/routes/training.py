@@ -37,9 +37,9 @@ async def ping(db: AsyncSession = Depends(get_db)):
 
 @router.post("/reseed", dependencies=[Depends(check_admin_access)])
 async def reseed_db(db: AsyncSession = Depends(get_db)):
-    """Force re-seeding of training data."""
-    from app.db.seed_training import seed_training_if_empty
-    from app.db.models import Exercise, WorkoutDayTemplate, WorkoutDayExercise, DailySchedule
+    """Force re-seeding of training data, history, and progressions."""
+    from app.db.seed_training import seed_training_if_empty, seed_fake_history, seed_fake_progressions
+    from app.db.models import Exercise, WorkoutDayTemplate, WorkoutDayExercise, DailySchedule, TrainingProgression, WorkoutLog, SetLog
     from sqlalchemy import text
 
     # Manual schema fix for existing exercises table
@@ -48,11 +48,15 @@ async def reseed_db(db: AsyncSession = Depends(get_db)):
         await db.commit()
     except Exception as e:
         await db.rollback()
-        print(f"Schema fix error (might already exist): {e}")
+        print(f"Schema fix error: {e}")
 
     try:
+        # Delete dependent data first
         await db.execute(delete(DailySchedule))
         await db.execute(delete(WorkoutDayExercise))
+        await db.execute(delete(SetLog))
+        await db.execute(delete(WorkoutLog))
+        await db.execute(delete(TrainingProgression))
         await db.execute(delete(WorkoutDayTemplate))
         await db.execute(delete(Exercise))
         await db.commit()
@@ -60,8 +64,22 @@ async def reseed_db(db: AsyncSession = Depends(get_db)):
         await db.rollback()
         print(f"Cleanup error: {e}")
 
-    n = await seed_training_if_empty(db)
-    return {"status": "ok", "seeded": n}
+    # Seed data
+    n_ex = await seed_training_if_empty(db)
+    n_hist = await seed_fake_history(db, force=True)
+    n_prog = await seed_fake_progressions(db, force=True)
+    
+    # Generate schedule for next 21 days
+    await crud_training.get_daily_schedule(db, date.today(), 21)
+    
+    return {
+        "status": "ok", 
+        "seeded": {
+            "exercises": n_ex,
+            "history_logs": n_hist,
+            "progressions": n_prog
+        }
+    }
 
 @router.post("/migrate", dependencies=[Depends(check_admin_access)])
 async def migrate_data(db: AsyncSession = Depends(get_db)):
