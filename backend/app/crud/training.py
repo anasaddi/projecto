@@ -211,7 +211,12 @@ async def migrate_json_to_relational(db: AsyncSession):
         if progressions:
             logger.info(f"Found {len(progressions)} progressions to migrate.")
             for ex_id, prog_data in progressions.items():
-                await update_training_progression(db, ex_id, prog_data)
+                # Check if exercise exists to avoid FK error
+                ex_check = await db.execute(select(Exercise).filter(Exercise.id == ex_id))
+                if ex_check.scalar_one_or_none():
+                    await update_training_progression(db, ex_id, prog_data)
+                else:
+                    logger.warning(f"Skipping progression for unknown exercise: {ex_id}")
 
     # 2. Shared Dashboards
     res_sd = await db.execute(select(SharedDashboard))
@@ -223,9 +228,6 @@ async def migrate_json_to_relational(db: AsyncSession):
         await update_shared_dashboard_from_json(db, sd.share_id, data, sd.title)
 
     # 3. Training Logs (Historical Data)
-    # If the old JSON had a key for historical workout logs, we would migrate it here.
-    # Currently, WorkoutLog and SetLog are already relational. 
-    # If there's a 'workoutLogs' key in DashboardState, we can extract it.
     if ds:
         old_logs = data.get("workoutLogs", [])
         if isinstance(old_logs, list) and old_logs:
@@ -242,19 +244,28 @@ async def migrate_json_to_relational(db: AsyncSession):
                     try: log_date = datetime.fromisoformat(log_date_str.replace("Z", "+00:00"))
                     except: pass
                 
+                # Check if template exists
+                if tmpl_id:
+                    t_check = await db.execute(select(WorkoutDayTemplate).filter(WorkoutDayTemplate.id == tmpl_id))
+                    if not t_check.scalar_one_or_none(): tmpl_id = None
+
                 new_log = WorkoutLog(template_id=tmpl_id, logged_at=log_date)
                 db.add(new_log)
                 await db.flush()
                 
                 for s in sets_data:
-                    db.add(SetLog(
-                        workout_log_id=new_log.id,
-                        exercise_id=s.get("exercise_id"),
-                        set_number=s.get("set_number", 1),
-                        weight_kg=float(s.get("weight_kg", 0)),
-                        reps=int(s.get("reps", 0)),
-                        completed=1 if s.get("completed") else 0
-                    ))
+                    ex_id = s.get("exercise_id")
+                    # Check if exercise exists
+                    ex_check = await db.execute(select(Exercise).filter(Exercise.id == ex_id))
+                    if ex_check.scalar_one_or_none():
+                        db.add(SetLog(
+                            workout_log_id=new_log.id,
+                            exercise_id=ex_id,
+                            set_number=s.get("set_number", 1),
+                            weight_kg=float(s.get("weight_kg", 0)),
+                            reps=int(s.get("reps", 0)),
+                            completed=1 if s.get("completed") else 0
+                        ))
 
     await db.commit()
     return {"status": "ok", "message": "Migration completed"}
