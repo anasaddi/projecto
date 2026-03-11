@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../api/client';
 
 /**
@@ -16,6 +17,8 @@ const Icons = {
   ChevronDown: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="6 9 12 15 18 9"/></svg>,
   ChevronRight: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6"/></svg>,
   Calendar: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+  Zap: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+  Trash: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
 };
 
 /**
@@ -231,22 +234,31 @@ function SharedTaskNode({ node, depth, projectId, projectAccent, onToggle, onDel
 export default function SharedProjects() {
   const { shareId } = useParams();
   const [projects, setProjects] = useState([]);
+  const [quickTasks, setQuickTasks] = useState([]);
   const [title, setTitle] = useState("Progetti Condivisi");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [projectTaskDrafts, setProjectTaskDrafts] = useState({});
+  const [quickTaskDraft, setQuickTaskDraft] = useState("");
 
   useEffect(() => {
     async function fetchShared() {
       try {
         const res = await api.training.getSharedDashboard(shareId);
-        if (res) {
-          setProjects(res.data || []);
+        if (res && res.data) {
+          // Gestione migrazione dati: se res.data è un array, sono i vecchi progetti
+          if (Array.isArray(res.data)) {
+            setProjects(res.data);
+            setQuickTasks([]);
+          } else {
+            setProjects(res.data.projects || []);
+            setQuickTasks(res.data.quickTasks || []);
+          }
           setTitle(res.title || "Progetti Condivisi");
         } else {
-          // If not exists, create a default one
           setProjects([]);
+          setQuickTasks([]);
         }
       } catch (err) {
         setError(err.message);
@@ -264,121 +276,226 @@ export default function SharedProjects() {
     syncTimeoutRef.current = setTimeout(async () => {
       setIsSaving(true);
       try {
-        await api.training.updateSharedDashboard(shareId, projects, title);
+        const payload = { projects, quickTasks };
+        await api.training.updateSharedDashboard(shareId, payload, title);
       } catch (err) {
         console.error("Sync failed:", err);
       } finally {
         setIsSaving(false);
       }
     }, 2000);
-  }, [projects, title, shareId, loading]);
+  }, [projects, quickTasks, title, shareId, loading]);
+
+  const addQuickTask = () => {
+    const t = quickTaskDraft.trim();
+    if (!t) return;
+    setQuickTasks(prev => [{ id: uid('qtask'), title: t, done: false, created_at: Date.now() }, ...prev]);
+    setQuickTaskDraft("");
+  };
+
+  const toggleQuickTask = (id) => {
+    setQuickTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  };
+
+  const deleteQuickTask = (id) => {
+    setQuickTasks(prev => prev.filter(t => t.id !== id));
+  };
 
   const updateProject = (id, updater) => setProjects(p => p.map(x => x.id === id ? updater(x) : x));
 
-  if (loading) return <div className="p-8 text-center text-gray-500">Caricamento...</div>;
+  if (loading) return <div className="p-8 text-center text-gray-500 font-medium">Caricamento spazio condiviso...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Errore: {error}</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0B0F19] text-gray-900 dark:text-gray-100 p-6 sm:p-10 font-sans selection:bg-indigo-500/30 antialiased">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0B0F19] text-gray-900 dark:text-gray-100 p-4 sm:p-8 md:p-10 font-sans selection:bg-indigo-500/30 antialiased overflow-x-hidden">
+      <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-8">
         
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <input 
-              value={title} 
-              onChange={(e) => setTitle(e.target.value)}
-              className="text-3xl font-extrabold tracking-tight bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-500 rounded px-1 -ml-1"
-            />
-            <p className="text-gray-500 text-sm font-medium">Spazio di lavoro condiviso con gli amici</p>
-          </div>
-          {isSaving && <span className="text-[10px] font-bold text-indigo-500 animate-pulse uppercase tracking-widest bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-200 dark:border-indigo-500/20">Sincronizzazione...</span>}
-        </header>
+        {/* MAIN CONTENT: PROJECTS */}
+        <div className="flex-1 space-y-8 min-w-0 order-2 lg:order-1">
+          <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <input 
+                value={title} 
+                onChange={(e) => setTitle(e.target.value)}
+                className="text-3xl font-extrabold tracking-tight bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-500 rounded px-1 -ml-1 w-full sm:w-auto"
+              />
+              <p className="text-gray-500 text-sm font-medium">Spazio di lavoro condiviso</p>
+            </div>
+            {isSaving && (
+              <motion.span 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-200 dark:border-indigo-500/20 self-start sm:self-center"
+              >
+                Sincronizzazione...
+              </motion.span>
+            )}
+          </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((proj) => {
-            const stats = countTreeStats(proj.tasks);
-            return (
-              <div key={proj.id} className="flex flex-col bg-white dark:bg-[#1a1d24] border border-gray-200/80 dark:border-gray-800/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/20">
-                  <div className="flex-1 min-w-0 mr-2">
-                    <input
-                      defaultValue={proj.title}
-                      onBlur={(e) => updateProject(proj.id, p => ({ ...p, title: e.target.value }))}
-                      className="w-full text-sm font-bold bg-transparent border-none outline-none focus:ring-1 focus:ring-indigo-500 rounded px-1 -ml-1"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-[10px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-500 px-2 py-0.5 rounded-full tabular-nums">
-                      {stats.completed}/{stats.total}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {projects.map((proj) => {
+              const stats = countTreeStats(proj.tasks);
+              return (
+                <motion.div 
+                  layout
+                  key={proj.id} 
+                  className="flex flex-col bg-white dark:bg-[#1a1d24] border border-gray-200/80 dark:border-gray-800/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-fit"
+                >
+                  <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/20">
+                    <div className="flex-1 min-w-0 mr-2">
+                      <input
+                        defaultValue={proj.title}
+                        onBlur={(e) => updateProject(proj.id, p => ({ ...p, title: e.target.value }))}
+                        className="w-full text-sm font-bold bg-transparent border-none outline-none focus:ring-1 focus:ring-indigo-500 rounded px-1 -ml-1"
+                      />
                     </div>
-                    <button onClick={() => setProjects(p => p.filter(x => x.id !== proj.id))} className="text-gray-400 hover:text-red-500">
-                      <Icons.X className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <div className="text-[10px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-500 px-2 py-0.5 rounded-full tabular-nums">
+                        {stats.completed}/{stats.total}
+                      </div>
+                      <button onClick={() => setProjects(p => p.filter(x => x.id !== proj.id))} className="text-gray-400 hover:text-red-500 transition-colors">
+                        <Icons.X className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex-1 p-4 space-y-2 overflow-y-auto max-h-[400px] custom-scrollbar">
-                  {proj.tasks.map((task, idx) => (
-                    <SharedTaskNode
-                      key={task.id} node={task} depth={0} projectId={proj.id}
-                      onToggle={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, done: val })) }))}
-                      onDelete={(tid) => updateProject(proj.id, p => ({ ...p, tasks: removeNodeFromTree(p.tasks, tid) }))}
-                      onRename={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, title: val })) }))}
-                      onDeadline={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, deadline: val })) }))}
-                      onAddChild={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, children: [...(n.children || []), { id: uid('task'), title: val, done: false, children: [] }] })) }))}
-                      onMove={(tid, targetIdx, parentId) => updateProject(proj.id, p => {
-                        if (parentId) {
-                          return { ...p, tasks: updateNodeInTree(p.tasks, parentId, parent => {
-                            const next = [...(parent.children || [])];
-                            const fromIdx = next.findIndex(t => t.id === tid);
-                            if (fromIdx === -1) return parent;
-                            const [removed] = next.splice(fromIdx, 1);
-                            next.splice(targetIdx, 0, removed);
-                            return { ...parent, children: next };
-                          }) };
+                  <div className="flex-1 p-4 space-y-2 overflow-y-auto max-h-[400px] custom-scrollbar">
+                    {proj.tasks.map((task, idx) => (
+                      <SharedTaskNode
+                        key={task.id} node={task} depth={0} projectId={proj.id}
+                        onToggle={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, done: val })) }))}
+                        onDelete={(tid) => updateProject(proj.id, p => ({ ...p, tasks: removeNodeFromTree(p.tasks, tid) }))}
+                        onRename={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, title: val })) }))}
+                        onDeadline={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, deadline: val })) }))}
+                        onAddChild={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, children: [...(n.children || []), { id: uid('task'), title: val, done: false, children: [] }] })) }))}
+                        onMove={(tid, targetIdx, parentId) => updateProject(proj.id, p => {
+                          if (parentId) {
+                            return { ...p, tasks: updateNodeInTree(p.tasks, parentId, parent => {
+                              const next = [...(parent.children || [])];
+                              const fromIdx = next.findIndex(t => t.id === tid);
+                              if (fromIdx === -1) return parent;
+                              const [removed] = next.splice(fromIdx, 1);
+                              next.splice(targetIdx, 0, removed);
+                              return { ...parent, children: next };
+                            }) };
+                          }
+                          const next = [...p.tasks];
+                          const fromIdx = next.findIndex(t => t.id === tid);
+                          if (fromIdx === -1) return p;
+                          const [removed] = next.splice(fromIdx, 1);
+                          next.splice(targetIdx, 0, removed);
+                          return { ...p, tasks: next };
+                        })}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="p-4 pt-0">
+                    <input
+                      value={projectTaskDrafts[proj.id] || ''}
+                      onChange={(e) => setProjectTaskDrafts(prev => ({ ...prev, [proj.id]: e.target.value }))}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const val = projectTaskDrafts[proj.id]?.trim();
+                          if (val) {
+                            updateProject(proj.id, p => ({ ...p, tasks: [...p.tasks, { id: uid('task'), title: val, done: false, children: [] }] }));
+                            setProjectTaskDrafts(prev => ({ ...prev, [proj.id]: '' }));
+                          }
                         }
-                        const next = [...p.tasks];
-                        const fromIdx = next.findIndex(t => t.id === tid);
-                        if (fromIdx === -1) return p;
-                        const [removed] = next.splice(fromIdx, 1);
-                        next.splice(targetIdx, 0, removed);
-                        return { ...p, tasks: next };
-                      })}
+                      }}
+                      placeholder="+ Aggiungi task..."
+                      className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-2 text-xs outline-none focus:border-indigo-500 transition-colors"
                     />
-                  ))}
+                  </div>
+                </motion.div>
+              );
+            })}
+
+            <button 
+              onClick={() => setProjects(p => [{ id: uid('project'), title: 'Nuovo Progetto', tasks: [] }, ...p])}
+              className="flex flex-col items-center justify-center gap-2 p-8 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl hover:border-indigo-500 hover:bg-indigo-500/5 transition-all text-gray-400 hover:text-indigo-500 group min-h-[200px]"
+            >
+              <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                <Icons.Plus className="w-6 h-6" />
+              </div>
+              <span className="text-sm font-bold">Crea Progetto</span>
+            </button>
+          </div>
+        </div>
+
+        {/* SIDEBAR: QUICK TASKS */}
+        <aside className="w-full lg:w-72 shrink-0 order-1 lg:order-2">
+          <div className="sticky top-8 space-y-4">
+            <div className="bg-white dark:bg-[#1a1d24] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <Icons.Zap className="w-4 h-4" />
+                </div>
+                <h2 className="text-sm font-black uppercase tracking-wider text-gray-800 dark:text-gray-200">Quick Tasks</h2>
+              </div>
+
+              <div className="space-y-3">
+                <div className="relative">
+                  <input
+                    value={quickTaskDraft}
+                    onChange={(e) => setQuickTaskDraft(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addQuickTask()}
+                    placeholder="Cosa devi fare?"
+                    className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl pl-4 pr-10 py-2.5 text-xs outline-none focus:border-amber-500 transition-colors"
+                  />
+                  <button 
+                    onClick={addQuickTask}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-amber-500 transition-colors"
+                  >
+                    <Icons.Plus className="w-4 h-4" />
+                  </button>
                 </div>
 
-                <div className="p-4 pt-0">
-                  <input
-                    value={projectTaskDrafts[proj.id] || ''}
-                    onChange={(e) => setProjectTaskDrafts(prev => ({ ...prev, [proj.id]: e.target.value }))}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        const val = projectTaskDrafts[proj.id]?.trim();
-                        if (val) {
-                          updateProject(proj.id, p => ({ ...p, tasks: [...p.tasks, { id: uid('task'), title: val, done: false, children: [] }] }));
-                          setProjectTaskDrafts(prev => ({ ...prev, [proj.id]: '' }));
-                        }
-                      }
-                    }}
-                    placeholder="+ Aggiungi task..."
-                    className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-2 text-xs outline-none focus:border-indigo-500 transition-colors"
-                  />
+                <div className="space-y-1.5 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
+                  <AnimatePresence initial={false}>
+                    {quickTasks.map((task) => (
+                      <motion.div
+                        key={task.id}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        className="group flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-gray-100 dark:hover:border-gray-800"
+                      >
+                        <button 
+                          onClick={() => toggleQuickTask(task.id)}
+                          className={`shrink-0 ${task.done ? 'text-emerald-500' : 'text-gray-300 dark:text-gray-600 hover:text-amber-400'}`}
+                        >
+                          {task.done ? <Icons.CheckCircle className="w-4 h-4" /> : <Icons.Circle className="w-4 h-4" />}
+                        </button>
+                        <span className={`flex-1 text-[11px] min-w-0 truncate ${task.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
+                          {task.title}
+                        </span>
+                        <button 
+                          onClick={() => deleteQuickTask(task.id)}
+                          className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
+                        >
+                          <Icons.Trash className="w-3 h-3" />
+                        </button>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                  
+                  {quickTasks.length === 0 && (
+                    <div className="py-8 text-center space-y-2">
+                      <div className="text-gray-300 dark:text-gray-700 text-2xl">⚡</div>
+                      <p className="text-[10px] text-gray-400 font-medium">Nessuna task veloce</p>
+                    </div>
+                  )}
                 </div>
               </div>
-            );
-          })}
-
-          <button 
-            onClick={() => setProjects(p => [{ id: uid('project'), title: 'Nuovo Progetto', tasks: [] }, ...p])}
-            className="flex flex-col items-center justify-center gap-2 p-8 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl hover:border-indigo-500 hover:bg-indigo-500/5 transition-all text-gray-400 hover:text-indigo-500 group"
-          >
-            <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition-colors">
-              <Icons.Plus className="w-6 h-6" />
             </div>
-            <span className="text-sm font-bold">Crea Progetto</span>
-          </button>
-        </div>
+
+            <div className="p-4 bg-indigo-500/5 dark:bg-indigo-500/5 rounded-2xl border border-indigo-500/10 text-[10px] text-gray-500 leading-relaxed italic">
+              "Le Quick Tasks sono ideali per piccole note o azioni immediate che non richiedono un intero progetto."
+            </div>
+          </div>
+        </aside>
+
       </div>
     </div>
   );
