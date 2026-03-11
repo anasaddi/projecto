@@ -145,7 +145,7 @@ export function CompactExerciseCard({ exercise, showMuscleNames, progressions, d
     >
       <div className={`absolute top-0 left-0 bottom-0 w-1 ${isActive ? accentDot : 'bg-zinc-500'}`} />
       
-      <div className="flex flex-col items-center w-full gap-0.5">
+      <div className="flex flex-col items-center justify-center w-full gap-0.5 flex-1 min-h-0">
         <div className="flex items-center justify-center w-full gap-1 px-1">
           {!isActive && <Target size={8} className="text-zinc-500 shrink-0" />}
           <div className={`text-[10px] font-black uppercase tracking-tight text-center line-clamp-1
@@ -155,15 +155,15 @@ export function CompactExerciseCard({ exercise, showMuscleNames, progressions, d
         </div>
 
         {details && isActive && category !== 'AW' && (
-          <div className="flex items-center w-full mt-1 pt-1 border-t border-zinc-100/50 dark:border-zinc-800/50">
-            <div className="flex-1 flex justify-center border-r border-zinc-100/30 dark:border-zinc-800/30 pr-1">
+          <div className="flex items-stretch w-full mt-1 pt-1 border-t border-zinc-100/50 dark:border-zinc-800/50 min-h-[32px]">
+            <div className="flex-1 flex justify-center items-center border-r border-zinc-100/30 dark:border-zinc-800/30 pr-1">
               <span className={`text-[7px] font-bold uppercase tracking-widest px-1 py-0.5 rounded-md
                 ${category === 'STRENGTH' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 
                   'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>
                 {details.label}
               </span>
             </div>
-            <div className="flex-1 flex flex-col items-center gap-0 pl-1 leading-none">
+            <div className="flex-1 flex flex-col justify-center items-center gap-0 pl-1 leading-none">
               <span className="text-[7px] font-bold text-blue-500 tracking-tighter">A: {details.anas}</span>
               <span className="text-[7px] font-bold text-emerald-500 tracking-tighter">F: {details.flavio}</span>
             </div>
@@ -171,7 +171,7 @@ export function CompactExerciseCard({ exercise, showMuscleNames, progressions, d
         )}
 
         {details && isActive && category === 'AW' && (
-          <div className="flex items-center justify-center mt-0.5">
+          <div className="flex items-center justify-center min-h-[20px]">
             <span className="text-[7px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
               {details.label}
             </span>
