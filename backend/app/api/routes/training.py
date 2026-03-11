@@ -21,64 +21,25 @@ def check_admin_access(x_km_access: Optional[str] = Header(None)):
 
 @router.get("/ping")
 def ping(db: Session = Depends(get_db)):
-    from app.db.models import Exercise, WorkoutDayTemplate, DailySchedule, SharedDashboard
-    from sqlalchemy import text
-    
-    # Check if SharedDashboard table exists
-    shared_table_exists = False
-    try:
-        db.execute(text("SELECT 1 FROM shared_dashboards LIMIT 1"))
-        shared_table_exists = True
-    except Exception:
-        shared_table_exists = False
-
+    from app.db.models import Exercise, WorkoutDayTemplate, DailySchedule
     ex_count = db.query(Exercise).count()
     tmpl_count = db.query(WorkoutDayTemplate).count()
     sched_count = db.query(DailySchedule).count()
-    
     return {
         "status": "pong",
         "db_stats": {
             "exercises": ex_count,
             "templates": tmpl_count,
-            "schedule_entries": sched_count,
-            "shared_table_ready": shared_table_exists
+            "schedule_entries": sched_count
         }
     }
 
 @router.post("/reseed", dependencies=[Depends(check_admin_access)])
 def reseed_db(db: Session = Depends(get_db)):
-    """Force re-seeding of training data, including schema migrations."""
+    """Force re-seeding of training data."""
     from app.db.seed_training import seed_training_if_empty
-    from app.db.models import Exercise, WorkoutDayTemplate, WorkoutDayExercise, DailySchedule, SharedDashboard
-    from sqlalchemy import text
+    from app.db.models import Exercise, WorkoutDayTemplate, WorkoutDayExercise, DailySchedule
     
-    # 1. Migrazioni manuali per SQLite in produzione
-    try:
-        # Colonna is_active
-        try:
-            db.execute(text("ALTER TABLE exercises ADD COLUMN is_active INTEGER DEFAULT 1"))
-            db.commit()
-        except Exception:
-            db.rollback()
-
-        # Tabella SharedDashboard
-        db.execute(text("""
-            CREATE TABLE IF NOT EXISTS shared_dashboards (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                share_id VARCHAR(64) UNIQUE NOT NULL,
-                title VARCHAR(256) NOT NULL,
-                data JSON NOT NULL,
-                updated_at DATETIME
-            )
-        """))
-        db.execute(text("CREATE INDEX IF NOT EXISTS ix_shared_dashboards_share_id ON shared_dashboards (share_id)"))
-        db.execute(text("CREATE INDEX IF NOT EXISTS ix_shared_dashboards_id ON shared_dashboards (id)"))
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        print(f"Migration error: {e}")
-
     # 2. Pulizia totale per forzare il caricamento di TUTTI i dati locali
     try:
         db.query(DailySchedule).delete()

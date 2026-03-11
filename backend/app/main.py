@@ -6,7 +6,8 @@ from fastapi.responses import JSONResponse
 
 from app.api.routes import sources, content, insights, search, youtube, training
 from app.config import get_settings
-from app.db.session import SessionLocal
+from app.db.session import SessionLocal, Base, engine
+from app.db import models
 from app.db.seed_training import seed_training_if_empty, seed_fake_history
 
 
@@ -17,9 +18,24 @@ def _cors_origins_list(settings) -> list:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Ensure all tables exist (important for SQLite in production)
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"Table creation error: {e}")
+
     # Seed training data if DB is empty (run after migrations)
     try:
         db = SessionLocal()
+        
+        # Manual migration for SQLite (adding is_active to exercises if it doesn't exist)
+        from sqlalchemy import text
+        try:
+            db.execute(text("ALTER TABLE exercises ADD COLUMN is_active INTEGER DEFAULT 1"))
+            db.commit()
+        except Exception:
+            db.rollback() # Ignore if column already exists
+
         n = seed_training_if_empty(db)
         if n:
             print(f"Training seed: inserted {n} exercises and day templates.")
