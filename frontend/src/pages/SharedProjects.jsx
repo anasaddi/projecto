@@ -253,6 +253,7 @@ export default function SharedProjects() {
 
   const ws = useRef(null);
   const reconnectTimeout = useRef(null);
+  const heartbeatInterval = useRef(null);
   const mountedRef = useRef(true);
 
   // Helper per costruire l'URL WebSocket (Vercel non supporta WS, usiamo Railway diretto in prod)
@@ -293,12 +294,19 @@ export default function SharedProjects() {
     ws.current.onopen = () => {
       if (!mountedRef.current) return;
       setDashboard(prev => ({ ...prev, isConnected: true, error: null }));
+      if (heartbeatInterval.current) clearInterval(heartbeatInterval.current);
+      heartbeatInterval.current = setInterval(() => {
+        if (ws.current?.readyState === WebSocket.OPEN) {
+          ws.current.send(JSON.stringify({ type: 'ping' }));
+        }
+      }, 25000);
     };
 
     ws.current.onmessage = (event) => {
       if (!mountedRef.current) return;
       try {
         const msg = JSON.parse(event.data);
+        if (msg?.type === 'pong') return;
         applyDashboardFromPayload(msg);
         setTimeout(() => {
           if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
@@ -310,6 +318,10 @@ export default function SharedProjects() {
 
     ws.current.onclose = () => {
       if (!mountedRef.current) return;
+      if (heartbeatInterval.current) {
+        clearInterval(heartbeatInterval.current);
+        heartbeatInterval.current = null;
+      }
       setDashboard(prev => ({ ...prev, isConnected: false }));
       ws.current = null;
       if (mountedRef.current && id) {
@@ -361,6 +373,10 @@ export default function SharedProjects() {
     return () => {
       cancelled = true;
       mountedRef.current = false;
+      if (heartbeatInterval.current) {
+        clearInterval(heartbeatInterval.current);
+        heartbeatInterval.current = null;
+      }
       if (ws.current) {
         ws.current.close();
         ws.current = null;

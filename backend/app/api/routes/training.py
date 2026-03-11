@@ -273,6 +273,9 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
 
         while True:
             payload = await websocket.receive_json()
+            if payload.get("type") == "ping":
+                await websocket.send_json({"type": "pong"})
+                continue
             await manager.broadcast(payload, share_id, exclude=websocket)
             await crud_dashboard.update_shared_dashboard_from_json(
                 db, share_id, payload.get("data"), payload.get("title")
