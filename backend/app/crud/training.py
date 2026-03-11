@@ -195,6 +195,15 @@ async def migrate_json_to_relational(db: AsyncSession):
         data = _parse_json(ds.data, {})
         logger.info("Migrating personal dashboard...")
         await update_dashboard_from_json(db, data, key="default")
+        
+        # --- NEW: Extract Progressions (Strength Table / TMs) ---
+        # The old system stored TMs in a dictionary inside DashboardState
+        # We need to find the key. Usually it was "trainingProgressions"
+        progressions = data.get("trainingProgressions", {})
+        if progressions:
+            logger.info(f"Found {len(progressions)} progressions to migrate.")
+            for ex_id, prog_data in progressions.items():
+                await update_training_progression(db, ex_id, prog_data)
 
     # 2. Shared Dashboards
     res_sd = await db.execute(select(SharedDashboard))
