@@ -330,6 +330,7 @@ export default function SharedProjects() {
   const sendUpdate = (newState) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify({
+        type: 'sync',
         title: newState.title,
         data: {
           projects: newState.projects,

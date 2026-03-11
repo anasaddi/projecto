@@ -830,7 +830,7 @@ export default function DashboardV2() {
       if (wsConnections.current[shareId]) return;
 
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.hostname === 'localhost' ? 'localhost:8000' : 'projecto-production.up.railway.app';
+      const host = window.location.hostname === 'localhost' ? 'localhost:8000' : 'projecto-production-feda.up.railway.app';
       const wsUrl = `${protocol}//${host}/api/training/ws/shared-dashboard/${shareId}`;
       
       const socket = new WebSocket(wsUrl);
@@ -840,8 +840,9 @@ export default function DashboardV2() {
         try {
           const message = JSON.parse(event.data);
           if (message.type === 'sync') {
+            const data = message.data || message;
             setSharedDashboards(prev => prev.map(item => 
-              item.share_id === shareId ? { ...item, data: message.data } : item
+              item.share_id === shareId ? { ...item, data: data } : item
             ));
           }
         } catch (err) {
@@ -1048,11 +1049,13 @@ export default function DashboardV2() {
 
   const updateSharedDashboardProject = (shareId, projectId, updater) => {
     let updatedData = null;
+    let title = null;
     setSharedDashboards(prev => prev.map(sd => {
       if (sd.share_id === shareId) {
         const newData = { ...sd.data };
         newData.projects = (newData.projects || []).map(p => p.id === projectId ? updater(p) : p);
         updatedData = newData;
+        title = sd.title;
         return { ...sd, data: newData };
       }
       return sd;
@@ -1061,10 +1064,10 @@ export default function DashboardV2() {
     if (updatedData) {
       const socket = wsConnections.current[shareId];
       if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: 'sync', data: updatedData }));
+        socket.send(JSON.stringify({ type: 'sync', title, data: updatedData }));
       } else {
         // Fallback to REST API if WebSocket is not ready
-        api.training.updateSharedDashboard(shareId, updatedData).catch(err => {
+        api.training.updateSharedDashboard(shareId, updatedData, title).catch(err => {
           console.error("Failed to update shared dashboard (REST):", err);
         });
       }
@@ -1075,11 +1078,13 @@ export default function DashboardV2() {
     if (!window.confirm("Sei sicuro di voler eliminare questo progetto condiviso?")) return;
     
     let updatedData = null;
+    let title = null;
     setSharedDashboards(prev => prev.map(sd => {
       if (sd.share_id === shareId) {
         const newData = { ...sd.data };
         newData.projects = (newData.projects || []).filter(p => p.id !== projectId);
         updatedData = newData;
+        title = sd.title;
         return { ...sd, data: newData };
       }
       return sd;
@@ -1088,9 +1093,9 @@ export default function DashboardV2() {
     if (updatedData) {
       const socket = wsConnections.current[shareId];
       if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: 'sync', data: updatedData }));
+        socket.send(JSON.stringify({ type: 'sync', title, data: updatedData }));
       } else {
-        api.training.updateSharedDashboard(shareId, updatedData).catch(err => {
+        api.training.updateSharedDashboard(shareId, updatedData, title).catch(err => {
           console.error("Failed to delete shared dashboard project (REST):", err);
         });
       }

@@ -187,10 +187,12 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: Se
         if dashboard:
             # Serialize using Pydantic
             data_out = schemas.SharedDashboardOut.model_validate(dashboard).model_dump(mode='json')
+            data_out["type"] = "sync"
             await websocket.send_json(data_out)
         else:
             # Default empty state
             await websocket.send_json({
+                "type": "sync",
                 "share_id": share_id, 
                 "title": "Progetti Condivisi", 
                 "data": {"projects": [], "quickTasks": [], "chat": []},
