@@ -26,18 +26,27 @@ function AdminRoute({ children }) {
 
 // --- Auth Initialization (Synchronous) ---
 const initAuth = () => {
+  const params = new URLSearchParams(window.location.search);
   const path = window.location.pathname;
   const isShared = path.startsWith('/shared/');
+  const keyParam = params.get('key');
   
-  if (isShared) {
-    localStorage.setItem('km-user-role', 'guest');
-    localStorage.removeItem('km-admin-token');
-  } else if (path === '/' || path === '/dashboard' || path === '/training' || path === '/training2') {
-    // Se non è esplicitamente guest (o se stiamo forzando l'admin su queste rotte)
-    // Forziamo admin se siamo su una rotta privata e non siamo in un link condiviso
+  // Se l'utente fornisce la chiave corretta nell'URL, lo promuoviamo ad admin
+  if (keyParam === 'master-key') {
     localStorage.setItem('km-user-role', 'admin');
     localStorage.setItem('km-admin-token', 'master-key');
+    // Puliamo l'URL dal parametro per sicurezza
+    window.history.replaceState({}, '', path);
+  } else if (isShared) {
+    // Se è un link condiviso, forziamo il ruolo guest se non è già admin
+    const currentRole = localStorage.getItem('km-user-role');
+    if (currentRole !== 'admin') {
+      localStorage.setItem('km-user-role', 'guest');
+      localStorage.removeItem('km-admin-token');
+    }
   }
+  // Se non è né admin né guest (nuovo utente su pagine private), 
+  // AdminRoute si occuperà del redirect alla home.
 };
 
 // Eseguiamo l'inizializzazione immediatamente prima del render dei componenti
