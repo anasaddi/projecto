@@ -1057,28 +1057,34 @@ export default function DashboardV2() {
   const updateSharedDashboardProject = (shareId, projectId, updater) => {
     let updatedData = null;
     let title = null;
-    setSharedDashboards(prev => prev.map(sd => {
-      if (sd.share_id === shareId) {
-        const newData = { ...sd.data };
-        newData.projects = (newData.projects || []).map(p => p.id === projectId ? updater(p) : p);
-        updatedData = newData;
-        title = sd.title;
-        return { ...sd, data: newData };
+
+    setSharedDashboards(prev => {
+      const next = prev.map(sd => {
+        if (sd.share_id === shareId) {
+          const newData = { ...sd.data };
+          newData.projects = (newData.projects || []).map(p => p.id === projectId ? updater(p) : p);
+          updatedData = newData;
+          title = sd.title;
+          return { ...sd, data: newData };
+        }
+        return sd;
+      });
+
+      // Ora che abbiamo calcolato updatedData (perché map è sincrono), 
+      // possiamo inviare l'aggiornamento.
+      if (updatedData) {
+        const socket = wsConnections.current[shareId];
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: 'sync', title, data: updatedData }));
+        } else {
+          api.training.updateSharedDashboard(shareId, updatedData, title).catch(err => {
+            console.error("Failed to update shared dashboard (REST):", err);
+          });
+        }
       }
-      return sd;
-    }));
-    
-    if (updatedData) {
-      const socket = wsConnections.current[shareId];
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: 'sync', title, data: updatedData }));
-      } else {
-        // Fallback to REST API if WebSocket is not ready
-        api.training.updateSharedDashboard(shareId, updatedData, title).catch(err => {
-          console.error("Failed to update shared dashboard (REST):", err);
-        });
-      }
-    }
+
+      return next;
+    });
   };
 
   const deleteSharedDashboardProject = (shareId, projectId) => {
@@ -1086,27 +1092,32 @@ export default function DashboardV2() {
     
     let updatedData = null;
     let title = null;
-    setSharedDashboards(prev => prev.map(sd => {
-      if (sd.share_id === shareId) {
-        const newData = { ...sd.data };
-        newData.projects = (newData.projects || []).filter(p => p.id !== projectId);
-        updatedData = newData;
-        title = sd.title;
-        return { ...sd, data: newData };
-      }
-      return sd;
-    }));
 
-    if (updatedData) {
-      const socket = wsConnections.current[shareId];
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: 'sync', title, data: updatedData }));
-      } else {
-        api.training.updateSharedDashboard(shareId, updatedData, title).catch(err => {
-          console.error("Failed to delete shared dashboard project (REST):", err);
-        });
+    setSharedDashboards(prev => {
+      const next = prev.map(sd => {
+        if (sd.share_id === shareId) {
+          const newData = { ...sd.data };
+          newData.projects = (newData.projects || []).filter(p => p.id !== projectId);
+          updatedData = newData;
+          title = sd.title;
+          return { ...sd, data: newData };
+        }
+        return sd;
+      });
+
+      if (updatedData) {
+        const socket = wsConnections.current[shareId];
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: 'sync', title, data: updatedData }));
+        } else {
+          api.training.updateSharedDashboard(shareId, updatedData, title).catch(err => {
+            console.error("Failed to delete shared dashboard project (REST):", err);
+          });
+        }
       }
-    }
+
+      return next;
+    });
   };
   const reorderProjectTasks = (projectId, fromIndex, toIndex) => {
     if (fromIndex === toIndex) return;
