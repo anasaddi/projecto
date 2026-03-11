@@ -241,104 +241,98 @@ export default function SharedProjects() {
     title: "Progetti Condivisi",
     loading: true,
     error: null,
-    isSaving: false
+    isConnected: false
   });
 
-  // Ref per gestire la sincronizzazione senza loop
-  const syncRef = useRef({
-    lastLocalChange: 0,
-    isSaving: false,
-    pendingSave: false,
-    lastServerData: null
-  });
+  const ws = useRef(null);
+  const reconnectTimeout = useRef(null);
 
-  // Funzione unica per caricare i dati (Polling & Initial)
-  const fetchShared = async (isPoll = false) => {
-    // Se abbiamo cambiato qualcosa localmente negli ultimi 3 secondi, non sovrascrivere col server
-    if (isPoll && (syncRef.current.isSaving || Date.now() - syncRef.current.lastLocalChange < 3000)) return;
-
-    try {
-      const res = await api.training.getSharedDashboard(shareId);
-      if (!res) return;
-
-      const serverTitle = res.title || "Progetti Condivisi";
-      let serverProjects = [];
-      let serverQuickTasks = [];
-
-      if (res.data) {
-        if (Array.isArray(res.data)) {
-          serverProjects = res.data;
-        } else {
-          serverProjects = res.data.projects || [];
-          serverQuickTasks = res.data.quickTasks || [];
-        }
-      }
-
-      // Confronto profondo semplificato per evitare re-render inutili
-      const serverStateStr = JSON.stringify({ p: serverProjects, q: serverQuickTasks, t: serverTitle });
-      if (syncRef.current.lastServerData === serverStateStr) return;
-      syncRef.current.lastServerData = serverStateStr;
-
-      setDashboard(prev => ({
-        ...prev,
-        projects: serverProjects,
-        quickTasks: serverQuickTasks,
-        title: serverTitle,
-        loading: false
-      }));
-    } catch (err) {
-      if (!isPoll) setDashboard(prev => ({ ...prev, error: err.message, loading: false }));
+  // Helper per costruire l'URL WebSocket corretto
+  const getWsUrl = (id) => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    let host = 'localhost:8000'; 
+    if (window.location.hostname.includes('vercel.app')) {
+      host = 'projecto-production-feda.up.railway.app';
     }
+    return `${protocol}//${host}/api/training/ws/shared-dashboard/${encodeURIComponent(id)}`;
   };
 
-  // Caricamento iniziale
-  useEffect(() => {
-    fetchShared();
-    const pollInterval = setInterval(() => fetchShared(true), 3000);
-    return () => clearInterval(pollInterval);
-  }, [shareId]);
+  const connect = () => {
+    if (ws.current?.readyState === WebSocket.OPEN) return;
 
-  // Motore di salvataggio automatico (Debounced)
-  useEffect(() => {
-    if (dashboard.loading) return;
+    const url = getWsUrl(shareId);
+    ws.current = new WebSocket(url);
 
-    const performSave = async () => {
-      if (syncRef.current.isSaving) {
-        syncRef.current.pendingSave = true;
-        return;
-      }
+    ws.current.onopen = () => {
+      console.log('WS Connected');
+      setDashboard(prev => ({ ...prev, isConnected: true, error: null }));
+    };
 
-      syncRef.current.isSaving = true;
-      setDashboard(prev => ({ ...prev, isSaving: true }));
-
+    ws.current.onmessage = (event) => {
       try {
-        const payload = { projects: dashboard.projects, quickTasks: dashboard.quickTasks };
-        await api.training.updateSharedDashboard(shareId, payload, dashboard.title);
-        // Aggiorniamo il "lastServerData" con quello che abbiamo appena mandato per evitare che il poll lo veda come "nuovo"
-        syncRef.current.lastServerData = JSON.stringify({ p: dashboard.projects, q: dashboard.quickTasks, t: dashboard.title });
-      } catch (err) {
-        console.error("Save failed:", err);
-      } finally {
-        syncRef.current.isSaving = false;
-        setDashboard(prev => ({ ...prev, isSaving: false }));
-        // Se c'è stato un altro cambiamento mentre salvavamo, salviamo di nuovo
-        if (syncRef.current.pendingSave) {
-          syncRef.current.pendingSave = false;
-          performSave();
-        }
+        const msg = JSON.parse(event.data);
+        // Normalizzazione dati in ingresso
+        const serverProjects = Array.isArray(msg.data) ? msg.data : (msg.data?.projects || []);
+        const serverQuickTasks = Array.isArray(msg.data) ? [] : (msg.data?.quickTasks || []);
+        const serverTitle = msg.title || "Progetti Condivisi";
+
+        setDashboard(prev => ({
+          ...prev,
+          projects: serverProjects,
+          quickTasks: serverQuickTasks,
+          title: serverTitle,
+          loading: false
+        }));
+      } catch (e) {
+        console.error("WS Parse error", e);
       }
     };
 
-    const timer = setTimeout(performSave, 800);
-    return () => clearTimeout(timer);
-  }, [dashboard.projects, dashboard.quickTasks, dashboard.title]);
+    ws.current.onclose = () => {
+      console.log('WS Disconnected');
+      setDashboard(prev => ({ ...prev, isConnected: false }));
+      // Riconnessione automatica
+      reconnectTimeout.current = setTimeout(connect, 3000);
+    };
 
-  // Helper per aggiornare lo stato locale e segnare il cambiamento
+    ws.current.onerror = (err) => {
+      console.error('WS Error', err);
+      // Non settiamo errore bloccante, lasciamo che il retry agisca
+    };
+  };
+
+  useEffect(() => {
+    connect();
+    return () => {
+      if (ws.current) ws.current.close();
+      if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
+    };
+  }, [shareId]);
+
+  // Invio aggiornamenti tramite WebSocket
+  const sendUpdate = (newState) => {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify({
+        title: newState.title,
+        data: {
+          projects: newState.projects,
+          quickTasks: newState.quickTasks
+        }
+      }));
+    }
+  };
+
+  // Helper per aggiornare lo stato locale e inviare subito
   const updateLocal = (updater) => {
-    syncRef.current.lastLocalChange = Date.now();
     setDashboard(prev => {
-      const next = typeof updater === 'function' ? updater(prev) : updater;
-      return { ...prev, ...next };
+      const nextPartial = typeof updater === 'function' ? updater(prev) : updater;
+      const nextState = { ...prev, ...nextPartial };
+      
+      // Inviamo l'aggiornamento al server (fire and forget)
+      // Ottimizzazione: inviamo solo se i dati rilevanti sono cambiati
+      sendUpdate(nextState);
+      
+      return nextState;
     });
   };
 
@@ -382,9 +376,8 @@ export default function SharedProjects() {
   const [quickTaskDraft, setQuickTaskDraft] = useState("");
   const [projectTaskDrafts, setProjectTaskDrafts] = useState({});
 
-  if (dashboard.loading) return <div className="p-8 text-center text-gray-500 font-medium">Caricamento spazio condiviso...</div>;
-  if (dashboard.error) return <div className="p-8 text-center text-red-500">Errore: {dashboard.error}</div>;
-
+  if (dashboard.loading) return <div className="p-8 text-center text-gray-500 font-medium">Connessione in corso...</div>;
+  
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0B0F19] text-gray-900 dark:text-gray-100 p-4 sm:p-8 md:p-10 font-sans selection:bg-indigo-500/30 antialiased overflow-x-hidden">
       <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-8">
@@ -402,15 +395,23 @@ export default function SharedProjects() {
             </div>
             <div className="flex items-center gap-3">
               <AnimatePresence>
-                {dashboard.isSaving && (
+                {dashboard.isConnected ? (
                   <motion.div 
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     className="flex items-center gap-2 text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-500/20"
                   >
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Salvataggio...
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    LIVE
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex items-center gap-2 text-[10px] font-bold text-amber-500 uppercase tracking-widest bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-500/20"
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    Reconnecting...
                   </motion.div>
                 )}
               </AnimatePresence>

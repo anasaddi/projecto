@@ -2,12 +2,14 @@ import json
 from pathlib import Path
 from datetime import date
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, WebSocket, WebSocketDisconnect
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app import schemas
 from app.crud import training as crud_training
+from app.websockets import manager
 
 router = APIRouter()
 
@@ -168,6 +170,49 @@ def get_shared_dashboard(share_id: str, db: Session = Depends(get_db)):
 def update_shared_dashboard(share_id: str, body: schemas.SharedDashboardUpdate, db: Session = Depends(get_db)):
     """Update or create a shared dashboard by its share_id. PUBLIC ROUTE."""
     return crud_training.update_shared_dashboard(db, share_id, body.data, body.title)
+
+
+@router.websocket("/ws/shared-dashboard/{share_id}")
+async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: Session = Depends(get_db)):
+    await manager.connect(websocket, share_id)
+    try:
+        # 1. Send initial state
+        dashboard = await run_in_threadpool(crud_training.get_shared_dashboard, db, share_id)
+        if dashboard:
+            # Serialize using Pydantic
+            data_out = schemas.SharedDashboardOut.model_validate(dashboard).model_dump(mode='json')
+            await websocket.send_json(data_out)
+        else:
+            # Default empty state
+            await websocket.send_json({
+                "share_id": share_id, 
+                "title": "Progetti Condivisi", 
+                "data": {"projects": [], "quickTasks": []},
+                "updated_at": None
+            })
+
+        # 2. Listen for updates
+        while True:
+            payload = await websocket.receive_json()
+            # Payload expected: { "data": {...}, "title": "..." }
+            
+            # Broadcast to others immediately (Optimistic)
+            await manager.broadcast(payload, share_id, exclude=websocket)
+            
+            # Save to DB
+            await run_in_threadpool(
+                crud_training.update_shared_dashboard, 
+                db, 
+                share_id, 
+                payload.get("data"), 
+                payload.get("title")
+            )
+            
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, share_id)
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+        manager.disconnect(websocket, share_id)
 
 
 @router.post("/log", response_model=schemas.WorkoutLogOut, dependencies=[Depends(check_admin_access)])
