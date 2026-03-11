@@ -233,120 +233,157 @@ function SharedTaskNode({ node, depth, projectId, projectAccent, onToggle, onDel
 
 export default function SharedProjects() {
   const { shareId } = useParams();
-  const [projects, setProjects] = useState([]);
-  const [quickTasks, setQuickTasks] = useState([]);
-  const [title, setTitle] = useState("Progetti Condivisi");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [projectTaskDrafts, setProjectTaskDrafts] = useState({});
-  const [quickTaskDraft, setQuickTaskDraft] = useState("");
   
-  // Ref per evitare loop infiniti e gestire la precedenza tra polling e salvataggio
-  const lastLocalUpdateRef = useRef(0);
-  const isPollingRef = useRef(false);
+  // Stato unico per tutto il dashboard
+  const [dashboard, setDashboard] = useState({
+    projects: [],
+    quickTasks: [],
+    title: "Progetti Condivisi",
+    loading: true,
+    error: null,
+    isSaving: false
+  });
 
+  // Ref per gestire la sincronizzazione senza loop
+  const syncRef = useRef({
+    lastLocalChange: 0,
+    isSaving: false,
+    pendingSave: false,
+    lastServerData: null
+  });
+
+  // Funzione unica per caricare i dati (Polling & Initial)
   const fetchShared = async (isPoll = false) => {
-    // Se stiamo già salvando o abbiamo appena modificato localmente (< 2s), saltiamo il polling
-    if (isPoll && (isSaving || Date.now() - lastLocalUpdateRef.current < 2000)) return;
-    
+    // Se abbiamo cambiato qualcosa localmente negli ultimi 3 secondi, non sovrascrivere col server
+    if (isPoll && (syncRef.current.isSaving || Date.now() - syncRef.current.lastLocalChange < 3000)) return;
+
     try {
-      isPollingRef.current = true;
       const res = await api.training.getSharedDashboard(shareId);
-      if (res && res.data) {
-        // Se i dati sono diversi da quelli locali, aggiorniamo (molto semplificato)
-        // In un'app reale useremmo timestamp o versioni per ogni oggetto
-        const serverDataStr = JSON.stringify(res.data);
-        const localDataStr = JSON.stringify({ projects, quickTasks });
-        
-        if (serverDataStr !== localDataStr) {
-          if (Array.isArray(res.data)) {
-            setProjects(res.data);
-            setQuickTasks([]);
-          } else {
-            setProjects(res.data.projects || []);
-            setQuickTasks(res.data.quickTasks || []);
-          }
+      if (!res) return;
+
+      const serverTitle = res.title || "Progetti Condivisi";
+      let serverProjects = [];
+      let serverQuickTasks = [];
+
+      if (res.data) {
+        if (Array.isArray(res.data)) {
+          serverProjects = res.data;
+        } else {
+          serverProjects = res.data.projects || [];
+          serverQuickTasks = res.data.quickTasks || [];
         }
-        if (res.title !== title) setTitle(res.title || "Progetti Condivisi");
       }
+
+      // Confronto profondo semplificato per evitare re-render inutili
+      const serverStateStr = JSON.stringify({ p: serverProjects, q: serverQuickTasks, t: serverTitle });
+      if (syncRef.current.lastServerData === serverStateStr) return;
+      syncRef.current.lastServerData = serverStateStr;
+
+      setDashboard(prev => ({
+        ...prev,
+        projects: serverProjects,
+        quickTasks: serverQuickTasks,
+        title: serverTitle,
+        loading: false
+      }));
     } catch (err) {
-      if (!isPoll) setError(err.message);
-    } finally {
-      isPollingRef.current = false;
+      if (!isPoll) setDashboard(prev => ({ ...prev, error: err.message, loading: false }));
     }
   };
 
   // Caricamento iniziale
   useEffect(() => {
-    setLoading(true);
-    fetchShared().finally(() => setLoading(false));
+    fetchShared();
+    const pollInterval = setInterval(() => fetchShared(true), 3000);
+    return () => clearInterval(pollInterval);
   }, [shareId]);
 
-  // Polling ogni 3 secondi per vedere le modifiche degli altri (Live)
+  // Motore di salvataggio automatico (Debounced)
   useEffect(() => {
-    const timer = setInterval(() => fetchShared(true), 3000);
-    return () => clearInterval(timer);
-  }, [projects, quickTasks, title, shareId, isSaving]);
+    if (dashboard.loading) return;
 
-  // Salvataggio automatico ultra-rapido (500ms debounce)
-  const syncTimeoutRef = useRef(null);
-  useEffect(() => {
-    if (loading || isPollingRef.current) return;
-    
-    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-    syncTimeoutRef.current = setTimeout(async () => {
-      setIsSaving(true);
-      try {
-        const payload = { projects, quickTasks };
-        await api.training.updateSharedDashboard(shareId, payload, title);
-      } catch (err) {
-        console.error("Sync failed:", err);
-      } finally {
-        setIsSaving(false);
+    const performSave = async () => {
+      if (syncRef.current.isSaving) {
+        syncRef.current.pendingSave = true;
+        return;
       }
-    }, 500); // Ridotto a 500ms per salvataggi quasi istantanei
-  }, [projects, quickTasks, title, shareId, loading]);
 
-  const onLocalChange = () => {
-    lastLocalUpdateRef.current = Date.now();
+      syncRef.current.isSaving = true;
+      setDashboard(prev => ({ ...prev, isSaving: true }));
+
+      try {
+        const payload = { projects: dashboard.projects, quickTasks: dashboard.quickTasks };
+        await api.training.updateSharedDashboard(shareId, payload, dashboard.title);
+        // Aggiorniamo il "lastServerData" con quello che abbiamo appena mandato per evitare che il poll lo veda come "nuovo"
+        syncRef.current.lastServerData = JSON.stringify({ p: dashboard.projects, q: dashboard.quickTasks, t: dashboard.title });
+      } catch (err) {
+        console.error("Save failed:", err);
+      } finally {
+        syncRef.current.isSaving = false;
+        setDashboard(prev => ({ ...prev, isSaving: false }));
+        // Se c'è stato un altro cambiamento mentre salvavamo, salviamo di nuovo
+        if (syncRef.current.pendingSave) {
+          syncRef.current.pendingSave = false;
+          performSave();
+        }
+      }
+    };
+
+    const timer = setTimeout(performSave, 800);
+    return () => clearTimeout(timer);
+  }, [dashboard.projects, dashboard.quickTasks, dashboard.title]);
+
+  // Helper per aggiornare lo stato locale e segnare il cambiamento
+  const updateLocal = (updater) => {
+    syncRef.current.lastLocalChange = Date.now();
+    setDashboard(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      return { ...prev, ...next };
+    });
   };
 
-  const addQuickTask = () => {
-    const t = quickTaskDraft.trim();
-    if (!t) return;
-    onLocalChange();
-    setQuickTasks(prev => [{ id: uid('qtask'), title: t, done: false, created_at: Date.now() }, ...prev]);
-    setQuickTaskDraft("");
+  const addQuickTask = (title) => {
+    if (!title?.trim()) return;
+    updateLocal(prev => ({
+      quickTasks: [{ id: uid('qtask'), title: title.trim(), done: false, created_at: Date.now() }, ...prev.quickTasks]
+    }));
   };
 
   const toggleQuickTask = (id) => {
-    onLocalChange();
-    setQuickTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
+    updateLocal(prev => ({
+      quickTasks: prev.quickTasks.map(t => t.id === id ? { ...t, done: !t.done } : t)
+    }));
   };
 
   const deleteQuickTask = (id) => {
-    onLocalChange();
-    setQuickTasks(prev => prev.filter(t => t.id !== id));
+    updateLocal(prev => ({
+      quickTasks: prev.quickTasks.filter(t => t.id !== id)
+    }));
   };
 
   const updateProject = (id, updater) => {
-    onLocalChange();
-    setProjects(p => p.map(x => x.id === id ? updater(x) : x));
+    updateLocal(prev => ({
+      projects: prev.projects.map(x => x.id === id ? updater(x) : x)
+    }));
   };
 
   const createProject = () => {
-    onLocalChange();
-    setProjects(p => [{ id: uid('project'), title: 'Nuovo Progetto', tasks: [] }, ...p]);
+    updateLocal(prev => ({
+      projects: [{ id: uid('project'), title: 'Nuovo Progetto', tasks: [] }, ...prev.projects]
+    }));
   };
 
   const deleteProject = (id) => {
-    onLocalChange();
-    setProjects(p => p.filter(x => x.id !== id));
+    updateLocal(prev => ({
+      projects: prev.projects.filter(x => x.id !== id)
+    }));
   };
 
-  if (loading) return <div className="p-8 text-center text-gray-500 font-medium">Caricamento spazio condiviso...</div>;
-  if (error) return <div className="p-8 text-center text-red-500">Errore: {error}</div>;
+  const [quickTaskDraft, setQuickTaskDraft] = useState("");
+  const [projectTaskDrafts, setProjectTaskDrafts] = useState({});
+
+  if (dashboard.loading) return <div className="p-8 text-center text-gray-500 font-medium">Caricamento spazio condiviso...</div>;
+  if (dashboard.error) return <div className="p-8 text-center text-red-500">Errore: {dashboard.error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0B0F19] text-gray-900 dark:text-gray-100 p-4 sm:p-8 md:p-10 font-sans selection:bg-indigo-500/30 antialiased overflow-x-hidden">
@@ -357,15 +394,15 @@ export default function SharedProjects() {
           <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <input 
-                value={title} 
-                onChange={(e) => { onLocalChange(); setTitle(e.target.value); }}
+                value={dashboard.title} 
+                onChange={(e) => updateLocal({ title: e.target.value })}
                 className="text-3xl font-extrabold tracking-tight bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-500 rounded px-1 -ml-1 w-full sm:w-auto"
               />
               <p className="text-gray-500 text-sm font-medium">Spazio di lavoro condiviso</p>
             </div>
             <div className="flex items-center gap-3">
               <AnimatePresence>
-                {isSaving && (
+                {dashboard.isSaving && (
                   <motion.div 
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -373,7 +410,7 @@ export default function SharedProjects() {
                     className="flex items-center gap-2 text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-500/20"
                   >
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Salvataggio in corso...
+                    Salvataggio...
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -381,7 +418,7 @@ export default function SharedProjects() {
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {projects.map((proj) => {
+            {dashboard.projects.map((proj) => {
               const stats = countTreeStats(proj.tasks);
               return (
                 <motion.div 
@@ -487,11 +524,11 @@ export default function SharedProjects() {
                   <input
                     value={quickTaskDraft}
                     onChange={(e) => setQuickTaskDraft(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && addQuickTask()}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { addQuickTask(quickTaskDraft); setQuickTaskDraft(""); } }}
                     className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl pl-4 pr-10 py-2.5 text-xs outline-none focus:border-amber-500 transition-colors"
                   />
                   <button 
-                    onClick={addQuickTask}
+                    onClick={() => { addQuickTask(quickTaskDraft); setQuickTaskDraft(""); }}
                     className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-amber-500 transition-colors"
                   >
                     <Icons.Plus className="w-4 h-4" />
@@ -500,7 +537,7 @@ export default function SharedProjects() {
 
                 <div className="space-y-1.5 flex-1 overflow-y-auto custom-scrollbar pr-1 max-h-[600px]">
                   <AnimatePresence initial={false}>
-                    {quickTasks.map((task) => (
+                    {dashboard.quickTasks.map((task) => (
                       <motion.div
                         key={task.id}
                         initial={{ opacity: 0, x: 20 }}
@@ -527,7 +564,7 @@ export default function SharedProjects() {
                     ))}
                   </AnimatePresence>
                   
-                  {quickTasks.length === 0 && (
+                  {dashboard.quickTasks.length === 0 && (
                     <div className="py-8 text-center space-y-2">
                       <div className="text-gray-300 dark:text-gray-700 text-2xl">⚡</div>
                       <p className="text-[10px] text-gray-400 font-medium">Nessuna task veloce</p>
