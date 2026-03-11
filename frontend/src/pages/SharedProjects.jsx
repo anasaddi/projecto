@@ -419,6 +419,12 @@ export default function SharedProjects() {
     }, 50);
   };
 
+  const resetChat = () => {
+    if (window.confirm("Vuoi davvero cancellare tutta la cronologia della chat?")) {
+      updateLocal({ chat: [] });
+    }
+  };
+
   const [projectTaskDrafts, setProjectTaskDrafts] = useState({});
   const [quickTaskDraft, setQuickTaskDraft] = useState("");
 
@@ -623,11 +629,22 @@ export default function SharedProjects() {
 
           {/* CHAT BOX */}
           <div className="bg-white dark:bg-[#1a1d24] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm min-h-[400px] flex flex-col">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                <Icons.MessageCircle className="w-4 h-4" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                  <Icons.MessageCircle className="w-4 h-4" />
+                </div>
+                <h2 className="text-sm font-black uppercase tracking-wider text-gray-800 dark:text-gray-200">Chat</h2>
               </div>
-              <h2 className="text-sm font-black uppercase tracking-wider text-gray-800 dark:text-gray-200">Chat</h2>
+              {dashboard.chat.length > 0 && (
+                <button 
+                  onClick={resetChat}
+                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  title="Cancella cronologia"
+                >
+                  <Icons.Trash className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-3 pr-1 max-h-[350px] custom-scrollbar mb-3" ref={chatScrollRef}>
