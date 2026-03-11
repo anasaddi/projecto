@@ -817,8 +817,59 @@ export default function DashboardV2() {
   const [quickTaskDeadlineInput, setQuickTaskDeadlineInput] = useState('');
   const [dailyCompletionLog, setDailyCompletionLog] = useState(initial.dailyCompletionLog || {});
   const [sharedDashboards, setSharedDashboards] = useState([]);
+  const wsConnections = useRef({}); // { shareId: WebSocket }
   
   const [isLoaded, setIsLoaded] = useState(false);
+
+  // WebSocket management for shared dashboards
+  useEffect(() => {
+    if (!isLoaded || sharedDashboards.length === 0) return;
+
+    sharedDashboards.forEach(sd => {
+      const shareId = sd.share_id;
+      if (wsConnections.current[shareId]) return;
+
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.hostname === 'localhost' ? 'localhost:8000' : 'projecto-production.up.railway.app';
+      const wsUrl = `${protocol}//${host}/api/training/ws/shared-dashboard/${shareId}`;
+      
+      const socket = new WebSocket(wsUrl);
+      wsConnections.current[shareId] = socket;
+
+      socket.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === 'sync') {
+            setSharedDashboards(prev => prev.map(item => 
+              item.share_id === shareId ? { ...item, data: message.data } : item
+            ));
+          }
+        } catch (err) {
+          console.error(`WS error for ${shareId}:`, err);
+        }
+      };
+
+      socket.onclose = () => {
+        delete wsConnections.current[shareId];
+        // Reconnect after 3s
+        setTimeout(() => {
+          if (sharedDashboards.some(s => s.share_id === shareId)) {
+            setIsLoaded(prev => prev); // trigger re-run
+          }
+        }, 3000);
+      };
+    });
+
+    return () => {
+      // Clean up connections if they are no longer in sharedDashboards
+      Object.keys(wsConnections.current).forEach(id => {
+        if (!sharedDashboards.some(s => s.share_id === id)) {
+          wsConnections.current[id].close();
+          delete wsConnections.current[id];
+        }
+      });
+    };
+  }, [isLoaded, sharedDashboards]);
 
   // 1. Initial Load from DB
   useEffect(() => {
@@ -995,7 +1046,7 @@ export default function DashboardV2() {
   };
   const updateProject = (id, updater) => setProjects(p => p.map(x => x.id === id ? updater(x) : x));
 
-  const updateSharedDashboardProject = async (shareId, projectId, updater) => {
+  const updateSharedDashboardProject = (shareId, projectId, updater) => {
     let updatedData = null;
     setSharedDashboards(prev => prev.map(sd => {
       if (sd.share_id === shareId) {
@@ -1008,15 +1059,19 @@ export default function DashboardV2() {
     }));
     
     if (updatedData) {
-      try {
-        await api.training.updateSharedDashboard(shareId, updatedData);
-      } catch (err) {
-        console.error("Failed to update shared dashboard:", err);
+      const socket = wsConnections.current[shareId];
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'sync', data: updatedData }));
+      } else {
+        // Fallback to REST API if WebSocket is not ready
+        api.training.updateSharedDashboard(shareId, updatedData).catch(err => {
+          console.error("Failed to update shared dashboard (REST):", err);
+        });
       }
     }
   };
 
-  const deleteSharedDashboardProject = async (shareId, projectId) => {
+  const deleteSharedDashboardProject = (shareId, projectId) => {
     if (!window.confirm("Sei sicuro di voler eliminare questo progetto condiviso?")) return;
     
     let updatedData = null;
@@ -1031,10 +1086,13 @@ export default function DashboardV2() {
     }));
 
     if (updatedData) {
-      try {
-        await api.training.updateSharedDashboard(shareId, updatedData);
-      } catch (err) {
-        console.error("Failed to update shared dashboard:", err);
+      const socket = wsConnections.current[shareId];
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'sync', data: updatedData }));
+      } else {
+        api.training.updateSharedDashboard(shareId, updatedData).catch(err => {
+          console.error("Failed to delete shared dashboard project (REST):", err);
+        });
       }
     }
   };
