@@ -408,7 +408,7 @@ export default function SharedProjects() {
     };
     
     updateLocal(prev => ({
-      chat: [...prev.chat, msg]
+      chat: [...(prev.chat || []), msg]
     }));
     setChatDraft("");
     
@@ -420,60 +420,7 @@ export default function SharedProjects() {
   };
 
   const [projectTaskDrafts, setProjectTaskDrafts] = useState({});
-
-  // Helper per aggiornare lo stato locale e inviare subito
-  const updateLocal = (updater) => {
-    setDashboard(prev => {
-      const nextPartial = typeof updater === 'function' ? updater(prev) : updater;
-      const nextState = { ...prev, ...nextPartial };
-      
-      // Inviamo l'aggiornamento al server (fire and forget)
-      // Ottimizzazione: inviamo solo se i dati rilevanti sono cambiati
-      sendUpdate(nextState);
-      
-      return nextState;
-    });
-  };
-
-  const addQuickTask = (title) => {
-    if (!title?.trim()) return;
-    updateLocal(prev => ({
-      quickTasks: [{ id: uid('qtask'), title: title.trim(), done: false, created_at: Date.now() }, ...prev.quickTasks]
-    }));
-  };
-
-  const toggleQuickTask = (id) => {
-    updateLocal(prev => ({
-      quickTasks: prev.quickTasks.map(t => t.id === id ? { ...t, done: !t.done } : t)
-    }));
-  };
-
-  const deleteQuickTask = (id) => {
-    updateLocal(prev => ({
-      quickTasks: prev.quickTasks.filter(t => t.id !== id)
-    }));
-  };
-
-  const updateProject = (id, updater) => {
-    updateLocal(prev => ({
-      projects: prev.projects.map(x => x.id === id ? updater(x) : x)
-    }));
-  };
-
-  const createProject = () => {
-    updateLocal(prev => ({
-      projects: [{ id: uid('project'), title: 'Nuovo Progetto', tasks: [] }, ...prev.projects]
-    }));
-  };
-
-  const deleteProject = (id) => {
-    updateLocal(prev => ({
-      projects: prev.projects.filter(x => x.id !== id)
-    }));
-  };
-
   const [quickTaskDraft, setQuickTaskDraft] = useState("");
-  const [projectTaskDrafts, setProjectTaskDrafts] = useState({});
 
   if (dashboard.loading) return <div className="p-8 text-center text-gray-500 font-medium">Connessione in corso...</div>;
   
@@ -514,16 +461,6 @@ export default function SharedProjects() {
                   </motion.div>
                 )}
               </AnimatePresence>
-              
-              <button 
-                onClick={() => setChatOpen(!chatOpen)}
-                className="relative p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-              >
-                <Icons.MessageCircle className="w-6 h-6 text-gray-500 dark:text-gray-400" />
-                {chatMessages.length > 0 && (
-                  <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-50 dark:border-[#0B0F19]" />
-                )}
-              </button>
             </div>
           </header>
 

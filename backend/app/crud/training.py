@@ -229,14 +229,31 @@ def get_shared_dashboard(db: Session, share_id: str):
     return db.query(SharedDashboard).filter(SharedDashboard.share_id == share_id).first()
 
 
-def update_shared_dashboard(db: Session, share_id: str, data: list, title: str | None = None):
+def update_shared_dashboard(db: Session, share_id: str, data: dict | list, title: str | None = None):
     from app.db.models import SharedDashboard
     shared = db.query(SharedDashboard).filter(SharedDashboard.share_id == share_id).first()
     if not shared:
+        # Se è la prima volta, assicuriamoci che data sia nel formato nuovo se possibile,
+        # ma rispettiamo ciò che ci viene passato.
+        if isinstance(data, list):
+            # Migrazione al volo: se ci passano una lista (vecchio frontend?), la incapsuliamo
+            data = {"projects": data, "quickTasks": [], "chat": []}
+            
         shared = SharedDashboard(share_id=share_id, data=data, title=title or "Progetti Condivisi")
         db.add(shared)
     else:
-        shared.data = data
+        # Se il DB ha una lista e noi stiamo salvando un dict, perfetto (migrazione).
+        # Se il DB ha un dict e noi stiamo salvando una lista (vecchio frontend?),
+        # dovremmo stare attenti, ma assumiamo che il frontend sia aggiornato.
+        if isinstance(data, list) and isinstance(shared.data, dict):
+             # Caso strano: frontend vecchio su backend nuovo? Manteniamo la struttura nuova
+             # e aggiorniamo solo i projects.
+             new_data = shared.data.copy()
+             new_data["projects"] = data
+             shared.data = new_data
+        else:
+             shared.data = data
+             
         if title:
             shared.title = title
     db.commit()
