@@ -194,20 +194,38 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: Se
         # 2. Listen for updates
         while True:
             payload = await websocket.receive_json()
-            # Payload expected: { "data": {...}, "title": "..." }
             
-            # Broadcast to others immediately (Optimistic)
-            await manager.broadcast(payload, share_id, exclude=websocket)
+            # Gestione diversi tipi di messaggi
+            msg_type = payload.get("type", "update") # default 'update' per retrocompatibilità
             
-            # Save to DB
-            await run_in_threadpool(
-                crud_training.update_shared_dashboard, 
-                db, 
-                share_id, 
-                payload.get("data"), 
-                payload.get("title")
-            )
+            if msg_type == "update":
+                # Payload expected: { "type": "update", "data": {...}, "title": "..." }
+                # Broadcast to others immediately (Optimistic)
+                await manager.broadcast(payload, share_id, exclude=websocket)
+                
+                # Save to DB
+                await run_in_threadpool(
+                    crud_training.update_shared_dashboard, 
+                    db, 
+                    share_id, 
+                    payload.get("data"), 
+                    payload.get("title")
+                )
+            elif msg_type == "chat":
+                # Payload expected: { "type": "chat", "message": { "text": "...", "sender": "...", "timestamp": ... } }
+                await manager.broadcast(payload, share_id, exclude=websocket)
             
+            # Se il messaggio non ha tipo, assumiamo sia un vecchio update
+            elif "data" in payload:
+                await manager.broadcast(payload, share_id, exclude=websocket)
+                await run_in_threadpool(
+                    crud_training.update_shared_dashboard, 
+                    db, 
+                    share_id, 
+                    payload.get("data"), 
+                    payload.get("title")
+                )
+
     except WebSocketDisconnect:
         manager.disconnect(websocket, share_id)
     except Exception as e:
