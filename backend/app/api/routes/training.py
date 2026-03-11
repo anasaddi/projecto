@@ -36,16 +36,30 @@ def ping(db: Session = Depends(get_db)):
 
 @router.post("/reseed", dependencies=[Depends(check_admin_access)])
 def reseed_db(db: Session = Depends(get_db)):
-    """Force re-seeding of training data."""
+    """Force re-seeding of training data, including schema migrations."""
     from app.db.seed_training import seed_training_if_empty
     from app.db.models import Exercise, WorkoutDayTemplate, WorkoutDayExercise, DailySchedule
+    from sqlalchemy import text
     
-    # Pulizia totale per forzare il caricamento di TUTTI i dati locali
-    db.query(DailySchedule).delete()
-    db.query(WorkoutDayExercise).delete()
-    db.query(WorkoutDayTemplate).delete()
-    db.query(Exercise).delete()
-    db.commit()
+    # 1. Migrazione manuale: aggiungi colonne se mancano (per SQLite in produzione)
+    try:
+        db.execute(text("ALTER TABLE exercises ADD COLUMN is_active INTEGER DEFAULT 1"))
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        # Se l'errore è "duplicate column", lo ignoriamo
+        print(f"Migration notice: {e}")
+
+    # 2. Pulizia totale per forzare il caricamento di TUTTI i dati locali
+    try:
+        db.query(DailySchedule).delete()
+        db.query(WorkoutDayExercise).delete()
+        db.query(WorkoutDayTemplate).delete()
+        db.query(Exercise).delete()
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"Cleanup error: {e}")
     
     n = seed_training_if_empty(db)
     return {"status": "ok", "seeded": n}
