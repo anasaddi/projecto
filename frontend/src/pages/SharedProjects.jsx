@@ -429,6 +429,23 @@ export default function SharedProjects() {
   const [projectTaskDrafts, setProjectTaskDrafts] = useState({});
   const [quickTaskDraft, setQuickTaskDraft] = useState("");
 
+  // Calcolo statistiche globali per tutti i progetti
+  const globalStats = useMemo(() => {
+    let total = 0;
+    let completed = 0;
+    dashboard.projects.forEach(proj => {
+      const s = countTreeStats(proj.tasks);
+      total += s.total;
+      completed += s.completed;
+    });
+    return {
+      total,
+      completed,
+      ratio: total ? completed / total : 0,
+      percentage: Math.round((total ? completed / total : 0) * 100)
+    };
+  }, [dashboard.projects]);
+
   if (dashboard.loading) return <div className="p-8 text-center text-gray-500 font-medium">Connessione in corso...</div>;
   
   return (
@@ -437,65 +454,148 @@ export default function SharedProjects() {
         
         {/* MAIN CONTENT: PROJECTS */}
         <div className="flex-1 space-y-8 min-w-0 order-2 lg:order-1">
-          <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-            <input 
-              value={dashboard.title} 
-              onChange={(e) => updateLocal({ title: e.target.value })}
-              className="text-4xl font-extrabold tracking-tight bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-500 rounded px-2 py-1 w-full sm:w-auto transition-all"
-            />
-              <p className="text-gray-500 text-sm font-medium">Spazio di lavoro condiviso</p>
+          <header className="mb-10">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <input 
+                    value={dashboard.title} 
+                    onChange={(e) => updateLocal({ title: e.target.value })}
+                    className="text-4xl font-black tracking-tighter bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-500 rounded px-2 py-1 w-full sm:w-auto transition-all text-gray-900 dark:text-white"
+                  />
+                  <span className="px-3 py-1 bg-indigo-500 text-white text-[10px] font-black rounded-full uppercase tracking-widest shadow-lg shadow-indigo-500/20">
+                    Shared
+                  </span>
+                </div>
+                <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
+                  Spazio di lavoro condiviso
+                </p>
+              </div>
+
+              <div className="flex flex-col items-end gap-4">
+                <div className="flex items-center gap-3">
+                  <AnimatePresence>
+                    {dashboard.isConnected ? (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex items-center gap-2 text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-500/20"
+                      >
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                        LIVE
+                      </motion.div>
+                    ) : (
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="flex items-center gap-2 text-[10px] font-bold text-amber-500 uppercase tracking-widest bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-500/20"
+                      >
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                        Reconnecting...
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <AnimatePresence>
-                {dashboard.isConnected ? (
+
+            {/* BARRA PROGRESSO GENERALE */}
+            {dashboard.projects.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white/50 dark:bg-white/5 backdrop-blur-md border border-gray-200/50 dark:border-gray-800/50 rounded-2xl p-6 shadow-xl"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/30">
+                      <Icons.Target className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-black text-gray-800 dark:text-gray-200 uppercase tracking-wider">Avanzamento Globale</h2>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{globalStats.completed} di {globalStats.total} task completate</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-3xl font-black text-indigo-500 tabular-nums leading-none">
+                      {globalStats.percentage}%
+                    </span>
+                  </div>
+                </div>
+                <div className="h-3 bg-gray-100 dark:bg-gray-800/50 rounded-full overflow-hidden p-0.5 border border-gray-200/20 dark:border-white/5">
                   <motion.div 
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="flex items-center gap-2 text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-500/20"
-                  >
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    LIVE
-                  </motion.div>
-                ) : (
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex items-center gap-2 text-[10px] font-bold text-amber-500 uppercase tracking-widest bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-500/20"
-                  >
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    Reconnecting...
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                    initial={{ width: 0 }}
+                    animate={{ width: `${globalStats.percentage}%` }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    className="h-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-500 rounded-full shadow-[0_0_15px_rgba(79,70,229,0.4)]"
+                  />
+                </div>
+              </motion.div>
+            )}
           </header>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
-            {dashboard.projects.map((proj) => {
+            {dashboard.projects.map((proj, pIdx) => {
               const stats = countTreeStats(proj.tasks);
+              const percentage = Math.round(stats.ratio * 100);
+              const PROJECT_ACCENTS = ['indigo', 'sky', 'violet', 'emerald', 'amber', 'rose'];
+              const accent = PROJECT_ACCENTS[pIdx % PROJECT_ACCENTS.length];
+              const accentColors = {
+                indigo: 'from-indigo-500 to-indigo-400',
+                sky: 'from-sky-500 to-sky-400',
+                violet: 'from-violet-500 to-violet-400',
+                emerald: 'from-emerald-500 to-emerald-400',
+                amber: 'from-amber-500 to-amber-400',
+                rose: 'from-rose-500 to-rose-400'
+              }[accent];
+              const accentBar = {
+                indigo: 'bg-indigo-500',
+                sky: 'bg-sky-500',
+                violet: 'bg-violet-500',
+                emerald: 'bg-emerald-500',
+                amber: 'bg-amber-500',
+                rose: 'bg-rose-500'
+              }[accent];
+
               return (
                 <motion.div 
                   layout
                   key={proj.id} 
                   className="flex flex-col bg-white dark:bg-[#1a1d24] border border-gray-200/80 dark:border-gray-800/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 h-fit group"
                 >
-                  <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/20">
-                    <div className="flex-1 min-w-0 mr-2">
-                      <input
-                        defaultValue={proj.title}
-                        onBlur={(e) => updateProject(proj.id, p => ({ ...p, title: e.target.value }))}
-                        className="w-full text-base font-bold bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-500 rounded px-2 py-1 transition-all"
-                        placeholder="Titolo progetto..."
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="text-xs font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 px-2.5 py-1 rounded-full tabular-nums">
-                        {stats.completed}/{stats.total}
+                  <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
+                        <div className={`w-1.5 h-5 ${accentBar} rounded-full shrink-0 shadow-sm shadow-black/10`}></div>
+                        <input
+                          defaultValue={proj.title}
+                          onBlur={(e) => updateProject(proj.id, p => ({ ...p, title: e.target.value }))}
+                          className="w-full text-base font-bold bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-500 rounded px-2 py-1 transition-all"
+                          placeholder="Titolo progetto..."
+                        />
                       </div>
-                      <button onClick={() => deleteProject(proj.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200">
-                        <Icons.X className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => deleteProject(proj.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100">
+                          <Icons.X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* BARRA PROGETTO SINGOLO */}
+                    <div className="flex items-center gap-3 bg-white/50 dark:bg-black/20 p-2 rounded-xl border border-gray-100 dark:border-white/5 shadow-sm">
+                      <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${percentage}%` }}
+                          className={`h-full bg-gradient-to-r ${accentColors} rounded-full`}
+                        />
+                      </div>
+                      <span className="text-[11px] font-black text-gray-600 dark:text-gray-300 tabular-nums">
+                        {percentage}%
+                      </span>
+                      <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-tighter">
+                        {stats.completed}/{stats.total}
+                      </span>
                     </div>
                   </div>
 
