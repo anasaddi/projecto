@@ -128,17 +128,30 @@ async def seed_fake_progressions(db: AsyncSession, *, force: bool = False) -> in
         return 0
     
     # Example data for StrengthTable2 (5/3/1 or similar TMs)
-    # The frontend expects a 'data' blob that might contain tmAnas, tmFlavio, etc.
+    def _create_empty_data_by_month():
+        return [
+            [
+                {"week": w, "anas": {"weight": "", "reps": "", "completed": False}, "flavio": {"weight": "", "reps": "", "completed": False}}
+                for w in [1, 2, 3, 4]
+            ]
+            for _ in range(6)
+        ]
+
     fake_prog = {
-        "sq_str": {"tmAnas": 80, "tmFlavio": 70, "tmByMonth": {"2026-03": 80}, "dataByMonth": {"2026-03": {"tmAnas": 80, "tmFlavio": 70}}},
-        "bp_str": {"tmAnas": 60, "tmFlavio": 50, "tmByMonth": {"2026-03": 60}, "dataByMonth": {"2026-03": {"tmAnas": 60, "tmFlavio": 50}}},
-        "dl_str": {"tmAnas": 100, "tmFlavio": 90, "tmByMonth": {"2026-03": 100}, "dataByMonth": {"2026-03": {"tmAnas": 100, "tmFlavio": 90}}},
-        "ohp_str": {"tmAnas": 40, "tmFlavio": 35, "tmByMonth": {"2026-03": 40}, "dataByMonth": {"2026-03": {"tmAnas": 40, "tmFlavio": 35}}},
+        "sq_str": {"tmAnas": 80, "tmFlavio": 70, "tmByMonth": [{"anas": "", "flavio": ""} for _ in range(5)], "dataByMonth": _create_empty_data_by_month()},
+        "bp_str": {"tmAnas": 60, "tmFlavio": 50, "tmByMonth": [{"anas": "", "flavio": ""} for _ in range(5)], "dataByMonth": _create_empty_data_by_month()},
+        "dl_str": {"tmAnas": 100, "tmFlavio": 90, "tmByMonth": [{"anas": "", "flavio": ""} for _ in range(5)], "dataByMonth": _create_empty_data_by_month()},
+        "ohp_str": {"tmAnas": 40, "tmFlavio": 35, "tmByMonth": [{"anas": "", "flavio": ""} for _ in range(5)], "dataByMonth": _create_empty_data_by_month()},
     }
 
     count = 0
     for ex_id in str_ids:
-        data = fake_prog.get(ex_id, {"tmAnas": 50, "tmFlavio": 50})
+        data = fake_prog.get(ex_id, {
+            "tmAnas": 50, 
+            "tmFlavio": 50, 
+            "tmByMonth": [{"anas": "", "flavio": ""} for _ in range(5)],
+            "dataByMonth": _create_empty_data_by_month()
+        })
         db.add(TrainingProgression(exercise_id=ex_id, data=data))
         count += 1
     

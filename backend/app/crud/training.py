@@ -416,10 +416,19 @@ async def get_training_progression(db: AsyncSession, ex_id: str):
 async def update_training_progression(db: AsyncSession, ex_id: str, data: dict):
     res = await db.execute(select(TrainingProgression).filter(TrainingProgression.exercise_id == ex_id))
     prog = res.scalar_one_or_none()
+    
+    # Ensure the data has the minimum required structure for the frontend
+    if not isinstance(data, dict): data = {}
+    if "tmByMonth" not in data or not isinstance(data["tmByMonth"], list):
+        data["tmByMonth"] = [{"anas": "", "flavio": ""} for _ in range(5)]
+    if "dataByMonth" not in data or not isinstance(data["dataByMonth"], list):
+        data["dataByMonth"] = [[{"week": w, "anas": {"weight": "", "reps": "", "completed": False}, "flavio": {"weight": "", "reps": "", "completed": False}} for w in [1, 2, 3, 4]] for _ in range(6)]
+
     if not prog:
         prog = TrainingProgression(exercise_id=ex_id, data=data)
         db.add(prog)
-    else: prog.data = data
+    else: 
+        prog.data = data
     await db.commit()
     return prog
 
