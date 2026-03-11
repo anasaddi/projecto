@@ -40,7 +40,7 @@ class Source(Base):
     content_hash = Column(String(64), nullable=True, index=True)
     error_code = Column(String(64), nullable=True)
     error_message = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     content = relationship("Content", back_populates="source", uselist=False)
     sessions = relationship("Session", back_populates="source")
@@ -54,7 +54,7 @@ class Content(Base):
     raw_text = Column(Text, nullable=True)
     clean_text = Column(Text, nullable=True)
     parse_diagnostics = Column(JSON, nullable=True, default=dict)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     source = relationship("Source", back_populates="content")
     chunks = relationship("ContentChunk", back_populates="content", order_by="ContentChunk.ordinal")
@@ -69,7 +69,7 @@ class ContentChunk(Base):
     ordinal = Column(Integer, nullable=False)
     text = Column(Text, nullable=False)
     token_count = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     content = relationship("Content", back_populates="chunks")
 
@@ -80,8 +80,8 @@ class Session(Base):
     id = Column(Integer, primary_key=True, index=True)
     source_id = Column(Integer, ForeignKey("sources.id"), nullable=True, index=True)
     intent = Column(String(32), default=SessionIntent.auto.value, nullable=False)
-    started_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    ended_at = Column(DateTime, nullable=True)
+    started_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    ended_at = Column(DateTime(timezone=True), nullable=True)
 
     source = relationship("Source", back_populates="sessions")
 
@@ -98,7 +98,7 @@ class Insight(Base):
     session_intent = Column(String(32), nullable=True)
     user_rating = Column(String(32), nullable=True)
     weight = Column(Float, default=1.0, nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     content = relationship("Content", back_populates="insights")
 
@@ -110,7 +110,7 @@ class TrainingProgression(Base):
     exercise_id = Column(String(32), ForeignKey("exercises.id"), nullable=False, index=True)
     # Blob JSON per tmAnas, tmFlavio, tmByMonth, dataByMonth
     data = Column(JSON, nullable=False, default=dict)
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     exercise = relationship("Exercise")
 
@@ -119,7 +119,7 @@ class DailySchedule(Base):
     __tablename__ = "daily_schedules"
 
     id = Column(Integer, primary_key=True, index=True)
-    date_ = Column("date", DateTime, nullable=False, index=True, unique=True)
+    date_ = Column("date", DateTime(timezone=True), nullable=False, index=True, unique=True)
     template_id = Column(String(64), ForeignKey("workout_day_templates.id"), nullable=True)
     is_completed = Column(Integer, default=0, nullable=False)  # 1 = completed, 0 = pending
     
@@ -182,7 +182,7 @@ class WorkoutLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     template_id = Column(String(64), ForeignKey("workout_day_templates.id"), nullable=True, index=True)
-    logged_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    logged_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     template = relationship("WorkoutDayTemplate", back_populates="workout_logs")
     sets = relationship("SetLog", back_populates="workout_log", order_by="SetLog.id")
@@ -227,7 +227,7 @@ class Project(Base):
     title = Column(String(256), nullable=False)
     # Se share_id è presente, il progetto è condiviso
     share_id = Column(String(64), ForeignKey("shared_dashboards.share_id"), nullable=True, index=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     
     tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
 
@@ -239,7 +239,7 @@ class Task(Base):
     title = Column(String(512), nullable=False)
     done = Column(Integer, default=0)
     deadline = Column(String(10), nullable=True) # YYYY-MM-DD
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     project = relationship("Project", back_populates="tasks")
     children = relationship("Task", backref=backref("parent", remote_side=[id]), cascade="all, delete-orphan", single_parent=True)
@@ -250,7 +250,7 @@ class QuickTask(Base):
     title = Column(String(512), nullable=False)
     done = Column(Integer, default=0)
     deadline = Column(String(10), nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
@@ -258,14 +258,14 @@ class ChatMessage(Base):
     share_id = Column(String(64), ForeignKey("shared_dashboards.share_id"), nullable=False, index=True)
     sender_id = Column(String(64), nullable=False)
     text = Column(Text, nullable=False)
-    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 class DashboardState(Base):
     __tablename__ = "dashboard_states"
     id = Column(Integer, primary_key=True, index=True)
     key = Column(String(64), unique=True, index=True, nullable=False)
     data = Column(JSON, nullable=False, default=dict)
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 class SharedDashboard(Base):
     __tablename__ = "shared_dashboards"
@@ -273,7 +273,7 @@ class SharedDashboard(Base):
     share_id = Column(String(64), unique=True, index=True, nullable=False)
     title = Column(String(256), nullable=False, default="Progetti Condivisi")
     data = Column(JSON, nullable=False, default=list)
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     projects = relationship("Project", backref="shared_dashboard")
 
@@ -287,4 +287,4 @@ class DailyReadiness(Base):
     muscle_doms = Column(JSON, nullable=True, default=dict)  # { "quads": 5, "chest": 2 }
     joint_pain = Column(JSON, nullable=True, default=dict)  # { "elbow": 7, "wrist": 3 }
 
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
