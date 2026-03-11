@@ -424,9 +424,9 @@ export default function SharedProjects() {
         </div>
 
         {/* SIDEBAR: QUICK TASKS */}
-        <aside className="w-full lg:w-72 shrink-0 order-1 lg:order-2">
+        <aside className="w-full lg:w-72 shrink-0 order-1 lg:order-2 pt-[76px]">
           <div className="sticky top-8 space-y-4">
-            <div className="bg-white dark:bg-[#1a1d24] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
+            <div className="bg-white dark:bg-[#1a1d24] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm min-h-[400px] flex flex-col">
               <div className="flex items-center gap-2 mb-4">
                 <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
                   <Icons.Zap className="w-4 h-4" />
@@ -434,13 +434,12 @@ export default function SharedProjects() {
                 <h2 className="text-sm font-black uppercase tracking-wider text-gray-800 dark:text-gray-200">Quick Tasks</h2>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 flex-1 flex flex-col">
                 <div className="relative">
                   <input
                     value={quickTaskDraft}
                     onChange={(e) => setQuickTaskDraft(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && addQuickTask()}
-                    placeholder="Cosa devi fare?"
                     className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl pl-4 pr-10 py-2.5 text-xs outline-none focus:border-amber-500 transition-colors"
                   />
                   <button 
@@ -451,7 +450,7 @@ export default function SharedProjects() {
                   </button>
                 </div>
 
-                <div className="space-y-1.5 max-h-[500px] overflow-y-auto custom-scrollbar pr-1">
+                <div className="space-y-1.5 flex-1 overflow-y-auto custom-scrollbar pr-1 max-h-[600px]">
                   <AnimatePresence initial={false}>
                     {quickTasks.map((task) => (
                       <motion.div
@@ -488,10 +487,6 @@ export default function SharedProjects() {
                   )}
                 </div>
               </div>
-            </div>
-
-            <div className="p-4 bg-indigo-500/5 dark:bg-indigo-500/5 rounded-2xl border border-indigo-500/10 text-[10px] text-gray-500 leading-relaxed italic">
-              "Le Quick Tasks sono ideali per piccole note o azioni immediate che non richiedono un intero progetto."
             </div>
           </div>
         </aside>
