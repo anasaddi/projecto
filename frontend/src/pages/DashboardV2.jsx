@@ -594,7 +594,7 @@ function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDele
                 className="w-full bg-white dark:bg-gray-800 border border-indigo-400 rounded px-1 text-xs outline-none py-0 select-text"
               />
             ) : (
-              <span className={`text-xs cursor-pointer transition-colors truncate block select-text ${node.done ? 'text-gray-400 line-through' : 'text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400'}`}>
+              <span className={`text-xs cursor-pointer transition-colors break-words block select-text leading-relaxed ${node.done ? 'text-gray-400 line-through' : 'text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400'}`}>
                 {node.title}
               </span>
             )}
@@ -1635,7 +1635,7 @@ export default function DashboardV2() {
                                   <span className={node.done ? 'text-emerald-500' : 'text-gray-300'}>
                                     {node.done ? <Icons.CheckCircle className="w-3 h-3" /> : <Icons.Circle className="w-3 h-3" />}
                                   </span>
-                                  <span className={`leading-relaxed ${node.done ? 'text-gray-400 line-through' : 'text-gray-600 dark:text-gray-400'}`}>
+                                  <span className={`leading-relaxed break-words ${node.done ? 'text-gray-400 line-through' : 'text-gray-600 dark:text-gray-400'}`}>
                                     {node.title}
                                   </span>
                                 </div>
