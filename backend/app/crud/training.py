@@ -83,12 +83,13 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
     
     # Sync habits
     if "dailyTaskTemplates" in data:
+        await db.execute(delete(HabitLog))
         await db.execute(delete(Habit))
         for h in data["dailyTaskTemplates"]:
             db.add(Habit(id=h["id"], title=h["title"], locked=1 if h.get("locked") else 0, ordinal=h.get("ordinal", 0)))
     
     # Sync habit logs
-    if "dailyTaskLogs" in data:
+    elif "dailyTaskLogs" in data: # Only delete logs if we didn't delete habits (which already deleted logs)
         await db.execute(delete(HabitLog))
         for d_str, logs in data["dailyTaskLogs"].items():
             for l in logs: db.add(HabitLog(habit_id=l["id"], date=d_str, status=1 if l.get("done") else 0))
@@ -101,6 +102,11 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
     
     # Sync personal projects
     if "projects" in data:
+        # Delete tasks first to avoid FK violation
+        p_ids_res = await db.execute(select(Project.id).filter(Project.share_id == None))
+        p_ids = p_ids_res.scalars().all()
+        if p_ids:
+            await db.execute(delete(Task).filter(Task.project_id.in_(p_ids)))
         await db.execute(delete(Project).filter(Project.share_id == None))
         for p in data["projects"]:
             db.add(Project(id=p["id"], title=p["title"], share_id=None))
@@ -158,6 +164,10 @@ async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, dat
         shared.data = data # Keep the blob for non-relational fields if needed
     
     # Sync relational tables
+    p_ids_res = await db.execute(select(Project.id).filter(Project.share_id == share_id))
+    p_ids = p_ids_res.scalars().all()
+    if p_ids:
+        await db.execute(delete(Task).filter(Task.project_id.in_(p_ids)))
     await db.execute(delete(Project).filter(Project.share_id == share_id))
     p_data = data.get("projects", [])
     for p in p_data:
