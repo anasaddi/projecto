@@ -173,9 +173,22 @@ def list_shared_dashboards(db: Session = Depends(get_db)):
 
 
 @router.put("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut)
-def update_shared_dashboard(share_id: str, body: schemas.SharedDashboardUpdate, db: Session = Depends(get_db)):
+async def update_shared_dashboard(share_id: str, body: schemas.SharedDashboardUpdate, db: Session = Depends(get_db)):
     """Update or create a shared dashboard by its share_id. PUBLIC ROUTE."""
-    return crud_training.update_shared_dashboard(db, share_id, body.data, body.title)
+    # 1. Update in DB
+    dashboard = crud_training.update_shared_dashboard(db, share_id, body.data, body.title)
+    
+    # 2. Broadcast to all WebSocket listeners for this share_id
+    # We send the same format as the WebSocket sync message
+    payload = {
+        "type": "sync",
+        "share_id": share_id,
+        "title": body.title or dashboard.title,
+        "data": body.data
+    }
+    await manager.broadcast(payload, share_id)
+    
+    return dashboard
 
 
 @router.websocket("/ws/shared-dashboard/{share_id}")

@@ -831,10 +831,14 @@ export default function DashboardV2() {
 
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.hostname === 'localhost' ? 'localhost:8000' : 'projecto-production-feda.up.railway.app';
-      const wsUrl = `${protocol}//${host}/api/training/ws/shared-dashboard/${shareId}`;
+      const wsUrl = `${protocol}//${host}/api/training/ws/shared-dashboard/${encodeURIComponent(shareId)}`;
       
       const socket = new WebSocket(wsUrl);
       wsConnections.current[shareId] = socket;
+
+      socket.onopen = () => {
+        console.log(`WS Connected for ${shareId}`);
+      };
 
       socket.onmessage = (event) => {
         try {
@@ -846,17 +850,20 @@ export default function DashboardV2() {
             ));
           }
         } catch (err) {
-          console.error(`WS error for ${shareId}:`, err);
+          console.error(`WS message error for ${shareId}:`, err);
         }
       };
 
+      socket.onerror = (err) => {
+        console.error(`WS error for ${shareId}:`, err);
+      };
+
       socket.onclose = () => {
+        console.log(`WS Disconnected for ${shareId}`);
         delete wsConnections.current[shareId];
         // Reconnect after 3s
         setTimeout(() => {
-          if (sharedDashboards.some(s => s.share_id === shareId)) {
-            setIsLoaded(prev => prev); // trigger re-run
-          }
+          setSharedDashboards(prev => [...prev]); // Trigger re-run of useEffect
         }, 3000);
       };
     });
