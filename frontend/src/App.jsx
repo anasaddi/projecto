@@ -1,16 +1,26 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import React, { useEffect } from 'react'
+import React, { Suspense, lazy } from 'react'
 
 import { DashboardStatsProvider } from './context/DashboardStatsContext'
 import Layout from './components/Layout'
-import SourceList from './pages/SourceList'
-import Reader from './pages/vecchi/Reader'
-import YouTubeViewer from './pages/YouTubeViewer'
-import DashboardV2 from './pages/DashboardV2'
-import SharedProjects from './pages/SharedProjects'
-import Training from './pages/Training'
-import Training2 from './pages/Training2'
-import Welcome from './pages/Welcome'
+import AppErrorBoundary from './components/AppErrorBoundary'
+
+const SourceList = lazy(() => import('./pages/SourceList'))
+const Reader = lazy(() => import('./pages/vecchi/Reader'))
+const YouTubeViewer = lazy(() => import('./pages/YouTubeViewer'))
+const DashboardV2 = lazy(() => import('./pages/DashboardV2'))
+const SharedProjects = lazy(() => import('./pages/SharedProjects'))
+const Training = lazy(() => import('./pages/Training'))
+const Training2 = lazy(() => import('./pages/Training2'))
+const Welcome = lazy(() => import('./pages/Welcome'))
+
+function RouteLoader() {
+  return (
+    <div className="min-h-[40vh] flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-zinc-300 border-t-zinc-700 rounded-full animate-spin" />
+    </div>
+  )
+}
 
 // --- Admin Protection Wrapper ---
 function AdminRoute({ children }) {
@@ -61,18 +71,22 @@ export default function App() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <DashboardStatsProvider>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/source/:sourceId" element={<AdminRoute><Reader /></AdminRoute>} />
-            <Route path="/dashboard" element={<AdminRoute><DashboardV2 /></AdminRoute>} />
-            <Route path="/shared/:shareId" element={<SharedProjects />} />
-            <Route path="/youtube" element={<AdminRoute><YouTubeViewer /></AdminRoute>} />
-            <Route path="/training" element={<AdminRoute><Training /></AdminRoute>} />
-            <Route path="/training2" element={<AdminRoute><Training2 /></AdminRoute>} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Layout>
+        <AppErrorBoundary>
+          <Layout>
+            <Suspense fallback={<RouteLoader />}>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/source/:sourceId" element={<AdminRoute><Reader /></AdminRoute>} />
+                <Route path="/dashboard" element={<AdminRoute><DashboardV2 /></AdminRoute>} />
+                <Route path="/shared/:shareId" element={<SharedProjects />} />
+                <Route path="/youtube" element={<AdminRoute><YouTubeViewer /></AdminRoute>} />
+                <Route path="/training" element={<AdminRoute><Training /></AdminRoute>} />
+                <Route path="/training2" element={<AdminRoute><Training2 /></AdminRoute>} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+          </Layout>
+        </AppErrorBoundary>
       </DashboardStatsProvider>
     </BrowserRouter>
   )

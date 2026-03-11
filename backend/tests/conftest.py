@@ -1,11 +1,9 @@
-import os
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.main import app
 from app.db.session import Base, get_db
-from app.config import get_settings
 
 # Use in-memory SQLite for tests to avoid requiring Postgres
 TEST_DATABASE_URL = "sqlite:///./test.db"
@@ -18,7 +16,8 @@ def test_engine():
         connect_args={"check_same_thread": False},
     )
     Base.metadata.create_all(bind=engine)
-    return engine
+    yield engine
+    engine.dispose()
 
 
 @pytest.fixture

@@ -9,6 +9,8 @@ from sqlalchemy import select, func, delete
 from app.db.session import get_db
 from app import schemas
 from app.crud import training as crud_training
+from app.crud import dashboard as crud_dashboard
+from app.crud import migration as crud_migration
 from app.websockets import manager
 
 router = APIRouter()
@@ -84,14 +86,12 @@ async def reseed_db(db: AsyncSession = Depends(get_db)):
 @router.post("/migrate", dependencies=[Depends(check_admin_access)])
 async def migrate_data(db: AsyncSession = Depends(get_db)):
     """Migrate data from old JSON blobs to relational tables."""
-    return await crud_training.migrate_json_to_relational(db)
+    return await crud_migration.migrate_json_to_relational(db)
 
 @router.get("/exercises", response_model=list[schemas.ExerciseOut])
 async def get_exercises(db: AsyncSession = Depends(get_db)):
     """Public route for the muscle-exercise matrix."""
-    exercises = await crud_training.get_all_exercises(db)
-    # exercises is already a list of dicts from crud
-    return exercises
+    return await crud_training.get_all_exercises(db)
 
 _AW_PROGRAM_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "aw_training_program.json"
 
@@ -181,7 +181,10 @@ async def get_progression(exercise_id: str, db: AsyncSession = Depends(get_db)):
 @router.post("/progression/{exercise_id}", response_model=schemas.TrainingProgressionOut)
 async def update_progression(exercise_id: str, body: schemas.TrainingProgressionUpdate, db: AsyncSession = Depends(get_db)):
     """Update progression for a specific exercise."""
-    return await crud_training.update_training_progression(db, exercise_id, body.data)
+    try:
+        return await crud_training.update_training_progression(db, exercise_id, body.data)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 @router.get("/schedule", response_model=list[schemas.DailyScheduleOut])
 async def get_schedule(start_date: Optional[date] = None, days_count: int = 14, db: AsyncSession = Depends(get_db)):
@@ -216,13 +219,13 @@ async def skip_today(db: AsyncSession = Depends(get_db)):
 @router.get("/dashboard-state", response_model=schemas.DashboardStateOut | None, dependencies=[Depends(check_admin_access)])
 async def get_dashboard_state(db: AsyncSession = Depends(get_db)):
     """Fetch the dashboard state (habits, projects, etc.) from DB."""
-    data = await crud_training.get_dashboard_state_aggregated(db)
+    data = await crud_dashboard.get_dashboard_state_aggregated(db)
     return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
 
 @router.put("/dashboard-state", response_model=schemas.DashboardStateOut, dependencies=[Depends(check_admin_access)])
 async def update_dashboard_state(body: schemas.DashboardStateUpdate, db: AsyncSession = Depends(get_db)):
     """Save the dashboard state to DB."""
-    data = await crud_training.update_dashboard_from_json(db, body.data)
+    data = await crud_dashboard.update_dashboard_from_json(db, body.data)
     return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
 
 # --- Shared Dashboard ---
@@ -230,17 +233,17 @@ async def update_dashboard_state(body: schemas.DashboardStateUpdate, db: AsyncSe
 @router.get("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut | None)
 async def get_shared_dashboard(share_id: str, db: AsyncSession = Depends(get_db)):
     """Fetch a shared dashboard by its share_id. PUBLIC ROUTE."""
-    return await crud_training.get_shared_dashboard_aggregated(db, share_id)
+    return await crud_dashboard.get_shared_dashboard_aggregated(db, share_id)
 
 @router.get("/shared-dashboards", response_model=list[schemas.SharedDashboardOut])
 async def list_shared_dashboards(db: AsyncSession = Depends(get_db)):
     """Fetch all shared dashboards. PUBLIC ROUTE."""
-    return await crud_training.get_all_shared_dashboards_aggregated(db)
+    return await crud_dashboard.get_all_shared_dashboards_aggregated(db)
 
 @router.put("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut)
 async def update_shared_dashboard(share_id: str, body: schemas.SharedDashboardUpdate, db: AsyncSession = Depends(get_db)):
     """Update or create a shared dashboard by its share_id. PUBLIC ROUTE."""
-    dashboard = await crud_training.update_shared_dashboard_from_json(db, share_id, body.data, body.title)
+    dashboard = await crud_dashboard.update_shared_dashboard_from_json(db, share_id, body.data, body.title)
     
     payload = {
         "type": "sync",
@@ -255,7 +258,7 @@ async def update_shared_dashboard(share_id: str, body: schemas.SharedDashboardUp
 async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: AsyncSession = Depends(get_db)):
     await manager.connect(websocket, share_id)
     try:
-        dashboard = await crud_training.get_shared_dashboard_aggregated(db, share_id)
+        dashboard = await crud_dashboard.get_shared_dashboard_aggregated(db, share_id)
         if dashboard:
             dashboard["type"] = "sync"
             await websocket.send_json(dashboard)
@@ -271,7 +274,7 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
         while True:
             payload = await websocket.receive_json()
             await manager.broadcast(payload, share_id, exclude=websocket)
-            await crud_training.update_shared_dashboard_from_json(
+            await crud_dashboard.update_shared_dashboard_from_json(
                 db, share_id, payload.get("data"), payload.get("title")
             )
             

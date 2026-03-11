@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from app.api.routes import sources, content, insights, search, youtube, training
 from app.config import get_settings
@@ -27,6 +28,18 @@ async def lifespan(app: FastAPI):
         try:
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
+                # Manual schema migration for is_active column if it doesn't exist
+                try:
+                    dialect = conn.dialect.name
+                    if dialect == "postgresql":
+                        await conn.execute(text("ALTER TABLE exercises ADD COLUMN IF NOT EXISTS is_active INTEGER DEFAULT 1"))
+                    elif dialect == "sqlite":
+                        cols = await conn.execute(text("PRAGMA table_info(exercises)"))
+                        col_names = {r[1] for r in cols.fetchall()}
+                        if "is_active" not in col_names:
+                            await conn.execute(text("ALTER TABLE exercises ADD COLUMN is_active INTEGER DEFAULT 1"))
+                except Exception as migrate_err:
+                    print(f"Migration error (is_active): {migrate_err}")
             db_ready = True
             print(f"Database connection successful on attempt {i+1}")
             break

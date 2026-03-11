@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, insert, update, delete
 from app.db.models import Source
+from app.crud.base import _maybe_await
 import os
 import uuid
 import aiofiles
@@ -28,8 +29,8 @@ async def create_source(db: AsyncSession, file=None, url=None, tipo=None, title=
         status="pending",
     )
     db.add(src)
-    await db.commit()
-    await db.refresh(src)
+    await _maybe_await(db.commit())
+    await _maybe_await(db.refresh(src))
     
     try:
         run_pipeline.delay(src.id)
@@ -39,9 +40,9 @@ async def create_source(db: AsyncSession, file=None, url=None, tipo=None, title=
     return src
 
 async def list_sources(db: AsyncSession, skip=0, limit=50):
-    res = await db.execute(select(Source).order_by(Source.created_at.desc()).offset(skip).limit(limit))
+    res = await _maybe_await(db.execute(select(Source).order_by(Source.created_at.desc()).offset(skip).limit(limit)))
     return res.scalars().all()
 
 async def get_source(db: AsyncSession, source_id: int):
-    res = await db.execute(select(Source).filter(Source.id == source_id))
+    res = await _maybe_await(db.execute(select(Source).filter(Source.id == source_id)))
     return res.scalar_one_or_none()

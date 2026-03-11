@@ -1,0 +1,45 @@
+import React from 'react';
+
+export default class AppErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, errorMessage: '' };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, errorMessage: error?.message || 'Errore imprevisto' };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('[AppErrorBoundary]', error, errorInfo);
+  }
+
+  handleReset = () => {
+    this.setState({ hasError: false, errorMessage: '' });
+    window.location.reload();
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-gray-50/50 dark:bg-zinc-950 flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+            <span className="text-red-600 text-3xl leading-none">!</span>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Si è verificato un errore</h2>
+          <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md break-words">
+            {this.state.errorMessage}
+          </p>
+          <button
+            onClick={this.handleReset}
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all"
+          >
+            Ricarica
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+

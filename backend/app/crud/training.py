@@ -1,275 +1,19 @@
 from datetime import datetime, timezone, date, timedelta, time
-import json
 import logging
 from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, func
 from app.db.models import (
-    DashboardState, SharedDashboard, Project, Task, QuickTask, 
-    Habit, HabitLog, ChatMessage, WorkoutLog, SetLog, TrainingProgression,
+    WorkoutLog, SetLog, TrainingProgression,
     Exercise, WorkoutDayTemplate, WorkoutDayExercise, DailySchedule
 )
 from app.schemas.training import SetLogItem, WeekDayUpdateData
+from app.crud.base import _parse_json
+from app.crud.progression_schema import sanitize_strength_progression, sanitize_generic_progression
 
 logger = logging.getLogger(__name__)
 
-def _parse_json(val: Any, default: Any = None) -> Any:
-    if val is None: return default
-    if isinstance(val, (dict, list)): return val
-    if isinstance(val, str):
-        try: return json.loads(val)
-        except Exception: return default
-    return default
-
-# --- Dashboard (Aggregated View for Frontend) ---
-
-async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default"):
-    # 1. Habits
-    habits_result = await db.execute(select(Habit).order_by(Habit.ordinal))
-    habits = habits_result.scalars().all()
-    dailyTaskTemplates = [{"id": h.id, "title": h.title, "locked": bool(h.locked), "ordinal": h.ordinal} for h in habits]
-
-    # 2. Habit Logs
-    logs_result = await db.execute(select(HabitLog))
-    logs = logs_result.scalars().all()
-    dailyTaskLogs = {}
-    for l in logs:
-        if l.date not in dailyTaskLogs: dailyTaskLogs[l.date] = []
-        dailyTaskLogs[l.date].append({"id": l.habit_id, "done": bool(l.status)})
-
-    # 3. Quick Tasks
-    qt_result = await db.execute(select(QuickTask).order_by(QuickTask.created_at.desc()))
-    quickTasks = [{"id": q.id, "title": q.title, "done": bool(q.done), "deadline": q.deadline} for q in qt_result.scalars().all()]
-
-    # 4. Personal Projects
-    projs_result = await db.execute(select(Project).filter(Project.share_id == None).order_by(Project.created_at.desc()))
-    projs = projs_result.scalars().all()
-    
-    async def get_task_tree(project_id, parent_id=None):
-        res = await db.execute(select(Task).filter(Task.project_id == project_id, Task.parent_id == parent_id).order_by(Task.created_at))
-        tree = []
-        for t in res.scalars().all():
-            tree.append({"id": t.id, "title": t.title, "done": bool(t.done), "deadline": t.deadline, "children": await get_task_tree(project_id, t.id)})
-        return tree
-
-    projects = []
-    for p in projs:
-        projects.append({"id": p.id, "title": p.title, "tasks": await get_task_tree(p.id)})
-
-    # DashboardState for other fields (prayerLogs, etc.)
-    res_ds = await db.execute(select(DashboardState).filter(DashboardState.key == key))
-    ds = res_ds.scalar_one_or_none()
-    ds_data = _parse_json(ds.data, {}) if ds else {}
-
-    return {
-        "dailyTaskTemplates": dailyTaskTemplates,
-        "dailyTaskLogs": dailyTaskLogs,
-        "projects": projects,
-        "quickTasks": quickTasks,
-        "prayerLogs": ds_data.get("prayerLogs", {}),
-        "top3Manual": ds_data.get("top3Manual", [None, None, None]),
-        "dailyCompletionLog": ds_data.get("dailyCompletionLog", {})
-    }
-
-async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "default"):
-    # First, save everything to the DashboardState blob for extra fields (prayerLogs, etc.)
-    res_ds = await db.execute(select(DashboardState).filter(DashboardState.key == key))
-    ds = res_ds.scalar_one_or_none()
-    if not ds:
-        ds = DashboardState(key=key, data=data)
-        db.add(ds)
-    else:
-        ds.data = data
-    
-    # Sync habits
-    if "dailyTaskTemplates" in data:
-        await db.execute(delete(HabitLog))
-        await db.execute(delete(Habit))
-        for h in data["dailyTaskTemplates"]:
-            db.add(Habit(id=h["id"], title=h["title"], locked=1 if h.get("locked") else 0, ordinal=h.get("ordinal", 0)))
-    
-    # Sync habit logs
-    elif "dailyTaskLogs" in data: # Only delete logs if we didn't delete habits (which already deleted logs)
-        await db.execute(delete(HabitLog))
-        for d_str, logs in data["dailyTaskLogs"].items():
-            for l in logs: db.add(HabitLog(habit_id=l["id"], date=d_str, status=1 if l.get("done") else 0))
-    
-    # Sync quick tasks
-    if "quickTasks" in data:
-        await db.execute(delete(QuickTask))
-        for q in data["quickTasks"]:
-            db.add(QuickTask(id=q["id"], title=q["title"], done=1 if q.get("done") else 0, deadline=q.get("deadline")))
-    
-    # Sync personal projects
-    if "projects" in data:
-        # Delete tasks first to avoid FK violation
-        p_ids_res = await db.execute(select(Project.id).filter(Project.share_id == None))
-        p_ids = p_ids_res.scalars().all()
-        if p_ids:
-            await db.execute(delete(Task).filter(Task.project_id.in_(p_ids)))
-        await db.execute(delete(Project).filter(Project.share_id == None))
-        for p in data["projects"]:
-            db.add(Project(id=p["id"], title=p["title"], share_id=None))
-            async def add_t(tasks, pid, parent=None):
-                for t in tasks:
-                    db.add(Task(id=t["id"], project_id=pid, parent_id=parent, title=t["title"], done=1 if t.get("done") else 0, deadline=t.get("deadline")))
-                    if t.get("children"): await add_t(t["children"], pid, t["id"])
-            await add_t(p.get("tasks", []), p["id"])
-    
-    await db.commit()
-    return await get_dashboard_state_aggregated(db, key)
-
-# --- Shared Dashboards ---
-
-async def get_shared_dashboard_aggregated(db: AsyncSession, share_id: str):
-    res = await db.execute(select(SharedDashboard).filter(SharedDashboard.share_id == share_id))
-    shared = res.scalar_one_or_none()
-    if not shared: return None
-    projs_res = await db.execute(select(Project).filter(Project.share_id == share_id))
-    async def get_t(pid, parent=None):
-        r = await db.execute(select(Task).filter(Task.project_id == pid, Task.parent_id == parent).order_by(Task.created_at))
-        return [{"id": t.id, "title": t.title, "done": bool(t.done), "deadline": t.deadline, "children": await get_t(pid, t.id)} for t in r.scalars().all()]
-    projects = [{"id": p.id, "title": p.title, "tasks": await get_t(p.id)} for p in projs_res.scalars().all()]
-    chat_res = await db.execute(select(ChatMessage).filter(ChatMessage.share_id == share_id).order_by(ChatMessage.timestamp))
-    chat = [{"id": m.id, "senderId": m.sender_id, "text": m.text, "timestamp": int(m.timestamp.timestamp()*1000)} for m in chat_res.scalars().all()]
-    
-    # data can be a list or a dict in the DB
-    shared_data = _parse_json(shared.data, {})
-    quickTasks = shared_data.get("quickTasks", []) if isinstance(shared_data, dict) else []
-
-    return {
-        "share_id": shared.share_id,
-        "title": shared.title,
-        "data": {
-            "projects": projects,
-            "quickTasks": quickTasks,
-            "chat": chat
-        },
-        "updated_at": shared.updated_at
-    }
-
-async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, data: dict | list, title: str | None = None):
-    res = await db.execute(select(SharedDashboard).filter(SharedDashboard.share_id == share_id))
-    shared = res.scalar_one_or_none()
-    
-    # Se data è una lista (vecchio formato), la convertiamo internamente
-    if isinstance(data, list):
-        data = {"projects": data, "quickTasks": [], "chat": []}
-
-    if not shared:
-        shared = SharedDashboard(share_id=share_id, title=title or "Progetti Condivisi", data=data)
-        db.add(shared)
-    else:
-        if title: shared.title = title
-        shared.data = data # Keep the blob for non-relational fields if needed
-    
-    # Sync relational tables
-    p_ids_res = await db.execute(select(Project.id).filter(Project.share_id == share_id))
-    p_ids = p_ids_res.scalars().all()
-    if p_ids:
-        await db.execute(delete(Task).filter(Task.project_id.in_(p_ids)))
-    await db.execute(delete(Project).filter(Project.share_id == share_id))
-    p_data = data.get("projects", [])
-    for p in p_data:
-        db.add(Project(id=p["id"], title=p["title"], share_id=share_id))
-        async def add_t(tasks, pid, parent=None):
-            for t in tasks:
-                db.add(Task(id=t["id"], project_id=pid, parent_id=parent, title=t["title"], done=1 if t.get("done") else 0, deadline=t.get("deadline")))
-                if t.get("children"): await add_t(t["children"], pid, t["id"])
-        await add_t(p.get("tasks", []), p["id"])
-    
-    if "chat" in data:
-        await db.execute(delete(ChatMessage).filter(ChatMessage.share_id == share_id))
-        for msg in data["chat"]:
-            db.add(ChatMessage(id=msg["id"], share_id=share_id, sender_id=msg["senderId"], text=msg["text"], 
-                               timestamp=datetime.fromtimestamp(msg["timestamp"]/1000, tz=timezone.utc) if msg.get("timestamp") else datetime.now(timezone.utc)))
-    
-    await db.commit()
-    return await get_shared_dashboard_aggregated(db, share_id)
-
-async def get_all_shared_dashboards_aggregated(db: AsyncSession):
-    res = await db.execute(select(SharedDashboard).order_by(SharedDashboard.updated_at.desc()))
-    return [await get_shared_dashboard_aggregated(db, sd.share_id) for sd in res.scalars().all()]
-
-# --- Migration Logic ---
-
-async def migrate_json_to_relational(db: AsyncSession):
-    """
-    Migrates data from old JSON blobs (DashboardState and SharedDashboard)
-    to the new relational tables.
-    """
-    # 1. Personal Dashboard
-    res_ds = await db.execute(select(DashboardState).filter(DashboardState.key == "default"))
-    ds = res_ds.scalar_one_or_none()
-    if ds:
-        data = _parse_json(ds.data, {})
-        logger.info("Migrating personal dashboard...")
-        await update_dashboard_from_json(db, data, key="default")
-        
-        # --- NEW: Extract Progressions (Strength Table / TMs) ---
-        # Try both common keys used in older versions
-        progressions = data.get("trainingProgressions") or data.get("progressions") or {}
-        if progressions:
-            logger.info(f"Found {len(progressions)} progressions to migrate.")
-            for ex_id, prog_data in progressions.items():
-                # Check if exercise exists to avoid FK error
-                ex_check = await db.execute(select(Exercise).filter(Exercise.id == ex_id))
-                if ex_check.scalar_one_or_none():
-                    await update_training_progression(db, ex_id, prog_data)
-                else:
-                    logger.warning(f"Skipping progression for unknown exercise: {ex_id}")
-
-    # 2. Shared Dashboards
-    res_sd = await db.execute(select(SharedDashboard))
-    shared_dashboards = res_sd.scalars().all()
-    for sd in shared_dashboards:
-        logger.info(f"Migrating shared dashboard: {sd.share_id}")
-        data = _parse_json(sd.data, {})
-        # update_shared_dashboard_from_json handles projects and chat
-        await update_shared_dashboard_from_json(db, sd.share_id, data, sd.title)
-
-    # 3. Training Logs (Historical Data)
-    if ds:
-        old_logs = data.get("workoutLogs", [])
-        if isinstance(old_logs, list) and old_logs:
-            logger.info(f"Found {len(old_logs)} workout logs to migrate.")
-            for log_entry in old_logs:
-                # Basic structure check to avoid crashes
-                tmpl_id = log_entry.get("template_id")
-                log_date_str = log_entry.get("logged_at")
-                sets_data = log_entry.get("sets", [])
-                
-                # Convert string date if needed
-                log_date = datetime.now(timezone.utc)
-                if log_date_str:
-                    try: log_date = datetime.fromisoformat(log_date_str.replace("Z", "+00:00"))
-                    except: pass
-                
-                # Check if template exists
-                if tmpl_id:
-                    t_check = await db.execute(select(WorkoutDayTemplate).filter(WorkoutDayTemplate.id == tmpl_id))
-                    if not t_check.scalar_one_or_none(): tmpl_id = None
-
-                new_log = WorkoutLog(template_id=tmpl_id, logged_at=log_date)
-                db.add(new_log)
-                await db.flush()
-                
-                for s in sets_data:
-                    ex_id = s.get("exercise_id")
-                    # Check if exercise exists
-                    ex_check = await db.execute(select(Exercise).filter(Exercise.id == ex_id))
-                    if ex_check.scalar_one_or_none():
-                        db.add(SetLog(
-                            workout_log_id=new_log.id,
-                            exercise_id=ex_id,
-                            set_number=s.get("set_number", 1),
-                            weight_kg=float(s.get("weight_kg", 0)),
-                            reps=int(s.get("reps", 0)),
-                            completed=1 if s.get("completed") else 0
-                        ))
-
-    await db.commit()
-    return {"status": "ok", "message": "Migration completed"}
+# --- Training Management ---
 
 async def get_all_exercises(db: AsyncSession):
     try:
@@ -403,31 +147,48 @@ async def create_workout_log(db: AsyncSession, template_id: str | None, sets: li
     await db.commit()
     return log
 
-def _sanitize_progression_data(data: Any) -> dict:
-    if not isinstance(data, dict):
-        data = {}
-    if "tmByMonth" not in data or not isinstance(data["tmByMonth"], list):
-        data["tmByMonth"] = [{"anas": "", "flavio": ""} for _ in range(5)]
-    if "dataByMonth" not in data or not isinstance(data["dataByMonth"], list):
-        data["dataByMonth"] = [[{"week": w, "anas": {"weight": "", "reps": "", "completed": False}, "flavio": {"weight": "", "reps": "", "completed": False}} for w in [1, 2, 3, 4]] for _ in range(6)]
-    return data
+# --- Progressions & Sanitization ---
+
+def _sanitize_progression_data(data: Any, category: str | None = None) -> dict:
+    if category == "STRENGTH":
+        return sanitize_strength_progression(data)
+    return sanitize_generic_progression(data)
 
 async def get_all_progressions(db: AsyncSession):
-    res = await db.execute(select(TrainingProgression))
-    return [{"exercise_id": p.exercise_id, "data": _sanitize_progression_data(_parse_json(p.data, {})), "updated_at": p.updated_at} for p in res.scalars().all()]
+    res = await db.execute(select(TrainingProgression, Exercise.category).join(Exercise, Exercise.id == TrainingProgression.exercise_id))
+    rows = res.all()
+    return [
+        {
+            "exercise_id": p.exercise_id,
+            "data": _sanitize_progression_data(_parse_json(p.data, {}), category),
+            "updated_at": p.updated_at
+        }
+        for p, category in rows
+    ]
 
 async def get_training_progression(db: AsyncSession, ex_id: str):
-    res = await db.execute(select(TrainingProgression).filter(TrainingProgression.exercise_id == ex_id))
-    p = res.scalar_one_or_none()
-    if not p: return None
-    return {"exercise_id": p.exercise_id, "data": _sanitize_progression_data(_parse_json(p.data, {})), "updated_at": p.updated_at}
+    res = await db.execute(
+        select(TrainingProgression, Exercise.category)
+        .join(Exercise, Exercise.id == TrainingProgression.exercise_id)
+        .filter(TrainingProgression.exercise_id == ex_id)
+    )
+    row = res.first()
+    if not row:
+        return None
+    p, category = row
+    return {"exercise_id": p.exercise_id, "data": _sanitize_progression_data(_parse_json(p.data, {}), category), "updated_at": p.updated_at}
 
 async def update_training_progression(db: AsyncSession, ex_id: str, data: dict):
+    ex_res = await db.execute(select(Exercise).filter(Exercise.id == ex_id))
+    exercise = ex_res.scalar_one_or_none()
+    if not exercise:
+        raise ValueError(f"Exercise not found: {ex_id}")
+
     res = await db.execute(select(TrainingProgression).filter(TrainingProgression.exercise_id == ex_id))
     prog = res.scalar_one_or_none()
     
-    # Ensure the data has the minimum required structure for the frontend
-    data = _sanitize_progression_data(data)
+    # Ensure the data has a strict structure for the frontend
+    data = _sanitize_progression_data(data, exercise.category)
 
     if not prog:
         prog = TrainingProgression(exercise_id=ex_id, data=data)
@@ -436,6 +197,8 @@ async def update_training_progression(db: AsyncSession, ex_id: str, data: dict):
         prog.data = data
     await db.commit()
     return prog
+
+# --- Schedule Management ---
 
 async def get_daily_schedule(db: AsyncSession, start_date: date, days_count: int = 14):
     t_res = await db.execute(select(WorkoutDayTemplate).order_by(WorkoutDayTemplate.weekday))
