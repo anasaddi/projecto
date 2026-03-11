@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useDashboardStats } from '../context/DashboardStatsContext';
 import { api } from '../api/client';
 
@@ -22,6 +23,8 @@ const Icons = {
   ChevronDown: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="6 9 12 15 18 9"/></svg>,
   ChevronRight: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6"/></svg>,
   Calendar: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+  ExternalLink: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 22 3 22 9"/><line x1="10" y1="14" x2="22" y2="3"/></svg>,
+  MessageCircle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
 };
 
 /**
@@ -696,6 +699,7 @@ export default function DashboardV2() {
   const [quickTaskDeadlineEditing, setQuickTaskDeadlineEditing] = useState(null);
   const [quickTaskDeadlineInput, setQuickTaskDeadlineInput] = useState('');
   const [dailyCompletionLog, setDailyCompletionLog] = useState(initial.dailyCompletionLog || {});
+  const [sharedDashboards, setSharedDashboards] = useState([]);
   
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -713,6 +717,12 @@ export default function DashboardV2() {
           if (d.top3Manual) setTop3Manual(d.top3Manual);
           if (d.quickTasks) setQuickTasks(d.quickTasks);
           if (d.dailyCompletionLog) setDailyCompletionLog(d.dailyCompletionLog);
+        }
+
+        // Fetch shared dashboards
+        const shared = await api.training.listSharedDashboards();
+        if (Array.isArray(shared)) {
+          setSharedDashboards(shared);
         }
       } catch (err) {
         console.error("Failed to load dashboard from DB:", err);
@@ -1519,6 +1529,75 @@ export default function DashboardV2() {
                 </div>
               );
             })}
+
+            {/* SHARED PROJECTS */}
+            {sharedDashboards.length > 0 && (
+              <>
+                <div className="flex items-center gap-2 mt-4 mb-2 shrink-0">
+                  <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
+                    <Icons.MessageCircle className="w-3 h-3" /> Shared Dashboards
+                  </h2>
+                </div>
+                {sharedDashboards.map((shared, sIdx) => {
+                  // Un shared dashboard ha un campo 'data' che contiene 'projects'
+                  const sharedData = shared.data || {};
+                  const sharedProjects = Array.isArray(sharedData.projects) ? sharedData.projects : (Array.isArray(sharedData) ? sharedData : []);
+                  
+                  return sharedProjects.map((project, pIdx) => {
+                    const stats = countTreeStats(project.tasks);
+                    const percentage = Math.round(stats.ratio * 100);
+                    const accent = PROJECT_ACCENTS[(sIdx + pIdx + projects.length) % PROJECT_ACCENTS.length];
+                    const accentProgress = { indigo: 'from-indigo-500 to-indigo-400', sky: 'from-sky-500 to-sky-400', violet: 'from-violet-500 to-violet-400', emerald: 'from-emerald-500 to-emerald-400', amber: 'from-amber-500 to-amber-400', rose: 'from-rose-500 to-rose-400' }[accent];
+                    const accentBorderClass = accentBorder(accent);
+
+                    return (
+                      <div key={`${shared.share_id}-${project.id}`} className="flex flex-col gap-2.5 group/proj bg-white/40 dark:bg-white/5 border border-dashed border-gray-200 dark:border-gray-700/50 rounded-xl p-3 hover:bg-white/60 dark:hover:bg-white/10 transition-colors relative">
+                        <div className="absolute -top-2 -right-2 bg-indigo-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full shadow-sm uppercase tracking-tighter z-10">
+                          {shared.share_id}
+                        </div>
+                        
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold text-gray-800 dark:text-gray-100 truncate flex-1">{project.title}</span>
+                            <Link 
+                              to={`/shared/${shared.share_id}`}
+                              className="p-1 text-gray-400 hover:text-indigo-500 transition-colors"
+                              title="Apri dashboard condivisa"
+                            >
+                              <Icons.ExternalLink className="w-3 h-3" />
+                            </Link>
+                          </div>
+                          <div className="flex items-center gap-2.5 pl-3.5">
+                            <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                              <div className={`h-full bg-gradient-to-r ${accentProgress} rounded-full transition-all duration-500`} style={{ width: `${percentage}%` }} />
+                            </div>
+                            <span className="text-[9px] font-bold text-gray-500 tabular-nums">{percentage}%</span>
+                          </div>
+                        </div>
+                        
+                        <div className={`flex flex-col gap-1 pl-3.5 border-l-2 ${accentBorderClass} ml-3.5 mt-1 opacity-80`}>
+                          {project.tasks?.slice(0, 5).map((node) => (
+                            <div key={node.id} className="flex items-center gap-2 text-[10px]">
+                              <span className={node.done ? 'text-emerald-500' : 'text-gray-300'}>
+                                {node.done ? <Icons.CheckCircle className="w-3 h-3" /> : <Icons.Circle className="w-3 h-3" />}
+                              </span>
+                              <span className={`truncate ${node.done ? 'text-gray-400 line-through' : 'text-gray-600 dark:text-gray-400'}`}>
+                                {node.title}
+                              </span>
+                            </div>
+                          ))}
+                          {project.tasks?.length > 5 && (
+                            <span className="text-[9px] text-gray-400 font-medium italic ml-5">
+                              + altri {project.tasks.length - 5} compiti...
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  });
+                })}
+              </>
+            )}
           </div>
         </div>
 

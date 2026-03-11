@@ -166,6 +166,12 @@ def get_shared_dashboard(share_id: str, db: Session = Depends(get_db)):
     return crud_training.get_shared_dashboard(db, share_id)
 
 
+@router.get("/shared-dashboards", response_model=list[schemas.SharedDashboardOut])
+def list_shared_dashboards(db: Session = Depends(get_db)):
+    """Fetch all shared dashboards. PUBLIC ROUTE."""
+    return crud_training.get_all_shared_dashboards(db)
+
+
 @router.put("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut)
 def update_shared_dashboard(share_id: str, body: schemas.SharedDashboardUpdate, db: Session = Depends(get_db)):
     """Update or create a shared dashboard by its share_id. PUBLIC ROUTE."""

@@ -229,6 +229,11 @@ def get_shared_dashboard(db: Session, share_id: str):
     return db.query(SharedDashboard).filter(SharedDashboard.share_id == share_id).first()
 
 
+def get_all_shared_dashboards(db: Session):
+    from app.db.models import SharedDashboard
+    return db.query(SharedDashboard).order_by(SharedDashboard.updated_at.desc()).all()
+
+
 def update_shared_dashboard(db: Session, share_id: str, data: dict | list, title: str | None = None):
     from app.db.models import SharedDashboard
     shared = db.query(SharedDashboard).filter(SharedDashboard.share_id == share_id).first()

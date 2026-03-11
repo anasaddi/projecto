@@ -144,6 +144,7 @@ export const api = {
         body: JSON.stringify({ data }),
       }),
     getSharedDashboard: (shareId) => request(`/training/shared-dashboard/${encodeURIComponent(shareId)}`),
+    listSharedDashboards: () => request('/training/shared-dashboards'),
     updateSharedDashboard: (shareId, data, title) =>
       request(`/training/shared-dashboard/${encodeURIComponent(shareId)}`, {
         method: 'PUT',
