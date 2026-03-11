@@ -7,18 +7,25 @@ async function request(path, options = {}) {
     ...(token ? { 'x-km-access': token } : {}),
     ...options.headers,
   }
-  const res = await fetch(BASE + path, {
-    ...options,
-    headers,
-  })
-  if (!res.ok) {
-    const err = new Error(res.statusText)
-    err.status = res.status
-    err.body = await res.text()
+  const url = BASE + path
+  try {
+    const res = await fetch(url, {
+      ...options,
+      headers,
+    })
+    if (!res.ok) {
+      const err = new Error(`Request failed with status ${res.status}: ${res.statusText}`)
+      err.status = res.status
+      err.body = await res.text()
+      console.error(`[API] Error fetching ${url}:`, err)
+      throw err
+    }
+    if (res.status === 204) return
+    return res.json()
+  } catch (err) {
+    console.error(`[API] Failed to fetch ${url}:`, err)
     throw err
   }
-  if (res.status === 204) return
-  return res.json()
 }
 
 export const api = {

@@ -202,11 +202,21 @@ function CompactExerciseCard({ exercise, showMuscleNames, progressions, date, is
       const weekIdx = getActiveWeekIdx(monthData);
       const weekData = monthData?.[weekIdx];
       const cfg = WEEK_CONFIGS[weekIdx];
+      
       if (weekData) {
         details = {
           label: `M${monthIdx + 1} • ${cfg.label}`,
           anas: weekData.anas.weight ? `${weekData.anas.weight}kg` : '?',
           flavio: weekData.flavio.weight ? `${weekData.flavio.weight}kg` : '?'
+        };
+      } else {
+        // Fallback se non ci sono dati di progressione
+        const sets = exercise.base_sets || 4;
+        const reps = exercise.base_reps || 'RPE';
+        details = {
+          label: `M1 • ${sets}x${reps}`,
+          anas: '?',
+          flavio: '?'
         };
       }
     } else if (category === 'AW') {

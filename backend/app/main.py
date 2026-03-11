@@ -53,6 +53,8 @@ def create_app() -> FastAPI:
     origins = _cors_origins_list(settings) or [
         "http://localhost:3000", "http://127.0.0.1:3000",
         "http://localhost:3001", "http://127.0.0.1:3001",
+        "https://projecto-indol.vercel.app",
+        "https://projecto-production-feda.up.railway.app",
     ]
     app.add_middleware(
         CORSMiddleware,
