@@ -128,7 +128,7 @@ class DashboardStateUpdate(BaseModel):
 class SharedDashboardOut(BaseModel):
     share_id: str
     title: str
-    data: list
+    data: dict | list
     updated_at: datetime
 
     class Config:
@@ -136,7 +136,7 @@ class SharedDashboardOut(BaseModel):
 
 
 class SharedDashboardUpdate(BaseModel):
-    data: list
+    data: dict | list
     title: Optional[str] = None
 
 
