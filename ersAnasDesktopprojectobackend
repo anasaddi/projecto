@@ -1,0 +1,436 @@
+[33mcommit 57c898aac9d139f31509c45b9cbaf2a64ba5f28b[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: Anas <anasaddi2001@gmail.com>
+Date:   Wed Mar 11 16:11:07 2026 +0100
+
+    fix_backend_500_error_and_pydantic_v2_compat
+
+[1mdiff --git a/backend/app/api/routes/training.py b/backend/app/api/routes/training.py[m
+[1mindex f84d600..72d356b 100644[m
+[1m--- a/backend/app/api/routes/training.py[m
+[1m+++ b/backend/app/api/routes/training.py[m
+[36m@@ -1,10 +1,10 @@[m
+ import json[m
+ from pathlib import Path[m
+[31m-from datetime import date[m
+[32m+[m[32mfrom datetime import date, datetime, timezone, time[m
+ from typing import Optional[m
+ from fastapi import APIRouter, Depends, HTTPException, Header, WebSocket, WebSocketDisconnect[m
+[31m-from fastapi.concurrency import run_in_threadpool[m
+[31m-from sqlalchemy.orm import Session[m
+[32m+[m[32mfrom sqlalchemy.ext.asyncio import AsyncSession[m
+[32m+[m[32mfrom sqlalchemy import select, func[m
+ [m
+ from app.db.session import get_db[m
+ from app import schemas[m
+[36m@@ -16,17 +16,16 @@[m [mrouter = APIRouter()[m
+ # --- Security Dependency ---[m
+ def check_admin_access(x_km_access: Optional[str] = Header(None)):[m
+     """Simple header check to block unauthorized access to private routes."""[m
+[31m-    # 'master-key' è la chiave predefinita per Anas. Il "friend" non la avrà.[m
+     if x_km_access != "master-key":[m
+         raise HTTPException(status_code=403, detail="Accesso negato: sezione privata.")[m
+     return True[m
+ [m
+ @router.get("/ping")[m
+[31m-def ping(db: Session = Depends(get_db)):[m
+[32m+[m[32masync def ping(db: AsyncSession = Depends(get_db)):[m
+     from app.db.models import Exercise, WorkoutDayTemplate, DailySchedule[m
+[31m-    ex_count = db.query(Exercise).count()[m
+[31m-    tmpl_count = db.query(WorkoutDayTemplate).count()[m
+[31m-    sched_count = db.query(DailySchedule).count()[m
+[32m+[m[32m    ex_count = (await db.execute(select(func.count(Exercise.id)))).scalar()[m
+[32m+[m[32m    tmpl_count = (await db.execute(select(func.count(WorkoutDayTemplate.id)))).scalar()[m
+[32m+[m[32m    sched_count = (await db.execute(select(func.count(DailySchedule.id)))).scalar()[m
+     return {[m
+         "status": "pong",[m
+         "db_stats": {[m
+[36m@@ -36,174 +35,60 @@[m [mdef ping(db: Session = Depends(get_db)):[m
+         }[m
+     }[m
+ [m
+[31m-@router.post("/reseed", dependencies=[Depends(check_admin_access)])[m
+[31m-def reseed_db(db: Session = Depends(get_db)):[m
+[31m-    """Force re-seeding of training data."""[m
+[31m-    from app.db.seed_training import seed_training_if_empty[m
+[31m-    from app.db.models import Exercise, WorkoutDayTemplate, WorkoutDayExercise, DailySchedule[m
+[31m-    [m
+[31m-    # 2. Pulizia totale per forzare il caricamento di TUTTI i dati locali[m
+[31m-    try:[m
+[31m-        db.query(DailySchedule).delete()[m
+[31m-        db.query(WorkoutDayExercise).delete()[m
+[31m-        db.query(WorkoutDayTemplate).delete()[m
+[31m-        db.query(Exercise).delete()[m
+[31m-        db.commit()[m
+[31m-    except Exception as e:[m
+[31m-        db.rollback()[m
+[31m-        print(f"Cleanup error: {e}")[m
+[31m-    [m
+[31m-    n = seed_training_if_empty(db)[m
+[31m-    return {"status": "ok", "seeded": n}[m
+[31m-[m
+[31m-@router.get("/exercises", response_model=list[schemas.ExerciseOut])[m
+[31m-def get_exercises(db: Session = Depends(get_db)):[m
+[31m-    """Public route for the muscle-exercise matrix."""[m
+[31m-    exercises = crud_training.get_all_exercises(db)[m
+[31m-    return [schemas.ExerciseOut.model_validate(ex) for ex in exercises][m
+[31m-[m
+[31m-[m
+[31m-_AW_PROGRAM_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "aw_training_program.json"[m
+[31m-[m
+[31m-[m
+[31m-@router.get("/aw-program", dependencies=[Depends(check_admin_access)])[m
+[31m-def get_aw_program():[m
+[31m-    """Return AW training program data (max_day, light, heavy, speed) from aw_training_program.json."""[m
+[31m-    if not _AW_PROGRAM_PATH.exists():[m
+[31m-        return {}[m
+[31m-    try:[m
+[31m-        return json.loads(_AW_PROGRAM_PATH.read_text(encoding="utf-8"))[m
+[31m-    except Exception:[m
+[31m-        return {}[m
+[31m-[m
+[31m-[m
+[31m-@router.get("/today", response_model=schemas.TodayResponse, dependencies=[Depends(check_admin_access)])[m
+[31m-def get_today(db: Session = Depends(get_db), for_date: Optional[date] = None):[m
+[31m-    """Fetch the template for today (or for_date)."""[m
+[31m-    from datetime import date as date_type[m
+[31m-    target = for_date or date_type.today()[m
+[31m-    template = crud_training.get_today_template(db, for_date)[m
+[31m-    if not template:[m
+[31m-        return schemas.TodayResponse([m
+[31m-            template_id="",[m
+[31m-            day_name="Nessun template per oggi",[m
+[31m-            hypertrophy_exercises=[],[m
+[31m-            strength_aw_exercises=[],[m
+[31m-        )[m
+[31m-    hyp, strength_aw = crud_training.get_today_exercises_grouped(db, for_date)[m
+[31m-    is_fallback = template.weekday is not None and template.weekday != target.weekday()[m
+[31m-    return schemas.TodayResponse([m
+[31m-        template_id=template.id,[m
+[31m-        day_name=template.day_name,[m
+[31m-        hypertrophy_exercises=hyp,[m
+[31m-        strength_aw_exercises=strength_aw,[m
+[31m-        is_fallback=is_fallback,[m
+[31m-    )[m
+[31m-[m
+[31m-[m
+[31m-@router.get("/week", response_model=list[schemas.WeekDayData])[m
+[31m-def get_week(db: Session = Depends(get_db)):[m
+[31m-    """Fetch the full week's templates for the drag & drop calendar."""[m
+[31m-    return crud_training.get_week_templates(db)[m
+[31m-[m
+[31m-@router.put("/week", response_model=dict, dependencies=[Depends(check_admin_access)])[m
+[31m-def update_week(body: schemas.WeekUpdateRequest, db: Session = Depends(get_db)):[m
+[31m-    """Update the full week's exercises."""[m
+[31m-    crud_training.update_week_templates(db, body.days)[m
+[31m-    return {"status": "ok"}[m
+[31m-[m
+[31m-[m
+[31m-@router.patch("/exercise/active", response_model=dict, dependencies=[Depends(check_admin_access)])[m
+[31m-def update_exercise_active(body: schemas.ExerciseActiveUpdate, db: Session = Depends(get_db)):[m
+[31m-    """Enable or disable an exercise globally."""[m
+[31m-    ok = crud_training.update_exercise_active(db, body.exercise_id, body.is_active)[m
+[31m-    return {"status": "ok" if ok else "not_found"}[m
+[31m-[m
+[31m-[m
+[31m-@router.patch("/day-exercise", response_model=dict, dependencies=[Depends(check_admin_access)])[m
+[31m-def update_day_exercise(body: schemas.DayExerciseUpdate, db: Session = Depends(get_db)):[m
+[31m-    """Update instruction/base_sets/base_reps for an exercise in a day template."""[m
+[31m-    ok = crud_training.update_day_exercise([m
+[31m-        db,[m
+[31m-        template_id=body.template_id,[m
+[31m-        exercise_id=body.exercise_id,[m
+[31m-        custom_name=body.custom_name,[m
+[31m-        instruction=body.instruction,[m
+[31m-        base_sets=body.base_sets,[m
+[31m-        base_reps=body.base_reps,[m
+[31m-    )[m
+[31m-    return {"status": "ok" if ok else "not_found"}[m
+[31m-[m
+[31m-@router.get("/history", response_model=schemas.ExerciseHistoryResponse, dependencies=[Depends(check_admin_access)])[m
+[31m-def get_exercise_history_route([m
+[31m-    exercise_id: str,[m
+[31m-    limit: int = 15,[m
+[31m-    db: Session = Depends(get_db),[m
+[31m-):[m
+[31m-    """Get workout history for an exercise (past sessions with weight/reps)."""[m
+[31m-    return crud_training.get_exercise_history(db, exercise_id, limit=limit)[m
+[31m-[m
+[31m-[m
+ # --- Dashboard ---[m
+ [m
+ @router.get("/dashboard-state", response_model=schemas.DashboardStateOut | None, dependencies=[Depends(check_admin_access)])[m
+[31m-def get_dashboard_state(db: Session = Depends(get_db)):[m
+[32m+[m[32masync def get_dashboard_state(db: AsyncSession = Depends(get_db)):[m
+     """Fetch the dashboard state (habits, projects, etc.) from DB."""[m
+[31m-    return crud_training.get_dashboard_state(db)[m
+[32m+[m[32m    data = await crud_training.get_dashboard_state_aggregated(db)[m
+[32m+[m[32m    return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}[m
+ [m
+ [m
+ @router.put("/dashboard-state", response_model=schemas.DashboardStateOut, dependencies=[Depends(check_admin_access)])[m
+[31m-def update_dashboard_state(body: schemas.DashboardStateUpdate, db: Session = Depends(get_db)):[m
+[32m+[m[32masync def update_dashboard_state(body: schemas.DashboardStateUpdate, db: AsyncSession = Depends(get_db)):[m
+     """Save the dashboard state to DB."""[m
+[31m-    return crud_training.update_dashboard_state(db, body.data)[m
+[32m+[m[32m    data = await crud_training.update_dashboard_from_json(db, body.data)[m
+[32m+[m[32m    return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}[m
+ [m
+ [m
+ # --- Shared Dashboard ---[m
+ [m
+ @router.get("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut | None)[m
+[31m-def get_shared_dashboard(share_id: str, db: Session = Depends(get_db)):[m
+[32m+[m[32masync def get_shared_dashboard(share_id: str, db: AsyncSession = Depends(get_db)):[m
+     """Fetch a shared dashboard by its share_id. PUBLIC ROUTE."""[m
+[31m-    return crud_training.get_shared_dashboard(db, share_id)[m
+[32m+[m[32m    return await crud_training.get_shared_dashboard_aggregated(db, share_id)[m
+ [m
+ [m
+ @router.get("/shared-dashboards", response_model=list[schemas.SharedDashboardOut])[m
+[31m-def list_shared_dashboards(db: Session = Depends(get_db)):[m
+[32m+[m[32masync def list_shared_dashboards(db: AsyncSession = Depends(get_db)):[m
+     """Fetch all shared dashboards. PUBLIC ROUTE."""[m
+[31m-    return crud_training.get_all_shared_dashboards(db)[m
+[32m+[m[32m    return await crud_training.get_all_shared_dashboards_aggregated(db)[m
+ [m
+ [m
+ @router.put("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut)[m
+[31m-async def update_shared_dashboard(share_id: str, body: schemas.SharedDashboardUpdate, db: Session = Depends(get_db)):[m
+[32m+[m[32masync def update_shared_dashboard(share_id: str, body: schemas.SharedDashboardUpdate, db: AsyncSession = Depends(get_db)):[m
+     """Update or create a shared dashboard by its share_id. PUBLIC ROUTE."""[m
+[31m-    # 1. Update in DB[m
+[31m-    dashboard = crud_training.update_shared_dashboard(db, share_id, body.data, body.title)[m
+[32m+[m[32m    dashboard = await crud_training.update_shared_dashboard_from_json(db, share_id, body.data, body.title)[m
+     [m
+[31m-    # 2. Broadcast to all WebSocket listeners for this share_id[m
+[31m-    # We send the same format as the WebSocket sync message[m
+     payload = {[m
+         "type": "sync",[m
+         "share_id": share_id,[m
+[31m-        "title": body.title or dashboard.title,[m
+[32m+[m[32m        "title": body.title or dashboard["title"],[m
+         "data": body.data[m
+     }[m
+     await manager.broadcast(payload, share_id)[m
+[31m-    [m
+     return dashboard[m
+ [m
+ [m
+ @router.websocket("/ws/shared-dashboard/{share_id}")[m
+[31m-async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: Session = Depends(get_db)):[m
+[32m+[m[32masync def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: AsyncSession = Depends(get_db)):[m
+     await manager.connect(websocket, share_id)[m
+     try:[m
+[31m-        # 1. Send initial state[m
+[31m-        dashboard = await run_in_threadpool(crud_training.get_shared_dashboard, db, share_id)[m
+[32m+[m[32m        dashboard = await crud_training.get_shared_dashboard_aggregated(db, share_id)[m
+         if dashboard:[m
+[31m-            # Serialize using Pydantic[m
+[31m-            data_out = schemas.SharedDashboardOut.model_validate(dashboard).model_dump(mode='json')[m
+[31m-            data_out["type"] = "sync"[m
+[31m-            await websocket.send_json(data_out)[m
+[32m+[m[32m            dashboard["type"] = "sync"[m
+[32m+[m[32m            await websocket.send_json(dashboard)[m
+         else:[m
+[31m-            # Default empty state[m
+             await websocket.send_json({[m
+                 "type": "sync",[m
+                 "share_id": share_id, [m
+[36m@@ -212,23 +97,11 @@[m [masync def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: Se[m
+                 "updated_at": None[m
+             })[m
+ [m
+[31m-        # 2. Listen for updates[m
+         while True:[m
+             payload = await websocket.receive_json()[m
+[31m-            [m
+[31m-            # Ora gestiamo tutto come un unico stato sincronizzato (projects, quickTasks, chat)[m
+[31m-            # Il frontend invia sempre lo stato completo aggiornato[m
+[31m-            [m
+[31m-            # Broadcast to others immediately (Optimistic)[m
+             await manager.broadcast(payload, share_id, exclude=websocket)[m
+[31m-            [m
+[31m-            # Save to DB[m
+[31m-            await run_in_threadpool([m
+[31m-                crud_training.update_shared_dashboard, [m
+[31m-                db, [m
+[31m-                share_id, [m
+[31m-                payload.get("data"), [m
+[31m-                payload.get("title")[m
+[32m+[m[32m            await crud_training.update_shared_dashboard_from_json([m
+[32m+[m[32m                db, share_id, payload.get("data"), payload.get("title")[m
+             )[m
+             [m
+     except WebSocketDisconnect:[m
+[36m@@ -237,97 +110,91 @@[m [masync def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: Se[m
+         print(f"WebSocket error: {e}")[m
+         manager.disconnect(websocket, share_id)[m
+ [m
+[32m+[m[32m# --- Legacy (Need Async Refactor if used) ---[m
+ [m
+[31m-@router.post("/log", response_model=schemas.WorkoutLogOut, dependencies=[Depends(check_admin_access)])[m
+[31m-def log_workout(body: schemas.WorkoutLogCreate, db: Session = Depends(get_db)):[m
+[31m-    """Receive completed sets from the React ExerciseTable and save them."""[m
+[31m-    log = crud_training.create_workout_log(db, body.template_id, body.sets)[m
+[31m-    return log[m
+[31m-[m
+[31m-[m
+[31m-@router.post("/recommendation", response_model=schemas.RecommendationResponse, dependencies=[Depends(check_admin_access)])[m
+[31m-def recommendation(body: schemas.RecommendationRequest, db: Session = Depends(get_db)):[m
+[31m-    """Dummy endpoint for future recommendation logic."""[m
+[31m-    target = body.date or date.today()[m
+[31m-    template = crud_training.get_today_template(db, target)[m
+[31m-    if template:[m
+[31m-        return schemas.RecommendationResponse([m
+[31m-            message="Placeholder: recommendation logic.",[m
+[31m-            recommended_template_id=template.id,[m
+[31m-        )[m
+[31m-    return schemas.RecommendationResponse([m
+[31m-        message="No template for this day.",[m
+[31m-        recommended_template_id=None,[m
+[32m+[m[32m@router.get("/exercises", response_model=list[schemas.ExerciseOut])[m
+[32m+[m[32masync def get_exercises(db: AsyncSession = Depends(get_db)):[m
+[32m+[m[32m    exercises = await crud_training.get_all_exercises(db)[m
+[32m+[m[32m    return [schemas.ExerciseOut.model_validate(ex) for ex in exercises][m
+[32m+[m
+[32m+[m[32m@router.get("/today", response_model=schemas.TodayResponse, dependencies=[Depends(check_admin_access)])[m
+[32m+[m[32masync def get_today(db: AsyncSession = Depends(get_db), for_date: Optional[date] = None):[m
+[32m+[m[32m    target = for_date or date.today()[m
+[32m+[m[32m    template = await crud_training.get_today_template(db, for_date)[m
+[32m+[m[32m    if not template:[m
+[32m+[m[32m        return schemas.TodayResponse(template_id="", day_name="Nessun template per oggi")[m
+[32m+[m[32m    hyp, strength_aw = await crud_training.get_today_exercises_grouped(db, for_date)[m
+[32m+[m[32m    is_fallback = template.weekday is not None and template.weekday != target.weekday()[m
+[32m+[m[32m    return schemas.TodayResponse([m
+[32m+[m[32m        template_id=template.id, day_name=template.day_name,[m
+[32m+[m[32m        hypertrophy_exercises=hyp, strength_aw_exercises=strength_aw,[m
+[32m+[m[32m        is_fallback=is_fallback,[m
+     )[m
+ [m
+[32m+[m[32m@router.get("/week", response_model=list[schemas.WeekDayData])[m
+[32m+[m[32masync def get_week(db: AsyncSession = Depends(get_db)):[m
+[32m+[m[32m    return await crud_training.get_week_templates(db)[m
+ [m
+[31m-# --- Training Progression (StrengthTable2) ---[m
+[32m+[m[32m@router.put("/week", response_model=dict, dependencies=[Depends(check_admin_access)])[m
+[32m+[m[32masync def update_week(body: schemas.WeekUpdateRequest, db: AsyncSession = Depends(get_db)):[m
+[32m+[m[32m    await crud_training.update_week_templates(db, body.days)[m
+[32m+[m[32m    return {"status": "ok"}[m
+ [m
+[31m-@router.get("/progression", response_model=list[schemas.TrainingProgressionOut])[m
+[31m-def get_all_progressions(db: Session = Depends(get_db)):[m
+[31m-    """Fetch all progression data for all exercises."""[m
+[31m-    return crud_training.get_all_progressions(db)[m
+[32m+[m[32m@router.patch("/exercise/active", response_model=dict, dependencies=[Depends(check_admin_access)])[m
+[32m+[m[32masync def update_exercise_active(body: schemas.ExerciseActiveUpdate, db: AsyncSession = Depends(get_db)):[m
+[32m+[m[32m    ok = await crud_training.update_exercise_active(db, body.exercise_id, body.is_active)[m
+[32m+[m[32m    return {"status": "ok" if ok else "not_found"}[m
+ [m
+[32m+[m[32m@router.patch("/day-exercise", response_model=dict, dependencies=[Depends(check_admin_access)])[m
+[32m+[m[32masync def update_day_exercise(body: schemas.DayExerciseUpdate, db: AsyncSession = Depends(get_db)):[m
+[32m+[m[32m    ok = await crud_training.update_day_exercise([m
+[32m+[m[32m        db, template_id=body.template_id, exercise_id=body.exercise_id,[m
+[32m+[m[32m        custom_name=body.custom_name, instruction=body.instruction,[m
+[32m+[m[32m        base_sets=body.base_sets, base_reps=body.base_reps,[m
+[32m+[m[32m    )[m
+[32m+[m[32m    return {"status": "ok" if ok else "not_found"}[m
+ [m
+[31m-@router.get("/progression/{exercise_id}", response_model=Optional[schemas.TrainingProgressionOut])[m
+[31m-def get_progression(exercise_id: str, db: Session = Depends(get_db)):[m
+[31m-    """Fetch 6-month progression data for an exercise."""[m
+[31m-    return crud_training.get_training_progression(db, exercise_id)[m
+[32m+[m[32m@router.get("/history", response_model=schemas.ExerciseHistoryResponse, dependencies=[Depends(check_admin_access)])[m
+[32m+[m[32masync def get_exercise_history_route(exercise_id: str, limit: int = 15, db: AsyncSession = Depends(get_db)):[m
+[32m+[m[32m    return await crud_training.get_exercise_history(db, exercise_id, limit=limit)[m
+ [m
+[32m+[m[32m@router.post("/log", response_model=schemas.WorkoutLogOut, dependencies=[Depends(check_admin_access)])[m
+[32m+[m[32masync def log_workout(body: schemas.WorkoutLogCreate, db: AsyncSession = Depends(get_db)):[m
+[32m+[m[32m    return await crud_training.create_workout_log(db, body.template_id, body.sets)[m
+ [m
+[31m-@router.post("/progression/{exercise_id}", response_model=schemas.TrainingProgressionOut)[m
+[31m-def update_progression(exercise_id: str, body: schemas.TrainingProgressionUpdate, db: Session = Depends(get_db)):[m
+[31m-    """Save 6-month progression data for an exercise."""[m
+[31m-    return crud_training.update_training_progression(db, exercise_id, body.data)[m
+[32m+[m[32m@router.get("/progression", response_model=list[schemas.TrainingProgressionOut])[m
+[32m+[m[32masync def get_all_progressions(db: AsyncSession = Depends(get_db)):[m
+[32m+[m[32m    return await crud_training.get_all_progressions(db)[m
+ [m
+[32m+[m[32m@router.get("/progression/{exercise_id}", response_model=Optional[schemas.TrainingProgressionOut])[m
+[32m+[m[32masync def get_progression(exercise_id: str, db: AsyncSession = Depends(get_db)):[m
+[32m+[m[32m    return await crud_training.get_training_progression(db, exercise_id)[m
+ [m
+[31m-# --- Daily Schedule ---[m
+[32m+[m[32m@router.post("/progression/{exercise_id}", response_model=schemas.TrainingProgressionOut)[m
+[32m+[m[32masync def update_progression(exercise_id: str, body: schemas.TrainingProgressionUpdate, db: AsyncSession = Depends(get_db)):[m
+[32m+[m[32m    return await crud_training.update_training_progression(db, exercise_id, body.data)[m
+ [m
+ @router.get("/schedule", response_model=list[schemas.DailyScheduleOut])[m
+[31m-def get_schedule([m
+[31m-    start_date: Optional[date] = None, [m
+[31m-    days_count: int = 14, [m
+[31m-    db: Session = Depends(get_db)[m
+[31m-):[m
+[31m-    """Get the sliding schedule for training days."""[m
+[32m+[m[32masync def get_schedule(start_date: Optional[date] = None, days_count: int = 14, db: AsyncSession = Depends(get_db)):[m
+     target_date = start_date or date.today()[m
+[31m-    return crud_training.get_daily_schedule(db, target_date, days_count)[m
+[31m-[m
+[32m+[m[32m    return await crud_training.get_daily_schedule(db, target_date, days_count)[m
+ [m
+ @router.patch("/schedule/{schedule_date}", response_model=schemas.DailyScheduleOut)[m
+[31m-def update_schedule_completion([m
+[31m-    schedule_date: date, [m
+[31m-    body: schemas.DailyScheduleUpdate, [m
+[31m-    db: Session = Depends(get_db)[m
+[31m-):[m
+[31m-    """Toggle completion for a specific date in the schedule."""[m
+[31m-    sched = crud_training.update_daily_schedule_completion(db, schedule_date, body.is_completed)[m
+[31m-    return sched[m
+[32m+[m[32masync def update_schedule_completion(schedule_date: date, body: schemas.DailyScheduleUpdate, db: AsyncSession = Depends(get_db)):[m
+[32m+[m[32m    return await crud_training.update_daily_schedule_completion(db, schedule_date, body.is_completed)[m
+ [m
+ @router.post("/schedule/skip-today", response_model=dict, dependencies=[Depends(check_admin_access)])[m
+[31m-def skip_today(db: Session = Depends(get_db)):[m
+[31m-    """Manually skip today's workout and slide everything by one day."""[m
+[32m+[m[32masync def skip_today(db: AsyncSession = Depends(get_db)):[m
+     from app.db.models import DailySchedule[m
+[31m-    from datetime import datetime, date, time[m
+[31m-    [m
+[31m-    today_date = date.today()[m
+[31m-    today_dt = datetime.combine(today_date, time.min)[m
+[31m-    [m
+[31m-    # Cerchiamo se esiste già un record per oggi[m
+[31m-    today_sched = db.query(DailySchedule).filter(DailySchedule.date_ == today_dt).first()[m
+[31m-    [m
+[32m+[m[32m    today_dt = datetime.combine(date.today(), time.min)[m
+[32m+[m[32m    res = await db.execute(select(DailySchedule).filter(DailySchedule.date_ == today_dt))[m
+[32m+[m[32m    today_sched = res.scalar_one_or_none()[m
+     if today_sched:[m
+[31m-        # Se oggi era già completato, ignoriamo[m
+         if today_sched.is_completed:[m
+             return {"status": "ignored", "message": "Oggi è già completato."}[m
+[31m-        [m
+[31m-        # Altrimenti lo trasformiamo in un Rest Day completato (saltato)[m
+         today_sched.template_id = None[m
+         today_sched.is_completed = 1[m
+     else:[m
+[31m-        # Se non esiste, lo creiamo come Rest Day saltato[m
+[31m-        new_rest = DailySchedule(date_=today_dt, template_id=None, is_completed=1)[m
+[31m-        db.add(new_rest)[m
+[31m-        [m
+[31m-    db.commit()[m
+[32m+[m[32m        db.add(DailySchedule(date_=today_dt, template_id=None, is_completed=1))[m
+[32m+[m[32m    await db.commit()[m
+     return {"status": "ok", "message": "Oggi saltato, la sequenza slitterà a domani."}[m
+
+[33mcommit 9db2f1ca24e4e0ab79b81abe6ef41451a4f92289[m
+Author: Anas <anasaddi2001@gmail.com>
+Date:   Mon Mar 2 16:40:43 2026 +0100
+
+    first caricamento dashboard
+
+[1mdiff --git a/backend/app/api/routes/training.py b/backend/app/api/routes/training.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..081f466[m
+[1m--- /dev/null[m
+[1m+++ b/backend/ap

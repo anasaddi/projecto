@@ -1,5 +1,7 @@
 from datetime import datetime, timezone, date, timedelta, time
+import json
 import logging
+from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, func
 from app.db.models import (
@@ -10,6 +12,14 @@ from app.db.models import (
 from app.schemas.training import SetLogItem, WeekDayUpdateData
 
 logger = logging.getLogger(__name__)
+
+def _parse_json(val: Any, default: Any = None) -> Any:
+    if val is None: return default
+    if isinstance(val, (dict, list)): return val
+    if isinstance(val, str):
+        try: return json.loads(val)
+        except Exception: return default
+    return default
 
 # --- Dashboard (Aggregated View for Frontend) ---
 
@@ -46,27 +56,50 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default")
     for p in projs:
         projects.append({"id": p.id, "title": p.title, "tasks": await get_task_tree(p.id)})
 
+    # DashboardState for other fields (prayerLogs, etc.)
+    res_ds = await db.execute(select(DashboardState).filter(DashboardState.key == key))
+    ds = res_ds.scalar_one_or_none()
+    ds_data = _parse_json(ds.data, {}) if ds else {}
+
     return {
         "dailyTaskTemplates": dailyTaskTemplates,
         "dailyTaskLogs": dailyTaskLogs,
         "projects": projects,
         "quickTasks": quickTasks,
-        "prayerLogs": {}, "top3Manual": [None, None, None], "dailyCompletionLog": {}
+        "prayerLogs": ds_data.get("prayerLogs", {}),
+        "top3Manual": ds_data.get("top3Manual", [None, None, None]),
+        "dailyCompletionLog": ds_data.get("dailyCompletionLog", {})
     }
 
 async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "default"):
+    # First, save everything to the DashboardState blob for extra fields (prayerLogs, etc.)
+    res_ds = await db.execute(select(DashboardState).filter(DashboardState.key == key))
+    ds = res_ds.scalar_one_or_none()
+    if not ds:
+        ds = DashboardState(key=key, data=data)
+        db.add(ds)
+    else:
+        ds.data = data
+    
+    # Sync habits
     if "dailyTaskTemplates" in data:
         await db.execute(delete(Habit))
         for h in data["dailyTaskTemplates"]:
             db.add(Habit(id=h["id"], title=h["title"], locked=1 if h.get("locked") else 0, ordinal=h.get("ordinal", 0)))
+    
+    # Sync habit logs
     if "dailyTaskLogs" in data:
         await db.execute(delete(HabitLog))
         for d_str, logs in data["dailyTaskLogs"].items():
             for l in logs: db.add(HabitLog(habit_id=l["id"], date=d_str, status=1 if l.get("done") else 0))
+    
+    # Sync quick tasks
     if "quickTasks" in data:
         await db.execute(delete(QuickTask))
         for q in data["quickTasks"]:
             db.add(QuickTask(id=q["id"], title=q["title"], done=1 if q.get("done") else 0, deadline=q.get("deadline")))
+    
+    # Sync personal projects
     if "projects" in data:
         await db.execute(delete(Project).filter(Project.share_id == None))
         for p in data["projects"]:
@@ -76,6 +109,7 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
                     db.add(Task(id=t["id"], project_id=pid, parent_id=parent, title=t["title"], done=1 if t.get("done") else 0, deadline=t.get("deadline")))
                     if t.get("children"): await add_t(t["children"], pid, t["id"])
             await add_t(p.get("tasks", []), p["id"])
+    
     await db.commit()
     return await get_dashboard_state_aggregated(db, key)
 
@@ -92,17 +126,40 @@ async def get_shared_dashboard_aggregated(db: AsyncSession, share_id: str):
     projects = [{"id": p.id, "title": p.title, "tasks": await get_t(p.id)} for p in projs_res.scalars().all()]
     chat_res = await db.execute(select(ChatMessage).filter(ChatMessage.share_id == share_id).order_by(ChatMessage.timestamp))
     chat = [{"id": m.id, "senderId": m.sender_id, "text": m.text, "timestamp": int(m.timestamp.timestamp()*1000)} for m in chat_res.scalars().all()]
-    return {"share_id": shared.share_id, "title": shared.title, "data": {"projects": projects, "quickTasks": [], "chat": chat}, "updated_at": shared.updated_at}
+    
+    # data can be a list or a dict in the DB
+    shared_data = _parse_json(shared.data, {})
+    quickTasks = shared_data.get("quickTasks", []) if isinstance(shared_data, dict) else []
 
-async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, data: dict, title: str | None = None):
+    return {
+        "share_id": shared.share_id,
+        "title": shared.title,
+        "data": {
+            "projects": projects,
+            "quickTasks": quickTasks,
+            "chat": chat
+        },
+        "updated_at": shared.updated_at
+    }
+
+async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, data: dict | list, title: str | None = None):
     res = await db.execute(select(SharedDashboard).filter(SharedDashboard.share_id == share_id))
     shared = res.scalar_one_or_none()
+    
+    # Se data è una lista (vecchio formato), la convertiamo internamente
+    if isinstance(data, list):
+        data = {"projects": data, "quickTasks": [], "chat": []}
+
     if not shared:
-        shared = SharedDashboard(share_id=share_id, title=title or "Progetti Condivisi")
+        shared = SharedDashboard(share_id=share_id, title=title or "Progetti Condivisi", data=data)
         db.add(shared)
-    elif title: shared.title = title
+    else:
+        if title: shared.title = title
+        shared.data = data # Keep the blob for non-relational fields if needed
+    
+    # Sync relational tables
     await db.execute(delete(Project).filter(Project.share_id == share_id))
-    p_data = data.get("projects", []) if isinstance(data, dict) else (data if isinstance(data, list) else [])
+    p_data = data.get("projects", [])
     for p in p_data:
         db.add(Project(id=p["id"], title=p["title"], share_id=share_id))
         async def add_t(tasks, pid, parent=None):
@@ -110,11 +167,13 @@ async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, dat
                 db.add(Task(id=t["id"], project_id=pid, parent_id=parent, title=t["title"], done=1 if t.get("done") else 0, deadline=t.get("deadline")))
                 if t.get("children"): await add_t(t["children"], pid, t["id"])
         await add_t(p.get("tasks", []), p["id"])
-    if isinstance(data, dict) and "chat" in data:
+    
+    if "chat" in data:
         await db.execute(delete(ChatMessage).filter(ChatMessage.share_id == share_id))
         for msg in data["chat"]:
             db.add(ChatMessage(id=msg["id"], share_id=share_id, sender_id=msg["senderId"], text=msg["text"], 
                                timestamp=datetime.fromtimestamp(msg["timestamp"]/1000, tz=timezone.utc) if msg.get("timestamp") else datetime.now(timezone.utc)))
+    
     await db.commit()
     return await get_shared_dashboard_aggregated(db, share_id)
 
@@ -126,7 +185,19 @@ async def get_all_shared_dashboards_aggregated(db: AsyncSession):
 
 async def get_all_exercises(db: AsyncSession):
     res = await db.execute(select(Exercise))
-    return res.scalars().all()
+    exercises = res.scalars().all()
+    out = []
+    for ex in exercises:
+        d = {
+            "id": ex.id, "name": ex.name, "category": ex.category,
+            "primary_muscles": _parse_json(ex.primary_muscles, []),
+            "secondary_muscles": _parse_json(ex.secondary_muscles, []),
+            "cns_fatigue": ex.cns_fatigue,
+            "joint_stress": _parse_json(ex.joint_stress, {}),
+            "is_active": ex.is_active
+        }
+        out.append(d)
+    return out
 
 async def get_today_template(db: AsyncSession, for_date: date | None = None):
     target = for_date or date.today()
@@ -151,8 +222,11 @@ async def get_today_exercises_grouped(db: AsyncSession, for_date: date | None = 
         d = {
             "exercise_id": ex.id, "exercise_name": we.custom_name or ex.name, "category": ex.category,
             "instruction": we.instruction, "base_sets": we.base_sets, "base_reps": we.base_reps,
-            "primary_muscles": ex.primary_muscles, "secondary_muscles": ex.secondary_muscles,
-            "cns_fatigue": ex.cns_fatigue, "joint_stress": ex.joint_stress, "is_active": ex.is_active
+            "primary_muscles": _parse_json(ex.primary_muscles, []), 
+            "secondary_muscles": _parse_json(ex.secondary_muscles, []),
+            "cns_fatigue": ex.cns_fatigue, 
+            "joint_stress": _parse_json(ex.joint_stress, {}), 
+            "is_active": ex.is_active
         }
         if ex.category == "HYPERTROPHY": hyp.append(d)
         else: str_aw.append(d)
@@ -169,7 +243,12 @@ async def get_week_templates(db: AsyncSession):
             e = e_res.scalar_one_or_none()
             if e: exercises.append({
                 "exercise_id": e.id, "exercise_name": we.custom_name or e.name, "category": e.category,
-                "instruction": we.instruction, "base_sets": we.base_sets, "base_reps": we.base_reps
+                "instruction": we.instruction, "base_sets": we.base_sets, "base_reps": we.base_reps,
+                "primary_muscles": _parse_json(e.primary_muscles, []),
+                "secondary_muscles": _parse_json(e.secondary_muscles, []),
+                "cns_fatigue": e.cns_fatigue,
+                "joint_stress": _parse_json(e.joint_stress, {}),
+                "is_active": e.is_active
             })
         days.append({"template_id": t.id, "day_name": t.day_name, "weekday": t.weekday, "exercises": exercises})
     return days
@@ -218,11 +297,13 @@ async def create_workout_log(db: AsyncSession, template_id: str | None, sets: li
 
 async def get_all_progressions(db: AsyncSession):
     res = await db.execute(select(TrainingProgression))
-    return res.scalars().all()
+    return [{"exercise_id": p.exercise_id, "data": _parse_json(p.data, {}), "updated_at": p.updated_at} for p in res.scalars().all()]
 
 async def get_training_progression(db: AsyncSession, ex_id: str):
     res = await db.execute(select(TrainingProgression).filter(TrainingProgression.exercise_id == ex_id))
-    return res.scalar_one_or_none()
+    p = res.scalar_one_or_none()
+    if not p: return None
+    return {"exercise_id": p.exercise_id, "data": _parse_json(p.data, {}), "updated_at": p.updated_at}
 
 async def update_training_progression(db: AsyncSession, ex_id: str, data: dict):
     res = await db.execute(select(TrainingProgression).filter(TrainingProgression.exercise_id == ex_id))

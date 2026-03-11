@@ -14,8 +14,8 @@ class JointStress(BaseModel):
 class ExerciseBase(BaseModel):
     name: str
     category: str  # STRENGTH | AW | HYPERTROPHY
-    primary_muscles: list[str] = []
-    secondary_muscles: list[str] = []
+    primary_muscles: list[str] = Field(default_factory=list)
+    secondary_muscles: list[str] = Field(default_factory=list)
     cns_fatigue: float = 0.0
     joint_stress: Optional[dict] = Field(default_factory=dict)
 
@@ -47,10 +47,10 @@ class TemplateExerciseOut(BaseModel):
     instruction: Optional[str] = None
     base_sets: int
     base_reps: Optional[int] = None
-    primary_muscles: list[str] = []
-    secondary_muscles: list[str] = []
+    primary_muscles: list[str] = Field(default_factory=list)
+    secondary_muscles: list[str] = Field(default_factory=list)
     cns_fatigue: float = 0.0
-    joint_stress: Optional[dict] = {}
+    joint_stress: Optional[dict] = Field(default_factory=dict)
     is_active: int = 1
 
     model_config = {"from_attributes": True}

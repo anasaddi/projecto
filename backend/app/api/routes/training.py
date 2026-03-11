@@ -58,7 +58,8 @@ async def reseed_db(db: AsyncSession = Depends(get_db)):
 async def get_exercises(db: AsyncSession = Depends(get_db)):
     """Public route for the muscle-exercise matrix."""
     exercises = await crud_training.get_all_exercises(db)
-    return [schemas.ExerciseOut.model_validate(ex) for ex in exercises]
+    # exercises is already a list of dicts from crud
+    return exercises
 
 _AW_PROGRAM_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "aw_training_program.json"
 
@@ -94,7 +95,7 @@ async def get_today(db: AsyncSession = Depends(get_db), for_date: Optional[date]
         is_fallback=is_fallback,
     )
 
-@router.get("/week", response_model=list[schemas.WeekDayData])
+@router.get("/week", response_model=list[schemas.WeekDayData], dependencies=[Depends(check_admin_access)])
 async def get_week(db: AsyncSession = Depends(get_db)):
     """Fetch the full week's templates."""
     return await crud_training.get_week_templates(db)
