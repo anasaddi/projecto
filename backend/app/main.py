@@ -19,34 +19,50 @@ def _cors_origins_list(settings) -> list:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Ensure all tables exist (important for SQLite and first Postgres run)
-    try:
-        Base.metadata.create_all(bind=engine)
-    except Exception as e:
-        print(f"Table creation error: {e}")
+    # We add a retry loop because PostgreSQL/DNS might take a few seconds to be ready on Railway
+    import time
+    max_retries = 5
+    retry_delay = 5
+    
+    db_ready = False
+    for i in range(max_retries):
+        try:
+            Base.metadata.create_all(bind=engine)
+            db_ready = True
+            print(f"Database connection successful on attempt {i+1}")
+            break
+        except Exception as e:
+            print(f"Database connection attempt {i+1} failed: {e}")
+            if i < max_retries - 1:
+                print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print("Max retries reached. Database initialization failed.")
 
-    # Seed training data if DB is empty (run after migrations)
-    try:
-        db = SessionLocal()
-        
-        # Manual migration for SQLite (adding is_active to exercises if it doesn't exist)
-        # We only do this if it's sqlite, postgres handles it via create_all or alembic
-        if "sqlite" in str(engine.url):
-            from sqlalchemy import text
-            try:
-                db.execute(text("ALTER TABLE exercises ADD COLUMN is_active INTEGER DEFAULT 1"))
-                db.commit()
-            except Exception:
-                db.rollback() 
+    if db_ready:
+        # Seed training data if DB is empty (run after migrations)
+        try:
+            db = SessionLocal()
+            
+            # Manual migration for SQLite (adding is_active to exercises if it doesn't exist)
+            if "sqlite" in str(engine.url):
+                from sqlalchemy import text
+                try:
+                    db.execute(text("ALTER TABLE exercises ADD COLUMN is_active INTEGER DEFAULT 1"))
+                    db.commit()
+                except Exception:
+                    db.rollback() 
 
-        n = seed_training_if_empty(db)
-        if n:
-            print(f"Training seed: inserted {n} exercises and day templates.")
-        m = seed_fake_history(db)
-        if m:
-            print(f"Fake history: inserted {m} workout logs.")
-        db.close()
-    except Exception as e:
-        print(f"Training seed skipped or failed: {e}")
+            n = seed_training_if_empty(db)
+            if n:
+                print(f"Training seed: inserted {n} exercises and day templates.")
+            m = seed_fake_history(db)
+            if m:
+                print(f"Fake history: inserted {m} workout logs.")
+            db.close()
+        except Exception as e:
+            print(f"Training seed skipped or failed: {e}")
+    
     yield
     # shutdown cleanup if needed
 
