@@ -78,6 +78,7 @@ export default function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/source/:sourceId" element={<AdminRoute><Reader /></AdminRoute>} />
                 <Route path="/dashboard" element={<AdminRoute><DashboardV2 /></AdminRoute>} />
+                <Route path="/shared" element={<SharedProjects />} />
                 <Route path="/shared/:shareId" element={<SharedProjects />} />
                 <Route path="/youtube" element={<AdminRoute><YouTubeViewer /></AdminRoute>} />
                 <Route path="/training" element={<AdminRoute><Training /></AdminRoute>} />

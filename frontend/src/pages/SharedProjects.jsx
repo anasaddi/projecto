@@ -235,6 +235,7 @@ function SharedTaskNode({ node, depth, projectId, projectAccent, onToggle, onDel
 
 export default function SharedProjects() {
   const { shareId } = useParams();
+  const id = (shareId || '').trim();
   
   // Stato unico per tutto il dashboard
   const [dashboard, setDashboard] = useState({
@@ -252,79 +253,124 @@ export default function SharedProjects() {
 
   const ws = useRef(null);
   const reconnectTimeout = useRef(null);
+  const mountedRef = useRef(true);
 
-  // Helper per costruire l'URL WebSocket corretto
-  const getWsUrl = (id) => {
+  // Helper per costruire l'URL WebSocket (Vercel non supporta WS, usiamo Railway diretto in prod)
+  const getWsUrl = (sid) => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    let host = 'localhost:8000'; 
-    if (window.location.hostname.includes('vercel.app')) {
-      host = 'projecto-production-feda.up.railway.app';
-    }
-    return `${protocol}//${host}/api/training/ws/shared-dashboard/${encodeURIComponent(id)}`;
+    const host = window.location.hostname === 'localhost' ? 'localhost:8000' : 'projecto-production-feda.up.railway.app';
+    return `${protocol}//${host}/api/training/ws/shared-dashboard/${encodeURIComponent(sid)}`;
+  };
+
+  const applyDashboardFromPayload = (msg) => {
+    const dataPayload = msg.data || msg;
+    const serverProjects = Array.isArray(dataPayload.projects) ? dataPayload.projects : [];
+    const serverQuickTasks = Array.isArray(dataPayload.quickTasks) ? dataPayload.quickTasks : [];
+    const serverChat = Array.isArray(dataPayload.chat) ? dataPayload.chat : [];
+    const serverTitle = msg.title || "Progetti Condivisi";
+    setDashboard(prev => ({
+      ...prev,
+      projects: serverProjects,
+      quickTasks: serverQuickTasks,
+      chat: serverChat,
+      title: serverTitle,
+      loading: false,
+      error: null
+    }));
   };
 
   const connect = () => {
-    if (ws.current?.readyState === WebSocket.OPEN) return;
+    if (!id || ws.current?.readyState === WebSocket.OPEN) return;
 
-    const url = getWsUrl(shareId);
-    ws.current = new WebSocket(url);
+    const url = getWsUrl(id);
+    try {
+      ws.current = new WebSocket(url);
+    } catch (e) {
+      console.error('WS create error', e);
+      return;
+    }
 
     ws.current.onopen = () => {
-      console.log('WS Connected');
+      if (!mountedRef.current) return;
       setDashboard(prev => ({ ...prev, isConnected: true, error: null }));
     };
 
     ws.current.onmessage = (event) => {
+      if (!mountedRef.current) return;
       try {
         const msg = JSON.parse(event.data);
-        
-        // Normalizzazione dati in ingresso
-        const dataPayload = msg.data || msg;
-        const serverProjects = Array.isArray(dataPayload.projects) ? dataPayload.projects : [];
-        const serverQuickTasks = Array.isArray(dataPayload.quickTasks) ? dataPayload.quickTasks : [];
-        const serverChat = Array.isArray(dataPayload.chat) ? dataPayload.chat : [];
-        const serverTitle = msg.title || "Progetti Condivisi";
-
-        setDashboard(prev => ({
-          ...prev,
-          projects: serverProjects,
-          quickTasks: serverQuickTasks,
-          chat: serverChat,
-          title: serverTitle,
-          loading: false
-        }));
-        
-        // Scroll chat to bottom on new messages
+        applyDashboardFromPayload(msg);
         setTimeout(() => {
-          if (chatScrollRef.current) {
-            chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
-          }
+          if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
         }, 100);
-
       } catch (e) {
         console.error("WS Parse error", e);
       }
     };
 
     ws.current.onclose = () => {
-      console.log('WS Disconnected');
+      if (!mountedRef.current) return;
       setDashboard(prev => ({ ...prev, isConnected: false }));
-      // Riconnessione automatica
-      reconnectTimeout.current = setTimeout(connect, 3000);
+      ws.current = null;
+      if (mountedRef.current && id) {
+        reconnectTimeout.current = setTimeout(connect, 3000);
+      }
     };
 
-    ws.current.onerror = (err) => {
-      console.error('WS Error', err);
+    ws.current.onerror = () => {
+      // onclose verrà chiamato dopo
     };
   };
 
+  // Caricamento iniziale via REST (fallback robusto se WS fallisce)
   useEffect(() => {
+    mountedRef.current = true;
+    if (!id) {
+      setDashboard(prev => ({ ...prev, loading: false, error: 'ID condivisione mancante. Usa un link come /shared/xxx' }));
+      return;
+    }
+
+    let cancelled = false;
+    api.training.getSharedDashboard(id)
+      .then((data) => {
+        if (cancelled || !mountedRef.current) return;
+        const payload = data?.data || data;
+        const projects = Array.isArray(payload?.projects) ? payload.projects : [];
+        const quickTasks = Array.isArray(payload?.quickTasks) ? payload.quickTasks : [];
+        const chat = Array.isArray(payload?.chat) ? payload.chat : [];
+        setDashboard(prev => ({
+          ...prev,
+          projects,
+          quickTasks,
+          chat,
+          title: data?.title || prev.title,
+          loading: false,
+          error: null
+        }));
+      })
+      .catch((err) => {
+        if (cancelled || !mountedRef.current) return;
+        setDashboard(prev => ({
+          ...prev,
+          loading: false,
+          error: err?.message || 'Impossibile caricare il dashboard condiviso'
+        }));
+      });
+
     connect();
     return () => {
-      if (ws.current) ws.current.close();
-      if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
+      cancelled = true;
+      mountedRef.current = false;
+      if (ws.current) {
+        ws.current.close();
+        ws.current = null;
+      }
+      if (reconnectTimeout.current) {
+        clearTimeout(reconnectTimeout.current);
+        reconnectTimeout.current = null;
+      }
     };
-  }, [shareId]);
+  }, [id]);
 
   // Invio aggiornamenti tramite WebSocket
   const sendUpdate = (newState) => {
@@ -447,6 +493,14 @@ export default function SharedProjects() {
   }, [dashboard.projects]);
 
   if (dashboard.loading) return <div className="p-8 text-center text-gray-500 font-medium">Connessione in corso...</div>;
+  if (dashboard.error) return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] p-4">
+      <div className="text-center max-w-md">
+        <p className="text-red-500 dark:text-red-400 font-medium mb-2">{dashboard.error}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Assicurati di usare il link completo fornito per la condivisione (es. /shared/abc123).</p>
+      </div>
+    </div>
+  );
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] text-gray-900 dark:text-gray-100 p-4 sm:p-8 md:p-10 font-sans selection:bg-indigo-500/30 antialiased overflow-x-hidden relative">
