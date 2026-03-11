@@ -40,6 +40,15 @@ async def reseed_db(db: AsyncSession = Depends(get_db)):
     """Force re-seeding of training data."""
     from app.db.seed_training import seed_training_if_empty
     from app.db.models import Exercise, WorkoutDayTemplate, WorkoutDayExercise, DailySchedule
+    from sqlalchemy import text
+
+    # Manual schema fix for existing exercises table
+    try:
+        await db.execute(text("ALTER TABLE exercises ADD COLUMN IF NOT EXISTS is_active INTEGER DEFAULT 1"))
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        print(f"Schema fix error (might already exist): {e}")
 
     try:
         await db.execute(delete(DailySchedule))
