@@ -696,7 +696,7 @@ function StandardProjectCard({
   const accentBorderClass = { indigo: 'border-indigo-500/30', sky: 'border-sky-500/30', violet: 'border-violet-500/30', emerald: 'border-emerald-500/30', amber: 'border-amber-500/30', rose: 'border-rose-500/30' }[accent];
 
   return (
-    <div className={`flex flex-col gap-4 group/proj bg-white/60 dark:bg-white/5 border ${isShared ? 'border-dashed border-gray-200 dark:border-gray-700/50' : 'border-gray-100 dark:border-gray-800/60'} rounded-2xl p-5 hover:shadow-xl hover:bg-white dark:hover:bg-white/10 transition-all duration-300 relative`}>
+    <div className="flex flex-col gap-4 group/proj bg-white/60 dark:bg-white/5 border border-gray-100 dark:border-gray-800/60 rounded-2xl p-5 hover:shadow-xl hover:bg-white dark:hover:bg-white/10 transition-all duration-300 relative">
       {isShared && (
         <div className="absolute -top-2.5 -right-2 bg-indigo-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg uppercase tracking-tighter z-10 border-2 border-white dark:border-[#0B0F19]">
           {shareId}
@@ -708,15 +708,11 @@ function StandardProjectCard({
           <div className={`w-2 h-6 ${accentBar} rounded-full shrink-0 shadow-sm shadow-black/10`}></div>
           
           <div className="flex-1 min-w-0 flex items-center gap-3">
-            {isShared ? (
-              <span className="text-sm font-bold text-gray-900 dark:text-white leading-tight">{project.title}</span>
-            ) : (
-              <input 
-                value={project.title}
-                onChange={(e) => onTitleChange(e.target.value)}
-                className="flex-1 text-sm font-bold text-gray-900 dark:text-white bg-transparent outline-none border-b border-transparent focus:border-indigo-500 transition-colors min-w-0 select-text leading-tight"
-              />
-            )}
+            <input 
+              value={project.title}
+              onChange={(e) => onTitleChange(e.target.value)}
+              className="flex-1 text-sm font-bold text-gray-900 dark:text-white bg-transparent outline-none border-b border-transparent focus:border-indigo-500 transition-colors min-w-0 select-text leading-tight"
+            />
 
             {/* BARRA % ACCANTO AL TITOLO */}
             <div className="flex items-center gap-2 shrink-0 bg-gray-50 dark:bg-gray-800/50 px-2.5 py-1.5 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm">
@@ -728,7 +724,7 @@ function StandardProjectCard({
           </div>
 
           <div className="flex items-center gap-1 opacity-0 group-hover/proj:opacity-100 transition-all">
-            {isShared ? (
+            {isShared && (
               <Link 
                 to={`/shared/${shareId}`}
                 className="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-md transition-colors"
@@ -736,54 +732,52 @@ function StandardProjectCard({
               >
                 <Icons.ExternalLink className="w-3.5 h-3.5" />
               </Link>
-            ) : (
-              <>
-                {(project.deadline || projectDeadlineEditing === project.id) ? (
-                  <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                    {projectDeadlineEditing === project.id ? (
-                      <input
-                        type="date"
-                        value={projectDeadlineInput}
-                        onChange={(e) => setProjectDeadlineInput(e.target.value)}
-                        onBlur={() => onDeadlineClick(projectDeadlineInput)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') onDeadlineClick(projectDeadlineInput);
-                          if (e.key === 'Escape') setProjectDeadlineEditing(null);
-                        }}
-                        autoFocus
-                        className="text-[10px] py-1 px-1.5 rounded-md border border-amber-400 dark:border-amber-500 bg-white dark:bg-gray-800 outline-none"
-                      />
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => { setProjectDeadlineInput(project.deadline || ''); setProjectDeadlineEditing(project.id); }}
-                        className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold ${getDeadlineColorClass(project.deadline, false)}`}
-                      >
-                        <Icons.Calendar className="w-3 h-3 shrink-0" />
-                        <span className="tabular-nums">{formatDeadline(project.deadline)}</span>
-                      </button>
-                    )}
-                  </div>
+            )}
+            
+            {(project.deadline || projectDeadlineEditing === project.id) ? (
+              <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                {projectDeadlineEditing === project.id ? (
+                  <input
+                    type="date"
+                    value={projectDeadlineInput}
+                    onChange={(e) => setProjectDeadlineInput(e.target.value)}
+                    onBlur={() => onDeadlineClick(projectDeadlineInput)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') onDeadlineClick(projectDeadlineInput);
+                      if (e.key === 'Escape') setProjectDeadlineEditing(null);
+                    }}
+                    autoFocus
+                    className="text-[10px] py-1 px-1.5 rounded-md border border-amber-400 dark:border-amber-500 bg-white dark:bg-gray-800 outline-none"
+                  />
                 ) : (
                   <button
                     type="button"
-                    onClick={() => { setProjectDeadlineInput(''); setProjectDeadlineEditing(project.id); }}
-                    className="p-1.5 text-gray-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-md transition-all"
-                    title="Scadenza"
+                    onClick={() => { setProjectDeadlineInput(project.deadline || ''); setProjectDeadlineEditing(project.id); }}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold ${getDeadlineColorClass(project.deadline, false)}`}
                   >
-                    <Icons.Calendar className="w-3.5 h-3.5" />
+                    <Icons.Calendar className="w-3 h-3 shrink-0" />
+                    <span className="tabular-nums">{formatDeadline(project.deadline)}</span>
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={() => onDelete(project.id)}
-                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-all"
-                  title="Elimina"
-                >
-                  <Icons.X className="w-3.5 h-3.5" />
-                </button>
-              </>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => { setProjectDeadlineInput(''); setProjectDeadlineEditing(project.id); }}
+                className="p-1.5 text-gray-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-md transition-all"
+                title="Scadenza"
+              >
+                <Icons.Calendar className="w-3.5 h-3.5" />
+              </button>
             )}
+            <button
+              type="button"
+              onClick={() => onDelete(project.id)}
+              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-all"
+              title="Elimina"
+            >
+              <Icons.X className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </div>
@@ -1000,6 +994,50 @@ export default function DashboardV2() {
     setProjectTaskDrafts(prev => { const n = { ...prev }; delete n[projectId]; return n; });
   };
   const updateProject = (id, updater) => setProjects(p => p.map(x => x.id === id ? updater(x) : x));
+
+  const updateSharedDashboardProject = async (shareId, projectId, updater) => {
+    let updatedData = null;
+    setSharedDashboards(prev => prev.map(sd => {
+      if (sd.share_id === shareId) {
+        const newData = { ...sd.data };
+        newData.projects = (newData.projects || []).map(p => p.id === projectId ? updater(p) : p);
+        updatedData = newData;
+        return { ...sd, data: newData };
+      }
+      return sd;
+    }));
+    
+    if (updatedData) {
+      try {
+        await api.training.updateSharedDashboard(shareId, updatedData);
+      } catch (err) {
+        console.error("Failed to update shared dashboard:", err);
+      }
+    }
+  };
+
+  const deleteSharedDashboardProject = async (shareId, projectId) => {
+    if (!window.confirm("Sei sicuro di voler eliminare questo progetto condiviso?")) return;
+    
+    let updatedData = null;
+    setSharedDashboards(prev => prev.map(sd => {
+      if (sd.share_id === shareId) {
+        const newData = { ...sd.data };
+        newData.projects = (newData.projects || []).filter(p => p.id !== projectId);
+        updatedData = newData;
+        return { ...sd, data: newData };
+      }
+      return sd;
+    }));
+
+    if (updatedData) {
+      try {
+        await api.training.updateSharedDashboard(shareId, updatedData);
+      } catch (err) {
+        console.error("Failed to update shared dashboard:", err);
+      }
+    }
+  };
   const reorderProjectTasks = (projectId, fromIndex, toIndex) => {
     if (fromIndex === toIndex) return;
     updateProject(projectId, p => {
@@ -1617,7 +1655,6 @@ export default function DashboardV2() {
                       const stats = countTreeStats(project.tasks);
                       const percentage = Math.round(stats.ratio * 100);
                       const accent = PROJECT_ACCENTS[(sIdx + pIdx + projects.length) % PROJECT_ACCENTS.length];
-                      const accentBorderClass = accentBorder(accent);
 
                       return (
                         <StandardProjectCard
@@ -1628,23 +1665,78 @@ export default function DashboardV2() {
                           accent={accent}
                           isShared={true}
                           shareId={shared.share_id}
+                          onTitleChange={(val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, title: val }))}
+                          onDelete={() => deleteSharedDashboardProject(shared.share_id, project.id)}
+                          onDeadlineClick={(val) => {
+                            updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, deadline: val.trim() || undefined }));
+                            setProjectDeadlineEditing(null);
+                          }}
+                          projectDeadlineEditing={projectDeadlineEditing}
+                          projectDeadlineInput={projectDeadlineInput}
+                          setProjectDeadlineInput={setProjectDeadlineInput}
+                          setProjectDeadlineEditing={setProjectDeadlineEditing}
+                          getDeadlineColorClass={getDeadlineColorClass}
+                          formatDeadline={formatDeadline}
                           renderTasks={() => (
                             <>
-                              {project.tasks?.slice(0, 5).map((node) => (
-                                <div key={node.id} className="flex items-center gap-2 text-[10px]">
-                                  <span className={node.done ? 'text-emerald-500' : 'text-gray-300'}>
-                                    {node.done ? <Icons.CheckCircle className="w-3 h-3" /> : <Icons.Circle className="w-3 h-3" />}
-                                  </span>
-                                  <span className={`leading-relaxed break-words ${node.done ? 'text-gray-400 line-through' : 'text-gray-600 dark:text-gray-400'}`}>
-                                    {node.title}
-                                  </span>
-                                </div>
+                              {project.tasks?.map((node, tIdx) => (
+                                <DenseTaskNode
+                                  key={node.id} node={node} depth={0} projectId={project.id} projectAccent={accent}
+                                  onToggle={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, done: val })) }))}
+                                  onDelete={(tid) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: removeNodeFromTree(p.tasks, tid) }))}
+                                  onRename={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, title: val })) }))}
+                                  onDeadline={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, deadline: val || undefined })) }))}
+                                  onAddChild={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, children: [...(n.children||[]), createTaskNode(val)] })) }))}
+                                  onAddToTop3={(pid, tid) => {
+                                    // Top3 is local only for now, but we can enable it if needed
+                                    const free = top3Manual.findIndex(s => !s);
+                                    if (free !== -1) setTop3SlotAtIndex(free, { projectId: pid, taskId: tid });
+                                  }}
+                                  onMove={(tid, targetIdx, pid) => {
+                                    if (pid) {
+                                      updateSharedDashboardProject(shared.share_id, project.id, p => ({
+                                        ...p,
+                                        tasks: updateNodeInTree(p.tasks, pid, parent => {
+                                          const next = [...(parent.children || [])];
+                                          const fromIdx = next.findIndex(t => t.id === tid);
+                                          if (fromIdx === -1) return parent;
+                                          const [removed] = next.splice(fromIdx, 1);
+                                          next.splice(targetIdx, 0, removed);
+                                          return { ...parent, children: next };
+                                        })
+                                      }));
+                                    } else {
+                                      updateSharedDashboardProject(shared.share_id, project.id, p => {
+                                        const next = [...(p.tasks || [])];
+                                        const fromIdx = next.findIndex(t => t.id === tid);
+                                        if (fromIdx === -1) return p;
+                                        const [removed] = next.splice(fromIdx, 1);
+                                        next.splice(targetIdx, 0, removed);
+                                        return { ...p, tasks: next };
+                                      });
+                                    }
+                                  }}
+                                  hasFreeTop3Slot={top3Manual.some(s => !s)}
+                                />
                               ))}
-                              {project.tasks?.length > 5 && (
-                                <span className="text-[9px] text-gray-400 font-medium italic ml-5">
-                                  + altri {project.tasks.length - 5} compiti...
-                                </span>
-                              )}
+                              <div className="pt-1 pl-1">
+                                <input 
+                                  value={projectTaskDrafts[`${shared.share_id}-${project.id}`] ?? ''}
+                                  onChange={(e) => setProjectTaskDrafts(prev => ({ ...prev, [`${shared.share_id}-${project.id}`]: e.target.value }))}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      const title = (projectTaskDrafts[`${shared.share_id}-${project.id}`] ?? '').trim();
+                                      if (title) {
+                                        updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: [...(p.tasks||[]), createTaskNode(title)] }));
+                                        setProjectTaskDrafts(prev => ({ ...prev, [`${shared.share_id}-${project.id}`]: '' }));
+                                      }
+                                    }
+                                  }}
+                                  placeholder="Add task... (Enter)"
+                                  className="w-full bg-transparent border-none text-[11px] outline-none text-gray-600 dark:text-gray-400 placeholder:text-gray-300 dark:placeholder:text-gray-600"
+                                />
+                              </div>
                             </>
                           )}
                         />
