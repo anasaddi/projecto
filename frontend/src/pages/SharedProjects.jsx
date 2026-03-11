@@ -240,14 +240,13 @@ export default function SharedProjects() {
   const [dashboard, setDashboard] = useState({
     projects: [],
     quickTasks: [],
+    chat: [],
     title: "Progetti Condivisi",
     loading: true,
     error: null,
     isConnected: false
   });
 
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState([]);
   const [chatDraft, setChatDraft] = useState("");
   const chatScrollRef = useRef(null);
 
@@ -279,37 +278,29 @@ export default function SharedProjects() {
       try {
         const msg = JSON.parse(event.data);
         
-        // Se è un messaggio di chat
-        if (msg.type === 'chat') {
-          setChatMessages(prev => [...prev, msg.message]);
-          // Scroll to bottom
-          setTimeout(() => {
-            if (chatScrollRef.current) {
-              chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
-            }
-          }, 100);
-          if (!chatOpen) {
-            // TODO: Aggiungere indicatore di messaggi non letti
-          }
-          return;
-        }
-
-        // Se è un update dati (gestiamo sia { type: 'update', data: ... } che { data: ... })
-        const dataPayload = msg.type === 'update' ? msg : msg;
-        if (!dataPayload.data && !dataPayload.title && !msg.type) return; // Ignore invalid
-
         // Normalizzazione dati in ingresso
-        const serverProjects = Array.isArray(dataPayload.data) ? dataPayload.data : (dataPayload.data?.projects || []);
-        const serverQuickTasks = Array.isArray(dataPayload.data) ? [] : (dataPayload.data?.quickTasks || []);
-        const serverTitle = dataPayload.title || "Progetti Condivisi";
+        const dataPayload = msg.data || msg;
+        const serverProjects = Array.isArray(dataPayload.projects) ? dataPayload.projects : [];
+        const serverQuickTasks = Array.isArray(dataPayload.quickTasks) ? dataPayload.quickTasks : [];
+        const serverChat = Array.isArray(dataPayload.chat) ? dataPayload.chat : [];
+        const serverTitle = msg.title || "Progetti Condivisi";
 
         setDashboard(prev => ({
           ...prev,
           projects: serverProjects,
           quickTasks: serverQuickTasks,
+          chat: serverChat,
           title: serverTitle,
           loading: false
         }));
+        
+        // Scroll chat to bottom on new messages
+        setTimeout(() => {
+          if (chatScrollRef.current) {
+            chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+          }
+        }, 100);
+
       } catch (e) {
         console.error("WS Parse error", e);
       }
@@ -324,7 +315,6 @@ export default function SharedProjects() {
 
     ws.current.onerror = (err) => {
       console.error('WS Error', err);
-      // Non settiamo errore bloccante, lasciamo che il retry agisca
     };
   };
 
@@ -340,44 +330,96 @@ export default function SharedProjects() {
   const sendUpdate = (newState) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify({
-        type: 'update',
         title: newState.title,
         data: {
           projects: newState.projects,
-          quickTasks: newState.quickTasks
+          quickTasks: newState.quickTasks,
+          chat: newState.chat
         }
       }));
     }
   };
 
+  // Helper per aggiornare lo stato locale e inviare subito
+  const updateLocal = (updater) => {
+    setDashboard(prev => {
+      const nextPartial = typeof updater === 'function' ? updater(prev) : updater;
+      const nextState = { ...prev, ...nextPartial };
+      
+      // Inviamo l'aggiornamento al server (fire and forget)
+      sendUpdate(nextState);
+      
+      return nextState;
+    });
+  };
+
+  const addQuickTask = (title) => {
+    if (!title?.trim()) return;
+    updateLocal(prev => ({
+      quickTasks: [{ id: uid('qtask'), title: title.trim(), done: false, created_at: Date.now() }, ...prev.quickTasks]
+    }));
+  };
+
+  const toggleQuickTask = (id) => {
+    updateLocal(prev => ({
+      quickTasks: prev.quickTasks.map(t => t.id === id ? { ...t, done: !t.done } : t)
+    }));
+  };
+
+  const deleteQuickTask = (id) => {
+    updateLocal(prev => ({
+      quickTasks: prev.quickTasks.filter(t => t.id !== id)
+    }));
+  };
+
+  const updateProject = (id, updater) => {
+    updateLocal(prev => ({
+      projects: prev.projects.map(x => x.id === id ? updater(x) : x)
+    }));
+  };
+
+  const createProject = () => {
+    updateLocal(prev => ({
+      projects: [{ id: uid('project'), title: 'Nuovo Progetto', tasks: [] }, ...prev.projects]
+    }));
+  };
+
+  const deleteProject = (id) => {
+    updateLocal(prev => ({
+      projects: prev.projects.filter(x => x.id !== id)
+    }));
+  };
+
   const sendChatMessage = () => {
     if (!chatDraft.trim()) return;
+    
+    // Generiamo un ID mittente persistente (semplificato)
+    let senderId = localStorage.getItem('km-chat-sender-id');
+    if (!senderId) {
+      senderId = uid('user');
+      localStorage.setItem('km-chat-sender-id', senderId);
+    }
+
     const msg = {
       id: uid('msg'),
       text: chatDraft.trim(),
-      sender: 'Me', // In futuro potremmo usare un nome utente vero
+      senderId: senderId,
       timestamp: Date.now()
     };
     
-    // Optimistic update
-    setChatMessages(prev => [...prev, msg]);
+    updateLocal(prev => ({
+      chat: [...prev.chat, msg]
+    }));
     setChatDraft("");
     
-    // Scroll
     setTimeout(() => {
       if (chatScrollRef.current) {
         chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
       }
     }, 50);
-
-    // Send to server
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({
-        type: 'chat',
-        message: msg
-      }));
-    }
   };
+
+  const [projectTaskDrafts, setProjectTaskDrafts] = useState({});
 
   // Helper per aggiornare lo stato locale e inviare subito
   const updateLocal = (updater) => {
@@ -576,159 +618,134 @@ export default function SharedProjects() {
           </div>
         </div>
 
-        {/* SIDEBAR: QUICK TASKS */}
-        <aside className="w-full lg:w-72 shrink-0 order-1 lg:order-2 pt-[76px]">
-          <div className="sticky top-8 space-y-4">
-            <div className="bg-white dark:bg-[#1a1d24] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm min-h-[400px] flex flex-col">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                  <Icons.Zap className="w-4 h-4" />
-                </div>
-                <h2 className="text-sm font-black uppercase tracking-wider text-gray-800 dark:text-gray-200">Quick Tasks</h2>
+        {/* SIDEBAR: QUICK TASKS & CHAT */}
+        <aside className="w-full lg:w-72 shrink-0 order-1 lg:order-2 pt-[76px] space-y-6">
+          {/* QUICK TASKS */}
+          <div className="bg-white dark:bg-[#1a1d24] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm min-h-[300px] flex flex-col">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <Icons.Zap className="w-4 h-4" />
+              </div>
+              <h2 className="text-sm font-black uppercase tracking-wider text-gray-800 dark:text-gray-200">Quick Tasks</h2>
+            </div>
+
+            <div className="space-y-3 flex-1 flex flex-col">
+              <div className="relative">
+                <input
+                  value={quickTaskDraft}
+                  onChange={(e) => setQuickTaskDraft(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addQuickTask(quickTaskDraft)}
+                  className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl pl-4 pr-10 py-2.5 text-xs outline-none focus:border-amber-500 transition-colors"
+                />
+                <button 
+                  onClick={() => { addQuickTask(quickTaskDraft); setQuickTaskDraft(""); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-amber-500 transition-colors"
+                >
+                  <Icons.Plus className="w-4 h-4" />
+                </button>
               </div>
 
-              <div className="space-y-3 flex-1 flex flex-col">
-                <div className="relative">
-                  <input
-                    value={quickTaskDraft}
-                    onChange={(e) => setQuickTaskDraft(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { addQuickTask(quickTaskDraft); setQuickTaskDraft(""); } }}
-                    className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl pl-4 pr-10 py-2.5 text-xs outline-none focus:border-amber-500 transition-colors"
-                  />
-                  <button 
-                    onClick={() => { addQuickTask(quickTaskDraft); setQuickTaskDraft(""); }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-amber-500 transition-colors"
-                  >
-                    <Icons.Plus className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="space-y-1.5 flex-1 overflow-y-auto custom-scrollbar pr-1 max-h-[600px]">
-                  <AnimatePresence initial={false}>
-                    {dashboard.quickTasks.map((task) => (
-                      <motion.div
-                        key={task.id}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        className="group flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-gray-100 dark:hover:border-gray-800"
+              <div className="space-y-1.5 flex-1 overflow-y-auto custom-scrollbar pr-1 max-h-[300px]">
+                <AnimatePresence initial={false}>
+                  {dashboard.quickTasks.map((task) => (
+                    <motion.div
+                      key={task.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="group flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-gray-100 dark:hover:border-gray-800"
+                    >
+                      <button 
+                        onClick={() => toggleQuickTask(task.id)}
+                        className={`shrink-0 ${task.done ? 'text-emerald-500' : 'text-gray-300 dark:text-gray-600 hover:text-amber-400'}`}
                       >
-                        <button 
-                          onClick={() => toggleQuickTask(task.id)}
-                          className={`shrink-0 ${task.done ? 'text-emerald-500' : 'text-gray-300 dark:text-gray-600 hover:text-amber-400'}`}
-                        >
-                          {task.done ? <Icons.CheckCircle className="w-4 h-4" /> : <Icons.Circle className="w-4 h-4" />}
-                        </button>
-                        <span className={`flex-1 text-[11px] min-w-0 truncate ${task.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
-                          {task.title}
-                        </span>
-                        <button 
-                          onClick={() => deleteQuickTask(task.id)}
-                          className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
-                        >
-                          <Icons.Trash className="w-3 h-3" />
-                        </button>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                  
-                  {dashboard.quickTasks.length === 0 && (
-                    <div className="py-8 text-center space-y-2">
-                      <div className="text-gray-300 dark:text-gray-700 text-2xl">⚡</div>
-                      <p className="text-[10px] text-gray-400 font-medium">Nessuna task veloce</p>
-                    </div>
-                  )}
-                </div>
+                        {task.done ? <Icons.CheckCircle className="w-4 h-4" /> : <Icons.Circle className="w-4 h-4" />}
+                      </button>
+                      <span className={`flex-1 text-[11px] min-w-0 truncate ${task.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
+                        {task.title}
+                      </span>
+                      <button 
+                        onClick={() => deleteQuickTask(task.id)}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
+                      >
+                        <Icons.Trash className="w-3 h-3" />
+                      </button>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+                
+                {dashboard.quickTasks.length === 0 && (
+                  <div className="py-8 text-center space-y-2">
+                    <div className="text-gray-300 dark:text-gray-700 text-2xl">⚡</div>
+                    <p className="text-[10px] text-gray-400 font-medium">Nessuna task veloce</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        </aside>
 
-        {/* CHAT DRAWER */}
-        <AnimatePresence>
-          {chatOpen && (
-            <>
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setChatOpen(false)}
-                className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
-              />
-              <motion.div
-                initial={{ x: '100%' }}
-                animate={{ x: 0 }}
-                exit={{ x: '100%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white dark:bg-[#1a1d24] shadow-2xl z-50 border-l border-gray-200 dark:border-gray-800 flex flex-col"
-              >
-                <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-500">
-                      <Icons.MessageCircle className="w-5 h-5" />
-                    </div>
-                    <h3 className="font-bold text-gray-900 dark:text-white">Chat di Progetto</h3>
-                  </div>
-                  <button 
-                    onClick={() => setChatOpen(false)}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-                  >
-                    <Icons.X className="w-5 h-5 text-gray-500" />
-                  </button>
-                </div>
+          {/* CHAT BOX */}
+          <div className="bg-white dark:bg-[#1a1d24] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm min-h-[400px] flex flex-col">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                <Icons.MessageCircle className="w-4 h-4" />
+              </div>
+              <h2 className="text-sm font-black uppercase tracking-wider text-gray-800 dark:text-gray-200">Chat</h2>
+            </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50 dark:bg-[#0B0F19]/50 custom-scrollbar" ref={chatScrollRef}>
-                  {chatMessages.map((msg) => {
-                    const isMe = msg.sender === 'Me';
-                    return (
-                      <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                        <div 
-                          className={`max-w-[80%] p-3 rounded-2xl text-sm ${
-                            isMe 
-                              ? 'bg-indigo-500 text-white rounded-tr-none' 
-                              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-tl-none'
-                          }`}
-                        >
-                          <p>{msg.text}</p>
-                          <span className={`text-[10px] block mt-1 opacity-70 ${isMe ? 'text-indigo-100' : 'text-gray-400'}`}>
-                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {chatMessages.length === 0 && (
-                    <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2 opacity-50">
-                      <Icons.MessageCircle className="w-12 h-12" />
-                      <p className="text-sm">Nessun messaggio ancora</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1d24]">
-                  <form 
-                    onSubmit={(e) => { e.preventDefault(); sendChatMessage(); }}
-                    className="flex gap-2"
-                  >
-                    <input
-                      value={chatDraft}
-                      onChange={(e) => setChatDraft(e.target.value)}
-                      placeholder="Scrivi un messaggio..."
-                      className="flex-1 bg-gray-100 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                    />
-                    <button 
-                      type="submit"
-                      disabled={!chatDraft.trim()}
-                      className="p-3 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1 max-h-[350px] custom-scrollbar mb-3" ref={chatScrollRef}>
+              {dashboard.chat.map((msg) => {
+                const isMe = msg.senderId === localStorage.getItem('km-chat-sender-id');
+                // Colore univoco basato sull'ID del mittente per chi non sono io
+                const senderColor = isMe ? '' : `hsl(${parseInt(msg.senderId.slice(-4), 16) % 360}, 70%, 45%)`;
+                
+                return (
+                  <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                    <div 
+                      className={`max-w-[90%] p-2.5 rounded-2xl text-xs shadow-sm ${
+                        isMe 
+                          ? 'bg-indigo-500 text-white rounded-tr-none' 
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-tl-none border border-gray-200 dark:border-gray-700'
+                      }`}
                     >
-                      <Icons.Send className="w-5 h-5" />
-                    </button>
-                  </form>
+                      {!isMe && (
+                        <span className="block text-[9px] font-bold mb-0.5 opacity-80" style={{ color: senderColor }}>
+                          User {msg.senderId.slice(0,4)}
+                        </span>
+                      )}
+                      <p className="leading-relaxed">{msg.text}</p>
+                    </div>
+                    <span className="text-[9px] text-gray-400 mt-1 px-1">
+                      {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                );
+              })}
+              {dashboard.chat.length === 0 && (
+                <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2 opacity-50 py-10">
+                  <Icons.MessageCircle className="w-8 h-8" />
+                  <p className="text-[10px]">Inizia a chattare</p>
                 </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
+              )}
+            </div>
+
+            <form onSubmit={(e) => { e.preventDefault(); sendChatMessage(); }} className="relative">
+              <input
+                value={chatDraft}
+                onChange={(e) => setChatDraft(e.target.value)}
+                placeholder="Messaggio..."
+                className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl pl-4 pr-10 py-2.5 text-xs outline-none focus:border-indigo-500 transition-colors"
+              />
+              <button 
+                type="submit"
+                disabled={!chatDraft.trim()}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-indigo-500 hover:text-indigo-600 disabled:opacity-30 transition-colors"
+              >
+                <Icons.Send className="w-4 h-4" />
+              </button>
+            </form>
+          </div>
+        </aside>
 
       </div>
     </div>
