@@ -241,13 +241,25 @@ export default function SharedProjects() {
   const [isSaving, setIsSaving] = useState(false);
   const [projectTaskDrafts, setProjectTaskDrafts] = useState({});
   const [quickTaskDraft, setQuickTaskDraft] = useState("");
+  
+  // Ref per evitare loop infiniti e gestire la precedenza tra polling e salvataggio
+  const lastLocalUpdateRef = useRef(0);
+  const isPollingRef = useRef(false);
 
-  useEffect(() => {
-    async function fetchShared() {
-      try {
-        const res = await api.training.getSharedDashboard(shareId);
-        if (res && res.data) {
-          // Gestione migrazione dati: se res.data è un array, sono i vecchi progetti
+  const fetchShared = async (isPoll = false) => {
+    // Se stiamo già salvando o abbiamo appena modificato localmente (< 2s), saltiamo il polling
+    if (isPoll && (isSaving || Date.now() - lastLocalUpdateRef.current < 2000)) return;
+    
+    try {
+      isPollingRef.current = true;
+      const res = await api.training.getSharedDashboard(shareId);
+      if (res && res.data) {
+        // Se i dati sono diversi da quelli locali, aggiorniamo (molto semplificato)
+        // In un'app reale useremmo timestamp o versioni per ogni oggetto
+        const serverDataStr = JSON.stringify(res.data);
+        const localDataStr = JSON.stringify({ projects, quickTasks });
+        
+        if (serverDataStr !== localDataStr) {
           if (Array.isArray(res.data)) {
             setProjects(res.data);
             setQuickTasks([]);
@@ -255,23 +267,33 @@ export default function SharedProjects() {
             setProjects(res.data.projects || []);
             setQuickTasks(res.data.quickTasks || []);
           }
-          setTitle(res.title || "Progetti Condivisi");
-        } else {
-          setProjects([]);
-          setQuickTasks([]);
         }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+        if (res.title !== title) setTitle(res.title || "Progetti Condivisi");
       }
+    } catch (err) {
+      if (!isPoll) setError(err.message);
+    } finally {
+      isPollingRef.current = false;
     }
-    fetchShared();
+  };
+
+  // Caricamento iniziale
+  useEffect(() => {
+    setLoading(true);
+    fetchShared().finally(() => setLoading(false));
   }, [shareId]);
 
+  // Polling ogni 3 secondi per vedere le modifiche degli altri (Live)
+  useEffect(() => {
+    const timer = setInterval(() => fetchShared(true), 3000);
+    return () => clearInterval(timer);
+  }, [projects, quickTasks, title, shareId, isSaving]);
+
+  // Salvataggio automatico ultra-rapido (500ms debounce)
   const syncTimeoutRef = useRef(null);
   useEffect(() => {
-    if (loading) return;
+    if (loading || isPollingRef.current) return;
+    
     if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
     syncTimeoutRef.current = setTimeout(async () => {
       setIsSaving(true);
@@ -283,25 +305,45 @@ export default function SharedProjects() {
       } finally {
         setIsSaving(false);
       }
-    }, 2000);
+    }, 500); // Ridotto a 500ms per salvataggi quasi istantanei
   }, [projects, quickTasks, title, shareId, loading]);
+
+  const onLocalChange = () => {
+    lastLocalUpdateRef.current = Date.now();
+  };
 
   const addQuickTask = () => {
     const t = quickTaskDraft.trim();
     if (!t) return;
+    onLocalChange();
     setQuickTasks(prev => [{ id: uid('qtask'), title: t, done: false, created_at: Date.now() }, ...prev]);
     setQuickTaskDraft("");
   };
 
   const toggleQuickTask = (id) => {
+    onLocalChange();
     setQuickTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
   };
 
   const deleteQuickTask = (id) => {
+    onLocalChange();
     setQuickTasks(prev => prev.filter(t => t.id !== id));
   };
 
-  const updateProject = (id, updater) => setProjects(p => p.map(x => x.id === id ? updater(x) : x));
+  const updateProject = (id, updater) => {
+    onLocalChange();
+    setProjects(p => p.map(x => x.id === id ? updater(x) : x));
+  };
+
+  const createProject = () => {
+    onLocalChange();
+    setProjects(p => [{ id: uid('project'), title: 'Nuovo Progetto', tasks: [] }, ...p]);
+  };
+
+  const deleteProject = (id) => {
+    onLocalChange();
+    setProjects(p => p.filter(x => x.id !== id));
+  };
 
   if (loading) return <div className="p-8 text-center text-gray-500 font-medium">Caricamento spazio condiviso...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Errore: {error}</div>;
@@ -316,20 +358,26 @@ export default function SharedProjects() {
             <div className="space-y-1">
               <input 
                 value={title} 
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => { onLocalChange(); setTitle(e.target.value); }}
                 className="text-3xl font-extrabold tracking-tight bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-500 rounded px-1 -ml-1 w-full sm:w-auto"
               />
               <p className="text-gray-500 text-sm font-medium">Spazio di lavoro condiviso</p>
             </div>
-            {isSaving && (
-              <motion.span 
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-200 dark:border-indigo-500/20 self-start sm:self-center"
-              >
-                Sincronizzazione...
-              </motion.span>
-            )}
+            <div className="flex items-center gap-3">
+              <AnimatePresence>
+                {isSaving && (
+                  <motion.div 
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    className="flex items-center gap-2 text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-500/20"
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Salvataggio in corso...
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -353,7 +401,7 @@ export default function SharedProjects() {
                       <div className="text-[10px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-500 px-2 py-0.5 rounded-full tabular-nums">
                         {stats.completed}/{stats.total}
                       </div>
-                      <button onClick={() => setProjects(p => p.filter(x => x.id !== proj.id))} className="text-gray-400 hover:text-red-500 transition-colors">
+                      <button onClick={() => deleteProject(proj.id)} className="text-gray-400 hover:text-red-500 transition-colors">
                         <Icons.X className="w-4 h-4" />
                       </button>
                     </div>
@@ -412,7 +460,7 @@ export default function SharedProjects() {
             })}
 
             <button 
-              onClick={() => setProjects(p => [{ id: uid('project'), title: 'Nuovo Progetto', tasks: [] }, ...p])}
+              onClick={createProject}
               className="flex flex-col items-center justify-center gap-2 p-8 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl hover:border-indigo-500 hover:bg-indigo-500/5 transition-all text-gray-400 hover:text-indigo-500 group min-h-[200px]"
             >
               <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition-colors">
