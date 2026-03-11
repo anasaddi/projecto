@@ -1,4 +1,6 @@
-const BASE = import.meta.env.VITE_API_BASE || '/api'
+// Su Vercel (produzione), usiamo il proxy configurato in vercel.json (/api)
+// In locale, usiamo '/api' che viene gestito dal proxy di Vite (vite.config.js)
+const BASE = '/api'
 
 async function request(path, options = {}) {
   const token = localStorage.getItem('km-admin-token')

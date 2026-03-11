@@ -50,15 +50,9 @@ def create_app() -> FastAPI:
             content={"detail": str(exc), "traceback": tb},
         )
 
-    origins = _cors_origins_list(settings) or [
-        "http://localhost:3000", "http://127.0.0.1:3000",
-        "http://localhost:3001", "http://127.0.0.1:3001",
-        "https://projecto-indol.vercel.app",
-        "https://projecto-production-feda.up.railway.app",
-    ]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,
+        allow_origins=["*"],  # Temporaneamente permettiamo tutto per debugging CORS/Proxy
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
