@@ -254,12 +254,14 @@ export default function SharedProjects() {
   const ws = useRef(null);
   const reconnectTimeout = useRef(null);
   const heartbeatInterval = useRef(null);
+  const restDebounceRef = useRef(null);
   const mountedRef = useRef(true);
 
-  // Helper per costruire l'URL WebSocket (Vercel non supporta WS, usiamo Railway diretto in prod)
+  // WebSocket: in locale va a backend diretto; in prod usa stessa origine (Vercel proxy → Railway)
   const getWsUrl = (sid) => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.hostname === 'localhost' ? 'localhost:8000' : 'projecto-production-feda.up.railway.app';
+    const isLocal = window.location.hostname === 'localhost';
+    const host = isLocal ? 'localhost:8000' : window.location.host;
     return `${protocol}//${host}/api/training/ws/shared-dashboard/${encodeURIComponent(sid)}`;
   };
 
@@ -385,21 +387,27 @@ export default function SharedProjects() {
         clearTimeout(reconnectTimeout.current);
         reconnectTimeout.current = null;
       }
+      if (restDebounceRef.current) {
+        clearTimeout(restDebounceRef.current);
+        restDebounceRef.current = null;
+      }
     };
   }, [id]);
 
-  // Invio aggiornamenti tramite WebSocket
+  // Invio aggiornamenti: WebSocket se connesso, altrimenti REST (debounced)
   const sendUpdate = (newState) => {
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({
-        type: 'sync',
-        title: newState.title,
-        data: {
-          projects: newState.projects,
-          quickTasks: newState.quickTasks,
-          chat: newState.chat
-        }
-      }));
+    const payload = {
+      type: 'sync',
+      title: newState.title,
+      data: { projects: newState.projects, quickTasks: newState.quickTasks, chat: newState.chat }
+    };
+    if (ws.current?.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify(payload));
+    } else if (id) {
+      if (restDebounceRef.current) clearTimeout(restDebounceRef.current);
+      restDebounceRef.current = setTimeout(() => {
+        api.training.updateSharedDashboard(id, payload.data, payload.title).catch(() => {});
+      }, 600);
     }
   };
 
@@ -558,10 +566,10 @@ export default function SharedProjects() {
                       <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="flex items-center gap-2 text-[10px] font-bold text-amber-500 uppercase tracking-widest bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-200 dark:border-amber-500/20"
+                        className="flex items-center gap-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-500/10 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-500/20"
                       >
-                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                        Reconnecting...
+                        <div className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                        Sincronizzazione manuale
                       </motion.div>
                     )}
                   </AnimatePresence>
