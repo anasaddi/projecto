@@ -403,26 +403,31 @@ async def create_workout_log(db: AsyncSession, template_id: str | None, sets: li
     await db.commit()
     return log
 
+def _sanitize_progression_data(data: Any) -> dict:
+    if not isinstance(data, dict):
+        data = {}
+    if "tmByMonth" not in data or not isinstance(data["tmByMonth"], list):
+        data["tmByMonth"] = [{"anas": "", "flavio": ""} for _ in range(5)]
+    if "dataByMonth" not in data or not isinstance(data["dataByMonth"], list):
+        data["dataByMonth"] = [[{"week": w, "anas": {"weight": "", "reps": "", "completed": False}, "flavio": {"weight": "", "reps": "", "completed": False}} for w in [1, 2, 3, 4]] for _ in range(6)]
+    return data
+
 async def get_all_progressions(db: AsyncSession):
     res = await db.execute(select(TrainingProgression))
-    return [{"exercise_id": p.exercise_id, "data": _parse_json(p.data, {}), "updated_at": p.updated_at} for p in res.scalars().all()]
+    return [{"exercise_id": p.exercise_id, "data": _sanitize_progression_data(_parse_json(p.data, {})), "updated_at": p.updated_at} for p in res.scalars().all()]
 
 async def get_training_progression(db: AsyncSession, ex_id: str):
     res = await db.execute(select(TrainingProgression).filter(TrainingProgression.exercise_id == ex_id))
     p = res.scalar_one_or_none()
     if not p: return None
-    return {"exercise_id": p.exercise_id, "data": _parse_json(p.data, {}), "updated_at": p.updated_at}
+    return {"exercise_id": p.exercise_id, "data": _sanitize_progression_data(_parse_json(p.data, {})), "updated_at": p.updated_at}
 
 async def update_training_progression(db: AsyncSession, ex_id: str, data: dict):
     res = await db.execute(select(TrainingProgression).filter(TrainingProgression.exercise_id == ex_id))
     prog = res.scalar_one_or_none()
     
     # Ensure the data has the minimum required structure for the frontend
-    if not isinstance(data, dict): data = {}
-    if "tmByMonth" not in data or not isinstance(data["tmByMonth"], list):
-        data["tmByMonth"] = [{"anas": "", "flavio": ""} for _ in range(5)]
-    if "dataByMonth" not in data or not isinstance(data["dataByMonth"], list):
-        data["dataByMonth"] = [[{"week": w, "anas": {"weight": "", "reps": "", "completed": False}, "flavio": {"weight": "", "reps": "", "completed": False}} for w in [1, 2, 3, 4]] for _ in range(6)]
+    data = _sanitize_progression_data(data)
 
     if not prog:
         prog = TrainingProgression(exercise_id=ex_id, data=data)

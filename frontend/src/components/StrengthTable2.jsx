@@ -102,20 +102,24 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
           const { tmAnas, tmFlavio, tmByMonth, dataByMonth } = backendData.data;
           if (tmAnas != null) setTmAnas(String(tmAnas));
           if (tmFlavio != null) setTmFlavio(String(tmFlavio));
-          if (tmByMonth?.length === 5) setTmByMonth(tmByMonth);
-          if (dataByMonth?.length === 6) setDataByMonth(dataByMonth);
+          if (Array.isArray(tmByMonth)) setTmByMonth(tmByMonth);
+          if (Array.isArray(dataByMonth)) setDataByMonth(dataByMonth);
         } else {
           // Fallback/Migrazione da localStorage
           const raw = localStorage.getItem(storageKey);
           if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed.tmAnas != null) setTmAnas(String(parsed.tmAnas));
-            if (parsed.tmFlavio != null) setTmFlavio(String(parsed.tmFlavio));
-            if (parsed.tmByMonth?.length === 5) setTmByMonth(parsed.tmByMonth);
-            if (parsed.dataByMonth?.length === 6) setDataByMonth(parsed.dataByMonth);
-            
-            // Salva subito nel backend per migrare
-            await api.training.updateProgression(exercise_id, parsed);
+            try {
+              const parsed = JSON.parse(raw);
+              if (parsed.tmAnas != null) setTmAnas(String(parsed.tmAnas));
+              if (parsed.tmFlavio != null) setTmFlavio(String(parsed.tmFlavio));
+              if (Array.isArray(parsed.tmByMonth)) setTmByMonth(parsed.tmByMonth);
+              if (Array.isArray(parsed.dataByMonth)) setDataByMonth(parsed.dataByMonth);
+              
+              // Salva subito nel backend per migrare
+              await api.training.updateProgression(exercise_id, parsed);
+            } catch (e) {
+              console.warn("Invalid localStorage data for", exercise_id);
+            }
           }
         }
       } catch (err) {

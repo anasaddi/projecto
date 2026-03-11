@@ -20,20 +20,30 @@ const format1RM = (weight, reps) => {
   return rm != null ? `${roundToHalf(rm)} kg` : '-';
 };
 
+const sanitizeProgressionData = (data) => {
+  if (!data || typeof data !== 'object') return {};
+  const sanitized = { ...data };
+  if (!Array.isArray(sanitized.dataByMonth)) sanitized.dataByMonth = [];
+  if (!Array.isArray(sanitized.tmByMonth)) sanitized.tmByMonth = [];
+  return sanitized;
+};
+
 // Helper to find the active month (1-6) for a progression
 const getActiveMonth = (progressionData) => {
-  if (!progressionData || !progressionData.dataByMonth) return 1;
+  const sanitized = sanitizeProgressionData(progressionData);
+  if (!sanitized.dataByMonth || sanitized.dataByMonth.length === 0) return 1;
   
-  let activeMonthIdx = [...progressionData.dataByMonth].reverse().findIndex(m => 
-    m.some(r => r.anas.completed || r.flavio.completed)
+  const dataByMonth = sanitized.dataByMonth;
+  let activeMonthIdx = [...dataByMonth].reverse().findIndex(m => 
+    Array.isArray(m) && m.some(r => r?.anas?.completed || r?.flavio?.completed)
   );
   
   if (activeMonthIdx !== -1) {
-    activeMonthIdx = (progressionData.dataByMonth.length - 1) - activeMonthIdx;
+    activeMonthIdx = (dataByMonth.length - 1) - activeMonthIdx;
     
-    const currentMonth = progressionData.dataByMonth[activeMonthIdx];
-    if (currentMonth) {
-      const lastCheckedIdx = [...currentMonth].reverse().findIndex(row => row.anas.completed || row.flavio.completed);
+    const currentMonth = dataByMonth[activeMonthIdx];
+    if (Array.isArray(currentMonth)) {
+      const lastCheckedIdx = [...currentMonth].reverse().findIndex(row => row?.anas?.completed || row?.flavio?.completed);
       let activeWeekIdx = -1;
       
       if (lastCheckedIdx !== -1) {
@@ -43,7 +53,7 @@ const getActiveMonth = (progressionData) => {
         activeWeekIdx = 0;
       }
       
-      if (activeWeekIdx >= currentMonth.length && activeMonthIdx < progressionData.dataByMonth.length - 1) {
+      if (activeWeekIdx >= currentMonth.length && activeMonthIdx < dataByMonth.length - 1) {
         activeMonthIdx++;
       }
     }
@@ -55,21 +65,26 @@ const getActiveMonth = (progressionData) => {
 
 // Helper to find the active week (1-5) for AW progressions
 const getActiveWeek = (progressionData, exerciseId) => {
-  if (!progressionData) return 1;
+  if (!progressionData || typeof progressionData !== 'object') return 1;
   
   // Per AW Volume, i dati sono salvati con chiavi tipo w1_s1, w2_s1, ecc.
   // Cerchiamo l'ultima settimana che ha ALMENO un completato
   let maxWeek = 0;
   
-  Object.keys(progressionData).forEach(key => {
-    if (key.startsWith('w')) {
-      const parts = key.substring(1).split('_');
-      const w = parseInt(parts[0]);
-      if (!isNaN(w) && (progressionData[key]?.anas?.completed || progressionData[key]?.flavio?.completed)) {
-        if (w > maxWeek) maxWeek = w;
+  try {
+    Object.keys(progressionData).forEach(key => {
+      if (key.startsWith('w')) {
+        const parts = key.substring(1).split('_');
+        const w = parseInt(parts[0]);
+        if (!isNaN(w) && (progressionData[key]?.anas?.completed || progressionData[key]?.flavio?.completed)) {
+          if (w > maxWeek) maxWeek = w;
+        }
       }
-    }
-  });
+    });
+  } catch (e) {
+    console.warn("Error parsing active week for", exerciseId, e);
+    return 1;
+  }
 
   if (maxWeek === 0) return 1;
   return Math.min(maxWeek, 5); 
@@ -1733,7 +1748,7 @@ export default function Training2() {
       setAwProgram(awData && Object.keys(awData).length ? awData : AW_PROGRAM_FALLBACK);
       
       const progMap = {};
-      (progressions || []).forEach(p => { progMap[p.exercise_id] = p.data; });
+      (progressions || []).forEach(p => { progMap[p.exercise_id] = sanitizeProgressionData(p.data); });
       setAllProgressions(progMap);
 
       if (isInitial) {
@@ -1798,7 +1813,7 @@ export default function Training2() {
       });
       api.training.getAllProgressions().then(progressions => {
         const progMap = {};
-        (progressions || []).forEach(p => { progMap[p.exercise_id] = p.data; });
+        (progressions || []).forEach(p => { progMap[p.exercise_id] = sanitizeProgressionData(p.data); });
         setAllProgressions(progMap);
       }).catch(err => {
         console.error("[Training2] Error fetching progressions:", err);

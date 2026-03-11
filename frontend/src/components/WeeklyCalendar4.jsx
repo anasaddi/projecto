@@ -156,17 +156,18 @@ const getDominantGroup = (muscles) => {
 };
 
 const getActiveMonthIdx = (progressionData) => {
-  if (!progressionData || !progressionData.dataByMonth) return 0;
-  let activeMonthIdx = [...progressionData.dataByMonth].reverse().findIndex(m => 
-    m.some(r => r.anas.completed || r.flavio.completed)
+  if (!progressionData || !Array.isArray(progressionData.dataByMonth)) return 0;
+  const dataByMonth = progressionData.dataByMonth;
+  let activeMonthIdx = [...dataByMonth].reverse().findIndex(m => 
+    Array.isArray(m) && m.some(r => r?.anas?.completed || r?.flavio?.completed)
   );
   if (activeMonthIdx !== -1) {
-    activeMonthIdx = (progressionData.dataByMonth.length - 1) - activeMonthIdx;
-    const currentMonth = progressionData.dataByMonth[activeMonthIdx];
-    if (currentMonth) {
-      const lastCheckedIdx = [...currentMonth].reverse().findIndex(row => row.anas.completed || row.flavio.completed);
+    activeMonthIdx = (dataByMonth.length - 1) - activeMonthIdx;
+    const currentMonth = dataByMonth[activeMonthIdx];
+    if (Array.isArray(currentMonth)) {
+      const lastCheckedIdx = [...currentMonth].reverse().findIndex(row => row?.anas?.completed || row?.flavio?.completed);
       let activeWeekIdx = lastCheckedIdx !== -1 ? (currentMonth.length - 1 - lastCheckedIdx) + 1 : 0;
-      if (activeWeekIdx >= currentMonth.length && activeMonthIdx < progressionData.dataByMonth.length - 1) {
+      if (activeWeekIdx >= currentMonth.length && activeMonthIdx < dataByMonth.length - 1) {
         activeMonthIdx++;
       }
     }
@@ -176,8 +177,8 @@ const getActiveMonthIdx = (progressionData) => {
 };
 
 const getActiveWeekIdx = (monthData) => {
-  if (!monthData) return 0;
-  const lastCheckedIdx = [...monthData].reverse().findIndex(row => row.anas.completed || row.flavio.completed);
+  if (!Array.isArray(monthData)) return 0;
+  const lastCheckedIdx = [...monthData].reverse().findIndex(row => row?.anas?.completed || row?.flavio?.completed);
   if (lastCheckedIdx === -1) return 0;
   const nextIdx = (monthData.length - 1 - lastCheckedIdx) + 1;
   return Math.min(nextIdx, monthData.length - 1);
@@ -201,7 +202,7 @@ function CompactExerciseCard({ exercise, showMuscleNames, progressions, date, is
       const monthData = prog?.dataByMonth?.[monthIdx];
       const weekIdx = getActiveWeekIdx(monthData);
       const weekData = monthData?.[weekIdx];
-      const cfg = WEEK_CONFIGS[weekIdx];
+      const cfg = WEEK_CONFIGS[weekIdx] || { label: '?' };
       
       if (weekData) {
         details = {
