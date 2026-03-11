@@ -696,34 +696,34 @@ function StandardProjectCard({
   const accentBorderClass = { indigo: 'border-indigo-500/30', sky: 'border-sky-500/30', violet: 'border-violet-500/30', emerald: 'border-emerald-500/30', amber: 'border-amber-500/30', rose: 'border-rose-500/30' }[accent];
 
   return (
-    <div className={`flex flex-col gap-3 group/proj bg-white dark:bg-white/5 border ${isShared ? 'border-dashed border-gray-200 dark:border-gray-700/50' : 'border-gray-100 dark:border-gray-800/60'} rounded-2xl p-4 hover:shadow-md transition-all duration-300 relative`}>
+    <div className={`flex flex-col gap-4 group/proj bg-white/60 dark:bg-white/5 border ${isShared ? 'border-dashed border-gray-200 dark:border-gray-700/50' : 'border-gray-100 dark:border-gray-800/60'} rounded-2xl p-5 hover:shadow-xl hover:bg-white dark:hover:bg-white/10 transition-all duration-300 relative`}>
       {isShared && (
-        <div className="absolute -top-2 -right-2 bg-indigo-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full shadow-sm uppercase tracking-tighter z-10">
+        <div className="absolute -top-2.5 -right-2 bg-indigo-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg uppercase tracking-tighter z-10 border-2 border-white dark:border-[#0B0F19]">
           {shareId}
         </div>
       )}
       
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-3">
-          <div className={`w-1.5 h-5 ${accentBar} rounded-full shrink-0`}></div>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-4">
+          <div className={`w-2 h-6 ${accentBar} rounded-full shrink-0 shadow-sm shadow-black/10`}></div>
           
           <div className="flex-1 min-w-0 flex items-center gap-3">
             {isShared ? (
-              <span className="text-sm font-bold text-gray-900 dark:text-white truncate">{project.title}</span>
+              <span className="text-sm font-bold text-gray-900 dark:text-white leading-tight">{project.title}</span>
             ) : (
               <input 
                 value={project.title}
                 onChange={(e) => onTitleChange(e.target.value)}
-                className="flex-1 text-sm font-bold text-gray-900 dark:text-white bg-transparent outline-none border-b border-transparent focus:border-indigo-500 transition-colors min-w-0 select-text"
+                className="flex-1 text-sm font-bold text-gray-900 dark:text-white bg-transparent outline-none border-b border-transparent focus:border-indigo-500 transition-colors min-w-0 select-text leading-tight"
               />
             )}
 
             {/* BARRA % ACCANTO AL TITOLO */}
-            <div className="flex items-center gap-2 shrink-0 bg-gray-50 dark:bg-gray-800/50 px-2 py-1 rounded-lg border border-gray-100 dark:border-gray-700/50">
-              <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div className="flex items-center gap-2 shrink-0 bg-gray-50 dark:bg-gray-800/50 px-2.5 py-1.5 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm">
+              <div className="w-16 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div className={`h-full bg-gradient-to-r ${accentProgress} rounded-full transition-all duration-500`} style={{ width: `${percentage}%` }} />
               </div>
-              <span className="text-[10px] font-black text-gray-600 dark:text-gray-300 tabular-nums">{percentage}%</span>
+              <span className="text-[11px] font-black text-gray-700 dark:text-gray-200 tabular-nums">{percentage}%</span>
             </div>
           </div>
 
@@ -788,7 +788,7 @@ function StandardProjectCard({
         </div>
       </div>
       
-      <div className={`flex flex-col gap-1 pl-4 border-l-2 ${accentBorderClass} ml-0.5`}>
+      <div className={`flex flex-col gap-1.5 pl-5 border-l-2 ${accentBorderClass} ml-1 transition-opacity duration-300 ${isShared ? 'opacity-80' : 'opacity-100'}`}>
         {renderTasks()}
       </div>
     </div>
@@ -1518,8 +1518,8 @@ export default function DashboardV2() {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 flex flex-col gap-8">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 flex flex-col gap-6">
+            <div className="flex flex-col gap-6">
               {projects.map((project, idx) => {
                 const stats = countTreeStats(project.tasks);
                 const percentage = Math.round(stats.ratio * 100);
@@ -1602,13 +1602,13 @@ export default function DashboardV2() {
 
             {/* SHARED PROJECTS */}
             {sharedDashboards.length > 0 && (
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-2 mt-4 shrink-0">
+              <div className="flex flex-col gap-6 mt-4">
+                <div className="flex items-center gap-2 shrink-0">
                   <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
-                    <Icons.MessageCircle className="w-3.5 h-3.5" /> Shared Dashboards
+                    <Icons.MessageCircle className="w-4 h-4" /> Shared Dashboards
                   </h2>
                 </div>
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-6">
                   {sharedDashboards.map((shared, sIdx) => {
                     const sharedData = shared.data || {};
                     const sharedProjects = Array.isArray(sharedData.projects) ? sharedData.projects : (Array.isArray(sharedData) ? sharedData : []);
@@ -1635,7 +1635,7 @@ export default function DashboardV2() {
                                   <span className={node.done ? 'text-emerald-500' : 'text-gray-300'}>
                                     {node.done ? <Icons.CheckCircle className="w-3 h-3" /> : <Icons.Circle className="w-3 h-3" />}
                                   </span>
-                                  <span className={`truncate ${node.done ? 'text-gray-400 line-through' : 'text-gray-600 dark:text-gray-400'}`}>
+                                  <span className={`leading-relaxed ${node.done ? 'text-gray-400 line-through' : 'text-gray-600 dark:text-gray-400'}`}>
                                     {node.title}
                                   </span>
                                 </div>
