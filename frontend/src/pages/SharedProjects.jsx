@@ -153,14 +153,14 @@ function SharedTaskNode({ node, depth, projectId, projectAccent, onToggle, onDel
           <div className="min-w-0" onDoubleClick={() => setEditing(true)}>
             {editing ? (
               <input
-              autoFocus
-              defaultValue={node.title}
-              onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
-              onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
-              className="w-full bg-white dark:bg-gray-800 border border-indigo-400 rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+                autoFocus
+                defaultValue={node.title}
+                onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
+                className="w-full bg-white dark:bg-gray-800 border border-indigo-400 rounded px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-indigo-500"
+              />
             ) : (
-              <span onClick={() => onToggle(node.id, !node.done)} className={`text-sm cursor-pointer block leading-relaxed ${node.done ? 'text-gray-400 line-through' : 'text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400'}`}>
+              <span onClick={() => onToggle(node.id, !node.done)} className={`text-xs cursor-pointer block leading-relaxed ${node.done ? 'text-gray-400 line-through' : 'text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400'}`}>
                 {node.title}
               </span>
             )}
@@ -212,9 +212,8 @@ function SharedTaskNode({ node, depth, projectId, projectAccent, onToggle, onDel
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { const t = draft.trim(); if (t) { onAddChild(node.id, t); setDraft(''); setOpenAdd(false); } } if (e.key === 'Escape') setOpenAdd(false); }}
-                      placeholder="Aggiungi subtask..."
-                      className="flex-1 bg-white dark:bg-[#1a1d24] border border-gray-200 dark:border-gray-700 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    />
+            placeholder="Aggiungi subtask..."
+            className="flex-1 bg-white dark:bg-[#1a1d24] border border-gray-200 dark:border-gray-700 rounded px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
       )}
@@ -478,7 +477,7 @@ export default function SharedProjects() {
                 <motion.div 
                   layout
                   key={proj.id} 
-                  className="flex flex-col bg-white dark:bg-[#1a1d24] border border-gray-200/80 dark:border-gray-800/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 h-fit">
+                  className="flex flex-col bg-white dark:bg-[#1a1d24] border border-gray-200/80 dark:border-gray-800/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 h-fit group"
                 >
                   <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/20">
                     <div className="flex-1 min-w-0 mr-2">
@@ -544,8 +543,7 @@ export default function SharedProjects() {
                         }
                       }}
                       placeholder="+ Aggiungi task..."
-              className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors"
-            />
+                      className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-2 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors"
                     />
                   </div>
                 </motion.div>
@@ -581,9 +579,8 @@ export default function SharedProjects() {
                   value={quickTaskDraft}
                   onChange={(e) => setQuickTaskDraft(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addQuickTask(quickTaskDraft)}
-                  className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl pl-4 pr-10 py-3 text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500 transition-colors"
+                  className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl pl-4 pr-10 py-2.5 text-xs outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500 transition-colors"
                   placeholder="Nuova task veloce..."
-                />
                 />
                 <button 
                   onClick={() => { addQuickTask(quickTaskDraft); setQuickTaskDraft(""); }}
@@ -602,9 +599,7 @@ export default function SharedProjects() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
                       whileHover={{ scale: 1.02 }}
-                      className="group flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-gray-100 dark:hover:border-gray-800 cursor-pointer"
-                    >
-                    >
+                      className="group flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-gray-100 dark:hover:border-gray-800 cursor-pointer"
                     >
                       <button 
                         onClick={() => toggleQuickTask(task.id)}
@@ -612,7 +607,7 @@ export default function SharedProjects() {
                       >
                         {task.done ? <Icons.CheckCircle className="w-4 h-4" /> : <Icons.Circle className="w-4 h-4" />}
                       </button>
-                      <span className={`flex-1 text-sm min-w-0 ${task.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
+                      <span className={`flex-1 text-xs min-w-0 ${task.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
                         {task.title}
                       </span>
                       <button 
