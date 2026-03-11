@@ -19,6 +19,8 @@ const Icons = {
   Calendar: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
   Zap: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
   Trash: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
+  MessageCircle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
+  Send: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
 };
 
 /**
@@ -244,6 +246,11 @@ export default function SharedProjects() {
     isConnected: false
   });
 
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatDraft, setChatDraft] = useState("");
+  const chatScrollRef = useRef(null);
+
   const ws = useRef(null);
   const reconnectTimeout = useRef(null);
 
@@ -271,10 +278,30 @@ export default function SharedProjects() {
     ws.current.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data);
+        
+        // Se è un messaggio di chat
+        if (msg.type === 'chat') {
+          setChatMessages(prev => [...prev, msg.message]);
+          // Scroll to bottom
+          setTimeout(() => {
+            if (chatScrollRef.current) {
+              chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+            }
+          }, 100);
+          if (!chatOpen) {
+            // TODO: Aggiungere indicatore di messaggi non letti
+          }
+          return;
+        }
+
+        // Se è un update dati (gestiamo sia { type: 'update', data: ... } che { data: ... })
+        const dataPayload = msg.type === 'update' ? msg : msg;
+        if (!dataPayload.data && !dataPayload.title && !msg.type) return; // Ignore invalid
+
         // Normalizzazione dati in ingresso
-        const serverProjects = Array.isArray(msg.data) ? msg.data : (msg.data?.projects || []);
-        const serverQuickTasks = Array.isArray(msg.data) ? [] : (msg.data?.quickTasks || []);
-        const serverTitle = msg.title || "Progetti Condivisi";
+        const serverProjects = Array.isArray(dataPayload.data) ? dataPayload.data : (dataPayload.data?.projects || []);
+        const serverQuickTasks = Array.isArray(dataPayload.data) ? [] : (dataPayload.data?.quickTasks || []);
+        const serverTitle = dataPayload.title || "Progetti Condivisi";
 
         setDashboard(prev => ({
           ...prev,
@@ -313,11 +340,41 @@ export default function SharedProjects() {
   const sendUpdate = (newState) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify({
+        type: 'update',
         title: newState.title,
         data: {
           projects: newState.projects,
           quickTasks: newState.quickTasks
         }
+      }));
+    }
+  };
+
+  const sendChatMessage = () => {
+    if (!chatDraft.trim()) return;
+    const msg = {
+      id: uid('msg'),
+      text: chatDraft.trim(),
+      sender: 'Me', // In futuro potremmo usare un nome utente vero
+      timestamp: Date.now()
+    };
+    
+    // Optimistic update
+    setChatMessages(prev => [...prev, msg]);
+    setChatDraft("");
+    
+    // Scroll
+    setTimeout(() => {
+      if (chatScrollRef.current) {
+        chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+      }
+    }, 50);
+
+    // Send to server
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify({
+        type: 'chat',
+        message: msg
       }));
     }
   };
@@ -379,7 +436,7 @@ export default function SharedProjects() {
   if (dashboard.loading) return <div className="p-8 text-center text-gray-500 font-medium">Connessione in corso...</div>;
   
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0B0F19] text-gray-900 dark:text-gray-100 p-4 sm:p-8 md:p-10 font-sans selection:bg-indigo-500/30 antialiased overflow-x-hidden">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0B0F19] text-gray-900 dark:text-gray-100 p-4 sm:p-8 md:p-10 font-sans selection:bg-indigo-500/30 antialiased overflow-x-hidden relative">
       <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-8">
         
         {/* MAIN CONTENT: PROJECTS */}
@@ -415,6 +472,16 @@ export default function SharedProjects() {
                   </motion.div>
                 )}
               </AnimatePresence>
+              
+              <button 
+                onClick={() => setChatOpen(!chatOpen)}
+                className="relative p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+              >
+                <Icons.MessageCircle className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                {chatMessages.length > 0 && (
+                  <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-50 dark:border-[#0B0F19]" />
+                )}
+              </button>
             </div>
           </header>
 
@@ -576,6 +643,92 @@ export default function SharedProjects() {
             </div>
           </div>
         </aside>
+
+        {/* CHAT DRAWER */}
+        <AnimatePresence>
+          {chatOpen && (
+            <>
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setChatOpen(false)}
+                className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+              />
+              <motion.div
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white dark:bg-[#1a1d24] shadow-2xl z-50 border-l border-gray-200 dark:border-gray-800 flex flex-col"
+              >
+                <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+                      <Icons.MessageCircle className="w-5 h-5" />
+                    </div>
+                    <h3 className="font-bold text-gray-900 dark:text-white">Chat di Progetto</h3>
+                  </div>
+                  <button 
+                    onClick={() => setChatOpen(false)}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                  >
+                    <Icons.X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50 dark:bg-[#0B0F19]/50 custom-scrollbar" ref={chatScrollRef}>
+                  {chatMessages.map((msg) => {
+                    const isMe = msg.sender === 'Me';
+                    return (
+                      <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                        <div 
+                          className={`max-w-[80%] p-3 rounded-2xl text-sm ${
+                            isMe 
+                              ? 'bg-indigo-500 text-white rounded-tr-none' 
+                              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-tl-none'
+                          }`}
+                        >
+                          <p>{msg.text}</p>
+                          <span className={`text-[10px] block mt-1 opacity-70 ${isMe ? 'text-indigo-100' : 'text-gray-400'}`}>
+                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {chatMessages.length === 0 && (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2 opacity-50">
+                      <Icons.MessageCircle className="w-12 h-12" />
+                      <p className="text-sm">Nessun messaggio ancora</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1d24]">
+                  <form 
+                    onSubmit={(e) => { e.preventDefault(); sendChatMessage(); }}
+                    className="flex gap-2"
+                  >
+                    <input
+                      value={chatDraft}
+                      onChange={(e) => setChatDraft(e.target.value)}
+                      placeholder="Scrivi un messaggio..."
+                      className="flex-1 bg-gray-100 dark:bg-gray-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                    <button 
+                      type="submit"
+                      disabled={!chatDraft.trim()}
+                      className="p-3 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <Icons.Send className="w-5 h-5" />
+                    </button>
+                  </form>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
       </div>
     </div>
