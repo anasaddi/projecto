@@ -18,7 +18,7 @@ def _cors_origins_list(settings) -> list:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Ensure all tables exist (important for SQLite in production)
+    # Ensure all tables exist (important for SQLite and first Postgres run)
     try:
         Base.metadata.create_all(bind=engine)
     except Exception as e:
@@ -29,12 +29,14 @@ async def lifespan(app: FastAPI):
         db = SessionLocal()
         
         # Manual migration for SQLite (adding is_active to exercises if it doesn't exist)
-        from sqlalchemy import text
-        try:
-            db.execute(text("ALTER TABLE exercises ADD COLUMN is_active INTEGER DEFAULT 1"))
-            db.commit()
-        except Exception:
-            db.rollback() # Ignore if column already exists
+        # We only do this if it's sqlite, postgres handles it via create_all or alembic
+        if "sqlite" in str(engine.url):
+            from sqlalchemy import text
+            try:
+                db.execute(text("ALTER TABLE exercises ADD COLUMN is_active INTEGER DEFAULT 1"))
+                db.commit()
+            except Exception:
+                db.rollback() 
 
         n = seed_training_if_empty(db)
         if n:
