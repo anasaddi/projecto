@@ -19,6 +19,13 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
 
+    @property
+    def sqlalchemy_database_url(self) -> str:
+        # Railway fornisce spesso 'postgres://', ma SQLAlchemy vuole 'postgresql://'
+        if self.database_url.startswith("postgres://"):
+            return self.database_url.replace("postgres://", "postgresql://", 1)
+        return self.database_url
+
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
