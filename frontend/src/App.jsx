@@ -10,18 +10,28 @@ import DashboardV2 from './pages/DashboardV2'
 import SharedProjects from './pages/SharedProjects'
 import Training from './pages/Training'
 import Training2 from './pages/Training2'
+import Welcome from './pages/Welcome'
 
 // --- Admin Protection Wrapper ---
 function AdminRoute({ children }) {
   const role = localStorage.getItem('km-user-role');
   const token = localStorage.getItem('km-admin-token');
   
-  // Se l'utente non è admin, non può vedere questa pagina.
-  // Viene reindirizzato alla pagina di benvenuto o resta bloccato.
   if (role !== 'admin' || token !== 'master-key') {
     return <Navigate to="/" replace />;
   }
   return children;
+}
+
+// --- Home Component (Handles Redirect) ---
+function HomePage() {
+  const role = localStorage.getItem('km-user-role');
+  const token = localStorage.getItem('km-admin-token');
+  
+  if (role === 'admin' && token === 'master-key') {
+    return <SourceList />;
+  }
+  return <Welcome />;
 }
 
 // --- Auth Initialization (Synchronous) ---
@@ -31,22 +41,17 @@ const initAuth = () => {
   const isShared = path.startsWith('/shared/');
   const keyParam = params.get('key');
   
-  // Se l'utente fornisce la chiave corretta nell'URL, lo promuoviamo ad admin
   if (keyParam === 'master-key') {
     localStorage.setItem('km-user-role', 'admin');
     localStorage.setItem('km-admin-token', 'master-key');
-    // Puliamo l'URL dal parametro per sicurezza
     window.history.replaceState({}, '', path);
   } else if (isShared) {
-    // Se è un link condiviso, forziamo il ruolo guest se non è già admin
     const currentRole = localStorage.getItem('km-user-role');
     if (currentRole !== 'admin') {
       localStorage.setItem('km-user-role', 'guest');
       localStorage.removeItem('km-admin-token');
     }
   }
-  // Se non è né admin né guest (nuovo utente su pagine private), 
-  // AdminRoute si occuperà del redirect alla home.
 };
 
 // Eseguiamo l'inizializzazione immediatamente prima del render dei componenti
@@ -58,14 +63,13 @@ export default function App() {
       <DashboardStatsProvider>
         <Layout>
           <Routes>
-            <Route path="/" element={<SourceList />} />
-            <Route path="/source/:sourceId" element={<Reader />} />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/source/:sourceId" element={<AdminRoute><Reader /></AdminRoute>} />
             <Route path="/dashboard" element={<AdminRoute><DashboardV2 /></AdminRoute>} />
             <Route path="/shared/:shareId" element={<SharedProjects />} />
             <Route path="/youtube" element={<AdminRoute><YouTubeViewer /></AdminRoute>} />
             <Route path="/training" element={<AdminRoute><Training /></AdminRoute>} />
             <Route path="/training2" element={<AdminRoute><Training2 /></AdminRoute>} />
-            {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Layout>

@@ -19,8 +19,9 @@ export default function Layout({ children }) {
 
   // Se è una pagina condivisa o l'utente è un guest, mostriamo un layout minimale
   const isGuest = localStorage.getItem('km-user-role') === 'guest'
+  const isAdmin = localStorage.getItem('km-user-role') === 'admin' && localStorage.getItem('km-admin-token') === 'master-key'
   
-  if (isShared || isGuest) {
+  if (isShared || isGuest || (!isAdmin && pathname === '/')) {
     return (
       <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors flex flex-col">
         <main className="flex-1 overflow-auto">
