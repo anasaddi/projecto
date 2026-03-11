@@ -153,14 +153,14 @@ function SharedTaskNode({ node, depth, projectId, projectAccent, onToggle, onDel
           <div className="min-w-0" onDoubleClick={() => setEditing(true)}>
             {editing ? (
               <input
-                autoFocus
-                defaultValue={node.title}
-                onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
-                onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
-                className="w-full bg-white dark:bg-gray-800 border border-indigo-400 rounded px-1 text-xs outline-none py-0"
-              />
+              autoFocus
+              defaultValue={node.title}
+              onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
+              className="w-full bg-white dark:bg-gray-800 border border-indigo-400 rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+            />
             ) : (
-              <span onClick={() => onToggle(node.id, !node.done)} className={`text-xs cursor-pointer truncate block ${node.done ? 'text-gray-400 line-through' : 'text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400'}`}>
+              <span onClick={() => onToggle(node.id, !node.done)} className={`text-sm cursor-pointer block leading-relaxed ${node.done ? 'text-gray-400 line-through' : 'text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400'}`}>
                 {node.title}
               </span>
             )}
@@ -179,7 +179,7 @@ function SharedTaskNode({ node, depth, projectId, projectAccent, onToggle, onDel
                   className="w-full max-w-[7rem] text-[10px] py-0.5 px-1.5 rounded-md border border-amber-400 bg-white dark:bg-gray-800 outline-none"
                 />
               ) : (
-                <button onClick={() => setShowDeadline(true)} className={`flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] shrink-0 ${getDeadlineColorClass(node.deadline, node.done)}`}>
+                <button onClick={() => setShowDeadline(true)} className={`flex items-center gap-0.5 px-2 py-1 rounded text-[11px] shrink-0 ${getDeadlineColorClass(node.deadline, node.done)}`}>
                   <Icons.Calendar className="w-3 h-3 shrink-0" />
                   <span className="tabular-nums">{formatDeadline(node.deadline)}</span>
                 </button>
@@ -212,8 +212,9 @@ function SharedTaskNode({ node, depth, projectId, projectAccent, onToggle, onDel
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { const t = draft.trim(); if (t) { onAddChild(node.id, t); setDraft(''); setOpenAdd(false); } } if (e.key === 'Escape') setOpenAdd(false); }}
-            placeholder="Subtask..."
-            className="flex-1 bg-white dark:bg-[#1a1d24] border border-gray-200 dark:border-gray-700 rounded px-2 py-0.5 text-[11px] outline-none"
+                      placeholder="Aggiungi subtask..."
+                      className="flex-1 bg-white dark:bg-[#1a1d24] border border-gray-200 dark:border-gray-700 rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    />
           />
         </div>
       )}
@@ -431,18 +432,18 @@ export default function SharedProjects() {
   if (dashboard.loading) return <div className="p-8 text-center text-gray-500 font-medium">Connessione in corso...</div>;
   
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0B0F19] text-gray-900 dark:text-gray-100 p-4 sm:p-8 md:p-10 font-sans selection:bg-indigo-500/30 antialiased overflow-x-hidden relative">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] text-gray-900 dark:text-gray-100 p-4 sm:p-8 md:p-10 font-sans selection:bg-indigo-500/30 antialiased overflow-x-hidden relative">
       <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-8">
         
         {/* MAIN CONTENT: PROJECTS */}
         <div className="flex-1 space-y-8 min-w-0 order-2 lg:order-1">
           <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
-              <input 
-                value={dashboard.title} 
-                onChange={(e) => updateLocal({ title: e.target.value })}
-                className="text-3xl font-extrabold tracking-tight bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-500 rounded px-1 -ml-1 w-full sm:w-auto"
-              />
+            <input 
+              value={dashboard.title} 
+              onChange={(e) => updateLocal({ title: e.target.value })}
+              className="text-4xl font-extrabold tracking-tight bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-500 rounded px-2 py-1 w-full sm:w-auto transition-all"
+            />
               <p className="text-gray-500 text-sm font-medium">Spazio di lavoro condiviso</p>
             </div>
             <div className="flex items-center gap-3">
@@ -470,34 +471,35 @@ export default function SharedProjects() {
             </div>
           </header>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
             {dashboard.projects.map((proj) => {
               const stats = countTreeStats(proj.tasks);
               return (
                 <motion.div 
                   layout
                   key={proj.id} 
-                  className="flex flex-col bg-white dark:bg-[#1a1d24] border border-gray-200/80 dark:border-gray-800/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow h-fit"
+                  className="flex flex-col bg-white dark:bg-[#1a1d24] border border-gray-200/80 dark:border-gray-800/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 h-fit">
                 >
                   <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/20">
                     <div className="flex-1 min-w-0 mr-2">
                       <input
                         defaultValue={proj.title}
                         onBlur={(e) => updateProject(proj.id, p => ({ ...p, title: e.target.value }))}
-                        className="w-full text-sm font-bold bg-transparent border-none outline-none focus:ring-1 focus:ring-indigo-500 rounded px-1 -ml-1"
+                        className="w-full text-base font-bold bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-500 rounded px-2 py-1 transition-all"
+                        placeholder="Titolo progetto..."
                       />
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="text-[10px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-500 px-2 py-0.5 rounded-full tabular-nums">
+                      <div className="text-xs font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 px-2.5 py-1 rounded-full tabular-nums">
                         {stats.completed}/{stats.total}
                       </div>
-                      <button onClick={() => deleteProject(proj.id)} className="text-gray-400 hover:text-red-500 transition-colors">
+                      <button onClick={() => deleteProject(proj.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200">
                         <Icons.X className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
 
-                  <div className="flex-1 p-4 space-y-2 overflow-y-auto max-h-[400px] custom-scrollbar">
+                  <div className="flex-1 p-4 space-y-3 overflow-y-auto max-h-[450px] custom-scrollbar">
                     {proj.tasks.map((task, idx) => (
                       <SharedTaskNode
                         key={task.id} node={task} depth={0} projectId={proj.id}
@@ -542,7 +544,8 @@ export default function SharedProjects() {
                         }
                       }}
                       placeholder="+ Aggiungi task..."
-                      className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-2 text-xs outline-none focus:border-indigo-500 transition-colors"
+              className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors"
+            />
                     />
                   </div>
                 </motion.div>
@@ -551,12 +554,12 @@ export default function SharedProjects() {
 
             <button 
               onClick={createProject}
-              className="flex flex-col items-center justify-center gap-2 p-8 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl hover:border-indigo-500 hover:bg-indigo-500/5 transition-all text-gray-400 hover:text-indigo-500 group min-h-[200px]"
+              className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl hover:border-indigo-500 hover:bg-indigo-500/5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 text-gray-400 hover:text-indigo-500 group min-h-[240px]"
             >
-              <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition-colors">
-                <Icons.Plus className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center group-hover:from-indigo-500 group-hover:to-purple-600 group-hover:text-white transition-all duration-300 transform group-hover:scale-110 shadow-lg group-hover:shadow-indigo-500/25">
+                <Icons.Plus className="w-7 h-7 transition-transform group-hover:rotate-90 duration-300" />
               </div>
-              <span className="text-sm font-bold">Crea Progetto</span>
+              <span className="text-lg font-bold bg-gradient-to-r from-gray-600 to-gray-800 dark:from-gray-300 dark:to-gray-100 bg-clip-text text-transparent group-hover:from-indigo-500 group-hover:to-purple-600 transition-all duration-300">Crea Progetto</span>
             </button>
           </div>
         </div>
@@ -564,7 +567,7 @@ export default function SharedProjects() {
         {/* SIDEBAR: QUICK TASKS & CHAT */}
         <aside className="w-full lg:w-72 shrink-0 order-1 lg:order-2 pt-[76px] space-y-6">
           {/* QUICK TASKS */}
-          <div className="bg-white dark:bg-[#1a1d24] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm min-h-[300px] flex flex-col">
+          <div className="bg-white/80 dark:bg-[#1a1d24]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 rounded-2xl p-6 shadow-lg min-h-[340px] flex flex-col">
             <div className="flex items-center gap-2 mb-4">
               <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
                 <Icons.Zap className="w-4 h-4" />
@@ -578,7 +581,9 @@ export default function SharedProjects() {
                   value={quickTaskDraft}
                   onChange={(e) => setQuickTaskDraft(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addQuickTask(quickTaskDraft)}
-                  className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl pl-4 pr-10 py-2.5 text-xs outline-none focus:border-amber-500 transition-colors"
+                  className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl pl-4 pr-10 py-3 text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500 transition-colors"
+                  placeholder="Nuova task veloce..."
+                />
                 />
                 <button 
                   onClick={() => { addQuickTask(quickTaskDraft); setQuickTaskDraft(""); }}
@@ -588,7 +593,7 @@ export default function SharedProjects() {
                 </button>
               </div>
 
-              <div className="space-y-1.5 flex-1 overflow-y-auto custom-scrollbar pr-1 max-h-[300px]">
+              <div className="space-y-2 flex-1 overflow-y-auto custom-scrollbar pr-2 max-h-[320px]">
                 <AnimatePresence initial={false}>
                   {dashboard.quickTasks.map((task) => (
                     <motion.div
@@ -596,20 +601,23 @@ export default function SharedProjects() {
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
-                      className="group flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-gray-100 dark:hover:border-gray-800"
+                      whileHover={{ scale: 1.02 }}
+                      className="group flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-gray-100 dark:hover:border-gray-800 cursor-pointer"
+                    >
+                    >
                     >
                       <button 
                         onClick={() => toggleQuickTask(task.id)}
-                        className={`shrink-0 ${task.done ? 'text-emerald-500' : 'text-gray-300 dark:text-gray-600 hover:text-amber-400'}`}
+                        className={`shrink-0 ${task.done ? 'text-emerald-500' : 'text-gray-300 dark:text-gray-600 hover:text-amber-400'} transition-colors duration-200`}
                       >
                         {task.done ? <Icons.CheckCircle className="w-4 h-4" /> : <Icons.Circle className="w-4 h-4" />}
                       </button>
-                      <span className={`flex-1 text-[11px] min-w-0 truncate ${task.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
+                      <span className={`flex-1 text-sm min-w-0 ${task.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
                         {task.title}
                       </span>
                       <button 
                         onClick={() => deleteQuickTask(task.id)}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
                       >
                         <Icons.Trash className="w-3 h-3" />
                       </button>
@@ -618,17 +626,23 @@ export default function SharedProjects() {
                 </AnimatePresence>
                 
                 {dashboard.quickTasks.length === 0 && (
-                  <div className="py-8 text-center space-y-2">
-                    <div className="text-gray-300 dark:text-gray-700 text-2xl">⚡</div>
-                    <p className="text-[10px] text-gray-400 font-medium">Nessuna task veloce</p>
-                  </div>
+                  <motion.div 
+                    className="py-10 text-center space-y-3"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <div className="text-gray-300 dark:text-gray-700 text-3xl">⚡</div>
+                    <p className="text-sm text-gray-400 font-medium">Nessuna task veloce</p>
+                    <p className="text-xs text-gray-400 max-w-[200px] mx-auto">Aggiungi una nuova task per iniziare</p>
+                  </motion.div>
                 )}
               </div>
             </div>
           </div>
 
           {/* CHAT BOX */}
-          <div className="bg-white dark:bg-[#1a1d24] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm min-h-[400px] flex flex-col">
+          <div className="bg-white/80 dark:bg-[#1a1d24]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 rounded-2xl p-6 shadow-lg min-h-[420px] flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
@@ -647,19 +661,25 @@ export default function SharedProjects() {
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-3 pr-1 max-h-[350px] custom-scrollbar mb-3" ref={chatScrollRef}>
+            <div className="flex-1 overflow-y-auto space-y-3 pr-2 max-h-[380px] custom-scrollbar">
               {dashboard.chat.map((msg) => {
                 const isMe = msg.senderId === localStorage.getItem('km-chat-sender-id');
                 // Colore univoco basato sull'ID del mittente per chi non sono io
                 const senderColor = isMe ? '' : `hsl(${parseInt(msg.senderId.slice(-4), 16) % 360}, 70%, 45%)`;
                 
                 return (
-                  <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                  <motion.div 
+                    key={msg.id} 
+                    className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     <div 
-                      className={`max-w-[90%] p-2.5 rounded-2xl text-xs shadow-sm ${
+                      className={`max-w-[85%] p-3 rounded-2xl text-sm shadow-lg backdrop-blur-sm ${
                         isMe 
-                          ? 'bg-indigo-500 text-white rounded-tr-none' 
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-tl-none border border-gray-200 dark:border-gray-700'
+                          ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-tr-none shadow-indigo-500/25' 
+                          : 'bg-white/90 dark:bg-gray-800/90 text-gray-800 dark:text-gray-200 rounded-tl-none border border-gray-200/50 dark:border-gray-700/50 shadow-gray-500/10'
                       }`}
                     >
                       {!isMe && (
@@ -669,17 +689,23 @@ export default function SharedProjects() {
                       )}
                       <p className="leading-relaxed">{msg.text}</p>
                     </div>
-                    <span className="text-[9px] text-gray-400 mt-1 px-1">
+                    <span className="text-[10px] text-gray-400 mt-1 px-1 font-medium">
                       {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                  </div>
+                  </motion.div>
                 );
               })}
               {dashboard.chat.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-2 opacity-50 py-10">
-                  <Icons.MessageCircle className="w-8 h-8" />
-                  <p className="text-[10px]">Inizia a chattare</p>
-                </div>
+                <motion.div 
+                  className="flex flex-col items-center justify-center h-full text-gray-400 space-y-3 opacity-60 py-12"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <Icons.MessageCircle className="w-10 h-10" />
+                  <p className="text-sm font-medium text-center">Inizia la conversazione</p>
+                  <p className="text-xs text-center max-w-[200px]">Scrivi il tuo primo messaggio per iniziare a chattare</p>
+                </motion.div>
               )}
             </div>
 
@@ -687,13 +713,13 @@ export default function SharedProjects() {
               <input
                 value={chatDraft}
                 onChange={(e) => setChatDraft(e.target.value)}
-                placeholder="Messaggio..."
-                className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl pl-4 pr-10 py-2.5 text-xs outline-none focus:border-indigo-500 transition-colors"
+                placeholder="Scrivi un messaggio..."
+                className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl pl-4 pr-12 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
               />
               <button 
                 type="submit"
                 disabled={!chatDraft.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-indigo-500 hover:text-indigo-600 disabled:opacity-30 transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
               >
                 <Icons.Send className="w-4 h-4" />
               </button>
