@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Target, Eye, EyeOff, ArrowUp, ArrowDown, Edit2, Trash2, CheckCircle2, History as HistoryIcon } from 'lucide-react';
+import { Target, Eye, EyeOff, ArrowUp, ArrowDown, Edit2, Trash2, CheckCircle2, History as HistoryIcon, Zap, Dumbbell } from 'lucide-react';
 import { 
   WEEK_CONFIGS, 
   MUSCLE_GROUP_MAP, 
@@ -110,106 +110,115 @@ export function CompactExerciseCard({ exercise, showMuscleNames, progressions, d
         flavio: weekData?.flavio?.weight ? `${weekData.flavio.weight}kg` : '?'
       };
     } else if (category === 'HYPERTROPHY') {
-      const firstRow = prog?.rows?.[0];
-      const anasW = firstRow?.anas?.weight || prog?.anas?.weight;
-      const flavioW = firstRow?.flavio?.weight || prog?.flavio?.weight;
-      const sets = exercise.base_sets || 3;
-      const reps = exercise.base_reps || 10;
+      const anasW = prog?.anas?.weight;
+      const flavioW = prog?.flavio?.weight;
       details = {
-        label: `${sets}x${reps}`,
-        anas: anasW ? `${anasW}kg` : '?',
-        flavio: flavioW ? `${flavioW}kg` : '?'
+        label: '2 serie',
+        anas: anasW ? `${anasW}kg` : '—',
+        flavio: flavioW ? `${flavioW}kg` : '—'
       };
     }
   }
 
-  const accentDot = category === 'AW'
-    ? 'bg-gradient-to-br from-amber-400 to-orange-500'
-    : (() => { const g = getDominantGroup(muscles); return g ? (GROUP_ACCENT_DOT[g] || 'bg-zinc-400') : 'bg-zinc-400'; })();
-
   const cardStyle = !isActive
-    ? 'border-zinc-300 dark:border-zinc-700 bg-zinc-200/50 dark:bg-zinc-800/80 grayscale opacity-60'
+    ? {
+        border: 'border-zinc-300/70 dark:border-zinc-700/50 border-dashed',
+        bg: 'bg-zinc-100/50 dark:bg-zinc-800/30 grayscale opacity-70',
+        badge: 'bg-zinc-400',
+        label: 'text-zinc-500 italic',
+        icon: Target,
+        dot: 'bg-zinc-400',
+        anasPillBg: 'bg-zinc-200/50 dark:bg-zinc-800/50 text-zinc-500',
+        flavioPillBg: 'bg-zinc-200/50 dark:bg-zinc-800/50 text-zinc-500'
+      }
     : category === 'STRENGTH'
-    ? 'border-blue-100 dark:border-blue-900/30 bg-blue-50/30 dark:bg-blue-900/10'
+    ? {
+        border: 'border-blue-300/70 dark:border-blue-600/30',
+        bg: 'bg-gradient-to-br from-blue-50/80 to-indigo-50/40 dark:from-blue-950/20 dark:to-indigo-950/10',
+        badge: 'bg-blue-500',
+        label: 'text-blue-800 dark:text-blue-300',
+        icon: Zap,
+        dot: 'bg-blue-400',
+        anasPillBg: 'bg-blue-100/50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200/50 dark:border-blue-800/30',
+        flavioPillBg: 'bg-emerald-100/50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/30'
+      }
     : category === 'AW'
-    ? 'border-amber-100 dark:border-amber-900/30 bg-amber-50/30 dark:bg-amber-900/10'
-    : 'border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/30 dark:bg-emerald-900/10';
+    ? {
+        border: 'border-amber-300/70 dark:border-amber-600/30',
+        bg: 'bg-gradient-to-br from-amber-50/80 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/10',
+        badge: 'bg-amber-500',
+        label: 'text-amber-800 dark:text-amber-300',
+        icon: Target,
+        dot: 'bg-amber-400',
+        anasPillBg: 'bg-blue-100/50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200/50 dark:border-blue-800/30',
+        flavioPillBg: 'bg-emerald-100/50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/30'
+      }
+    : {
+        border: 'border-zinc-200/80 dark:border-zinc-700/60 hover:border-zinc-300/50 dark:hover:border-zinc-600/50',
+        bg: 'bg-white/80 dark:bg-zinc-900/40',
+        badge: 'bg-zinc-700 dark:bg-zinc-300',
+        label: 'text-zinc-800 dark:text-zinc-200',
+        icon: Dumbbell,
+        dot: 'bg-zinc-400',
+        anasPillBg: 'bg-blue-50/80 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-200/30 dark:border-blue-800/30',
+        flavioPillBg: 'bg-emerald-50/80 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200/30 dark:border-emerald-800/30'
+      };
+
+  const Icon = cardStyle.icon;
 
   return (
     <div 
-      className={`relative group rounded-xl border ${cardStyle} shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden flex flex-col justify-center items-center px-2 py-1 text-center
-        ${category === 'AW' ? 'min-h-[34px]' : 'min-h-[68px]'}
-        ${!isActive ? 'grayscale opacity-70 border-dashed' : ''}
-      `}
+      className={`relative group flex flex-col rounded-[1.25rem] border ${cardStyle.border} ${cardStyle.bg} p-2 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden justify-center min-h-[5rem]`}
       title={exercise.exercise_name || exercise.name}
     >
-      <div className={`absolute top-0 left-0 bottom-0 w-1 ${isActive ? accentDot : 'bg-zinc-500'}`} />
-      
-      <div className="flex flex-col items-center justify-center w-full gap-0.5 flex-1 min-h-0">
-        <div className="flex items-center justify-center w-full gap-1 px-1">
-          {!isActive && <Target size={8} className="text-zinc-500 shrink-0" />}
-          <div className={`text-[10px] font-black uppercase tracking-tight text-center line-clamp-1
-            ${!isActive ? 'text-zinc-500 italic' : 'text-zinc-800 dark:text-zinc-100'}`}>
-            {shortenName(exercise.exercise_name || exercise.name)}
-          </div>
+      <div className="flex flex-col items-center justify-center w-full gap-1.5 text-center">
+        <div className={`w-5 h-5 rounded-md ${isActive && getDominantGroup(muscles) ? GROUP_ACCENT_DOT[getDominantGroup(muscles)] : cardStyle.badge} shadow-sm flex items-center justify-center shrink-0`}>
+          <Icon size={10} className="text-white" />
         </div>
-
-        {details && isActive && category !== 'AW' && (
-          <div className="flex items-stretch w-full mt-1 pt-1 border-t border-zinc-100/50 dark:border-zinc-800/50 min-h-[32px]">
-            <div className="flex-1 flex justify-center items-center border-r border-zinc-100/30 dark:border-zinc-800/30 pr-1">
-              <span className={`text-[7px] font-bold uppercase tracking-widest px-1 py-0.5 rounded-md
-                ${category === 'STRENGTH' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 
-                  'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>
-                {details.label}
-              </span>
-            </div>
-            <div className="flex-1 flex flex-col justify-center items-center gap-0 pl-1 leading-none">
-              <span className="text-[7px] font-bold text-blue-500 tracking-tighter">A: {details.anas}</span>
-              <span className="text-[7px] font-bold text-emerald-500 tracking-tighter">F: {details.flavio}</span>
-            </div>
-          </div>
-        )}
-
-        {details && isActive && category === 'AW' && (
-          <div className="flex items-center justify-center min-h-[20px]">
-            <span className="text-[7px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
-              {details.label}
-            </span>
-          </div>
-        )}
-
-        {isEditMode && (
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute right-1 top-1/2 -translate-y-1/2 bg-white/90 dark:bg-zinc-900/90 rounded-lg shadow-sm px-1">
-            <button onClick={(e) => { e.stopPropagation(); onEditAction('toggleActive', exercise); }} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg">
-              {isActive ? <Eye size={10} /> : <EyeOff size={10} />}
-            </button>
-            <button onClick={(e) => { e.stopPropagation(); onEditAction('moveUp', exercise); }} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"><ArrowUp size={10} /></button>
-            <button onClick={(e) => { e.stopPropagation(); onEditAction('moveDown', exercise); }} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"><ArrowDown size={10} /></button>
-            <button onClick={(e) => { e.stopPropagation(); onEditAction('rename', exercise); }} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"><Edit2 size={10} /></button>
-            <button onClick={(e) => { e.stopPropagation(); onEditAction('delete', exercise); }} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-red-500"><Trash2 size={10} /></button>
-          </div>
+        <span className={`text-[10px] font-black uppercase tracking-tight leading-tight text-center px-1 line-clamp-2 ${cardStyle.label}`}>
+          {shortenName(exercise.exercise_name || exercise.name)}
+        </span>
+        {details && (
+          <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md ${isActive && getDominantGroup(muscles) ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' : cardStyle.badge + ' text-white'} shadow-sm shrink-0 whitespace-nowrap`}>
+            {details.label}
+          </span>
         )}
       </div>
 
+      {details && isActive && category !== 'AW' && (
+        <div className="flex gap-1 mt-2 w-full">
+          <div className={`flex-1 flex justify-center items-center py-0.5 rounded-md ${cardStyle.anasPillBg}`}>
+            <span className="text-[9px] font-bold tracking-tighter">A: {details.anas}</span>
+          </div>
+          <div className={`flex-1 flex justify-center items-center py-0.5 rounded-md ${cardStyle.flavioPillBg}`}>
+            <span className="text-[9px] font-bold tracking-tighter">F: {details.flavio}</span>
+          </div>
+        </div>
+      )}
+
+      {isEditMode && (
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 top-2 bg-white/90 dark:bg-zinc-900/90 rounded-lg shadow-sm px-1">
+          <button onClick={(e) => { e.stopPropagation(); onEditAction('toggleActive', exercise); }} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg">
+            {isActive ? <Eye size={10} /> : <EyeOff size={10} />}
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); onEditAction('moveUp', exercise); }} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"><ArrowUp size={10} /></button>
+          <button onClick={(e) => { e.stopPropagation(); onEditAction('moveDown', exercise); }} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"><ArrowDown size={10} /></button>
+          <button onClick={(e) => { e.stopPropagation(); onEditAction('rename', exercise); }} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"><Edit2 size={10} /></button>
+          <button onClick={(e) => { e.stopPropagation(); onEditAction('delete', exercise); }} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-red-500"><Trash2 size={10} /></button>
+        </div>
+      )}
+
       {showMuscleNames && muscles.length > 0 && isActive && (
-        <div className="flex flex-wrap justify-center gap-1 mt-1.5 w-full">
+        <div className="flex flex-wrap gap-1 mt-2.5 w-full">
           {muscles.map((m, idx) => {
             const group = MUSCLE_GROUP_MAP[m] || 'unknown';
             const style = MUSCLE_BADGE_STYLE[group] || MUSCLE_BADGE_STYLE.unknown;
             return (
-              <span key={idx} className={`text-[7px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-full border ${style}`}>
+              <span key={idx} className={`text-[8px] font-bold uppercase tracking-tighter px-2 py-0.5 rounded-[8px] border bg-white/80 dark:bg-zinc-900/60 ${style}`}>
                 {MUSCLE_DISPLAY_NAME[m] || m}
               </span>
             );
           })}
-        </div>
-      )}
-
-      {showMuscleNames && muscles.length > 0 && !isEditMode && isActive && (
-        <div className={`flex justify-center gap-[3px] w-full ${category === 'AW' ? 'mt-0.5' : 'mt-1'}`}>
-          {muscles.slice(0, category === 'AW' ? 6 : 4).map((m, idx) => (
-            <div key={idx} className={`rounded-full ${MUSCLE_DOT_COLORS[m] || 'bg-zinc-400'} shadow-sm ${category === 'AW' ? 'w-1 h-1' : 'w-1.5 h-1.5'}`} title={m} />
-          ))}
         </div>
       )}
     </div>

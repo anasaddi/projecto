@@ -102,15 +102,11 @@ const HypertrophyTable = ({ exercise, onRowsChange, onProgressionChange, initial
     <Card className="border-0 bg-white dark:bg-[#151718] rounded-[24px] overflow-hidden shadow-sm dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
       <div
         onClick={() => setExpanded(!expanded)}
-        className="px-4 py-3.5 flex items-center justify-between cursor-pointer border-b border-transparent dark:border-white/5 transition-colors hover:bg-black/5 dark:hover:bg-white/[0.02]"
+        className="px-4 py-3.5 flex flex-col items-center justify-center cursor-pointer border-b border-transparent dark:border-white/5 transition-colors hover:bg-black/5 dark:hover:bg-white/[0.02]"
       >
-        <div className="flex items-center gap-3">
-          <div className="w-1.5 h-6 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
-          <h3 className="text-[13px] font-black tracking-tight text-gray-900 dark:text-zinc-100 line-clamp-1 break-words">{exercise_name}</h3>
+        <div className="flex flex-col items-center gap-1">
+          <h3 className="text-[13px] font-black tracking-widest text-gray-900 dark:text-zinc-100 uppercase text-center">{exercise_name}</h3>
         </div>
-        <button className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-gray-400">
-          {expanded ? <ChevronUp size={16} /> : <HistoryIcon size={16} />}
-        </button>
       </div>
 
       <div className="p-3 pt-0">

@@ -40,10 +40,10 @@ async def get_all_exercises(db: AsyncSession):
 async def get_today_template(db: AsyncSession, for_date: date | None = None):
     target = for_date or date.today()
     dt = datetime.combine(target, time.min)
-    res = await db.execute(select(DailySchedule).filter(DailySchedule.date_ == dt))
+    res = await db.execute(select(DailySchedule).filter(DailySchedule.date_ == dt).limit(1))
     sched = res.scalar_one_or_none()
     if sched and sched.template_id:
-        r = await db.execute(select(WorkoutDayTemplate).filter(WorkoutDayTemplate.id == sched.template_id))
+        r = await db.execute(select(WorkoutDayTemplate).filter(WorkoutDayTemplate.id == sched.template_id).limit(1))
         return r.scalar_one_or_none()
     return None
 
@@ -54,7 +54,7 @@ async def get_today_exercises_grouped(db: AsyncSession, for_date: date | None = 
     exercises = res.scalars().all()
     hyp, str_aw = [], []
     for we in exercises:
-        ex_res = await db.execute(select(Exercise).filter(Exercise.id == we.exercise_id))
+        ex_res = await db.execute(select(Exercise).filter(Exercise.id == we.exercise_id).limit(1))
         ex = ex_res.scalar_one_or_none()
         if not ex: continue
         d = {
@@ -78,7 +78,7 @@ async def get_week_templates(db: AsyncSession):
             ex_res = await db.execute(select(WorkoutDayExercise).filter(WorkoutDayExercise.template_id == t.id).order_by(WorkoutDayExercise.ordinal))
             exercises = []
             for we in ex_res.scalars().all():
-                e_res = await db.execute(select(Exercise).filter(Exercise.id == we.exercise_id))
+                e_res = await db.execute(select(Exercise).filter(Exercise.id == we.exercise_id).limit(1))
                 e = e_res.scalar_one_or_none()
                 if e: 
                     exercises.append({
@@ -155,22 +155,27 @@ def _sanitize_progression_data(data: Any, category: str | None = None) -> dict:
     return sanitize_generic_progression(data)
 
 async def get_all_progressions(db: AsyncSession):
-    res = await db.execute(select(TrainingProgression, Exercise.category).join(Exercise, Exercise.id == TrainingProgression.exercise_id))
+    res = await db.execute(select(TrainingProgression, Exercise.category).join(Exercise, Exercise.id == TrainingProgression.exercise_id).order_by(TrainingProgression.updated_at.desc()))
     rows = res.all()
-    return [
-        {
+    seen = set()
+    out = []
+    for p, category in rows:
+        if p.exercise_id in seen:
+            continue
+        seen.add(p.exercise_id)
+        out.append({
             "exercise_id": p.exercise_id,
             "data": _sanitize_progression_data(_parse_json(p.data, {}), category),
             "updated_at": p.updated_at
-        }
-        for p, category in rows
-    ]
+        })
+    return out
 
 async def get_training_progression(db: AsyncSession, ex_id: str):
     res = await db.execute(
         select(TrainingProgression, Exercise.category)
         .join(Exercise, Exercise.id == TrainingProgression.exercise_id)
         .filter(TrainingProgression.exercise_id == ex_id)
+        .limit(1)
     )
     row = res.first()
     if not row:
@@ -184,7 +189,7 @@ async def update_training_progression(db: AsyncSession, ex_id: str, data: dict):
     if not exercise:
         raise ValueError(f"Exercise not found: {ex_id}")
 
-    res = await db.execute(select(TrainingProgression).filter(TrainingProgression.exercise_id == ex_id))
+    res = await db.execute(select(TrainingProgression).filter(TrainingProgression.exercise_id == ex_id).limit(1))
     prog = res.scalar_one_or_none()
     
     # Ensure the data has a strict structure for the frontend
@@ -206,37 +211,48 @@ async def get_daily_schedule(db: AsyncSession, start_date: date, days_count: int
     if not templates:
         return [DailySchedule(date_=datetime.combine(start_date + timedelta(days=i), time.min), template_id=None, is_completed=0) for i in range(days_count)]
     
-    last_c_res = await db.execute(select(DailySchedule).filter(DailySchedule.is_completed == 1).order_by(DailySchedule.date_.desc()))
-    last_completed = last_c_res.scalar_one_or_none()
-    last_w_res = await db.execute(select(DailySchedule).filter(DailySchedule.is_completed == 1, DailySchedule.template_id.is_not(None)).order_by(DailySchedule.date_.desc()))
+    # 1. Clean ALL future incomplete entries to prevent "dead zones"
+    today = date.today()
+    today_dt = datetime.combine(today, time.min)
+    await db.execute(delete(DailySchedule).filter(DailySchedule.date_ >= today_dt, DailySchedule.is_completed == 0))
+    await db.flush()
+
+    # 2. Get last completed workout to determine next template
+    last_w_res = await db.execute(
+        select(DailySchedule)
+        .filter(DailySchedule.is_completed == 1, DailySchedule.template_id.is_not(None))
+        .order_by(DailySchedule.date_.desc())
+        .limit(1)
+    )
     last_workout = last_w_res.scalar_one_or_none()
 
-    today = date.today()
-    next_t_idx, base_date = 0, today
+    next_t_idx = 0
     if last_workout:
         try:
             l_idx = next(i for i, t in enumerate(templates) if t.id == last_workout.template_id)
             next_t_idx = (l_idx + 1) % len(templates)
         except StopIteration: pass
-    if last_completed:
-        base_date = max(last_completed.date_.date() + timedelta(days=1), today)
 
-    today_dt = datetime.combine(today, time.min)
-    await db.execute(delete(DailySchedule).filter(DailySchedule.date_ >= today_dt, DailySchedule.is_completed == 0))
-    
+    # 3. Fill gaps starting from today
+    # We use a set of existing dates (completed ones) to avoid adding duplicates
+    existing_res = await db.execute(select(DailySchedule.date_).filter(DailySchedule.is_completed == 1))
+    existing_dates = {r[0].date() if isinstance(r[0], datetime) else r[0] for r in existing_res.all()}
+
     t_ptr = 0
-    for i in range(days_count * 3):
-        curr_d = base_date + timedelta(days=i)
-        if curr_d.weekday() == 6: continue
-        curr_dt = datetime.combine(curr_d, time.min)
-        ex_res = await db.execute(select(DailySchedule).filter(DailySchedule.date_ == curr_dt))
-        if ex_res.scalar_one_or_none(): continue
+    # Generate enough workouts to cover the request plus some buffer
+    for i in range(days_count * 4):
+        curr_d = today + timedelta(days=i)
+        if curr_d.weekday() == 6: continue # Skip Sunday
+        if curr_d in existing_dates: continue
+        
         t = templates[(next_t_idx + t_ptr) % len(templates)]
-        db.add(DailySchedule(date_=curr_dt, template_id=t.id, is_completed=0))
+        db.add(DailySchedule(date_=datetime.combine(curr_d, time.min), template_id=t.id, is_completed=0))
         t_ptr += 1
         if t_ptr >= days_count * 2: break
+    
     await db.commit()
 
+    # 4. Return the requested window
     s_dt = datetime.combine(start_date, time.min)
     res = await db.execute(select(DailySchedule).filter(DailySchedule.date_ >= s_dt, DailySchedule.date_ < s_dt + timedelta(days=days_count)))
     s_map = {s.date_.date(): s for s in res.scalars().all()}
@@ -244,7 +260,7 @@ async def get_daily_schedule(db: AsyncSession, start_date: date, days_count: int
 
 async def update_daily_schedule_completion(db: AsyncSession, s_date: date, completed: bool):
     dt = datetime.combine(s_date, time.min)
-    res = await db.execute(select(DailySchedule).filter(DailySchedule.date_ == dt))
+    res = await db.execute(select(DailySchedule).filter(DailySchedule.date_ == dt).limit(1))
     sched = res.scalar_one_or_none()
     if sched:
         sched.is_completed = 1 if completed else 0

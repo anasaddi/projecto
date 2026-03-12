@@ -44,18 +44,15 @@ const ExerciseTable = ({ exercise, onRowsChange, expandedOverride = false, initi
     <Card className="border-amber-100 dark:border-amber-900/30">
       <div
         onClick={() => setExpanded(!expanded)}
-        className="px-4 py-3 flex items-center justify-between cursor-pointer bg-gradient-to-r from-amber-50/50 to-transparent dark:from-amber-500/10 dark:to-transparent"
+        className="px-4 py-3 flex flex-col items-center justify-center cursor-pointer bg-gradient-to-b from-amber-50/50 to-transparent dark:from-amber-500/10 dark:to-transparent border-b border-gray-100 dark:border-zinc-800/80"
       >
-        <div className="flex items-center gap-3">
-          <div className="w-1.5 h-8 bg-amber-500 rounded-full"></div>
-          <div>
-            <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100">{exercise_name}</h3>
-            {instruction && <p className="text-[10px] text-gray-500 mt-0.5">{instruction}</p>}
-          </div>
+        <div className="flex flex-col items-center gap-1">
+          <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-widest text-center">{exercise_name}</h3>
+          {instruction && <p className="text-[10px] text-gray-500 text-center">{instruction}</p>}
+          <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-500/20 px-1.5 py-0.5 rounded">
+            {base_sets} Serie {base_reps ? `× ${base_reps}` : ''}
+          </span>
         </div>
-        <button className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-gray-400">
-          {expanded ? <ChevronUp size={16} /> : <HistoryIcon size={16} />}
-        </button>
       </div>
 
       <AnimatePresence initial={false}>

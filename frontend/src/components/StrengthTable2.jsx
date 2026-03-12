@@ -42,7 +42,7 @@ const STORAGE_KEY = (id) => `strength_v2_${id}`;
 
 // --- Components ---
 const Card = ({ children, className = '' }) => (
-  <div className={`rounded-2xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm hover:shadow-md transition-shadow duration-300 ${className}`}>
+  <div className={`rounded-[2rem] bg-white/20 dark:bg-zinc-900/20 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl shadow-zinc-200/10 dark:shadow-black/20 transition-all duration-300 hover:border-zinc-300/50 dark:hover:border-zinc-700/50 hover:shadow-2xl overflow-hidden ${className}`}>
     {children}
   </div>
 );
@@ -54,8 +54,7 @@ const ModernInput = ({ value, onChange, placeholder, step, className = '', small
     value={value}
     onChange={onChange}
     placeholder={placeholder}
-    className={`bg-gray-50/80 dark:bg-zinc-800/60 border border-gray-200 dark:border-zinc-700 rounded-lg text-center font-semibold text-gray-900 dark:text-zinc-100 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all placeholder:text-gray-400 dark:placeholder:text-zinc-600 mx-auto block ${small ? 'text-[10px] py-1 px-1' : 'text-xs py-1.5 px-2'
-      } ${className}`}
+    className={`bg-white/40 dark:bg-zinc-900/40 border border-zinc-200/50 dark:border-zinc-800/50 rounded-xl text-center font-bold text-zinc-900 dark:text-zinc-100 focus:bg-white focus:dark:bg-zinc-900 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600 shadow-inner shadow-zinc-100/50 dark:shadow-black/20 mx-auto block ${small ? 'text-[10px] py-1 px-1' : 'text-xs py-1.5 px-2'} ${className}`}
   />
 );
 
@@ -64,7 +63,7 @@ const Checkbox = ({ checked, onChange, colorClass = 'accent-blue-500' }) => (
     type="checkbox"
     checked={checked}
     onChange={onChange}
-    className={`w-4 h-4 rounded border-gray-300 dark:border-zinc-600 bg-gray-50 dark:bg-zinc-800 cursor-pointer transition-all ${colorClass}`}
+    className={`w-[18px] h-[18px] rounded-lg border-2 border-zinc-300/80 dark:border-zinc-700/80 bg-white/50 dark:bg-zinc-900/50 transition-all cursor-pointer hover:scale-110 shadow-sm ${colorClass}`}
   />
 );
 
@@ -346,43 +345,36 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
   return (
     <Card className="overflow-hidden border-blue-100/60 dark:border-blue-900/20">
       {/* Header */}
-      <div className="px-4 py-3 flex items-center justify-between bg-gradient-to-r from-blue-500/5 via-blue-400/5 to-transparent dark:from-blue-500/10 dark:to-transparent">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-xl bg-blue-500 flex items-center justify-center shadow-md shadow-blue-500/25">
-            <span className="text-[11px] font-black text-white">{currentMonth}</span>
-          </div>
-          <div className="min-w-0">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{exercise_name}</h3>
-            {isSaving && (
-              <span className="text-[8px] text-blue-500 animate-pulse font-bold uppercase tracking-tighter">Saving...</span>
-            )}
-          </div>
+      <div className="px-4 py-3 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-500/10 dark:to-transparent border-b border-gray-100 dark:border-zinc-800/80">
+        <div className="flex flex-col items-center gap-1">
+          <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-widest text-center">{exercise_name}</h3>
+          <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-100/50 dark:bg-blue-500/20 px-1.5 py-0.5 rounded">Mese {currentMonth}</span>
         </div>
 
-        {/* TM Input - visible for all months */}
-        <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
+        {/* TM Input - centered below title if needed, or keeping them in a row */}
+        <div className="flex items-center gap-4 shrink-0" onClick={e => e.stopPropagation()}>
           {currentMonth === 1 ? (
             <>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <span className="text-[9px] font-bold text-blue-500 uppercase">A</span>
                 <ModernInput
                   type="number"
                   step="0.5"
                   value={tmAnas}
                   onChange={e => setTmAnasWithSync(e.target.value)}
-                  className="w-10 text-center"
+                  className="w-12 text-center h-7"
                   placeholder="TM"
                   small
                 />
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <span className="text-[9px] font-bold text-emerald-500 uppercase">F</span>
                 <ModernInput
                   type="number"
                   step="0.5"
                   value={tmFlavio}
                   onChange={e => setTmFlavioWithSync(e.target.value)}
-                  className="w-10 text-center"
+                  className="w-12 text-center h-7"
                   placeholder="TM"
                   small
                 />
@@ -390,14 +382,14 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
             </>
           ) : (
             <>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <span className="text-[9px] font-bold text-blue-500 uppercase">A</span>
                 <ModernInput
                   type="number"
                   step="0.5"
                   value={tmByMonth[currentMonth - 2]?.anas || ''}
                   onChange={e => updateTmForMonth(currentMonth - 1, 'anas', e.target.value)}
-                  className="w-10 text-center"
+                  className="w-12 text-center h-7"
                   placeholder={(() => {
                     const prevAmrap = dataByMonth[currentMonth - 2]?.[2];
                     if (!prevAmrap) return 'TM';
@@ -414,14 +406,14 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
                   small
                 />
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <span className="text-[9px] font-bold text-emerald-500 uppercase">F</span>
                 <ModernInput
                   type="number"
                   step="0.5"
                   value={tmByMonth[currentMonth - 2]?.flavio || ''}
                   onChange={e => updateTmForMonth(currentMonth - 1, 'flavio', e.target.value)}
-                  className="w-10 text-center"
+                  className="w-12 text-center h-7"
                   placeholder={(() => {
                     const prevAmrap = dataByMonth[currentMonth - 2]?.[2];
                     if (!prevAmrap) return 'TM';
@@ -443,22 +435,20 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
         </div>
       </div>
 
-      {/* Month Selector - Modern Pills */}
-      <div className="px-3 py-2 bg-gray-50/80 dark:bg-zinc-800/60 border-y border-gray-100 dark:border-zinc-700/50">
-        <div className="flex items-center gap-1">
+      {/* Month Selector */}
+      <div className="px-4 py-2.5 border-b border-gray-100 dark:border-zinc-800/80">
+        <div className="flex items-center gap-1 bg-gray-100/50 dark:bg-zinc-800/50 p-1 rounded-xl">
           {[1, 2, 3, 4, 5, 6].map(m => (
-            <motion.button
+            <button
               key={m}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
               onClick={() => setCurrentMonth(m)}
-              className={`flex-1 h-7 rounded-lg text-[11px] font-bold transition-all duration-200 ${currentMonth === m
-                ? 'bg-blue-500 text-white shadow-md shadow-blue-500/25'
-                : 'bg-white dark:bg-zinc-700/50 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 border border-gray-200 dark:border-zinc-600'
+              className={`flex-1 h-7 rounded-lg text-xs font-bold transition-all ${currentMonth === m
+                ? 'bg-white dark:bg-zinc-700 shadow-sm text-blue-600 dark:text-blue-400'
+                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
             >
               {m}
-            </motion.button>
+            </button>
           ))}
         </div>
       </div>

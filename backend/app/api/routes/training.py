@@ -98,9 +98,9 @@ _AW_PROGRAM_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "aw_
 @router.get("/aw-program")
 async def get_aw_program():
     """Return AW training program data from aw_training_program.json."""
-    if not _AW_PROGRAM_PATH.exists():
-        return {}
     try:
+        if not _AW_PROGRAM_PATH.exists():
+            return {}
         return json.loads(_AW_PROGRAM_PATH.read_text(encoding="utf-8"))
     except Exception:
         return {}
@@ -127,7 +127,7 @@ async def get_today(db: AsyncSession = Depends(get_db), for_date: Optional[date]
         is_fallback=is_fallback,
     )
 
-@router.get("/week", response_model=list[schemas.WeekDayData], dependencies=[Depends(check_admin_access)])
+@router.get("/week", response_model=list[schemas.WeekDayData])
 async def get_week(db: AsyncSession = Depends(get_db)):
     """Fetch the full week's templates."""
     return await crud_training.get_week_templates(db)
@@ -202,7 +202,7 @@ async def skip_today(db: AsyncSession = Depends(get_db)):
     """Skip today's workout in the schedule."""
     from app.db.models import DailySchedule
     today_dt = datetime.combine(date.today(), time.min)
-    res = await db.execute(select(DailySchedule).filter(DailySchedule.date_ == today_dt))
+    res = await db.execute(select(DailySchedule).filter(DailySchedule.date_ == today_dt).limit(1))
     today_sched = res.scalar_one_or_none()
     if today_sched:
         if today_sched.is_completed:

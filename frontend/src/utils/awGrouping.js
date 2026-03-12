@@ -22,13 +22,25 @@ const isIso = (exercise) => hasAny(getExerciseText(exercise), AW_CONFIG.isoKeywo
 const isLight = (exercise) => hasAny(getExerciseText(exercise), AW_CONFIG.lightKeywords);
 const isHeavy = (exercise) => hasAny(getExerciseText(exercise), AW_CONFIG.heavyKeywords);
 
+const isMaxDay = (exercise) => {
+  const text = getExerciseText(exercise);
+  return text.includes('aw_max') || text.includes('max day') || text.includes('maxday');
+};
+
+const isSpeed = (exercise) => {
+  const text = getExerciseText(exercise);
+  return text.includes('aw_speed') || text.includes('speed');
+};
+
 export const groupAwExercises = (awExercises = []) => {
   const vol1 = awExercises.filter(isVolume1);
   const vol2 = awExercises.filter(isVolume2);
   const isoLight = awExercises.filter((ex) => !isVolume1(ex) && !isVolume2(ex) && isIso(ex) && isLight(ex) && !isHeavy(ex));
   const isoHeavy = awExercises.filter((ex) => !isVolume1(ex) && !isVolume2(ex) && isIso(ex) && isHeavy(ex));
-  const others = awExercises.filter((ex) => !vol1.includes(ex) && !vol2.includes(ex) && !isoLight.includes(ex) && !isoHeavy.includes(ex));
+  const maxDay = awExercises.filter((ex) => !vol1.includes(ex) && !vol2.includes(ex) && !isoLight.includes(ex) && !isoHeavy.includes(ex) && isMaxDay(ex));
+  const speed = awExercises.filter((ex) => !vol1.includes(ex) && !vol2.includes(ex) && !isoLight.includes(ex) && !isoHeavy.includes(ex) && !maxDay.includes(ex) && isSpeed(ex));
+  const others = awExercises.filter((ex) => !vol1.includes(ex) && !vol2.includes(ex) && !isoLight.includes(ex) && !isoHeavy.includes(ex) && !maxDay.includes(ex) && !speed.includes(ex));
 
-  return { vol1, vol2, isoLight, isoHeavy, others };
+  return { vol1, vol2, isoLight, isoHeavy, maxDay, speed, others };
 };
 
