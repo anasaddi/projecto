@@ -21,11 +21,86 @@ const Icons = {
   Pause: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>,
   Square: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>,
   ChevronDown: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="6 9 12 15 18 9"/></svg>,
+  ChevronUp: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="18 15 12 9 6 15"/></svg>,
   ChevronRight: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6"/></svg>,
   Calendar: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
   ExternalLink: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 22 3 22 9"/><line x1="10" y1="14" x2="22" y2="3"/></svg>,
   MessageCircle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
+  MoreHorizontal: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>,
+  Check: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>,
 };
+
+/**
+ * Checkbox universale con animazione bump
+ */
+function TaskCheckbox({ done, onClick, className = '' }) {
+  const [bump, setBump] = useState(false);
+  const handleClick = (e) => {
+    e.stopPropagation();
+    setBump(true);
+    onClick(e);
+  };
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      onAnimationEnd={() => setBump(false)}
+      className={`task-checkbox shrink-0 ${done ? 'checked' : ''} ${bump ? 'checkbox-bump' : ''} ${className}`}
+    >
+      {done && <Icons.Check className="h-2.5 w-2.5" />}
+    </button>
+  );
+}
+
+/**
+ * KebabMenu — dropdown minimale con azioni contestuali
+ */
+function KebabMenu({ items }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative" onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
+        className="dashboard-action-btn opacity-0 group-hover:opacity-100"
+        title="Azioni"
+      >
+        <Icons.MoreHorizontal className="h-3.5 w-3.5" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-1 min-w-[140px] animate-slide-down rounded-lg border border-zinc-200/80 bg-white py-1 shadow-lg shadow-zinc-900/10 dark:border-white/10 dark:bg-zinc-800 dark:shadow-black/40">
+          {items.map((item, i) =>
+            item === 'divider' ? (
+              <div key={i} className="my-1 border-t border-zinc-100 dark:border-white/5" />
+            ) : (
+              <button
+                key={i}
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setOpen(false); item.onClick(e); }}
+                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors ${
+                  item.danger
+                    ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                    : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-white/[0.04]'
+                }`}
+              >
+                {item.icon && <span className="h-3.5 w-3.5 shrink-0">{item.icon}</span>}
+                {item.label}
+              </button>
+            )
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
  * ----------------------------------------------------------------------
@@ -71,6 +146,75 @@ function formatCountdown(ms) {
   if (d > 0) return `${d}d ${h}h`;
   const m = Math.floor((totalSec % 3600) / 60);
   return `${h}h ${m}m`;
+}
+
+function buildDefaultLifeGoals() {
+  const mkG = (title, category, type = 'quick', done = false) => ({ 
+    id: uid('goal'), title, category, type, done, deadline: null, tasks: [] 
+  });
+  return {
+    collapsed: false,
+    tiers: [
+      {
+        id: 'tier-1', name: 'Tier 1', emoji: '🎯', color: 'emerald', collapsed: false,
+        goals: [
+          mkG('Eliminare ogni addiction', 'Disciplina', 'project'),
+          mkG('Completare KM Personal', 'Conoscenza', 'project'),
+          mkG('Pagare tutti i debiti', 'Finanza', 'project'),
+          mkG('Raggiungere 66kg', 'Corpo', 'quick'),
+          mkG('Test DNA privato (origini)', 'Identità', 'quick'),
+          mkG('Esperienza di deprivazione sensoriale', 'Esperienze', 'quick'),
+          mkG('Imparare il salto mortale', 'Corpo', 'quick'),
+          mkG('Smettere con qualsiasi addiction', 'Disciplina', 'quick'),
+        ]
+      },
+      {
+        id: 'tier-2', name: 'Tier 2', emoji: '📈', color: 'sky', collapsed: true,
+        goals: [
+          mkG('Correre una maratona', 'Corpo', 'project'),
+          mkG('Ottenere il brevetto da pilota', 'Abilità', 'project'),
+          mkG('Iniziare memorizzazione del Corano (Hafiz)', 'Spiritualità', 'project'),
+          mkG('1 settimana senza luce artificiale', 'Disciplina', 'quick'),
+          mkG('Vacanza con i genitori', 'Famiglia', 'quick'),
+          mkG('Hajj con i genitori', 'Spiritualità', 'quick'),
+          mkG('Trovare un mentor per ogni area della vita', 'Crescita', 'quick'),
+          mkG('Leggere tutti i libri salvati', 'Conoscenza', 'quick'),
+        ]
+      },
+      {
+        id: 'tier-3', name: 'Tier 3', emoji: '⚡', color: 'violet', collapsed: true,
+        goals: [
+          mkG('Diventare milionario', 'Finanza', 'quick'),
+          mkG('Pagare il mutuo della casa', 'Finanza', 'quick'),
+          mkG('Uno stipendio mensile ai genitori', 'Famiglia', 'quick'),
+          mkG('Imparare 5 nuove lingue', 'Conoscenza', 'project'),
+          mkG('Completare Quran Hafiz', 'Spiritualità', 'project'),
+          mkG('Costruire la dream house', 'Patrimonio', 'project'),
+          mkG('Padroneggiare i viaggi astrali', 'Spiritualità', 'project'),
+        ]
+      },
+      {
+        id: 'tier-4', name: 'Tier 4', emoji: '👑', color: 'amber', collapsed: true,
+        goals: [
+          mkG('Diventare miliardario', 'Finanza', 'quick'),
+          mkG('Costruire una moschea', 'Legacy', 'project'),
+          mkG('Nuotare in tutti gli oceani', 'Avventura', 'quick'),
+          mkG('Visitare tutti i paesi del mondo', 'Avventura', 'quick'),
+          mkG('Comprare una squadra di calcio', 'Patrimonio', 'quick'),
+          mkG('Creare una nuova lingua ottimizzata', 'Conoscenza', 'project'),
+          mkG('Vivere in un luogo con tutti gli ecosistemi', 'Patrimonio', 'quick'),
+          mkG('1 anno di silenzio totale', 'Disciplina', 'quick'),
+        ]
+      },
+      {
+        id: 'tier-5', name: 'Tier 5', emoji: '🚀', color: 'rose', collapsed: true,
+        goals: [
+          mkG('Comprare un\'isola privata', 'Patrimonio', 'quick'),
+          mkG('Andare nello spazio', 'Avventura', 'quick'),
+        ]
+      },
+    ]
+  };
 }
 
 function buildDefaultState() {
@@ -133,6 +277,58 @@ function buildDefaultState() {
     top3Manual: [null, null, null],
     quickTasks: [],
     dailyCompletionLog: {},
+    lifeGoals: buildDefaultLifeGoals(),
+  };
+}
+
+function normalizeLifeGoals(lg, fallback) {
+  // Se non ci sono tiers o goals, usa il fallback completo
+  if (!lg || !Array.isArray(lg.tiers) || lg.tiers.length === 0) return fallback;
+
+  const projectTitles = [
+    'Eliminare ogni addiction', 'Completare KM Personal', 'Pagare tutti i debiti',
+    'Correre una maratona', 'Ottenere il brevetto da pilota', 'Iniziare memorizzazione del Corano (Hafiz)',
+    'Imparare 5 nuove lingue', 'Completare Quran Hafiz', 'Costruire la dream house',
+    'Padroneggiare i viaggi astrali', 'Costruire una moschea', 'Creare una nuova lingua ottimizzata'
+  ];
+
+  // Nuovi nomi e emoji per i tier
+  const tierMeta = {
+    'tier-1': { name: 'Tier 1', emoji: '🎯' },
+    'tier-2': { name: 'Tier 2', emoji: '📈' },
+    'tier-3': { name: 'Tier 3', emoji: '⚡' },
+    'tier-4': { name: 'Tier 4', emoji: '👑' },
+    'tier-5': { name: 'Tier 5', emoji: '🚀' },
+  };
+
+  return {
+    ...lg,
+    tiers: lg.tiers.map(t => {
+      // Recupera il tier corrispondente dal fallback per assicurarci di avere gli obiettivi originali se il tier è vuoto
+      const fallbackTier = fallback.tiers.find(ft => ft.id === t.id);
+      const currentGoals = Array.isArray(t.goals) && t.goals.length > 0 ? t.goals : (fallbackTier ? fallbackTier.goals : []);
+      const meta = tierMeta[t.id] || { name: t.name, emoji: t.emoji };
+
+      return {
+        ...t,
+        name: meta.name,
+        emoji: meta.emoji,
+        collapsed: t.collapsed !== undefined ? t.collapsed : (t.id !== 'tier-1'),
+        goals: currentGoals.map(g => {
+          const isKnownProject = projectTitles.some(pt => g.title.toLowerCase().includes(pt.toLowerCase()));
+          // Forza il tipo se è un progetto noto, altrimenti mantieni l'esistente o deduci
+          let targetType = g.type;
+          if (isKnownProject) targetType = 'project';
+          else if (!targetType) targetType = (Array.isArray(g.tasks) && g.tasks.length > 0) ? 'project' : 'quick';
+
+          return {
+            ...g,
+            type: targetType,
+            tasks: Array.isArray(g.tasks) ? g.tasks : []
+          };
+        })
+      };
+    })
   };
 }
 
@@ -152,27 +348,54 @@ function loadState() {
       top3Manual: top3Normalized,
       quickTasks: Array.isArray(parsed.quickTasks) ? parsed.quickTasks : fallback.quickTasks,
       dailyCompletionLog: parsed.dailyCompletionLog && typeof parsed.dailyCompletionLog === 'object' ? parsed.dailyCompletionLog : fallback.dailyCompletionLog,
+      lifeGoals: normalizeLifeGoals(parsed.lifeGoals, fallback.lifeGoals),
     };
   } catch (_) {
     return fallback;
   }
 }
 
-function findTaskInProjects(projects, projectId, taskId) {
+function findTaskInProjects(projects, projectId, taskId, lifeGoals = null) {
+  // 1. Check Standard Projects
   const project = projects.find((p) => p.id === projectId);
-  if (!project) return null;
-  let found = null;
-  function walk(nodes) {
-    for (const n of nodes || []) {
-      if (n.id === taskId) { found = { node: n, projectTitle: project.title }; return; }
-      if (Array.isArray(n.children) && n.children.length) walk(n.children);
+  if (project) {
+    let found = null;
+    function walk(nodes) {
+      for (const n of nodes || []) {
+        if (n.id === taskId) { found = { node: n, projectTitle: project.title }; return; }
+        if (Array.isArray(n.children) && n.children.length) walk(n.children);
+      }
+    }
+    walk(project.tasks);
+    if (found) return found;
+  }
+
+  // 2. Check Life Goals (Projects or Quick)
+  if (lifeGoals && lifeGoals.tiers) {
+    for (const tier of lifeGoals.tiers) {
+      // Check Project Life Goals
+      const lgProj = tier.goals?.find(g => g.id === projectId || `lg-${g.id}` === projectId);
+      if (lgProj) {
+        let found = null;
+        // Se il taskId coincide col projectId, è un Quick Goal pinnato direttamente
+        if (lgProj.id === taskId) return { node: lgProj, projectTitle: `LG: ${tier.name}` };
+        
+        // Altrimenti cerca nelle subtask
+        function walkLG(nodes) {
+          for (const n of nodes || []) {
+            if (n.id === taskId) { found = { node: n, projectTitle: `LG: ${lgProj.title}` }; return; }
+            if (Array.isArray(n.children) && n.children.length) walkLG(n.children);
+          }
+        }
+        walkLG(lgProj.tasks);
+        if (found) return found;
+      }
     }
   }
-  walk(project.tasks);
-  return found;
+  return null;
 }
 
-function resolveTop3Slots(projects, top3Manual, quickTasks = []) {
+function resolveTop3Slots(projects, top3Manual, quickTasks = [], lifeGoals = null) {
   return top3Manual.map((slot) => {
     if (!slot) return null;
     if (slot.quickTaskId) {
@@ -180,7 +403,7 @@ function resolveTop3Slots(projects, top3Manual, quickTasks = []) {
       if (!qt) return { ...slot, missing: true };
       return { ...slot, title: qt.title, projectTitle: 'Quick Task', done: qt.done, isQuick: true };
     }
-    const res = findTaskInProjects(projects, slot.projectId, slot.taskId);
+    const res = findTaskInProjects(projects, slot.projectId, slot.taskId, lifeGoals);
     if (!res) return { ...slot, missing: true };
     return { ...slot, title: res.node.title, projectTitle: res.projectTitle, done: res.node.done };
   });
@@ -301,37 +524,37 @@ function PomodoroCompact() {
   const progress = 1 - remaining / POMODORO_DURATION;
 
   return (
-    <div className="bg-white dark:bg-[#1a1d24] border border-gray-200/80 dark:border-gray-700/80 rounded-xl p-4 flex flex-col gap-2.5 relative overflow-hidden select-none shadow-sm">
+    <div className="dashboard-panel p-4 flex flex-col gap-2.5 relative overflow-hidden select-none">
       <div className="flex justify-between items-center z-10">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-widest">
-          <Icons.Clock className="w-3.5 h-3.5 text-indigo-500" /> Focus
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
+          <Icons.Clock className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" /> Focus
         </div>
-        <div className="text-[10px] font-bold bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded">
+        <div className="text-[10px] font-bold bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded">
           {sessionsToday} sess
         </div>
       </div>
       
       <div className="flex items-center justify-between z-10">
-        <div className="text-2xl font-black tracking-tighter tabular-nums text-gray-900 dark:text-white">
+        <div className="text-2xl font-black tracking-tighter tabular-nums text-zinc-900 dark:text-zinc-50">
           {String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}
         </div>
         <div className="flex gap-1">
            {status === 'idle' && (
-            <button onClick={() => { setStatus('running'); setRemaining(POMODORO_DURATION); }} className="bg-indigo-600 hover:bg-indigo-700 text-white w-7 h-7 flex items-center justify-center rounded-lg shadow-sm active:scale-95 transition-all">
+            <button onClick={() => { setStatus('running'); setRemaining(POMODORO_DURATION); }} className="bg-indigo-600 hover:bg-indigo-500 text-white w-7 h-7 flex items-center justify-center rounded-lg active:scale-95 transition-all">
               <Icons.Play className="w-3.5 h-3.5 fill-current" />
             </button>
           )}
           {status === 'running' && (
-            <button onClick={() => setStatus('paused')} className="bg-amber-500 hover:bg-amber-600 text-white w-7 h-7 flex items-center justify-center rounded-lg shadow-sm active:scale-95 transition-all">
+            <button onClick={() => setStatus('paused')} className="bg-amber-500 hover:bg-amber-400 text-white w-7 h-7 flex items-center justify-center rounded-lg active:scale-95 transition-all">
               <Icons.Pause className="w-3.5 h-3.5 fill-current" />
             </button>
           )}
           {status === 'paused' && (
             <>
-              <button onClick={() => setStatus('running')} className="bg-indigo-600 hover:bg-indigo-700 text-white w-7 h-7 flex items-center justify-center rounded-lg shadow-sm active:scale-95 transition-all">
+              <button onClick={() => setStatus('running')} className="bg-indigo-600 hover:bg-indigo-500 text-white w-7 h-7 flex items-center justify-center rounded-lg active:scale-95 transition-all">
                 <Icons.Play className="w-3.5 h-3.5 fill-current" />
               </button>
-              <button onClick={() => { setStatus('idle'); setRemaining(POMODORO_DURATION); }} className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white w-7 h-7 flex items-center justify-center rounded-lg shadow-sm active:scale-95 transition-all">
+              <button onClick={() => { setStatus('idle'); setRemaining(POMODORO_DURATION); }} className="bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 w-7 h-7 flex items-center justify-center rounded-lg active:scale-95 transition-all">
                 <Icons.Square className="w-3 h-3 fill-current" />
               </button>
             </>
@@ -339,8 +562,8 @@ function PomodoroCompact() {
         </div>
       </div>
       
-      <div className="h-1 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mt-1">
-        <div className="h-full bg-indigo-500 rounded-full transition-all duration-1000 ease-linear" style={{ width: `${progress * 100}%` }} />
+      <div className="h-1 w-full bg-zinc-100 dark:bg-zinc-700/60 rounded-full overflow-hidden mt-1">
+        <div className="h-full bg-indigo-500 dark:bg-indigo-400 rounded-full transition-all duration-1000 ease-linear" style={{ width: `${progress * 100}%` }} />
       </div>
     </div>
   );
@@ -374,8 +597,8 @@ function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHab
     if (score >= 0.35) return 'bg-amber-500 dark:bg-amber-600';
     if (score >= 0.2) return 'bg-yellow-500 dark:bg-yellow-600';
     if (score >= 0.1) return 'bg-yellow-400 dark:bg-yellow-700/70';
-    if (score > 0) return 'bg-yellow-200 dark:bg-yellow-900/60';
-    return 'bg-gray-100 dark:bg-gray-800';
+    if (score > 0) return 'bg-yellow-200 dark:bg-yellow-900/50';
+    return 'bg-zinc-100 dark:bg-zinc-800/80';
   };
 
   const streak = useMemo(() => {
@@ -388,14 +611,17 @@ function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHab
   }, [heatmapDays]);
 
   return (
-    <div className="bg-white dark:bg-[#1a1d24] border border-gray-200/80 dark:border-gray-700/80 rounded-xl p-4 flex flex-col gap-2.5 select-none shadow-sm">
+    <div className="dashboard-panel p-4 flex flex-col gap-2.5 select-none">
       <div className="flex justify-between items-center">
-        <h3 className="text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest flex items-center gap-1.5">
-          <Icons.Flame className="w-3.5 h-3.5" /> Last 30 days
-        </h3>
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-emerald-400" />
+          <h3 className="text-[11px] font-medium text-zinc-400 dark:text-zinc-400 uppercase tracking-[0.18em]">
+            30 days
+          </h3>
+        </div>
         {streak > 0 && (
-          <span className="text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded">
-            {streak} day streak
+          <span className="text-[10px] font-bold bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded">
+            {streak}d streak
           </span>
         )}
       </div>
@@ -404,25 +630,23 @@ function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHab
           <div
             key={key}
             title={`${Math.round(score * 100)}% · ${key}`}
-            className={`aspect-square rounded-[2px] ${getColor(score)} ${isToday ? 'ring-1 ring-emerald-500 ring-offset-1 dark:ring-offset-[#1a1d24]' : ''} transition-colors`}
+            className={`aspect-square rounded-[2px] ${getColor(score)} ${isToday ? 'ring-1 ring-emerald-500 ring-offset-1 dark:ring-offset-[#161920]' : ''} transition-colors`}
           />
         ))}
       </div>
-      <div className="flex justify-between items-center text-[9px] text-gray-400 font-medium">
+      <div className="flex justify-between items-center text-[9px] text-zinc-400 font-medium">
         <span>Less</span>
         <div className="flex gap-0.5">
-          <div className="w-2 h-2 rounded-sm bg-gray-100 dark:bg-gray-800" />
-          <div className="w-2 h-2 rounded-sm bg-yellow-200 dark:bg-yellow-900/60" />
+          <div className="w-2 h-2 rounded-sm bg-zinc-100 dark:bg-zinc-800/80" />
+          <div className="w-2 h-2 rounded-sm bg-yellow-200 dark:bg-yellow-900/50" />
           <div className="w-2 h-2 rounded-sm bg-yellow-400 dark:bg-yellow-700/70" />
-          <div className="w-2 h-2 rounded-sm bg-yellow-500 dark:bg-yellow-600" />
           <div className="w-2 h-2 rounded-sm bg-amber-500 dark:bg-amber-600" />
-          <div className="w-2 h-2 rounded-sm bg-lime-500 dark:bg-lime-600" />
-          <div className="w-2 h-2 rounded-sm bg-lime-600 dark:bg-lime-500" />
+          <div className="w-2 h-2 rounded-sm bg-lime-500 dark:bg-lime-500" />
           <div className="w-2 h-2 rounded-sm bg-emerald-600 dark:bg-emerald-500" />
         </div>
         <span>100%</span>
       </div>
-      <p className="text-[9px] text-gray-400 italic">Habits + Prayers + Tasks</p>
+      <p className="text-[9px] text-zinc-400 italic">Habits + Prayers + Tasks</p>
       <LightAnalyticsInner dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} now={now} />
     </div>
   );
@@ -454,9 +678,9 @@ function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
     return { weekAvg, monthAvg, bestDay, worstDay };
   }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, now, totalItems]);
   return (
-    <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800 flex flex-wrap gap-x-3 gap-y-1 text-[9px]">
-      <span className="text-gray-500">Week: <strong className="text-gray-700 dark:text-gray-300">{Math.round(weekAvg * 100)}%</strong></span>
-      <span className="text-gray-500">Month: <strong className="text-gray-700 dark:text-gray-300">{Math.round(monthAvg * 100)}%</strong></span>
+    <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800/60 flex flex-wrap gap-x-3 gap-y-1 text-[9px]">
+      <span className="text-zinc-500">Week: <strong className="text-zinc-700 dark:text-zinc-300">{Math.round(weekAvg * 100)}%</strong></span>
+      <span className="text-zinc-500">Month: <strong className="text-zinc-700 dark:text-zinc-300">{Math.round(monthAvg * 100)}%</strong></span>
       {bestDay && <span className="text-emerald-600 dark:text-emerald-400">Best: {bestDay.key} ({Math.round(bestDay.score * 100)}%)</span>}
       {worstDay && worstDay.key !== bestDay?.key && <span className="text-amber-600 dark:text-amber-400">Worst: {worstDay.key} ({Math.round(worstDay.score * 100)}%)</span>}
     </div>
@@ -489,22 +713,22 @@ function ThisWeekWidget({ dailyTaskLogs, activeHabits, now }) {
   ];
   const quote = QUOTES[Math.floor(now.getDate() % QUOTES.length)];
   return (
-    <div className="mt-2.5 pt-2.5 border-t border-gray-100 dark:border-gray-800 shrink-0">
+    <div className="mt-2.5 pt-2.5 border-t border-zinc-100 dark:border-zinc-800/60 shrink-0">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[9px] font-bold text-sky-500 uppercase tracking-wider">This week</span>
+        <span className="text-[9px] font-bold text-sky-500 dark:text-sky-400 uppercase tracking-wider">This week</span>
         <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400 tabular-nums">{weekPct}%</span>
       </div>
       <div className="flex gap-0.5 mb-1.5">
-        {weekDays.map(({ label, pct, isToday }) => (
-          <div key={label} className="flex-1 flex flex-col items-center gap-0.5">
-            <div className="w-full h-4 bg-gray-100 dark:bg-gray-800 rounded-[2px] overflow-hidden" title={`${Math.round(pct * 100)}%`}>
+        {weekDays.map(({ key, label, pct, isToday }) => (
+          <div key={key} className="flex-1 flex flex-col items-center gap-0.5">
+            <div className="w-full h-4 bg-zinc-100 dark:bg-zinc-800/80 rounded-[2px] overflow-hidden" title={`${Math.round(pct * 100)}%`}>
               <div className={`h-full transition-all ${pct >= 0.8 ? 'bg-emerald-500' : pct >= 0.5 ? 'bg-sky-500' : pct > 0 ? 'bg-amber-400' : 'bg-transparent'}`} style={{ width: `${pct * 100}%` }} />
             </div>
-            <span className={`text-[8px] font-medium ${isToday ? 'text-sky-500 font-bold' : 'text-gray-400'}`}>{label}</span>
+            <span className={`text-[8px] font-medium ${isToday ? 'text-sky-500 dark:text-sky-400 font-bold' : 'text-zinc-400'}`}>{label}</span>
           </div>
         ))}
       </div>
-      <p className="text-[9px] text-gray-400 italic">{quote}</p>
+      <p className="text-[9px] text-zinc-400 italic">{quote}</p>
     </div>
   );
 }
@@ -529,7 +753,6 @@ function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDele
   const hasChildren = Array.isArray(node.children) && node.children.length > 0;
   const canAddChild = depth < MAX_TASK_DEPTH;
   const todayKey = toDateKey();
-  const isOverdue = node.deadline && !node.done && node.deadline < todayKey;
 
   const handleDeadlineSave = () => {
     const val = deadlineInput.trim() || null;
@@ -545,13 +768,13 @@ function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDele
 
   return (
     <div 
-      className="group/task flex flex-col w-full select-text"
-      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.add('bg-indigo-50/50', 'dark:bg-indigo-500/5'); }}
-      onDragLeave={(e) => { e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-500/5'); }}
+      className="group/task flex flex-col w-full"
+      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.add('bg-zinc-50'); }}
+      onDragLeave={(e) => { e.currentTarget.classList.remove('bg-zinc-50'); }}
       onDrop={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-500/5');
+        e.currentTarget.classList.remove('bg-zinc-50');
         try {
           const payload = JSON.parse(e.dataTransfer.getData('application/json'));
           if (payload.type === 'project-task' && payload.projectId === projectId && payload.parentId === parentId) {
@@ -563,102 +786,106 @@ function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDele
       <div 
         draggable
         onDragStart={handleDragStart}
-        className="flex items-start gap-1.5 py-1 px-1 -mx-1 rounded-md hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group/row cursor-grab active:cursor-grabbing"
+        className="group/row task-row cursor-grab active:cursor-grabbing"
       >
-        
         {/* Expand Toggle */}
-        <div className="w-3.5 flex justify-center shrink-0 mt-0.5">
+        <div className="flex h-4 w-3 shrink-0 items-center justify-center">
           {hasChildren ? (
-            <button type="button" onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 select-none">
-              {expanded ? <Icons.ChevronDown className="w-3 h-3" /> : <Icons.ChevronRight className="w-3 h-3" />}
+            <button type="button" onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }} className="text-zinc-400 transition-colors hover:text-zinc-600 dark:hover:text-zinc-300">
+              {expanded ? <Icons.ChevronDown className="h-3 w-3" /> : <Icons.ChevronRight className="h-3 w-3" />}
             </button>
-          ) : <span className="w-3 h-3" />}
+          ) : <span className="h-3 w-3" />}
         </div>
 
-        {/* Checkbox - click toggles */}
-        <button type="button" onClick={(e) => { e.stopPropagation(); onToggle(node.id, !node.done); }} className={`shrink-0 mt-0.5 transition-colors select-none ${node.done ? 'text-emerald-500' : 'text-gray-300 dark:text-gray-600 hover:text-indigo-400'}`}>
-          {node.done ? <Icons.CheckCircle className="w-3.5 h-3.5" /> : <Icons.Circle className="w-3.5 h-3.5" />}
-        </button>
+        {/* Checkbox universale */}
+        <TaskCheckbox done={node.done} onClick={() => onToggle(node.id, !node.done)} />
         
-        {/* Content - click toggles, double-click to edit. Grid per allineare calendario su colonna fissa */}
-        <div className="flex-1 min-w-0 grid grid-cols-[1fr_5.5rem_auto] items-center gap-2" onClick={() => onToggle(node.id, !node.done)} onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); }}>
-          <div className="min-w-0">
-            {editing ? (
-              <input
-                autoFocus
-                defaultValue={node.title}
-                onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
-                onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
-                onClick={(e) => e.stopPropagation()}
-                onDoubleClick={(e) => e.stopPropagation()}
-                className="w-full bg-white dark:bg-gray-800 border border-indigo-400 rounded px-1 text-xs outline-none py-0 select-text"
-              />
-            ) : (
-              <span className={`text-xs cursor-pointer transition-colors break-words block select-text leading-relaxed ${node.done ? 'text-gray-400 line-through' : 'text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400'}`}>
-                {node.title}
-              </span>
-            )}
-          </div>
-
-          {/* Deadline - visibile solo se c'è una data o se si sta aggiungendo/modificando */}
-          {onDeadline && (node.deadline || showDeadline) && (
-            <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
-              {showDeadline ? (
-                <input
-                  type="date"
-                  value={deadlineInput || ''}
-                  onChange={(e) => setDeadlineInput(e.target.value)}
-                  onBlur={handleDeadlineSave}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleDeadlineSave(); if (e.key === 'Escape') { setShowDeadline(false); setDeadlineInput(node.deadline || ''); } }}
-                  autoFocus
-                  className="w-full max-w-[7rem] text-[10px] py-0.5 px-1.5 rounded-md border border-amber-400 dark:border-amber-500 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-amber-400"
-                />
-              ) : (
-                <button type="button" onClick={(e) => { e.stopPropagation(); setDeadlineInput(node.deadline || ''); setShowDeadline(true); }} className={`flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] shrink-0 ${getDeadlineColorClass(node.deadline, node.done)}`} title="Scadenza">
-                  <Icons.Calendar className="w-3 h-3 shrink-0" />
-                  <span className="tabular-nums">{formatDeadline(node.deadline)}</span>
-                </button>
-              )}
-            </div>
+        {/* Title - seamless editing */}
+        <div className="flex flex-1 min-w-0 items-center gap-2" onClick={() => !editing && onToggle(node.id, !node.done)}>
+          {editing ? (
+            <input
+              autoFocus
+              defaultValue={node.title}
+              onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
+              onClick={(e) => e.stopPropagation()}
+              className="seamless-input text-sm text-zinc-800 dark:text-zinc-100"
+            />
+          ) : (
+            <span
+              onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); }}
+              className={`cursor-pointer select-text text-sm leading-none transition-colors ${node.done ? 'text-zinc-400 line-through decoration-zinc-400' : 'text-zinc-700 dark:text-zinc-200'}`}
+            >
+              {node.title}
+            </span>
           )}
-          
-          {/* Actions - calendario per aggiungere scadenza appare al hover come le altre */}
-          <div className="flex items-center gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity justify-end" onClick={(e) => e.stopPropagation()}>
-            {onDeadline && !node.deadline && !showDeadline && (
-              <button type="button" onClick={(e) => { e.stopPropagation(); setDeadlineInput(''); setShowDeadline(true); }} className="p-0.5 text-gray-500 hover:text-amber-500 select-none" title="Aggiungi scadenza">
-                <Icons.Calendar className="w-3 h-3" />
-              </button>
-            )}
-            {canAddChild && (
-              <button type="button" onClick={() => setOpenAdd(!openAdd)} className="p-0.5 text-gray-500 hover:text-indigo-500 select-none" title="Subtask">
-                <Icons.Plus className="w-3 h-3" />
-              </button>
-            )}
-            <button type="button" onClick={() => hasFreeTop3Slot && onAddToTop3(projectId, node.id)} disabled={!hasFreeTop3Slot} className={`p-0.5 select-none ${hasFreeTop3Slot ? 'text-gray-500 hover:text-amber-500' : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'}`} title={hasFreeTop3Slot ? 'Add to Top 3' : 'Top 3 pieni'}>
-              <Icons.Target className="w-3 h-3" />
+
+          {/* Deadline badge inline */}
+          {onDeadline && node.deadline && !showDeadline && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setDeadlineInput(node.deadline || ''); setShowDeadline(true); }}
+              className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${getDeadlineColorClass(node.deadline, node.done)}`}
+            >
+              {formatDeadline(node.deadline)}
             </button>
-            <button type="button" onClick={() => onDelete(node.id)} className="p-0.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded select-none" title="Delete">
-              <Icons.X className="w-3 h-3" />
+          )}
+          {showDeadline && (
+            <input
+              type="date"
+              value={deadlineInput || ''}
+              onChange={(e) => setDeadlineInput(e.target.value)}
+              onBlur={handleDeadlineSave}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleDeadlineSave(); if (e.key === 'Escape') { setShowDeadline(false); } }}
+              autoFocus
+              onClick={(e) => e.stopPropagation()}
+              className="dashboard-input w-28 py-0.5 text-xs"
+            />
+          )}
+        </div>
+
+        {/* Actions — visibili al hover */}
+        <div className="flex items-center gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+          {onDeadline && !node.deadline && !showDeadline && (
+            <button type="button" onClick={() => { setDeadlineInput(''); setShowDeadline(true); }} className="dashboard-action-btn p-1 hover:text-amber-500" title="Scadenza">
+              <Icons.Calendar className="h-3 w-3" />
             </button>
-          </div>
+          )}
+          {canAddChild && (
+            <button type="button" onClick={() => setOpenAdd(!openAdd)} className="dashboard-action-btn p-1 hover:text-indigo-500" title="Subtask">
+              <Icons.Plus className="h-3 w-3" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => hasFreeTop3Slot && onAddToTop3(projectId, node.id)}
+            disabled={!hasFreeTop3Slot}
+            className={`dashboard-action-btn p-1 ${hasFreeTop3Slot ? 'hover:text-amber-500' : 'opacity-30 cursor-not-allowed'}`}
+            title={hasFreeTop3Slot ? 'Top 3' : 'Top 3 pieni'}
+          >
+            <Icons.Target className="h-3 w-3" />
+          </button>
+          <button type="button" onClick={() => onDelete(node.id)} className="dashboard-action-btn p-1 hover:text-red-500" title="Elimina">
+            <Icons.X className="h-3 w-3" />
+          </button>
         </div>
       </div>
 
-      {openAdd && canAddChild && !editing && (
-        <div className="flex pl-6 pr-1 py-1">
+      {openAdd && canAddChild && (
+        <div className="flex pl-8 pr-2 py-1">
           <input
             autoFocus
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const t = draft.trim(); if (t) { onAddChild(node.id, t); setDraft(''); setOpenAdd(false); } } if (e.key === 'Escape') { e.preventDefault(); setOpenAdd(false); } }}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const t = draft.trim(); if (t) { onAddChild(node.id, t); setDraft(''); setOpenAdd(false); } } if (e.key === 'Escape') { setOpenAdd(false); } }}
             placeholder="Subtask..."
-            className="flex-1 bg-white dark:bg-[#1a1d24] border border-gray-200 dark:border-gray-700 rounded px-2 py-0.5 text-[11px] outline-none focus:border-indigo-500"
+            className="dashboard-input flex-1 py-1 text-sm"
           />
         </div>
       )}
 
       {expanded && hasChildren && (
-        <div className={`ml-5 pl-2 border-l-2 ${accentBorder(projectAccent)} flex flex-col`}>
+        <div className={`ml-4 pl-3 border-l border-zinc-200 dark:border-zinc-700/60 flex flex-col`}>
           {node.children.map((child, cIdx) => (
             <DenseTaskNode
               key={child.id} node={child} depth={depth + 1} projectId={projectId} projectAccent={projectAccent}
@@ -672,7 +899,7 @@ function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDele
   );
 }
 
-// 3. Standardized Project Card
+// 3. Standardized Project Card — collapsible by default
 function StandardProjectCard({ 
   project, 
   stats, 
@@ -691,103 +918,211 @@ function StandardProjectCard({
   formatDeadline,
   renderTasks
 }) {
-  const accentBar = { indigo: 'bg-indigo-500', sky: 'bg-sky-500', violet: 'bg-violet-500', emerald: 'bg-emerald-500', amber: 'bg-amber-500', rose: 'bg-rose-500' }[accent];
-  const accentProgress = { indigo: 'from-indigo-500 to-indigo-400', sky: 'from-sky-500 to-sky-400', violet: 'from-violet-500 to-violet-400', emerald: 'from-emerald-500 to-emerald-400', amber: 'from-amber-500 to-amber-400', rose: 'from-rose-500 to-rose-400' }[accent];
-  const accentBorderClass = { indigo: 'border-indigo-500/30', sky: 'border-sky-500/30', violet: 'border-violet-500/30', emerald: 'border-emerald-500/30', amber: 'border-amber-500/30', rose: 'border-rose-500/30' }[accent];
+  const [expanded, setExpanded] = useState(false);
+  const accentBar = { indigo: 'bg-indigo-500', sky: 'bg-sky-500', violet: 'bg-violet-500', emerald: 'bg-emerald-500', amber: 'bg-amber-500', rose: 'bg-rose-500' }[accent] || 'bg-zinc-400';
+  const accentText = { indigo: 'text-indigo-600 dark:text-indigo-400', sky: 'text-sky-600 dark:text-sky-400', violet: 'text-violet-600 dark:text-violet-400', emerald: 'text-emerald-600 dark:text-emerald-400', amber: 'text-amber-600 dark:text-amber-400', rose: 'text-rose-600 dark:text-rose-400' }[accent] || 'text-zinc-500';
+
+  const menuItems = [
+    {
+      label: project.deadline ? 'Modifica scadenza' : 'Aggiungi scadenza',
+      icon: <Icons.Calendar className="h-3.5 w-3.5" />,
+      onClick: () => { setProjectDeadlineInput(project.deadline || ''); setProjectDeadlineEditing(project.id); }
+    },
+    ...(isShared ? [] : []),
+    'divider',
+    { label: 'Elimina progetto', icon: <Icons.X className="h-3.5 w-3.5" />, danger: true, onClick: () => onDelete(project.id) }
+  ];
 
   return (
-    <div className="flex flex-col gap-4 group/proj bg-white/60 dark:bg-white/5 border border-gray-100 dark:border-gray-800/60 rounded-2xl p-5 hover:shadow-xl hover:bg-white dark:hover:bg-white/10 transition-all duration-300 relative">
-      {isShared && (
-        <div className="absolute -top-2.5 -right-2 bg-indigo-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg uppercase tracking-tighter z-10 border-2 border-white dark:border-[#0B0F19]">
-          {shareId}
-        </div>
-      )}
-      
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-4">
-          <div className={`w-2 h-6 ${accentBar} rounded-full shrink-0 shadow-sm shadow-black/10`}></div>
-          
-          <div className="flex-1 min-w-0 flex items-center gap-3">
-            <input 
-              value={project.title}
-              onChange={(e) => onTitleChange(e.target.value)}
-              className="flex-1 text-sm font-bold text-gray-900 dark:text-white bg-transparent outline-none border-b border-transparent focus:border-indigo-500 transition-colors min-w-0 select-text leading-tight"
-            />
+    <div className="dashboard-panel group/proj flex flex-col overflow-hidden transition-all">
+      {/* Header — sempre visibile */}
+      <div
+        className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-zinc-50/60 dark:hover:bg-white/[0.03]"
+        onClick={() => setExpanded(e => !e)}
+      >
+        {/* Accent stripe */}
+        <div className={`h-5 w-1 shrink-0 rounded-full ${accentBar}`} />
 
-            {/* BARRA % ACCANTO AL TITOLO */}
-            <div className="flex items-center gap-2 shrink-0 bg-gray-50 dark:bg-gray-800/50 px-2.5 py-1.5 rounded-xl border border-gray-100 dark:border-gray-700/50 shadow-sm">
-              <div className="w-16 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div className={`h-full bg-gradient-to-r ${accentProgress} rounded-full transition-all duration-500`} style={{ width: `${percentage}%` }} />
-              </div>
-              <span className="text-[11px] font-black text-gray-700 dark:text-gray-200 tabular-nums">{percentage}%</span>
-            </div>
-          </div>
+        {/* Title — seamless */}
+        <input
+          value={project.title}
+          onChange={(e) => { e.stopPropagation(); onTitleChange(e.target.value); }}
+          onClick={(e) => e.stopPropagation()}
+          className="seamless-input flex-1 text-sm font-semibold text-zinc-800 dark:text-zinc-100"
+        />
 
-          <div className="flex items-center gap-1 opacity-0 group-hover/proj:opacity-100 transition-all">
-            {isShared && (
-              <Link 
-                to={`/shared/${shareId}`}
-                className="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-md transition-colors"
-                title="Apri dashboard condivisa"
-              >
-                <Icons.ExternalLink className="w-3.5 h-3.5" />
-              </Link>
-            )}
-            
-            {(project.deadline || projectDeadlineEditing === project.id) ? (
-              <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                {projectDeadlineEditing === project.id ? (
-                  <input
-                    type="date"
-                    value={projectDeadlineInput}
-                    onChange={(e) => setProjectDeadlineInput(e.target.value)}
-                    onBlur={() => onDeadlineClick(projectDeadlineInput)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') onDeadlineClick(projectDeadlineInput);
-                      if (e.key === 'Escape') setProjectDeadlineEditing(null);
-                    }}
-                    autoFocus
-                    className="text-[10px] py-1 px-1.5 rounded-md border border-amber-400 dark:border-amber-500 bg-white dark:bg-gray-800 outline-none"
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => { setProjectDeadlineInput(project.deadline || ''); setProjectDeadlineEditing(project.id); }}
-                    className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold ${getDeadlineColorClass(project.deadline, false)}`}
-                  >
-                    <Icons.Calendar className="w-3 h-3 shrink-0" />
-                    <span className="tabular-nums">{formatDeadline(project.deadline)}</span>
-                  </button>
-                )}
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => { setProjectDeadlineInput(''); setProjectDeadlineEditing(project.id); }}
-                className="p-1.5 text-gray-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-md transition-all"
-                title="Scadenza"
-              >
-                <Icons.Calendar className="w-3.5 h-3.5" />
-              </button>
-            )}
+        {/* Stats */}
+        <div className="flex shrink-0 items-center gap-3">
+          {project.deadline && projectDeadlineEditing !== project.id && (
             <button
               type="button"
-              onClick={() => onDelete(project.id)}
-              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-all"
-              title="Elimina"
+              onClick={(e) => { e.stopPropagation(); setProjectDeadlineInput(project.deadline || ''); setProjectDeadlineEditing(project.id); }}
+              className={`text-xs ${getDeadlineColorClass(project.deadline, false)}`}
             >
-              <Icons.X className="w-3.5 h-3.5" />
+              {formatDeadline(project.deadline)}
             </button>
+          )}
+          {projectDeadlineEditing === project.id && (
+            <input
+              type="date"
+              value={projectDeadlineInput}
+              onChange={(e) => setProjectDeadlineInput(e.target.value)}
+              onBlur={() => onDeadlineClick(projectDeadlineInput)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') onDeadlineClick(projectDeadlineInput);
+                if (e.key === 'Escape') setProjectDeadlineEditing(null);
+              }}
+              autoFocus
+              onClick={(e) => e.stopPropagation()}
+              className="dashboard-input w-28 py-0.5 text-xs"
+            />
+          )}
+          
+          {/* Progress bar + % */}
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <div className="h-1 w-20 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+              <div className={`h-full ${accentBar} transition-all duration-500`} style={{ width: `${percentage}%` }} />
+            </div>
+            <span className={`w-8 text-right text-xs tabular-nums font-medium ${accentText}`}>{percentage}%</span>
           </div>
+
+          {isShared && (
+            <Link to={`/shared/${shareId}`} onClick={(e) => e.stopPropagation()} className="dashboard-action-btn" title="Apri condivisa">
+              <Icons.ExternalLink className="h-3.5 w-3.5" />
+            </Link>
+          )}
+
+          <div onClick={(e) => e.stopPropagation()}>
+            <KebabMenu items={menuItems} />
+          </div>
+
+          <Icons.ChevronDown className={`h-3.5 w-3.5 text-zinc-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
         </div>
       </div>
-      
-      <div className={`flex flex-col gap-1.5 pl-5 border-l-2 ${accentBorderClass} ml-1 transition-opacity duration-300 ${isShared ? 'opacity-80' : 'opacity-100'}`}>
-        {renderTasks()}
-      </div>
+
+      {/* Tasks — espandibili */}
+      {expanded && (
+        <div className="animate-slide-down border-t border-zinc-100 px-4 py-3 dark:border-white/[0.06]">
+          {renderTasks()}
+        </div>
+      )}
     </div>
   );
 }
+
+// 4. Life Goals Components
+function LifeGoalCard({
+  goal, accent, stats, percentage,
+  onToggle, onDelete, onRename, onDeadline,
+  onDeadlineClick, deadlineEditing, deadlineInput, setDeadlineInput, setDeadlineEditing,
+  getDeadlineColorClass, formatDeadline, renderTasks, onAddToTop3, hasFreeTop3Slot,
+  onPromoteProject, onPromoteQuick, isLinkedToProject, isLinkedToQuick
+}) {
+  const accentBar = { emerald: 'bg-emerald-500', sky: 'bg-sky-500', violet: 'bg-violet-500', amber: 'bg-amber-500', rose: 'bg-rose-500' }[accent] || 'bg-indigo-500';
+  const accentText = { emerald: 'text-emerald-600', sky: 'text-sky-600', violet: 'text-violet-600', amber: 'text-amber-600', rose: 'text-rose-600' }[accent] || 'text-indigo-600';
+  const accentBg = { emerald: 'bg-emerald-500/10', sky: 'bg-sky-500/10', violet: 'bg-violet-500/10', amber: 'bg-amber-500/10', rose: 'bg-rose-500/10' }[accent] || 'bg-indigo-500/10';
+  const [showTasks, setShowTasks] = useState(false);
+  const isProject = goal.type === 'project';
+
+  return (
+    <div
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('application/json', JSON.stringify({ type: 'lifeGoal', goalId: goal.id }));
+        e.dataTransfer.effectAllowed = 'move';
+      }}
+      className="group/goal relative flex flex-col rounded-xl border border-gray-200 bg-white transition-all hover:shadow-md dark:border-white/10 dark:bg-white/[0.03]"
+    >
+      {/* Accent stripe */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${accentBar}`} />
+      
+      <div className="flex items-center gap-2 pl-3 pr-2 py-2 cursor-grab active:cursor-grabbing">
+        {/* Checkbox */}
+        <button
+          onClick={() => onToggle(goal.id, !goal.done)}
+          className={`shrink-0 rounded p-0.5 transition-colors ${goal.done ? 'bg-emerald-500 text-white' : 'bg-gray-200 text-transparent hover:bg-gray-300 dark:bg-gray-700'}`}
+        >
+          <Icons.CheckCircle className="h-3.5 w-3.5" />
+        </button>
+
+        {/* Title */}
+        <div className="flex-1 min-w-0">
+          <input
+            value={goal.title}
+            onChange={(e) => onRename(goal.id, e.target.value)}
+            className={`w-full bg-transparent text-xs font-medium outline-none ${goal.done ? 'text-gray-400 line-through' : 'text-gray-800 dark:text-gray-200'}`}
+          />
+          {isProject && (
+            <div className="mt-1 flex items-center gap-2">
+              <div className="h-1 w-16 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                <div className={`h-full ${accentBar}`} style={{ width: `${percentage}%` }} />
+              </div>
+              <span className="text-[9px] text-gray-400">{percentage}%</span>
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-0.5 opacity-0 group-hover/goal:opacity-100 transition-opacity">
+          {hasFreeTop3Slot && (
+            <button onClick={() => onAddToTop3(goal.id)} className="rounded p-1 text-gray-400 hover:text-amber-500" title="Top 3">
+              <Icons.Target className="h-3 w-3" />
+            </button>
+          )}
+          
+          {isProject ? (
+            <button onClick={() => onPromoteProject(goal.id)} className={`rounded p-1 ${isLinkedToProject ? 'text-sky-500' : 'text-gray-400 hover:text-sky-500'}`} title="Projects">
+              <Icons.Play className="h-3 w-3" />
+            </button>
+          ) : (
+            <button onClick={() => onPromoteQuick(goal.id)} className={`rounded p-1 ${isLinkedToQuick ? 'text-rose-500' : 'text-gray-400 hover:text-rose-500'}`} title="Quick">
+              <Icons.Play className="h-3 w-3" />
+            </button>
+          )}
+
+          {isProject && (
+            <button onClick={() => setShowTasks(!showTasks)} className={`rounded p-1 ${showTasks ? accentText : 'text-gray-400'}`}>
+              <Icons.ChevronDown className={`h-3 w-3 transition-transform ${showTasks ? 'rotate-180' : ''}`} />
+            </button>
+          )}
+          
+          {deadlineEditing === goal.id ? (
+            <input
+              type="date"
+              value={deadlineInput}
+              onChange={(e) => setDeadlineInput(e.target.value)}
+              onBlur={() => onDeadlineClick(goal.id, deadlineInput)}
+              autoFocus
+              className="w-20 text-[9px]"
+            />
+          ) : goal.deadline ? (
+            <button onClick={() => { setDeadlineInput(goal.deadline); setDeadlineEditing(goal.id); }} className={`rounded px-1.5 py-0.5 text-[8px] ${getDeadlineColorClass(goal.deadline, false)}`}>
+              {formatDeadline(goal.deadline)}
+            </button>
+          ) : (
+            <button onClick={() => { setDeadlineInput(''); setDeadlineEditing(goal.id); }} className="rounded p-1 text-gray-400 hover:text-amber-500">
+              <Icons.Calendar className="h-3 w-3" />
+            </button>
+          )}
+          
+          <button onClick={() => onDelete(goal.id)} className="rounded p-1 text-gray-400 hover:text-red-500">
+            <Icons.X className="h-3 w-3" />
+          </button>
+        </div>
+      </div>
+      
+      {/* Subtasks */}
+      {isProject && showTasks && (
+        <div className="border-t border-gray-100 bg-gray-50/50 px-2 py-2 dark:border-white/5 dark:bg-black/20">
+          <div className="flex flex-col gap-1">
+            {renderTasks()}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 /**
  * ----------------------------------------------------------------------
@@ -816,6 +1151,10 @@ export default function DashboardV2() {
   const [quickTaskDeadlineEditing, setQuickTaskDeadlineEditing] = useState(null);
   const [quickTaskDeadlineInput, setQuickTaskDeadlineInput] = useState('');
   const [dailyCompletionLog, setDailyCompletionLog] = useState(initial.dailyCompletionLog || {});
+  const [lifeGoals, setLifeGoals] = useState(initial.lifeGoals);
+  const [goalTaskDrafts, setGoalTaskDrafts] = useState({});
+  const [goalDeadlineEditing, setGoalDeadlineEditing] = useState(null);
+  const [goalDeadlineInput, setGoalDeadlineInput] = useState('');
   const [sharedDashboards, setSharedDashboards] = useState([]);
   const wsConnections = useRef({}); // { shareId: WebSocket }
   
@@ -893,6 +1232,7 @@ export default function DashboardV2() {
           if (d.top3Manual) setTop3Manual(d.top3Manual);
           if (d.quickTasks) setQuickTasks(d.quickTasks);
           if (d.dailyCompletionLog) setDailyCompletionLog(d.dailyCompletionLog);
+          if (d.lifeGoals) setLifeGoals(normalizeLifeGoals(d.lifeGoals, buildDefaultLifeGoals()));
         }
 
         // Fetch shared dashboards
@@ -920,7 +1260,7 @@ export default function DashboardV2() {
   useEffect(() => {
     if (!isLoaded) return;
 
-    const state = { dailyTaskTemplates, dailyTaskLogs, projects, prayerLogs, top3Manual, quickTasks, dailyCompletionLog };
+    const state = { dailyTaskTemplates, dailyTaskLogs, projects, prayerLogs, top3Manual, quickTasks, dailyCompletionLog, lifeGoals };
     
     // LocalStorage Sync
     try {
@@ -936,7 +1276,7 @@ export default function DashboardV2() {
         console.error("Failed to sync dashboard to DB:", err);
       }
     }, 2000);
-  }, [isLoaded, dailyTaskTemplates, dailyTaskLogs, projects, prayerLogs, top3Manual, quickTasks, dailyCompletionLog]);
+  }, [isLoaded, dailyTaskTemplates, dailyTaskLogs, projects, prayerLogs, top3Manual, quickTasks, dailyCompletionLog, lifeGoals]);
 
   const todayKey = toDateKey(now);
   const todayTaskLog = dailyTaskLogs[todayKey] || {};
@@ -945,12 +1285,17 @@ export default function DashboardV2() {
   const activeHabits = useMemo(() => dailyTaskTemplates.filter((t) => !t.locked), [dailyTaskTemplates]);
   const todayDone = activeHabits.reduce((acc, t) => acc + (todayTaskLog[t.id] ? 1 : 0), 0);
   const prayerDone = PRAYERS.reduce((acc, p) => acc + (todayPrayerLog[p] ? 1 : 0), 0);
-  const top3Resolved = useMemo(() => resolveTop3Slots(projects, top3Manual, quickTasks), [projects, top3Manual, quickTasks]);
+  const top3Resolved = useMemo(() => resolveTop3Slots(projects, top3Manual, quickTasks, lifeGoals), [projects, top3Manual, quickTasks, lifeGoals]);
   const top3DoneCount = top3Resolved.filter((s) => s && !s.missing && s.done).length;
 
   const totalFocusItems = activeHabits.length + PRAYERS.length + 3;
   const doneFocusItems = todayDone + prayerDone + top3DoneCount;
   const todayFocusScore = totalFocusItems ? doneFocusItems / totalFocusItems : 0;
+
+  const top3LifeGoalSync = useMemo(() => {
+    // This force-updates Top3 labels when lifeGoals change
+    return lifeGoals;
+  }, [lifeGoals]);
 
   const focusStreak = useMemo(() => {
     const totalItems = activeHabits.length + PRAYERS.length + 3;
@@ -1002,7 +1347,14 @@ export default function DashboardV2() {
   };
   const togglePrayer = (name, val) => setPrayerLogs(p => ({ ...p, [todayKey]: { ...p[todayKey], [name]: val } }));
   const toggleQuickTask = (id, val) => {
-    setQuickTasks(p => p.map(t => t.id === id ? { ...t, done: val } : t));
+    setQuickTasks(p => {
+      const next = p.map(t => t.id === id ? { ...t, done: val } : t);
+      const updatedTask = next.find(t => t.id === id);
+      if (updatedTask?.lifeGoalId) {
+        updateGoal(updatedTask.lifeGoalId, g => ({ ...g, done: val }));
+      }
+      return next;
+    });
     setDailyCompletionLog(prev => {
       const day = prev[todayKey] || { quick: [], project: [] };
       const nextQuick = val ? (day.quick?.includes(id) ? day.quick : [...(day.quick || []), id]) : (day.quick || []).filter(x => x !== id);
@@ -1153,8 +1505,143 @@ export default function DashboardV2() {
     });
   };
 
+  // ----------------------------------------------------------------------
+  // LIFE GOALS HELPERS
+  // ----------------------------------------------------------------------
+  const updateLifeGoals = (updater) => setLifeGoals(prev => {
+    const next = typeof updater === 'function' ? updater(prev) : updater;
+    return { ...next };
+  });
+
+  const updateGoal = (goalId, updater) => {
+    updateLifeGoals(prev => ({
+      ...prev,
+      tiers: prev.tiers.map(tier => ({
+        ...tier,
+        goals: tier.goals.map(goal => goal.id === goalId ? updater(goal) : goal)
+      }))
+    }));
+  };
+
+  const deleteGoal = (goalId) => {
+    if (!window.confirm("Sei sicuro di voler eliminare questo obiettivo?")) return;
+    updateLifeGoals(prev => ({
+      ...prev,
+      tiers: prev.tiers.map(tier => ({
+        ...tier,
+        goals: tier.goals.filter(goal => goal.id !== goalId)
+      }))
+    }));
+  };
+
+  const moveGoalToTier = (goalId, targetTierId) => {
+    updateLifeGoals(prev => {
+      let movedGoal = null;
+      const nextTiers = prev.tiers.map(tier => {
+        const goals = [...tier.goals];
+        const idx = goals.findIndex(g => g.id === goalId);
+        if (idx !== -1) {
+          [movedGoal] = goals.splice(idx, 1);
+        }
+        return { ...tier, goals };
+      });
+
+      if (!movedGoal) return prev;
+
+      return {
+        ...prev,
+        tiers: nextTiers.map(tier => {
+          if (tier.id === targetTierId) {
+            return { ...tier, goals: [...tier.goals, movedGoal] };
+          }
+          return tier;
+        })
+      };
+    });
+  };
+
+  const reorderGoalInTier = (tierId, fromIdx, toIdx) => {
+    updateLifeGoals(prev => ({
+      ...prev,
+      tiers: prev.tiers.map(tier => {
+        if (tier.id !== tierId) return tier;
+        const next = [...tier.goals];
+        const [removed] = next.splice(fromIdx, 1);
+        next.splice(toIdx, 0, removed);
+        return { ...tier, goals: next };
+      })
+    }));
+  };
+
+  const toggleTierCollapse = (tierId) => {
+    updateLifeGoals(prev => ({
+      ...prev,
+      tiers: prev.tiers.map(tier => tier.id === tierId ? { ...tier, collapsed: !tier.collapsed } : tier)
+    }));
+  };
+
+  const addGoalToTier = (tierId, title, category = 'General', type = 'quick') => {
+    const newGoal = { id: uid('goal'), title, category, type, done: false, deadline: null, tasks: [] };
+    updateLifeGoals(prev => ({
+      ...prev,
+      tiers: prev.tiers.map(tier => tier.id === tierId ? { ...tier, goals: [...tier.goals, newGoal] } : tier)
+    }));
+  };
+
+  const promoteGoalToProjects = (goalId) => {
+    if (projects.some((project) => project.lifeGoalId === goalId)) return;
+    let goalToLink = null;
+    for (const tier of lifeGoals.tiers) {
+      const found = tier.goals.find(g => g.id === goalId);
+      if (found) { goalToLink = { ...found }; break; }
+    }
+    if (!goalToLink) return;
+
+    // Crea un progetto collegato (usa l'ID del goal come riferimento)
+    setProjects(p => [{
+      id: uid('project'),
+      lifeGoalId: goalId, // Campo per la sincronizzazione
+      title: goalToLink.title,
+      active: true,
+      tasks: goalToLink.tasks || [],
+      deadline: goalToLink.deadline || undefined
+    }, ...p]);
+  };
+
+  const promoteGoalToQuickTasks = (goalId) => {
+    if (quickTasks.some((task) => task.lifeGoalId === goalId && !task.parentId)) return;
+    let goalToLink = null;
+    for (const tier of lifeGoals.tiers) {
+      const found = tier.goals.find(g => g.id === goalId);
+      if (found) { goalToLink = { ...found }; break; }
+    }
+    if (!goalToLink) return;
+
+    // Crea un quick task collegato
+    setQuickTasks(q => [{
+      id: uid('task'),
+      lifeGoalId: goalId, // Campo per la sincronizzazione
+      title: goalToLink.title,
+      done: goalToLink.done || false,
+      deadline: goalToLink.deadline || undefined,
+      parentId: null
+    }, ...q]);
+  };
+
   const toggleProjectTask = (projectId, taskId, val) => {
-    updateProject(projectId, p => ({ ...p, tasks: updateNodeInTree(p.tasks, taskId, n => ({ ...n, done: val })) }));
+    updateProject(projectId, p => {
+      const nextTasks = updateNodeInTree(p.tasks, taskId, n => ({ ...n, done: val }));
+      
+      // Se il progetto è collegato a un Life Goal, sincronizza il task corrispondente
+      if (p.lifeGoalId) {
+        updateGoal(p.lifeGoalId, g => ({
+          ...g,
+          tasks: updateNodeInTree(g.tasks, taskId, n => ({ ...n, done: val }))
+        }));
+      }
+      
+      return { ...p, tasks: nextTasks };
+    });
     setDailyCompletionLog(prev => {
       const day = prev[todayKey] || { quick: [], project: [] };
       const key = `${projectId}:${taskId}`;
@@ -1212,87 +1699,108 @@ export default function DashboardV2() {
   };
 
   return (
-    <div className="h-full w-full bg-gray-100/80 dark:bg-[#0B0F19] text-gray-900 dark:text-gray-100 flex flex-col overflow-hidden font-sans select-none selection:bg-indigo-500/30 antialiased">
+    <div className="h-full w-full bg-[#e4e5ea] dark:bg-[#0c0e14] text-gray-900 dark:text-zinc-100 flex flex-col overflow-hidden font-sans select-none selection:bg-indigo-500/30 antialiased">
       
-      {/* HEADER */}
-      <header className="shrink-0 px-5 py-3 flex items-center justify-between bg-white/95 dark:bg-[#1a1d24] border-b border-gray-200/80 dark:border-gray-800/80 select-none shadow-sm">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-extrabold tracking-tight text-gray-800 dark:text-gray-100 flex items-center gap-2.5">
-            Dashboard
-            <span className="text-[10px] font-bold px-2 py-0.5 bg-indigo-100 dark:bg-indigo-500/25 text-indigo-600 dark:text-indigo-300 rounded-md uppercase tracking-widest">Pro</span>
-          </h1>
-        </div>
+      {/* HEADER - Premium Redesign */}
+      <header className="shrink-0 border-b border-zinc-300/60 bg-[#eaebef]/95 px-6 py-3.5 backdrop-blur-xl transition-all dark:border-white/[0.06] dark:bg-[#111318]/95">
+        <div className="flex items-center justify-between">
+          {/* Left: Branding */}
+          <div className="flex items-center gap-4">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/25">
+              <Icons.Target className="h-5 w-5" />
+            </div>
+            <div className="hidden flex-col sm:flex">
+              <h1 className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">Dashboard</h1>
+              <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500">Daily Focus OS</span>
+            </div>
+          </div>
 
-        <div className="flex items-center gap-4">
-           {focusStreak > 0 && (
-             <span className="text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded">
-               {focusStreak} day streak
-             </span>
-           )}
-           {/* Mini Focus Bar */}
-           <div className="hidden md:flex items-center gap-2">
-             <span className="text-xs font-bold text-indigo-500">FOCUS</span>
-             <div className="w-32 h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-               <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full" style={{ width: `${Math.round(todayFocusScore * 100)}%` }} />
-             </div>
-             <span className="text-xs font-bold tabular-nums">{Math.round(todayFocusScore * 100)}%</span>
-           </div>
-           
-           <div className="text-xs text-gray-500 font-medium">
-             {now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-           </div>
-           <button
-             type="button"
-             onClick={() => {
-               if (window.confirm('Azzerare tutto? Verranno eliminati progetti, task, abitudini e dati della dashboard. Ricarica la pagina.')) {
-                 try {
-                   localStorage.removeItem(STORAGE_KEY);
-                   localStorage.removeItem('km-dashboard-v1');
-                   localStorage.removeItem(POMODORO_STORAGE);
-                   window.location.reload();
-                 } catch (_) {}
-               }
-             }}
-             className="text-[10px] font-medium text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-             title="Reset dashboard"
-           >
-             Reset
-           </button>
+          {/* Center: Live Stats */}
+          <div className="flex items-center gap-3">
+            {focusStreak > 0 && (
+              <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 px-3 py-1.5 text-amber-700 ring-1 ring-amber-200/50 dark:from-amber-900/20 dark:to-orange-900/20 dark:text-amber-300 dark:ring-amber-700/30">
+                <Icons.Flame className="h-3.5 w-3.5" />
+                <span className="text-[11px] font-bold">{focusStreak}</span>
+              </div>
+            )}
+            
+            {/* Focus Score */}
+            <div className="flex items-center gap-2 rounded-full bg-zinc-50 px-3 py-1.5 ring-1 ring-zinc-200/60 dark:bg-white/[0.06] dark:ring-white/[0.08]">
+              <div className="relative h-1.5 w-24 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700/80">
+                <div 
+                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-700"
+                  style={{ width: `${Math.round(todayFocusScore * 100)}%` }}
+                />
+              </div>
+              <span className="min-w-[2rem] text-[11px] font-black tabular-nums text-zinc-700 dark:text-zinc-200">
+                {Math.round(todayFocusScore * 100)}%
+              </span>
+            </div>
+          </div>
+
+          {/* Right: Date & Actions */}
+          <div className="flex items-center gap-3">
+            <div className="hidden rounded-lg bg-zinc-100/80 px-3 py-1.5 text-xs font-medium text-zinc-600 dark:bg-white/[0.06] dark:text-zinc-300 sm:block">
+              {now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm('Azzerare tutto? Verranno eliminati progetti, task, abitudini e dati della dashboard. Ricarica la pagina.')) {
+                  try {
+                    localStorage.removeItem(STORAGE_KEY);
+                    localStorage.removeItem('km-dashboard-v1');
+                    localStorage.removeItem(POMODORO_STORAGE);
+                    window.location.reload();
+                  } catch (_) {}
+                }
+              }}
+              className="rounded-lg p-2 text-gray-400 transition-all hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+              title="Reset dashboard"
+            >
+              <Icons.X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Prayers + Time Remaining - horizontal bar above main content */}
-      <div className="shrink-0 px-5 py-5">
-        <div className="rounded-xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-[#1a1d24] p-4 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {/* Prayers - left half */}
-            <div className="flex items-center gap-3 min-w-0">
-              <h3 className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest shrink-0">🕌 Prayers</h3>
-              <div className="flex flex-wrap gap-2 flex-1">
+      {/* Prayers + Time Remaining */}
+      <div className="shrink-0 px-5 py-4">
+        <div className="dashboard-panel px-4 py-3">
+          <div className="flex items-center gap-6">
+            {/* Prayers — prende lo spazio disponibile */}
+            <div className="flex flex-1 items-center gap-4 min-w-0">
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="dashboard-section-title">Prayers</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
                 {PRAYERS.map((prayer) => {
                   const isDone = todayPrayerLog[prayer];
                   return (
-                    <label key={prayer} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all cursor-pointer shrink-0 ${isDone ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30' : 'bg-transparent border-transparent hover:bg-gray-50 dark:hover:bg-white/5'}`}>
-                      <span className={`text-xs font-semibold ${isDone ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-600 dark:text-gray-300'}`}>{prayer}</span>
-                      <input type="checkbox" className="hidden" checked={!!isDone} onChange={(e) => togglePrayer(prayer, e.target.checked)} />
-                      <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center transition-colors shrink-0 ${isDone ? 'bg-emerald-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-transparent'}`}>
-                        <Icons.CheckCircle className="w-2.5 h-2.5" />
-                      </div>
+                    <label key={prayer} className={`flex h-8 cursor-pointer items-center gap-2 rounded-lg border px-2.5 transition-all ${isDone ? 'border-emerald-400/40 bg-emerald-500/12 dark:border-emerald-500/20 dark:bg-emerald-500/8' : 'border-transparent hover:border-zinc-200 hover:bg-zinc-50 dark:hover:border-white/5 dark:hover:bg-white/[0.03]'}`}>
+                      <TaskCheckbox done={isDone} onClick={() => togglePrayer(prayer, !isDone)} />
+                      <span className={`text-sm ${isDone ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400'}`}>{prayer}</span>
+                      <input type="checkbox" className="hidden" checked={!!isDone} readOnly />
                     </label>
                   );
                 })}
               </div>
             </div>
-            {/* Time Remaining - right half */}
-            <div className="flex items-center gap-3 min-w-0">
-              <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest shrink-0">Time Remaining</h3>
-              <div className="flex flex-wrap gap-x-4 gap-y-2 flex-1">
+
+            {/* Divider */}
+            <div className="hidden md:block h-8 w-px shrink-0 bg-zinc-200 dark:bg-white/[0.06]" />
+
+            {/* Time Remaining — ancorato a destra */}
+            <div className="hidden md:flex shrink-0 items-center gap-4">
+              <span className="dashboard-section-title">Remaining</span>
+              <div className="flex items-center gap-5">
                 {countdowns.map(c => (
-                  <div key={c.label} className="flex items-center gap-2 min-w-0 flex-1 md:flex-initial">
-                    <span className="text-[10px] font-medium text-gray-500 shrink-0 w-12">{c.label}</span>
-                    <span className="text-xs font-semibold text-gray-800 dark:text-gray-300 tabular-nums shrink-0">{c.remaining}</span>
-                    <div className="flex-1 min-w-[4rem] max-w-[8rem] h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                      <div className="h-full bg-gray-400 dark:bg-gray-500 rounded-full transition-all" style={{ width: `${c.pct * 100}%` }} />
+                  <div key={c.label} className="flex items-center gap-2">
+                    <span className="text-xs text-zinc-500 w-10 shrink-0">{c.label}</span>
+                    <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 tabular-nums shrink-0">{c.remaining}</span>
+                    <div className="w-14 h-1 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden shrink-0">
+                      <div className="h-full bg-zinc-400 dark:bg-zinc-500 rounded-full transition-all" style={{ width: `${c.pct * 100}%` }} />
                     </div>
                   </div>
                 ))}
@@ -1310,209 +1818,171 @@ export default function DashboardV2() {
           <PomodoroCompact />
           
           {/* Quick Tasks */}
-          <div className="bg-white dark:bg-[#1a1d24] border border-gray-200/80 dark:border-gray-700/80 rounded-xl p-4 flex flex-col min-h-0 shrink-0 shadow-sm">
-            <h3 className="text-xs font-bold text-rose-500 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
-              <Icons.CheckCircle className="w-3.5 h-3.5" /> Quick Tasks
-            </h3>
-            <input 
-              type="text" 
-              value={quickTaskDraft}
-              onChange={(e) => setQuickTaskDraft(e.target.value)}
-              onKeyDown={addQuickTask}
-              placeholder="Add quick task... (Enter)" 
-              className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-700/50 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-rose-400 mb-2.5 transition-colors"
-            />
-            <div className="overflow-y-auto custom-scrollbar flex flex-col gap-1.5 pr-1 max-h-28">
+          <div className="dashboard-panel flex min-h-0 shrink-0 flex-col overflow-hidden px-3 py-3">
+            <div className="mb-2 flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-rose-400" />
+                <span className="dashboard-section-title">Quick Tasks</span>
+              </div>
+              <span className="text-xs text-zinc-400">{quickTasks.filter(t => !t.parentId && t.done).length}/{quickTasks.filter(t => !t.parentId).length}</span>
+            </div>
+            
+            <div className="mb-2 flex gap-1.5">
+              <input 
+                type="text" 
+                value={quickTaskDraft}
+                onChange={(e) => setQuickTaskDraft(e.target.value)}
+                onKeyDown={addQuickTask}
+                placeholder="Nuova task..." 
+                className="dashboard-input flex-1 py-1.5 text-sm"
+              />
+              <button 
+                onClick={() => { const t = quickTaskDraft.trim(); if (t) { setQuickTasks(p => [...p, { id: uid('quick'), title: t, done: false }]); setQuickTaskDraft(''); } }} 
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-500 text-white transition-all hover:bg-rose-600 active:scale-95"
+              >
+                <Icons.Plus className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            
+            <div className="max-h-36 overflow-y-auto">
               {quickTasks.filter(t => !t.parentId).map((task, idx) => {
-                const showDeadline = task.deadline || quickTaskDeadlineEditing === task.id;
                 return (
                   <div 
-                    key={task.id} 
+                    key={task.id}
+                    className="group task-row cursor-grab active:cursor-grabbing"
                     draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData('application/json', JSON.stringify({ type: 'quick', quickTaskId: task.id, fromIndex: idx }));
-                      e.dataTransfer.effectAllowed = 'move';
-                    }}
-                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-rose-50', 'dark:bg-rose-500/5'); }}
-                    onDragLeave={(e) => { e.currentTarget.classList.remove('bg-rose-50', 'dark:bg-rose-500/5'); }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.classList.remove('bg-rose-50', 'dark:bg-rose-500/5');
-                      try {
-                        const payload = JSON.parse(e.dataTransfer.getData('application/json'));
-                        if (payload.type === 'quick') reorderQuickTasks(payload.fromIndex, idx);
-                      } catch (_) {}
-                    }}
-                    onClick={() => toggleQuickTask(task.id, !task.done)}
-                    onDoubleClick={(e) => { e.stopPropagation(); setQuickTaskEditingId(task.id); setQuickTaskEditingTitle(task.title); }}
-                    className="group/qt flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 cursor-grab active:cursor-grabbing select-text"
+                    onDragStart={(e) => { e.dataTransfer.setData('application/json', JSON.stringify({ type: 'quick', quickTaskId: task.id, fromIndex: idx })); e.dataTransfer.effectAllowed = 'move'; }}
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-zinc-50'); }}
+                    onDragLeave={(e) => e.currentTarget.classList.remove('bg-zinc-50')}
+                    onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-zinc-50'); try { const p = JSON.parse(e.dataTransfer.getData('application/json')); if (p.type === 'quick') reorderQuickTasks(p.fromIndex, idx); } catch (_) {} }}
                   >
-                    <span className={`shrink-0 transition-colors pointer-events-none ${task.done ? 'text-rose-500' : 'text-gray-300 dark:text-gray-600'}`}>
-                      {task.done ? <Icons.CheckCircle className="w-3.5 h-3.5" /> : <Icons.Circle className="w-3.5 h-3.5" />}
-                    </span>
-                    {quickTaskEditingId === task.id ? (
-                      <input
-                        autoFocus
-                        value={quickTaskEditingTitle}
-                        onChange={(e) => setQuickTaskEditingTitle(e.target.value)}
-                        onBlur={() => {
-                          const t = quickTaskEditingTitle.trim();
-                          if (t) updateQuickTask(task.id, qt => ({ ...qt, title: t }));
-                          setQuickTaskEditingId(null);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            const t = quickTaskEditingTitle.trim();
-                            if (t) updateQuickTask(task.id, qt => ({ ...qt, title: t }));
-                            setQuickTaskEditingId(null);
-                          }
-                          if (e.key === 'Escape') setQuickTaskEditingId(null);
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex-1 bg-white dark:bg-gray-800 border border-rose-400 rounded px-1 text-xs outline-none py-0 select-text"
-                      />
-                    ) : (
-                      <span className={`text-xs font-medium min-w-0 flex-1 truncate ${task.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-200'}`}>{task.title}</span>
-                    )}
-                    {/* Deadline - visibile solo se impostata */}
-                    {showDeadline && (
-                      <div className="flex justify-end min-w-[4rem] shrink-0" onClick={(e) => e.stopPropagation()}>
-                        {quickTaskDeadlineEditing === task.id ? (
-                          <input
-                            type="date"
-                            value={quickTaskDeadlineInput}
-                            onChange={(e) => setQuickTaskDeadlineInput(e.target.value)}
-                            onBlur={() => {
-                              updateQuickTask(task.id, t => ({ ...t, deadline: quickTaskDeadlineInput.trim() || undefined }));
-                              setQuickTaskDeadlineEditing(null);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                updateQuickTask(task.id, t => ({ ...t, deadline: quickTaskDeadlineInput.trim() || undefined }));
-                                setQuickTaskDeadlineEditing(null);
-                              }
-                              if (e.key === 'Escape') setQuickTaskDeadlineEditing(null);
-                            }}
-                            autoFocus
-                            className="text-[10px] py-0.5 px-1 rounded border border-amber-400 dark:border-amber-500 bg-white dark:bg-gray-800"
-                          />
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); setQuickTaskDeadlineInput(task.deadline || ''); setQuickTaskDeadlineEditing(task.id); }}
-                            className={`flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] ${getDeadlineColorClass(task.deadline, task.done)}`}
-                            title="Scadenza"
-                          >
-                            <Icons.Calendar className="w-3 h-3" />
-                            <span className="tabular-nums">{formatDeadline(task.deadline)}</span>
-                          </button>
-                        )}
-                      </div>
-                    )}
-                    {/* Actions - come nei project task */}
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover/qt:opacity-100 transition-opacity shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <TaskCheckbox done={task.done} onClick={() => toggleQuickTask(task.id, !task.done)} />
+                    
+                    <div className="flex flex-1 min-w-0 items-center gap-2" onClick={() => toggleQuickTask(task.id, !task.done)}>
+                      {quickTaskEditingId === task.id ? (
+                        <input
+                          autoFocus
+                          value={quickTaskEditingTitle}
+                          onChange={(e) => setQuickTaskEditingTitle(e.target.value)}
+                          onBlur={() => { const t = quickTaskEditingTitle.trim(); if (t) updateQuickTask(task.id, qt => ({ ...qt, title: t })); setQuickTaskEditingId(null); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { const t = quickTaskEditingTitle.trim(); if (t) updateQuickTask(task.id, qt => ({ ...qt, title: t })); setQuickTaskEditingId(null); } if (e.key === 'Escape') setQuickTaskEditingId(null); }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="seamless-input text-sm text-zinc-800 dark:text-zinc-100"
+                        />
+                      ) : (
+                        <span
+                          onDoubleClick={(e) => { e.stopPropagation(); setQuickTaskEditingId(task.id); setQuickTaskEditingTitle(task.title); }}
+                          className={`cursor-pointer select-text text-sm leading-none ${task.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}
+                        >
+                          {task.title}
+                        </span>
+                      )}
+                      {task.deadline && quickTaskDeadlineEditing !== task.id && (
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setQuickTaskDeadlineInput(task.deadline || ''); setQuickTaskDeadlineEditing(task.id); }} className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${getDeadlineColorClass(task.deadline, task.done)}`}>{formatDeadline(task.deadline)}</button>
+                      )}
+                      {quickTaskDeadlineEditing === task.id && (
+                        <input type="date" autoFocus value={quickTaskDeadlineInput} onChange={(e) => setQuickTaskDeadlineInput(e.target.value)}
+                          onBlur={() => { updateQuickTask(task.id, t => ({ ...t, deadline: quickTaskDeadlineInput.trim() || undefined })); setQuickTaskDeadlineEditing(null); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { updateQuickTask(task.id, t => ({ ...t, deadline: quickTaskDeadlineInput.trim() || undefined })); setQuickTaskDeadlineEditing(null); } if (e.key === 'Escape') setQuickTaskDeadlineEditing(null); }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="dashboard-input w-28 py-0.5 text-xs"
+                        />
+                      )}
+                    </div>
+
+                    {/* Actions al hover */}
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                       {!task.deadline && quickTaskDeadlineEditing !== task.id && (
-                        <button type="button" onClick={(e) => { e.stopPropagation(); setQuickTaskDeadlineInput(''); setQuickTaskDeadlineEditing(task.id); }} className="p-0.5 text-gray-500 hover:text-amber-500" title="Aggiungi scadenza">
-                          <Icons.Calendar className="w-3 h-3" />
+                        <button type="button" onClick={() => { setQuickTaskDeadlineInput(''); setQuickTaskDeadlineEditing(task.id); }} className="dashboard-action-btn p-1 hover:text-amber-500" title="Scadenza">
+                          <Icons.Calendar className="h-3 w-3" />
                         </button>
                       )}
                       <button
                         type="button"
-                        onClick={(e) => { e.stopPropagation(); const free = top3Manual.findIndex(s => !s); if (free !== -1) setTop3SlotAtIndex(free, { quickTaskId: task.id }); }}
+                        onClick={() => { const free = top3Manual.findIndex(s => !s); if (free !== -1) setTop3SlotAtIndex(free, { quickTaskId: task.id }); }}
                         disabled={!top3Manual.some(s => !s)}
-                        className={`p-0.5 ${top3Manual.some(s => !s) ? 'text-gray-500 hover:text-amber-500' : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'}`}
-                        title={top3Manual.some(s => !s) ? 'Add to Top 3' : 'Top 3 pieni'}
+                        className={`dashboard-action-btn p-1 ${top3Manual.some(s => !s) ? 'hover:text-amber-500' : 'opacity-30 cursor-not-allowed'}`}
+                        title="Top 3"
                       >
-                        <Icons.Target className="w-3 h-3" />
+                        <Icons.Target className="h-3 w-3" />
                       </button>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); removeQuickTask(task.id); }} className="p-0.5 text-gray-400 hover:text-red-500" title="Elimina">
-                        <Icons.X className="w-3 h-3" />
+                      <button type="button" onClick={() => removeQuickTask(task.id)} className="dashboard-action-btn p-1 hover:text-red-500" title="Elimina">
+                        <Icons.X className="h-3 w-3" />
                       </button>
                     </div>
                   </div>
                 );
               })}
-              {quickTasks.length === 0 && <p className="text-[10px] text-gray-400 italic py-2">No quick tasks</p>}
+              {quickTasks.filter(t => !t.parentId).length === 0 && (
+                <p className="py-3 text-center text-xs text-zinc-400">Nessun task</p>
+              )}
             </div>
           </div>
           
           <FocusHeatmap dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} now={now} />
         </div>
 
-        {/* COL 2: Top 3, Habits - Span 4 */}
-        <div className="md:col-span-4 flex flex-col gap-4 min-h-0">
+        {/* COL 2: Top 3, Habits */}
+        <div className="md:col-span-3 flex flex-col gap-4 min-h-0">
           
           {/* Top 3 */}
-          <div className="bg-white dark:bg-[#1a1d24] border border-gray-200/80 dark:border-gray-700/80 rounded-xl p-4 flex flex-col shrink-0 shadow-sm">
-            <div className="flex justify-between items-center mb-2.5">
-              <h3 className="text-xs font-bold text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
-                <Icons.Target className="w-3.5 h-3.5" /> Top 3 Tasks
-              </h3>
-              <span className="text-[10px] font-bold bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded">{top3DoneCount}/3</span>
+          <div className="dashboard-panel flex flex-col shrink-0 overflow-hidden px-3 py-3">
+            <div className="mb-2 flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-amber-400" />
+                <span className="dashboard-section-title">Top 3 Focus</span>
+              </div>
+              <span className="text-xs text-zinc-400">{top3DoneCount}/3</span>
             </div>
-            <div className="flex flex-col gap-2">
+            
+            <div className="flex flex-col gap-1">
               {[0, 1, 2].map((idx) => {
                 const slot = top3Resolved[idx];
                 const filled = slot && !slot.missing;
+                const isDone = slot?.done;
+                
                 return (
                   <div
                     key={idx}
                     data-slot-index={idx}
                     draggable={filled}
-                    onDragStart={filled ? (e) => {
-                      e.dataTransfer.setData('application/json', JSON.stringify({ type: 'top3', fromIndex: idx }));
-                      e.dataTransfer.effectAllowed = 'move';
-                    } : undefined}
-                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('ring-2', 'ring-amber-400'); }}
-                    onDragLeave={(e) => e.currentTarget.classList.remove('ring-2', 'ring-amber-400')}
+                    onDragStart={filled ? (e) => { e.dataTransfer.setData('application/json', JSON.stringify({ type: 'top3', fromIndex: idx })); e.dataTransfer.effectAllowed = 'move'; } : undefined}
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-zinc-50', 'dark:bg-white/[0.03]'); }}
+                    onDragLeave={(e) => e.currentTarget.classList.remove('bg-zinc-50', 'dark:bg-white/[0.03]')}
                     onDrop={(e) => {
                       e.preventDefault();
-                      e.currentTarget.classList.remove('ring-2', 'ring-amber-400');
+                      e.currentTarget.classList.remove('bg-zinc-50', 'dark:bg-white/[0.03]');
                       const toIndex = Number(e.currentTarget.dataset.slotIndex);
                       try {
                         const raw = e.dataTransfer.getData('application/json');
                         if (!raw) return;
                         const payload = JSON.parse(raw);
-                        if (payload.type === 'top3') {
-                          reorderTop3(payload.fromIndex, toIndex);
-                        } else if (payload.type === 'project' && payload.projectId && payload.taskId) {
-                          setTop3SlotAtIndex(toIndex, { projectId: payload.projectId, taskId: payload.taskId });
-                        } else if (payload.type === 'quick' && payload.quickTaskId) {
-                          setTop3SlotAtIndex(toIndex, { quickTaskId: payload.quickTaskId });
-                        }
+                        if (payload.type === 'top3') reorderTop3(payload.fromIndex, toIndex);
+                        else if (payload.type === 'project' && payload.projectId && payload.taskId) setTop3SlotAtIndex(toIndex, { projectId: payload.projectId, taskId: payload.taskId });
+                        else if (payload.type === 'quick' && payload.quickTaskId) setTop3SlotAtIndex(toIndex, { quickTaskId: payload.quickTaskId });
                       } catch (_) {}
                     }}
-                    className={`relative flex items-center min-h-[2.75rem] px-2.5 rounded-lg border transition-all ${filled ? 'bg-white dark:bg-[#1a1d24] border-gray-200 dark:border-gray-700 cursor-grab active:cursor-grabbing' : 'bg-gray-50 dark:bg-white/5 border-dashed border-gray-200 dark:border-gray-700'}`}
+                    className={`group task-row ${filled ? 'cursor-grab active:cursor-grabbing' : 'border border-dashed border-zinc-200 dark:border-white/5'}`}
                   >
-                    <div className="absolute -left-1.5 w-4 h-4 rounded bg-amber-500 text-white flex items-center justify-center text-[9px] font-black shadow-sm select-none">
+                    {/* Priority number */}
+                    <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded text-[10px] font-bold tabular-nums ${
+                      filled ? (isDone ? 'bg-emerald-500 text-white' : 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900') : 'bg-zinc-200 text-zinc-400 dark:bg-zinc-700'
+                    }`}>
                       {idx + 1}
-                    </div>
+                    </span>
+                    
                     {filled ? (
                       <>
-                        <div
-                          onClick={() => toggleTop3Slot(slot)}
-                          className="pl-4 flex items-center gap-2 w-full flex-1 min-w-0 cursor-pointer select-text"
-                        >
-                          <span className={`shrink-0 transition-colors ${slot.done ? 'text-amber-500' : 'text-gray-300 dark:text-gray-600'}`}>
-                            {slot.done ? <Icons.CheckCircle className="w-4 h-4" /> : <Icons.Circle className="w-4 h-4" />}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p className={`text-xs font-semibold truncate ${slot.done ? 'text-gray-400 line-through' : 'text-gray-800 dark:text-gray-200'}`}>{slot.title}</p>
-                            <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5">{slot.projectTitle}</p>
-                          </div>
+                        <div onClick={() => toggleTop3Slot(slot)} className="flex flex-1 min-w-0 flex-col cursor-pointer">
+                          <span className={`text-sm leading-none truncate ${isDone ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}>{slot.title}</span>
+                          {slot.projectTitle && <span className="mt-0.5 text-[10px] text-zinc-400 truncate">{slot.projectTitle}</span>}
                         </div>
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); removeFromTop3(idx); }}
-                          className="shrink-0 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded select-none"
-                          title="Rimuovi da Top 3"
-                          aria-label="Rimuovi"
-                        >
-                          <Icons.X className="w-3.5 h-3.5" />
+                        <button type="button" onClick={(e) => { e.stopPropagation(); removeFromTop3(idx); }} className="shrink-0 rounded p-1 text-zinc-400 opacity-0 hover:text-red-500 group-hover:opacity-100 transition-opacity">
+                          <Icons.X className="h-3 w-3" />
                         </button>
                       </>
                     ) : (
-                      <div className="pl-4 text-[10px] text-gray-400 font-medium italic">Trascina qui</div>
+                      <span className="text-xs text-zinc-400">Trascina qui</span>
                     )}
                   </div>
                 );
@@ -1521,124 +1991,103 @@ export default function DashboardV2() {
           </div>
 
           {/* Habits */}
-          <div className="bg-white dark:bg-[#1a1d24] border border-gray-200/80 dark:border-gray-700/80 rounded-xl p-4 flex flex-col flex-1 min-h-0 shadow-sm">
-            <div className="flex justify-between items-center mb-2.5 shrink-0">
-              <h3 className="text-xs font-bold text-sky-500 uppercase tracking-widest flex items-center gap-1.5">
-                <Icons.Flame className="w-3.5 h-3.5" /> Habits
-              </h3>
-              <span className="text-[10px] font-bold bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 px-2 py-0.5 rounded">{todayDone}/{activeHabits.length}</span>
+          <div className="dashboard-panel flex min-h-0 flex-1 flex-col overflow-hidden px-3 py-3">
+            <div className="mb-2 flex shrink-0 items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-sky-400" />
+                <span className="dashboard-section-title">Habits</span>
+              </div>
+              <span className="text-xs text-zinc-400">{todayDone}/{activeHabits.length}</span>
             </div>
-            <div className="flex gap-2 mb-2.5 shrink-0">
+            
+            <div className="mb-2 flex shrink-0 gap-1.5">
               <input
                 value={habitDraft}
                 onChange={(e) => setHabitDraft(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const t = habitDraft.trim(); if (t) { setDailyTaskTemplates(p => [...p, { id: uid('daily'), title: t, locked: false }]); setHabitDraft(''); } } }}
                 placeholder="Nuova abitudine..."
-                className="flex-1 min-w-0 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400/30"
+                className="dashboard-input flex-1 py-1.5 text-sm"
               />
-              <button onClick={() => { const t = habitDraft.trim(); if (t) { setDailyTaskTemplates(p => [...p, { id: uid('daily'), title: t, locked: false }]); setHabitDraft(''); } }} className="shrink-0 bg-sky-500 hover:bg-sky-600 text-white w-9 h-9 flex items-center justify-center rounded-lg shadow-sm transition-colors">
-                <Icons.Plus className="w-3.5 h-3.5" />
+              <button 
+                onClick={() => { const t = habitDraft.trim(); if (t) { setDailyTaskTemplates(p => [...p, { id: uid('daily'), title: t, locked: false }]); setHabitDraft(''); } }} 
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500 text-white transition-all hover:bg-sky-600 active:scale-95"
+              >
+                <Icons.Plus className="h-3.5 w-3.5" />
               </button>
             </div>
-            <div className="overflow-y-auto custom-scrollbar flex-1 flex flex-col gap-1.5 pr-1 min-h-0">
+            
+            <div className="flex-1 min-h-0 overflow-y-auto">
               {dailyTaskTemplates.map((task, idx) => {
                 const isLocked = task.locked;
                 const isDone = todayTaskLog[task.id];
-                return (
-                  <div
-                    key={task.id}
-                    data-habit-index={idx}
-                    draggable={!isLocked}
-                    onDragStart={(e) => { e.dataTransfer.setData('application/json', JSON.stringify({ type: 'habit', fromIndex: idx })); e.dataTransfer.effectAllowed = 'move'; }}
-                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('ring-1', 'ring-sky-400', 'ring-inset'); }}
-                    onDragLeave={(e) => { e.currentTarget.classList.remove('ring-1', 'ring-sky-400', 'ring-inset'); }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.classList.remove('ring-1', 'ring-sky-400', 'ring-inset');
-                      try {
-                        const payload = JSON.parse(e.dataTransfer.getData('application/json'));
-                        if (payload.type === 'habit') reorderHabits(payload.fromIndex, idx);
-                      } catch (_) {}
-                    }}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => !isLocked && toggleDailyTask(task.id, !isDone)}
-                    onKeyDown={(e) => !isLocked && (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), toggleDailyTask(task.id, !isDone))}
-                    onDoubleClick={(e) => { e.stopPropagation(); setHabitEditingId(task.id); setHabitEditingTitle(task.title); }}
-                    className={`group/hab flex items-center gap-2.5 px-3 py-2.5 rounded-lg border transition-all select-text ${isLocked ? 'opacity-60 bg-gray-50 dark:bg-gray-800/40 border-gray-100 dark:border-gray-800 cursor-default' : isDone ? 'bg-sky-50/50 dark:bg-sky-500/5 border-sky-100 dark:border-sky-500/20 cursor-pointer' : 'bg-white dark:bg-white/5 border-gray-100 dark:border-gray-700/50 hover:border-sky-200 dark:hover:border-sky-500/30 cursor-pointer'} ${!isLocked ? 'cursor-grab active:cursor-grabbing' : ''}`}
-                  >
-                    {isLocked ? (
-                      <Icons.Lock className="w-4 h-4 text-gray-400 shrink-0" />
-                    ) : (
-                      <span className={`shrink-0 transition-colors ${isDone ? 'text-sky-500' : 'text-gray-300 dark:text-gray-600'}`}>
-                        {isDone ? <Icons.CheckCircle className="w-4 h-4" /> : <Icons.Circle className="w-4 h-4" />}
-                      </span>
-                    )}
-                    {habitEditingId === task.id ? (
-                      <input
-                        autoFocus
-                        value={habitEditingTitle}
-                        onChange={(e) => setHabitEditingTitle(e.target.value)}
-                        onBlur={() => {
-                          const t = habitEditingTitle.trim();
-                          if (t) setDailyTaskTemplates(p => p.map(h => h.id === task.id ? { ...h, title: t } : h));
-                          setHabitEditingId(null);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            const t = habitEditingTitle.trim();
-                            if (t) setDailyTaskTemplates(p => p.map(h => h.id === task.id ? { ...h, title: t } : h));
-                            setHabitEditingId(null);
-                          }
-                          if (e.key === 'Escape') setHabitEditingId(null);
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex-1 bg-white dark:bg-gray-800 border border-sky-400 rounded px-1 text-xs outline-none py-0 select-text"
-                      />
-                    ) : (
-                      <span className={`text-xs font-medium truncate flex-1 ${isDone ? 'text-gray-400 line-through' : 'text-gray-800 dark:text-gray-200'}`}>{task.title}</span>
-                    )}
+                  return (
+                    <div
+                      key={task.id}
+                      data-habit-index={idx}
+                      draggable={!isLocked}
+                      onDragStart={(e) => { e.dataTransfer.setData('application/json', JSON.stringify({ type: 'habit', fromIndex: idx })); e.dataTransfer.effectAllowed = 'move'; }}
+                      onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-zinc-50'); }}
+                      onDragLeave={(e) => e.currentTarget.classList.remove('bg-zinc-50')}
+                      onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-zinc-50'); try { const p = JSON.parse(e.dataTransfer.getData('application/json')); if (p.type === 'habit') reorderHabits(p.fromIndex, idx); } catch (_) {} }}
+                      className={`group task-row ${isLocked ? 'opacity-40' : 'cursor-grab active:cursor-grabbing'}`}
+                    >
+                      <TaskCheckbox done={isDone} onClick={() => !isLocked && toggleDailyTask(task.id, !isDone)} />
                     
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover/hab:opacity-100 transition-opacity">
-                      <button 
-                        type="button" 
-                        onClick={(e) => { e.stopPropagation(); toggleHabitLock(task.id); }} 
-                        className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-white/10 transition-colors ${isLocked ? 'text-amber-500' : 'text-gray-400'}`}
-                        title={isLocked ? "Sblocca abitudine" : "Blocca abitudine"}
-                      >
-                        {isLocked ? <Icons.Lock className="w-3 h-3" /> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>}
-                      </button>
-                      <button 
-                        type="button" 
-                        onClick={(e) => { e.stopPropagation(); removeDailyTask(task.id); }} 
-                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors" 
-                        title="Rimuovi"
-                      >
-                        <Icons.X className="w-3 h-3" />
-                      </button>
+                      <div className="flex flex-1 min-w-0 items-center" onClick={() => !isLocked && toggleDailyTask(task.id, !isDone)}>
+                        {habitEditingId === task.id ? (
+                          <input
+                            autoFocus
+                            value={habitEditingTitle}
+                            onChange={(e) => setHabitEditingTitle(e.target.value)}
+                            onBlur={() => { const t = habitEditingTitle.trim(); if (t) setDailyTaskTemplates(p => p.map(h => h.id === task.id ? { ...h, title: t } : h)); setHabitEditingId(null); }}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { const t = habitEditingTitle.trim(); if (t) setDailyTaskTemplates(p => p.map(h => h.id === task.id ? { ...h, title: t } : h)); setHabitEditingId(null); } if (e.key === 'Escape') setHabitEditingId(null); }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="seamless-input text-sm text-zinc-800 dark:text-zinc-100"
+                          />
+                        ) : (
+                          <span
+                            onDoubleClick={(e) => { e.stopPropagation(); setHabitEditingId(task.id); setHabitEditingTitle(task.title); }}
+                            className={`cursor-pointer select-text text-sm leading-none ${isDone ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}
+                          >
+                            {task.title}
+                          </span>
+                        )}
+                      </div>
+                    
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={() => toggleHabitLock(task.id)} className={`dashboard-action-btn p-1 ${isLocked ? 'text-amber-500' : 'hover:text-amber-500'}`} title={isLocked ? 'Sblocca' : 'Blocca'}>
+                          <Icons.Lock className="h-3 w-3" />
+                        </button>
+                        <button type="button" onClick={() => removeDailyTask(task.id)} className="dashboard-action-btn p-1 hover:text-red-500" title="Elimina">
+                          <Icons.X className="h-3 w-3" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                );
+                  );
               })}
             </div>
-            {/* This Week - mini widget */}
             <ThisWeekWidget dailyTaskLogs={dailyTaskLogs} activeHabits={activeHabits} now={now} />
           </div>
         </div>
 
-        {/* COL 3 */}
-        <div className="md:col-span-5 bg-white dark:bg-[#1a1d24] border border-gray-200/80 dark:border-gray-700/80 rounded-xl p-4 flex flex-col min-h-0 shadow-sm">
-          <div className="flex items-center justify-between mb-3.5 shrink-0">
-            <h2 className="text-xs font-bold text-indigo-500 uppercase tracking-widest flex items-center gap-1.5">
-              <Icons.Square className="w-3.5 h-3.5" /> Projects
-            </h2>
-            <button onClick={createProject} className="flex items-center gap-1 text-[10px] font-bold bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/30 px-2 py-1 rounded transition-colors">
-              <Icons.Plus className="w-3 h-3" /> New
+        {/* COL 3 - Projects */}
+        <div className="dashboard-panel overflow-hidden md:col-span-6 flex min-h-0 flex-col p-4">
+          <div className="mb-4 flex shrink-0 items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-indigo-400" />
+              <span className="dashboard-section-title">Projects</span>
+            </div>
+            <button 
+              onClick={createProject} 
+              className="flex h-7 items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 text-xs font-medium text-indigo-600 transition-all hover:bg-indigo-100 active:scale-95 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-500/20"
+            >
+              <Icons.Plus className="h-3 w-3" />
+              <span>Nuovo</span>
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 flex flex-col gap-6">
-            <div className="flex flex-col gap-6">
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
               {projects.map((project, idx) => {
                 const stats = countTreeStats(project.tasks);
                 const percentage = Math.round(stats.ratio * 100);
@@ -1709,7 +2158,7 @@ export default function DashboardV2() {
                               }
                             }}
                             placeholder="Add task... (Enter)"
-                            className="w-full bg-transparent border-none text-[11px] outline-none text-gray-600 dark:text-gray-400 placeholder:text-gray-300 dark:placeholder:text-gray-600"
+                            className="seamless-input text-sm text-zinc-500 dark:text-zinc-400 placeholder:text-zinc-300 dark:placeholder:text-zinc-600"
                           />
                         </div>
                       </>
@@ -1721,13 +2170,12 @@ export default function DashboardV2() {
 
             {/* SHARED PROJECTS */}
             {sharedDashboards.length > 0 && (
-              <div className="flex flex-col gap-6 mt-4">
-                <div className="flex items-center gap-2 shrink-0">
-                  <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-1.5">
-                    <Icons.MessageCircle className="w-4 h-4" /> Shared Dashboards
-                  </h2>
+              <div className="flex flex-col gap-3 mt-2">
+                <div className="flex items-center gap-2 shrink-0 border-t border-zinc-100 dark:border-white/[0.05] pt-3">
+                  <Icons.MessageCircle className="w-3.5 h-3.5 text-zinc-400" />
+                  <span className="dashboard-section-title">Shared</span>
                 </div>
-                <div className="flex flex-col gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                   {sharedDashboards.map((shared, sIdx) => {
                     const sharedData = shared.data || {};
                     const sharedProjects = Array.isArray(sharedData.projects) ? sharedData.projects : (Array.isArray(sharedData) ? sharedData : []);
@@ -1815,7 +2263,7 @@ export default function DashboardV2() {
                                     }
                                   }}
                                   placeholder="Add task... (Enter)"
-                                  className="w-full bg-transparent border-none text-[11px] outline-none text-gray-600 dark:text-gray-400 placeholder:text-gray-300 dark:placeholder:text-gray-600"
+                                  className="seamless-input text-sm text-zinc-500 dark:text-zinc-400 placeholder:text-zinc-300 dark:placeholder:text-zinc-600"
                                 />
                               </div>
                             </>
@@ -1832,12 +2280,164 @@ export default function DashboardV2() {
 
       </div>
 
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(148, 163, 184, 0.4); border-radius: 6px; }
-        .custom-scrollbar:hover::-webkit-scrollbar-thumb { background-color: rgba(148, 163, 184, 0.6); }
-      `}</style>
+      {/* LIFE GOALS */}
+      <div className="shrink-0 px-5 pb-10">
+        <div className="dashboard-panel flex flex-col gap-3 p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-violet-400" />
+              <span className="dashboard-section-title">Life Goals</span>
+            </div>
+            <button 
+              onClick={() => updateLifeGoals(p => ({ ...p, collapsed: !p.collapsed }))}
+              className="dashboard-action-btn"
+            >
+              {lifeGoals.collapsed ? <Icons.ChevronDown className="h-3.5 w-3.5" /> : <Icons.ChevronUp className="h-3.5 w-3.5" />}
+            </button>
+          </div>
+
+          {!lifeGoals.collapsed && (
+            <div className="flex flex-col gap-3">
+              {lifeGoals.tiers.map((tier) => {
+                const completedCount = tier.goals.filter(g => g.done).length;
+                const totalCount = tier.goals.length;
+
+                return (
+                  <div 
+                    key={tier.id}
+                    className="flex flex-col gap-2 rounded-lg border border-zinc-200/60 dark:border-white/[0.04]"
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-zinc-50'); }}
+                    onDragLeave={(e) => e.currentTarget.classList.remove('bg-zinc-50')}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove('bg-zinc-50');
+                      try { const d = JSON.parse(e.dataTransfer.getData('application/json')); if (d.type === 'lifeGoal') moveGoalToTier(d.goalId, tier.id); } catch (_) {}
+                    }}
+                  >
+                    {/* Tier header */}
+                    <div 
+                      className="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 transition-colors hover:bg-zinc-50/80 dark:hover:bg-white/[0.04]"
+                      onClick={() => toggleTierCollapse(tier.id)}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-sm">{tier.emoji}</span>
+                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{tier.name}</span>
+                        <span className="text-xs text-zinc-400">{completedCount}/{totalCount}</span>
+                      </div>
+                      <Icons.ChevronDown className={`h-3.5 w-3.5 text-zinc-400 transition-transform duration-200 ${tier.collapsed ? '' : 'rotate-180'}`} />
+                    </div>
+
+                    {!tier.collapsed && (
+                      <div className="animate-slide-down flex flex-col gap-3 px-3 pb-3">
+                        {/* QUICK GOALS */}
+                        {tier.goals.some(g => g.type === 'quick') && (
+                          <div className="flex flex-col gap-1.5">
+                            <span className="px-1 text-[10px] font-medium uppercase tracking-[0.15em] text-zinc-400">Quick</span>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                              {tier.goals.filter(g => g.type === 'quick').map((goal) => (
+                                <LifeGoalCard 
+                                  key={goal.id} goal={goal} accent={tier.color} stats={{}} percentage={0}
+                                  onToggle={(gid, val) => { updateGoal(gid, g => ({ ...g, done: val })); setQuickTasks(prev => prev.map(t => t.lifeGoalId === gid ? { ...t, done: val } : t)); }}
+                                  onDelete={deleteGoal}
+                                  onRename={(gid, val, type) => updateGoal(gid, g => ({ ...g, title: val, type: type || g.type }))}
+                                  onDeadline={(gid, val) => updateGoal(gid, g => ({ ...g, deadline: val || null }))}
+                                  onDeadlineClick={(gid, val) => { updateGoal(gid, g => ({ ...g, deadline: val.trim() || null })); setGoalDeadlineEditing(null); }}
+                                  deadlineEditing={goalDeadlineEditing} deadlineInput={goalDeadlineInput}
+                                  setDeadlineInput={setGoalDeadlineInput} setDeadlineEditing={setGoalDeadlineEditing}
+                                  getDeadlineColorClass={getDeadlineColorClass} formatDeadline={formatDeadline}
+                                  onAddToTop3={(gid) => { const free = top3Manual.findIndex(s => !s); if (free !== -1) setTop3SlotAtIndex(free, { projectId: `lg-${gid}`, taskId: gid }); }}
+                                  hasFreeTop3Slot={top3Manual.some(s => !s)}
+                                  onPromoteProject={promoteGoalToProjects}
+                                  onPromoteQuick={promoteGoalToQuickTasks}
+                                  isLinkedToProject={projects.some((project) => project.lifeGoalId === goal.id)}
+                                  isLinkedToQuick={quickTasks.some((task) => task.lifeGoalId === goal.id && !task.parentId)}
+                                  renderTasks={() => null}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* PROJECT GOALS */}
+                        {tier.goals.some(g => g.type === 'project') && (
+                          <div className="flex flex-col gap-1.5">
+                            <span className="px-1 text-[10px] font-medium uppercase tracking-[0.15em] text-zinc-400">Projects</span>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+                              {tier.goals.filter(g => g.type === 'project').map((goal) => {
+                                const stats = countTreeStats(goal.tasks);
+                                const percentage = Math.round(stats.ratio * 100);
+                                return (
+                                  <LifeGoalCard 
+                                    key={goal.id} goal={goal} accent={tier.color} stats={stats} percentage={percentage}
+                                    onToggle={(gid, val) => { updateGoal(gid, g => ({ ...g, done: val })); setQuickTasks(prev => prev.map(t => t.lifeGoalId === gid ? { ...t, done: val } : t)); }}
+                                    onDelete={deleteGoal}
+                                    onRename={(gid, val, type) => updateGoal(gid, g => ({ ...g, title: val, type: type || g.type }))}
+                                    onDeadline={(gid, val) => updateGoal(gid, g => ({ ...g, deadline: val || null }))}
+                                    onDeadlineClick={(gid, val) => { updateGoal(gid, g => ({ ...g, deadline: val.trim() || null })); setGoalDeadlineEditing(null); }}
+                                    deadlineEditing={goalDeadlineEditing} deadlineInput={goalDeadlineInput}
+                                    setDeadlineInput={setGoalDeadlineInput} setDeadlineEditing={setGoalDeadlineEditing}
+                                    getDeadlineColorClass={getDeadlineColorClass} formatDeadline={formatDeadline}
+                                    onAddToTop3={() => {}}
+                                    hasFreeTop3Slot={false}
+                                    onPromoteProject={promoteGoalToProjects}
+                                    onPromoteQuick={promoteGoalToQuickTasks}
+                                    isLinkedToProject={projects.some((project) => project.lifeGoalId === goal.id)}
+                                    isLinkedToQuick={quickTasks.some((task) => task.lifeGoalId === goal.id && !task.parentId)}
+                                    renderTasks={() => (
+                                      <>
+                                        {goal.tasks?.map((node) => (
+                                          <DenseTaskNode
+                                            key={node.id} node={node} depth={0} projectId={`lg-${goal.id}`} projectAccent={tier.color}
+                                            onToggle={(tid, val) => { updateGoal(goal.id, g => ({ ...g, tasks: updateNodeInTree(g.tasks, tid, n => ({ ...n, done: val })) })); setProjects(prev => prev.map(p => p.lifeGoalId === goal.id ? { ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, done: val })) } : p)); }}
+                                            onDelete={(tid) => updateGoal(goal.id, g => ({ ...g, tasks: removeNodeFromTree(g.tasks, tid) }))}
+                                            onRename={(tid, val) => updateGoal(goal.id, g => ({ ...g, tasks: updateNodeInTree(g.tasks, tid, n => ({ ...n, title: val })) }))}
+                                            onDeadline={(tid, val) => updateGoal(goal.id, g => ({ ...g, tasks: updateNodeInTree(g.tasks, tid, n => ({ ...n, deadline: val || undefined })) }))}
+                                            onAddChild={(tid, val) => updateGoal(goal.id, g => ({ ...g, tasks: updateNodeInTree(g.tasks, tid, n => ({ ...n, children: [...(n.children||[]), createTaskNode(val)] })) }))}
+                                            onAddToTop3={(pid, tid) => { const free = top3Manual.findIndex(s => !s); if (free !== -1) setTop3SlotAtIndex(free, { projectId: pid, taskId: tid }); }}
+                                            hasFreeTop3Slot={top3Manual.some(s => !s)}
+                                          />
+                                        ))}
+                                        <div className="pt-1">
+                                          <input 
+                                            value={goalTaskDrafts[goal.id] ?? ''}
+                                            onChange={(e) => setGoalTaskDrafts(prev => ({ ...prev, [goal.id]: e.target.value }))}
+                                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const title = (goalTaskDrafts[goal.id] ?? '').trim(); if (title) { updateGoal(goal.id, g => ({ ...g, tasks: [...(g.tasks||[]), createTaskNode(title)] })); setGoalTaskDrafts(prev => ({ ...prev, [goal.id]: '' })); } } }}
+                                            placeholder="+ task..."
+                                            className="seamless-input text-sm text-zinc-500 placeholder:text-zinc-300"
+                                          />
+                                        </div>
+                                      </>
+                                    )}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => { const title = window.prompt("Quick goal:"); if (title) addGoalToTier(tier.id, title, 'General', 'quick'); }}
+                            className="dashboard-chip text-[10px] hover:text-zinc-600"
+                          >
+                            <Icons.Plus className="h-2.5 w-2.5" /> Quick
+                          </button>
+                          <button 
+                            onClick={() => { const title = window.prompt("Progetto:"); if (title) addGoalToTier(tier.id, title, 'General', 'project'); }}
+                            className="dashboard-chip text-[10px] hover:text-zinc-600"
+                          >
+                            <Icons.Plus className="h-2.5 w-2.5" /> Project
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
