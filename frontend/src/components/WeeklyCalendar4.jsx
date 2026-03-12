@@ -14,7 +14,67 @@ import { CompactExerciseCard } from './training/CalendarComponents';
 // --- Costanti ---
 const GIORNI = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
 
-function WeeklyCalendar4({ onSelectDay, progressions, schedule, loading, onEditAction, onToggleComplete }) {
+const AW_CARD_STYLE = {
+  border: 'border-amber-300/70 dark:border-amber-600/30',
+  bg: 'bg-gradient-to-br from-amber-50/80 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/10',
+  badge: 'bg-amber-500',
+  label: 'text-amber-800 dark:text-amber-300',
+  dot: 'bg-amber-400',
+};
+
+const CYCLE_COLORS = [
+  { ...AW_CARD_STYLE },
+  { ...AW_CARD_STYLE, border: 'border-orange-400/60 dark:border-orange-500/30', badge: 'bg-orange-500', dot: 'bg-orange-400' },
+  { ...AW_CARD_STYLE, border: 'border-rose-400/60 dark:border-rose-500/30', badge: 'bg-rose-500', dot: 'bg-rose-400' },
+  { ...AW_CARD_STYLE, border: 'border-violet-400/60 dark:border-violet-500/30', badge: 'bg-violet-500', dot: 'bg-violet-400' },
+];
+
+function AwMiniCard({ type, title, week, awProgram }) {
+  const cycle = type === 'max'
+    ? CYCLE_COLORS[Math.floor(((week || 1) - 1) / 5) % 4]
+    : { ...AW_CARD_STYLE };
+
+  const maxExercises = type === 'max' && awProgram
+    ? (awProgram?.max_day?.weeks?.find(w => w.week === (((week || 1) - 1) % 5) + 1)?.exercises || []).map(e => e.name.toUpperCase())
+    : null;
+
+  return (
+    <div className={`relative group flex flex-col rounded-[1.25rem] border ${cycle.border} ${cycle.bg} p-2 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden justify-center min-h-[5rem] text-center`}>
+      <div className="flex flex-col items-center justify-center w-full gap-1.5">
+        <div className={`w-5 h-5 rounded-md ${cycle.badge} shadow-sm flex items-center justify-center shrink-0`}>
+          <Target size={10} className="text-white" />
+        </div>
+        <span className={`text-[10px] font-black uppercase tracking-tight text-center px-1 line-clamp-2 leading-tight ${cycle.label}`}>{title}</span>
+        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md ${cycle.badge} text-white shadow-sm shrink-0 whitespace-nowrap`}>W{week}</span>
+      </div>
+
+      {type === 'max' && (
+        <div className="flex flex-wrap justify-center gap-1 mt-2.5 w-full">
+          {maxExercises?.length > 0 ? maxExercises.map((name, i) => (
+            <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[8px] bg-white/80 dark:bg-zinc-900/60 border border-amber-200/60 dark:border-amber-700/30 shadow-sm">
+              <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${cycle.dot}`} />
+              <span className="text-[8px] font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-tighter leading-tight">{name}</span>
+            </span>
+          )) : <span className="text-[10px] text-zinc-400 font-medium mt-1">—</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function getAwCardProps(ex) {
+  const id = (ex.exercise_id || '').toLowerCase();
+  const name = (ex.exercise_name || '').toLowerCase();
+  if (id === 'vol1' || name.includes('vol. 1') || name.includes('volume 1')) return { type: 'vol1', title: 'AW Vol. 1' };
+  if (id === 'vol2' || name.includes('vol. 2') || name.includes('volume 2')) return { type: 'vol2', title: 'AW Vol. 2' };
+  if (id.includes('aw_max') || name.includes('max day')) return { type: 'max', title: 'AW Max Day' };
+  if (id.includes('speed')) return { type: 'speed', title: 'AW Speed' };
+  if (name.includes('leggera') || (name.includes('light') && !name.includes('heavy')) || id.includes('iso_light')) return { type: 'iso_light', title: 'Iso Leggera' };
+  if (name.includes('pesante') || name.includes('heavy') || id.includes('iso_heavy')) return { type: 'iso_heavy', title: 'Iso Pesante' };
+  return { type: 'other', title: (ex.exercise_name || ex.name || '').slice(0, 14) };
+}
+
+function WeeklyCalendar4({ onSelectDay, progressions, schedule, loading, onEditAction, onToggleComplete, awProgram, currentMaxDayWeek, selectedDate }) {
   const [showMuscleNames, setShowMuscleNames] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const scrollRef = useRef(null);
@@ -98,121 +158,163 @@ function WeeklyCalendar4({ onSelectDay, progressions, schedule, loading, onEditA
         </div>
       </div>
 
-      {/* Horizontal Scroll Area */}
+      {/* Horizontal Scroll Area — grid con righe condivise e carte unite */}
+      {/* Horizontal Scroll Area — grid con righe condivise e carte unite */}
       <div 
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto pb-8 pt-2 px-2 snap-x snap-mandatory custom-scrollbar"
+        className="overflow-x-auto pb-6 pt-4 px-4 snap-x snap-mandatory custom-scrollbar"
         style={{ scrollPadding: '1rem' }}
       >
-        {schedule?.map((day, idx) => {
-          const dateObj = new Date(day.date || day.date_);
-          const isToday = dateObj.toDateString() === new Date().toDateString();
-          const dayName = GIORNI[dateObj.getDay() === 0 ? 6 : dateObj.getDay() - 1];
-          const dateLabel = dateObj.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
-          const isSunday = dateObj.getDay() === 0;
-          const template = day.template;
+        <div
+          className="grid gap-x-5 min-w-max items-start"
+          style={{
+            gridTemplateColumns: `repeat(${schedule?.length || 1}, 210px)`,
+            gridTemplateRows: 'auto auto auto auto',
+          }}
+        >
+          {schedule?.map((day, idx) => {
+            const dateObj = new Date(day.date || day.date_);
+            const dayStr = day.date || day.date_;
+            const isToday = dateObj.toDateString() === new Date().toDateString();
+            const isSelected = selectedDate && (
+              dayStr === selectedDate ||
+              dayStr?.slice(0, 10) === selectedDate?.slice(0, 10)
+            );
 
-          return (
-            <div 
-              key={idx} 
-              className={`flex-shrink-0 w-[185px] snap-start transition-all duration-500 ${isToday ? 'is-today-marker' : ''}`}
-            >
-              <div 
-                onClick={() => template && !isSunday && onSelectDay(template, day.date || day.date_)}
-                className={`h-full flex flex-col gap-3 p-4 rounded-[2.5rem] border transition-all duration-300 relative cursor-pointer
-                  ${isToday 
-                    ? 'bg-white dark:bg-zinc-900 border-amber-500/40 shadow-2xl shadow-amber-500/10 scale-[1.02] z-10' 
-                    : 'bg-white/60 dark:bg-zinc-900/60 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
-                  }
-                  ${day.is_completed ? 'border-emerald-500/30' : ''}
-                  ${isSunday ? 'opacity-50 grayscale' : ''}
-                `}
-              >
-                {/* Header Giorno */}
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${isToday ? 'text-amber-500' : 'text-zinc-400'}`}>
-                      {dayName}
-                    </span>
-                    <span className="text-xs font-black text-zinc-900 dark:text-zinc-100 uppercase tracking-tighter">
-                      {dateLabel}
-                    </span>
-                  </div>
-                  
-                  {!isSunday && (
-                    <motion.button 
-                      whileHover={{ scale: 1.15 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={(e) => { e.stopPropagation(); toggleComplete(day.date || day.date_, day.is_completed); }}
-                      className={`p-2.5 rounded-2xl transition-all shadow-lg ${day.is_completed ? 'text-white bg-emerald-500 shadow-emerald-500/20' : 'text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:text-amber-500 hover:bg-amber-500/10'}`}
-                    >
-                      <CheckCircle2 size={16} />
-                    </motion.button>
-                  )}
-                </div>
+            const dayName = GIORNI[dateObj.getDay() === 0 ? 6 : dateObj.getDay() - 1];
+            const dateLabel = dateObj.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+            const isSunday = dateObj.getDay() === 0;
+            const template = day.template;
+            const col = idx + 1;
 
-                {/* Lista Esercizi */}
-                <div className="flex-1 flex flex-col gap-2">
-                  {rows.map(row => {
-                    let exercises = template?.exercises?.filter(row.filter) || [];
-                    
-                    const isPast = !isToday && dateObj < new Date();
-                    if (isPast && !day.is_completed && !isEditMode) {
-                      exercises = [];
-                    }
+            const getExercises = (rowKey) => {
+              let exs = template?.exercises?.filter(rows.find(r => r.key === rowKey).filter) || [];
+              const isPast = !isToday && dateObj < new Date();
+              if (isPast && !day.is_completed && !isEditMode) exs = [];
+              exs = [...exs].sort((a, b) => (b.is_active !== 0 ? 1 : 0) - (a.is_active !== 0 ? 1 : 0));
+              if (rowKey === 'aw' && !isEditMode) {
+                const hasVol1 = exs.some(e => e.exercise_id?.startsWith('aw_v1_'));
+                const hasVol2 = exs.some(e => e.exercise_id?.startsWith('aw_v2_'));
+                const hasIsoLight = exs.some(e => (e.exercise_id || '').includes('iso') && ((e.exercise_name || '').toLowerCase().includes('light') || (e.exercise_name || '').toLowerCase().includes('leggera') || (e.exercise_id || '').includes('light')));
+                const hasIsoHeavy = exs.some(e => (e.exercise_id || '').includes('iso') && ((e.exercise_name || '').toLowerCase().includes('heavy') || (e.exercise_name || '').toLowerCase().includes('pesante') || (e.exercise_id || '').includes('heavy')));
+                const id = (e) => (e.exercise_id || '').toLowerCase();
+                const isIsoBlock = (e) => id(e).includes('iso_light') || id(e).includes('iso_heavy') || id(e) === 'aw_iso_l' || id(e) === 'aw_iso_h';
+                const isMaxDay  = (e) => id(e).includes('aw_max') || (e.exercise_name || '').toLowerCase().includes('max day');
+                const others = exs.filter(e => !e.exercise_id?.startsWith('aw_v1_') && !e.exercise_id?.startsWith('aw_v2_') && !isIsoBlock(e) && !isMaxDay(e) && e.is_active !== 0);
+                const inactive = exs.filter(e => e.is_active === 0 && !isMaxDay(e));
+                const compacted = [];
+                if (hasVol1) compacted.push({ exercise_id: 'vol1', exercise_name: 'AW Vol. 1', category: 'AW', is_active: 1 });
+                if (hasVol2) compacted.push({ exercise_id: 'vol2', exercise_name: 'AW Vol. 2', category: 'AW', is_active: 1 });
+                if (hasIsoLight) compacted.push({ exercise_id: 'aw_iso_light', exercise_name: 'Isometria Leggera', category: 'AW', is_active: 1 });
+                if (hasIsoHeavy) compacted.push({ exercise_id: 'aw_iso_heavy', exercise_name: 'Isometria Pesante', category: 'AW', is_active: 1 });
+                compacted.push(...others, ...inactive);
+                return compacted;
+              }
+              return exs;
+            };
 
-                    exercises = [...exercises].sort((a, b) => {
-                      const activeA = a.is_active !== 0 ? 1 : 0;
-                      const activeB = b.is_active !== 0 ? 1 : 0;
-                      return activeB - activeA;
-                    });
+            return (
+              <React.Fragment key={idx}>
+                {/* Background spanning all rows */}
+                <div
+                  className={`snap-start rounded-[2.5rem] border transition-all duration-500 z-0
+                    ${isToday ? 'is-today-marker bg-white dark:bg-zinc-900 border-amber-500/50 shadow-2xl shadow-amber-500/10' : 'bg-white/10 dark:bg-zinc-900/10 border-zinc-200/50 dark:border-zinc-800/50 group-hover:border-zinc-300/30 dark:group-hover:border-zinc-700/30 group-hover:bg-white/20 dark:group-hover:bg-zinc-900/20'}
+                    ${isSelected && !isToday ? 'border-blue-500/50 shadow-xl shadow-blue-500/5 bg-blue-50/10 dark:bg-blue-900/5' : ''}
+                    ${day.is_completed ? 'border-emerald-500/30' : ''}
+                    ${isSunday ? 'opacity-50 grayscale' : ''}
+                    ${isToday ? 'scale-[1.01] -translate-y-1' : ''}`}
+                  style={{ gridColumn: col, gridRow: '1 / 5' }}
+                />
 
-                    if (row.key === 'aw' && !isEditMode) {
-                      const hasVol1 = exercises.some(e => e.exercise_id?.startsWith('aw_v1_'));
-                      const hasVol2 = exercises.some(e => e.exercise_id?.startsWith('aw_v2_'));
-                      const others = exercises.filter(e => !e.exercise_id?.startsWith('aw_v1_') && !e.exercise_id?.startsWith('aw_v2_') && e.is_active !== 0);
-                      const inactiveExercises = exercises.filter(e => e.is_active === 0);
-                      
-                      const compacted = [];
-                      if (hasVol1) compacted.push({ exercise_id: 'vol1', exercise_name: 'AW Vol. 1', category: 'AW', is_active: 1 });
-                      if (hasVol2) compacted.push({ exercise_id: 'vol2', exercise_name: 'AW Vol. 2', category: 'AW', is_active: 1 });
-                      compacted.push(...others);
-                      compacted.push(...inactiveExercises);
-                      exercises = compacted;
-                    }
-
-                    return (
-                      <div key={row.key} className="flex flex-col gap-1.5">
-                        <div className="flex items-center gap-1.5 px-1 opacity-20">
-                          <row.icon size={10} className={row.color} />
-                          <span className="text-[8px] font-black tracking-widest text-zinc-500">{row.label}</span>
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                          {exercises.map((ex, eIdx) => (
-                            <CompactExerciseCard 
-                              key={`${row.key}-${eIdx}`} 
-                              exercise={ex} 
-                              showMuscleNames={showMuscleNames} 
-                              progressions={progressions}
-                              date={day.date || day.date_}
-                              isEditMode={isEditMode}
-                              onEditAction={(action, exercise) => handleEditAction(action, exercise, day.template_id)}
-                            />
-                          ))}
-                          {exercises.length === 0 && (
-                             <div className={`${row.key === 'aw' ? 'min-h-[34px]' : 'min-h-[68px]'} rounded-xl border border-dashed border-zinc-100 dark:border-zinc-800/50 flex items-center justify-center opacity-30`}>
-                               <span className="text-[7px] font-black uppercase tracking-widest text-zinc-400">Rest</span>
-                             </div>
-                           )}
-                        </div>
+                {/* Header (Row 1) */}
+                <div 
+                  className={`px-5 pt-5 pb-3 z-10 flex flex-col gap-1 transition-all rounded-t-[2.5rem] ${isSelected && !isToday ? 'bg-blue-500/5 dark:bg-blue-500/10' : ''} ${isToday ? 'scale-[1.01] -translate-y-1' : ''} ${!isSunday ? 'cursor-pointer' : ''}`} 
+                  style={{ gridColumn: col, gridRow: 1 }}
+                  onClick={() => template && !isSunday && onSelectDay(template, dayStr)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className={`text-[10px] font-black uppercase tracking-widest ${isToday ? 'text-amber-500' : isSelected ? 'text-blue-500' : 'text-zinc-400'}`}>{dayName}</span>
+                      <span className={`text-[13px] font-black uppercase tracking-tight ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-900 dark:text-zinc-100'}`}>{dateLabel}</span>
+                    </div>
+                    {isSelected && !isToday && (
+                      <div className="flex items-center justify-center px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 shadow-sm">
+                        <span className="text-[7px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-tighter">Attiva</span>
                       </div>
-                    );
-                  })}
+                    )}
+                    {!isSunday && (
+                      <motion.button
+                        whileHover={{ scale: 1.15 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={(e) => { e.stopPropagation(); toggleComplete(day.date || day.date_, day.is_completed); }}
+                        className={`p-2 rounded-2xl transition-all shadow-lg ${day.is_completed ? 'text-white bg-emerald-500 shadow-emerald-500/20' : 'text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:text-amber-500 hover:bg-amber-500/10'}`}
+                      >
+                        <CheckCircle2 size={14} />
+                      </motion.button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>
-          );
-        })}
+
+                {/* FORZA (Row 2) */}
+                <div className={`px-3 py-4 z-10 flex flex-col gap-2 transition-all border-x border-transparent ${isSelected ? 'bg-blue-500/[0.02] dark:bg-blue-500/[0.04] border-blue-500/10' : ''} ${isToday ? 'scale-[1.01] -translate-y-1' : ''}`} style={{ gridColumn: col, gridRow: 2 }}>
+                  <div className="flex items-center gap-1.5 px-2 opacity-40 mb-1">
+                    <Zap size={12} className="text-blue-500" />
+                    <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">FORZA</span>
+                  </div>
+                  <div className="flex flex-col gap-2.5 h-full">
+                    {getExercises('strength').map((ex, eIdx) => (
+                      <CompactExerciseCard key={`str-${eIdx}`} exercise={ex} showMuscleNames={showMuscleNames} progressions={progressions} date={day.date || day.date_} isEditMode={isEditMode} onEditAction={(a, ex) => handleEditAction(a, ex, day.template_id)} />
+                    ))}
+                    {getExercises('strength').length === 0 && (
+                      <div className="flex-1 min-h-[80px] rounded-[1.25rem] border border-dashed border-zinc-200 dark:border-zinc-800/60 flex items-center justify-center opacity-40">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Rest</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* AW (Row 3) */}
+                <div className={`px-3 py-4 z-10 flex flex-col gap-2 transition-all border-x border-transparent ${isSelected ? 'bg-amber-500/[0.02] dark:bg-amber-500/[0.04] border-amber-500/10' : ''} ${isToday ? 'scale-[1.01] -translate-y-1' : ''}`} style={{ gridColumn: col, gridRow: 3 }}>
+                  <div className="flex items-center gap-1.5 px-2 opacity-40 mb-1">
+                    <Target size={12} className="text-amber-500" />
+                    <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">AW</span>
+                  </div>
+                  <div className="flex flex-col gap-2.5 h-full">
+                    {!isEditMode ? getExercises('aw').map((ex, eIdx) => {
+                      const props = getAwCardProps(ex);
+                      return <AwMiniCard key={`aw-${eIdx}`} type={props.type} title={props.title} week={currentMaxDayWeek || 1} awProgram={awProgram} />;
+                    }) : getExercises('aw').map((ex, eIdx) => (
+                      <CompactExerciseCard key={`aw-${eIdx}`} exercise={ex} showMuscleNames={showMuscleNames} progressions={progressions} date={day.date || day.date_} isEditMode={isEditMode} onEditAction={(a, ex) => handleEditAction(a, ex, day.template_id)} />
+                    ))}
+                    {getExercises('aw').length === 0 && (
+                      <div className="flex-1 min-h-[80px] rounded-[1.25rem] border border-dashed border-zinc-200 dark:border-zinc-800/60 flex items-center justify-center opacity-40">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Rest</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* IPER (Row 4) */}
+                <div className={`px-3 pt-4 pb-8 z-10 flex flex-col gap-2 transition-all border-x border-transparent rounded-b-[2.5rem] ${isSelected ? 'bg-emerald-500/[0.02] dark:bg-emerald-500/[0.04] border-emerald-500/10' : ''} ${isToday ? 'scale-[1.01] -translate-y-1' : ''}`} style={{ gridColumn: col, gridRow: 4 }}>
+                  <div className="flex items-center gap-1.5 px-2 opacity-40 mb-1">
+                    <Dumbbell size={12} className="text-emerald-500" />
+                    <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">IPER</span>
+                  </div>
+                  <div className="flex flex-col gap-2.5 h-full">
+                    {getExercises('hyper').map((ex, eIdx) => (
+                      <CompactExerciseCard key={`hyp-${eIdx}`} exercise={ex} showMuscleNames={showMuscleNames} progressions={progressions} date={day.date || day.date_} isEditMode={isEditMode} onEditAction={(a, ex) => handleEditAction(a, ex, day.template_id)} />
+                    ))}
+                    {getExercises('hyper').length === 0 && (
+                      <div className="flex-1 min-h-[80px] rounded-[1.25rem] border border-dashed border-zinc-200 dark:border-zinc-800/60 flex items-center justify-center opacity-40">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Rest</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </React.Fragment>
+            );
+          })}
+        </div>
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
