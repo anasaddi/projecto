@@ -1191,11 +1191,12 @@ export default function DashboardV2() {
           if (!msg || applyingFromSharedBC.current) return;
           applyingFromSharedBC.current = true;
           if (msg.type === 'chat' && msg.data) {
-            setSharedDashboards(prev => prev.map(item =>
-              item.share_id === shareId
-                ? { ...item, data: { ...item.data, chat: [...(item.data?.chat || []).slice(-99), msg.data] } }
-                : item
-            ));
+            setSharedDashboards(prev => prev.map(item => {
+              if (item.share_id !== shareId) return item;
+              const chat = Array.isArray(item.data?.chat) ? item.data.chat : [];
+              if (chat.some(m => m.id === msg.data.id)) return item;
+              return { ...item, data: { ...item.data, chat: [...chat.slice(-99), msg.data] } };
+            }));
           } else if (msg.type === 'sync' && msg.data) {
             setSharedDashboards(prev => prev.map(item =>
               item.share_id === shareId ? { ...item, data: msg.data, title: msg.title || item.title } : item
@@ -1234,11 +1235,12 @@ export default function DashboardV2() {
           if (message.type === 'server_restart') return;
           if (message.type === 'error') return;
           if (message.type === 'chat' && message.data) {
-            setSharedDashboards(prev => prev.map(item =>
-              item.share_id === shareId
-                ? { ...item, data: { ...item.data, chat: [...(item.data?.chat || []).slice(-99), message.data] } }
-                : item
-            ));
+            setSharedDashboards(prev => prev.map(item => {
+              if (item.share_id !== shareId) return item;
+              const chat = Array.isArray(item.data?.chat) ? item.data.chat : [];
+              if (chat.some(m => m.id === message.data.id)) return item;
+              return { ...item, data: { ...item.data, chat: [...chat.slice(-99), message.data] } };
+            }));
           } else if (message.type === 'sync') {
             const data = message.data || message;
             setSharedDashboards(prev => prev.map(item =>

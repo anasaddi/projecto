@@ -394,10 +394,14 @@ export default function SharedProjects() {
   const applyDashboardFromPayload = (msg) => {
     if (msg.type === 'chat') {
       const newMsg = msg.data;
-      setDashboard(prev => ({
-        ...prev,
-        chat: Array.isArray(prev.chat) ? [...prev.chat.slice(-99), newMsg] : [newMsg]
-      }));
+      setDashboard(prev => {
+        const chat = Array.isArray(prev.chat) ? prev.chat : [];
+        if (chat.some(m => m.id === newMsg.id)) return prev;
+        return {
+          ...prev,
+          chat: [...chat.slice(-99), newMsg]
+        };
+      });
       return;
     }
     const dataPayload = msg.data || msg;
