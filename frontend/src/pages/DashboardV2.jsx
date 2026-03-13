@@ -1148,15 +1148,59 @@ export default function DashboardV2() {
   const [goalDeadlineInput, setGoalDeadlineInput] = useState('');
   const [sharedDashboards, setSharedDashboards] = useState([]);
   const wsConnections = useRef({}); // { shareId: WebSocket }
+  const bcChannels = useRef({}); // { shareId: BroadcastChannel }
+  const applyingFromSharedBC = useRef(false);
 
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // WebSocket management for shared dashboards
+  // Helper: send shared dashboard update via WS + BroadcastChannel + REST fallback
+  const sendSharedUpdate = (shareId, title, newData) => {
+    const payload = { type: 'sync', title, data: newData };
+
+    // 1. WebSocket (server broadcast)
+    const socket = wsConnections.current[shareId];
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(payload));
+    } else {
+      // REST fallback
+      api.training.updateSharedDashboard(shareId, newData, title).catch(err => {
+        console.error('Failed to update shared dashboard (REST):', err);
+      });
+    }
+
+    // 2. BroadcastChannel (instant cross-tab sync, same browser)
+    try {
+      const bc = new BroadcastChannel(`km-shared-${shareId}`);
+      bc.postMessage(payload);
+      bc.close();
+    } catch (_) { }
+  };
+
+  // WebSocket + BroadcastChannel management for shared dashboards
   useEffect(() => {
     if (!isLoaded || sharedDashboards.length === 0) return;
 
-    sharedDashboards.forEach(sd => {
-      const shareId = sd.share_id;
+    const shareIds = sharedDashboards.map(sd => sd.share_id);
+
+    shareIds.forEach(shareId => {
+      // --- BroadcastChannel listener (cross-tab sync) ---
+      if (!bcChannels.current[shareId]) {
+        const bc = new BroadcastChannel(`km-shared-${shareId}`);
+        bc.onmessage = (e) => {
+          const msg = e?.data;
+          if (!msg || applyingFromSharedBC.current) return;
+          applyingFromSharedBC.current = true;
+          if (msg.type === 'sync' && msg.data) {
+            setSharedDashboards(prev => prev.map(item =>
+              item.share_id === shareId ? { ...item, data: msg.data, title: msg.title || item.title } : item
+            ));
+          }
+          setTimeout(() => { applyingFromSharedBC.current = false; }, 0);
+        };
+        bcChannels.current[shareId] = bc;
+      }
+
+      // --- WebSocket connection ---
       if (wsConnections.current[shareId]) return;
 
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -1181,14 +1225,8 @@ export default function DashboardV2() {
         try {
           const message = JSON.parse(event.data);
           if (message.type === 'pong') return;
-          if (message.type === 'server_restart') {
-            console.log(`Server restart notification for ${shareId}`);
-            return;
-          }
-          if (message.type === 'error') {
-            console.warn(`WS rate limited for ${shareId}:`, message.message);
-            return;
-          }
+          if (message.type === 'server_restart') return;
+          if (message.type === 'error') return;
           if (message.type === 'sync') {
             const data = message.data || message;
             setSharedDashboards(prev => prev.map(item =>
@@ -1208,19 +1246,25 @@ export default function DashboardV2() {
         console.log(`WS Disconnected for ${shareId}`);
         clearInterval(hb);
         delete wsConnections.current[shareId];
-        // Reconnect after 3s
         setTimeout(() => {
-          setSharedDashboards(prev => [...prev]); // Trigger re-run of useEffect
+          setSharedDashboards(prev => [...prev]);
         }, 3000);
       };
     });
 
     return () => {
-      // Clean up connections if they are no longer in sharedDashboards
+      // Cleanup WS connections that are no longer needed
       Object.keys(wsConnections.current).forEach(id => {
-        if (!sharedDashboards.some(s => s.share_id === id)) {
+        if (!shareIds.includes(id)) {
           wsConnections.current[id].close();
           delete wsConnections.current[id];
+        }
+      });
+      // Cleanup BC channels that are no longer needed
+      Object.keys(bcChannels.current).forEach(id => {
+        if (!shareIds.includes(id)) {
+          bcChannels.current[id].close();
+          delete bcChannels.current[id];
         }
       });
     };
@@ -1482,14 +1526,7 @@ export default function DashboardV2() {
       sd.share_id === shareId ? { ...sd, data: newData } : sd
     ));
 
-    const socket = wsConnections.current[shareId];
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: 'sync', title, data: newData }));
-    } else {
-      api.training.updateSharedDashboard(shareId, newData, title).catch(err => {
-        console.error("Failed to update shared dashboard project (REST):", err);
-      });
-    }
+    sendSharedUpdate(shareId, title, newData);
   };
 
   const updateSharedDashboardData = (shareId, updater) => {
@@ -1503,14 +1540,7 @@ export default function DashboardV2() {
       sd.share_id === shareId ? { ...sd, data: newData } : sd
     ));
 
-    const socket = wsConnections.current[shareId];
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: 'sync', title, data: newData }));
-    } else {
-      api.training.updateSharedDashboard(shareId, newData, title).catch(err => {
-        console.error("Failed to update shared dashboard (REST):", err);
-      });
-    }
+    sendSharedUpdate(shareId, title, newData);
   };
   const toggleSharedQuickTask = (shareId, taskId, val) => {
     updateSharedDashboardData(shareId, data => ({
@@ -1546,14 +1576,7 @@ export default function DashboardV2() {
       sd.share_id === shareId ? { ...sd, data: newData } : sd
     ));
 
-    const socket = wsConnections.current[shareId];
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: 'sync', title, data: newData }));
-    } else {
-      api.training.updateSharedDashboard(shareId, newData, title).catch(err => {
-        console.error("Failed to delete shared dashboard project (REST):", err);
-      });
-    }
+    sendSharedUpdate(shareId, title, newData);
   };
   const reorderProjectTasks = (projectId, fromIndex, toIndex) => {
     if (fromIndex === toIndex) return;
