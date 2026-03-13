@@ -9,20 +9,20 @@ import { api } from '../api/client';
  * ----------------------------------------------------------------------
  */
 const Icons = {
-  CheckCircle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
-  Circle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/></svg>,
-  Plus: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
-  X: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
-  Target: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
-  ChevronDown: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="6 9 12 15 18 9"/></svg>,
-  ChevronRight: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6"/></svg>,
-  Calendar: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
-  Zap: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
-  Trash: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
-  MessageCircle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
-  Send: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
-  ExternalLink: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 22 3 22 9"/><line x1="10" y1="14" x2="22" y2="3"/></svg>,
-  Copy: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>,
+  CheckCircle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>,
+  Circle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10" /></svg>,
+  Plus: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>,
+  X: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>,
+  Target: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>,
+  ChevronDown: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="6 9 12 15 18 9" /></svg>,
+  ChevronRight: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6" /></svg>,
+  Calendar: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>,
+  Zap: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>,
+  Trash: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>,
+  MessageCircle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>,
+  Send: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>,
+  ExternalLink: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 22 3 22 9" /><line x1="10" y1="14" x2="22" y2="3" /></svg>,
+  Copy: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>,
 };
 
 /**
@@ -119,7 +119,7 @@ function SharedTaskNode({ node, depth, projectId, projectAccent, onToggle, onDel
   };
 
   return (
-    <div 
+    <div
       className="flex flex-col w-full"
       onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.add('bg-indigo-50/50', 'dark:bg-indigo-500/5'); }}
       onDragLeave={(e) => { e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-500/5'); }}
@@ -131,10 +131,10 @@ function SharedTaskNode({ node, depth, projectId, projectAccent, onToggle, onDel
           if (payload.type === 'shared-task' && payload.projectId === projectId && payload.parentId === parentId) {
             onMove(payload.taskId);
           }
-        } catch (_) {}
+        } catch (_) { }
       }}
     >
-      <div 
+      <div
         draggable
         onDragStart={handleDragStart}
         className="flex items-start gap-1.5 py-1 px-1 rounded-md hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group/row cursor-grab active:cursor-grabbing"
@@ -150,7 +150,7 @@ function SharedTaskNode({ node, depth, projectId, projectAccent, onToggle, onDel
         <button onClick={() => onToggle(node.id, !node.done)} className={`shrink-0 mt-0.5 ${node.done ? 'text-emerald-500' : 'text-gray-300 dark:text-gray-600 hover:text-indigo-400'}`}>
           {node.done ? <Icons.CheckCircle className="w-3.5 h-3.5" /> : <Icons.Circle className="w-3.5 h-3.5" />}
         </button>
-        
+
         <div className="flex-1 min-w-0 grid grid-cols-[1fr_5.5rem_auto] items-center gap-2">
           <div className="min-w-0" onDoubleClick={() => setEditing(true)}>
             {editing ? (
@@ -188,7 +188,7 @@ function SharedTaskNode({ node, depth, projectId, projectAccent, onToggle, onDel
               )}
             </div>
           )}
-          
+
           <div className="flex items-center gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity justify-end">
             {!node.deadline && !showDeadline && (
               <button onClick={() => setShowDeadline(true)} className="p-0.5 text-gray-500 hover:text-amber-500" title="Scadenza">
@@ -225,7 +225,7 @@ function SharedTaskNode({ node, depth, projectId, projectAccent, onToggle, onDel
           {node.children.map((child, cIdx) => (
             <SharedTaskNode
               key={child.id} node={child} depth={depth + 1} projectId={projectId}
-              onToggle={onToggle} onDelete={onDelete} onRename={onRename} onDeadline={onDeadline} onAddChild={onAddChild} 
+              onToggle={onToggle} onDelete={onDelete} onRename={onRename} onDeadline={onDeadline} onAddChild={onAddChild}
               onMove={(tid) => onMove(tid, cIdx, node.id)} parentId={node.id}
             />
           ))}
@@ -361,7 +361,7 @@ export default function SharedProjects() {
   const id = (shareId || '').trim();
 
   if (!id) return <SharedListDashboard />;
-  
+
   // Stato unico per tutto il dashboard
   const [dashboard, setDashboard] = useState({
     projects: [],
@@ -479,7 +479,7 @@ export default function SharedProjects() {
           title: data?.title || prev.title,
         }));
       })
-      .catch(() => {});
+      .catch(() => { });
   };
 
   useEffect(() => {
@@ -507,7 +507,7 @@ export default function SharedProjects() {
   // Polling fallback quando WebSocket non connesso (aggiornamenti ogni 4s)
   useEffect(() => {
     if (!id || dashboard.isConnected) return;
-    pollInterval.current = setInterval(refetchFromApi, 4000);
+    pollInterval.current = setInterval(refetchFromApi, 30);
     return () => {
       if (pollInterval.current) {
         clearInterval(pollInterval.current);
@@ -587,7 +587,7 @@ export default function SharedProjects() {
     } else if (id) {
       if (restDebounceRef.current) clearTimeout(restDebounceRef.current);
       restDebounceRef.current = setTimeout(() => {
-        api.training.updateSharedDashboard(id, payload.data, payload.title).catch(() => {});
+        api.training.updateSharedDashboard(id, payload.data, payload.title).catch(() => { });
       }, 600);
     }
     if (!applyingFromBCRef.current && id) {
@@ -595,7 +595,7 @@ export default function SharedProjects() {
         const bc = new BroadcastChannel(`km-shared-${id}`);
         bc.postMessage(payload);
         bc.close();
-      } catch (_) {}
+      } catch (_) { }
     }
   };
 
@@ -604,10 +604,10 @@ export default function SharedProjects() {
     setDashboard(prev => {
       const nextPartial = typeof updater === 'function' ? updater(prev) : updater;
       const nextState = { ...prev, ...nextPartial };
-      
+
       // Inviamo l'aggiornamento al server (fire and forget)
       sendUpdate(nextState);
-      
+
       return nextState;
     });
   };
@@ -651,7 +651,7 @@ export default function SharedProjects() {
 
   const sendChatMessage = () => {
     if (!chatDraft.trim()) return;
-    
+
     // Generiamo un ID mittente persistente (semplificato)
     let senderId = localStorage.getItem('km-chat-sender-id');
     if (!senderId) {
@@ -665,12 +665,12 @@ export default function SharedProjects() {
       senderId: senderId,
       timestamp: Date.now()
     };
-    
+
     updateLocal(prev => ({
       chat: [...(prev.chat || []), msg]
     }));
     setChatDraft("");
-    
+
     setTimeout(() => {
       if (chatScrollRef.current) {
         chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
@@ -721,19 +721,19 @@ export default function SharedProjects() {
       </div>
     </div>
   );
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] text-gray-900 dark:text-gray-100 p-4 sm:p-8 md:p-10 font-sans selection:bg-indigo-500/30 antialiased overflow-x-hidden relative">
       <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-8">
-        
+
         {/* MAIN CONTENT: PROJECTS */}
         <div className="flex-1 space-y-8 min-w-0 order-2 lg:order-1">
           <header className="mb-10">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <input 
-                    value={dashboard.title} 
+                  <input
+                    value={dashboard.title}
                     onChange={(e) => updateLocal({ title: e.target.value })}
                     className="text-4xl font-black tracking-tighter bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-500 rounded px-2 py-1 w-full sm:w-auto transition-all text-gray-900 dark:text-white"
                   />
@@ -759,7 +759,7 @@ export default function SharedProjects() {
                 <div className="flex items-center gap-3">
                   <AnimatePresence>
                     {dashboard.isConnected ? (
-                      <motion.div 
+                      <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         className="flex items-center gap-2 text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-500/20"
@@ -768,7 +768,7 @@ export default function SharedProjects() {
                         LIVE
                       </motion.div>
                     ) : (
-                      <motion.div 
+                      <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         className="flex items-center gap-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-500/10 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-500/20"
@@ -784,7 +784,7 @@ export default function SharedProjects() {
 
             {/* BARRA PROGRESSO GENERALE */}
             {dashboard.projects.length > 0 && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white/50 dark:bg-white/5 backdrop-blur-md border border-gray-200/50 dark:border-gray-800/50 rounded-2xl p-6 shadow-xl"
@@ -806,7 +806,7 @@ export default function SharedProjects() {
                   </div>
                 </div>
                 <div className="h-3 bg-gray-100 dark:bg-gray-800/50 rounded-full overflow-hidden p-0.5 border border-gray-200/20 dark:border-white/5">
-                  <motion.div 
+                  <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${globalStats.percentage}%` }}
                     transition={{ duration: 1, ease: "easeOut" }}
@@ -841,9 +841,9 @@ export default function SharedProjects() {
               }[accent];
 
               return (
-                <motion.div 
+                <motion.div
                   layout
-                  key={proj.id} 
+                  key={proj.id}
                   className="flex flex-col bg-white dark:bg-[#1a1d24] border border-gray-200/80 dark:border-gray-800/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 h-fit group"
                 >
                   <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20">
@@ -867,7 +867,7 @@ export default function SharedProjects() {
                     {/* BARRA PROGETTO SINGOLO */}
                     <div className="flex items-center gap-3 bg-white/50 dark:bg-black/20 p-2 rounded-xl border border-gray-100 dark:border-white/5 shadow-sm">
                       <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <motion.div 
+                        <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${percentage}%` }}
                           className={`h-full bg-gradient-to-r ${accentColors} rounded-full`}
@@ -893,14 +893,16 @@ export default function SharedProjects() {
                         onAddChild={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, children: [...(n.children || []), { id: uid('task'), title: val, done: false, children: [] }] })) }))}
                         onMove={(tid, targetIdx, parentId) => updateProject(proj.id, p => {
                           if (parentId) {
-                            return { ...p, tasks: updateNodeInTree(p.tasks, parentId, parent => {
-                              const next = [...(parent.children || [])];
-                              const fromIdx = next.findIndex(t => t.id === tid);
-                              if (fromIdx === -1) return parent;
-                              const [removed] = next.splice(fromIdx, 1);
-                              next.splice(targetIdx, 0, removed);
-                              return { ...parent, children: next };
-                            }) };
+                            return {
+                              ...p, tasks: updateNodeInTree(p.tasks, parentId, parent => {
+                                const next = [...(parent.children || [])];
+                                const fromIdx = next.findIndex(t => t.id === tid);
+                                if (fromIdx === -1) return parent;
+                                const [removed] = next.splice(fromIdx, 1);
+                                next.splice(targetIdx, 0, removed);
+                                return { ...parent, children: next };
+                              })
+                            };
                           }
                           const next = [...p.tasks];
                           const fromIdx = next.findIndex(t => t.id === tid);
@@ -934,7 +936,7 @@ export default function SharedProjects() {
               );
             })}
 
-            <button 
+            <button
               onClick={createProject}
               className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl hover:border-indigo-500 hover:bg-indigo-500/5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 text-gray-400 hover:text-indigo-500 group min-h-[240px]"
             >
@@ -966,7 +968,7 @@ export default function SharedProjects() {
                   className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl pl-4 pr-10 py-2.5 text-xs outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500 transition-colors"
                   placeholder="Nuova task veloce..."
                 />
-                <button 
+                <button
                   onClick={() => { addQuickTask(quickTaskDraft); setQuickTaskDraft(""); }}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-amber-500 transition-colors"
                 >
@@ -985,7 +987,7 @@ export default function SharedProjects() {
                       whileHover={{ scale: 1.02 }}
                       className="group flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-gray-100 dark:hover:border-gray-800 cursor-pointer"
                     >
-                      <button 
+                      <button
                         onClick={() => toggleQuickTask(task.id)}
                         className={`shrink-0 ${task.done ? 'text-emerald-500' : 'text-gray-300 dark:text-gray-600 hover:text-amber-400'} transition-colors duration-200`}
                       >
@@ -994,7 +996,7 @@ export default function SharedProjects() {
                       <span className={`flex-1 text-xs min-w-0 ${task.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
                         {task.title}
                       </span>
-                      <button 
+                      <button
                         onClick={() => deleteQuickTask(task.id)}
                         className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
                       >
@@ -1003,9 +1005,9 @@ export default function SharedProjects() {
                     </motion.div>
                   ))}
                 </AnimatePresence>
-                
+
                 {dashboard.quickTasks.length === 0 && (
-                  <motion.div 
+                  <motion.div
                     className="py-10 text-center space-y-3"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -1030,7 +1032,7 @@ export default function SharedProjects() {
                 <h2 className="text-sm font-black uppercase tracking-wider text-gray-800 dark:text-gray-200">Chat</h2>
               </div>
               {dashboard.chat.length > 0 && (
-                <button 
+                <button
                   onClick={resetChat}
                   className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                   title="Cancella cronologia"
@@ -1045,25 +1047,24 @@ export default function SharedProjects() {
                 const isMe = msg.senderId === localStorage.getItem('km-chat-sender-id');
                 // Colore univoco basato sull'ID del mittente per chi non sono io
                 const senderColor = isMe ? '' : `hsl(${parseInt(msg.senderId.slice(-4), 16) % 360}, 70%, 45%)`;
-                
+
                 return (
-                  <motion.div 
-                    key={msg.id} 
+                  <motion.div
+                    key={msg.id}
                     className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <div 
-                      className={`max-w-[85%] p-3 rounded-2xl text-sm shadow-lg backdrop-blur-sm ${
-                        isMe 
-                          ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-tr-none shadow-indigo-500/25' 
+                    <div
+                      className={`max-w-[85%] p-3 rounded-2xl text-sm shadow-lg backdrop-blur-sm ${isMe
+                          ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-tr-none shadow-indigo-500/25'
                           : 'bg-white/90 dark:bg-gray-800/90 text-gray-800 dark:text-gray-200 rounded-tl-none border border-gray-200/50 dark:border-gray-700/50 shadow-gray-500/10'
-                      }`}
+                        }`}
                     >
                       {!isMe && (
                         <span className="block text-[9px] font-bold mb-0.5 opacity-80" style={{ color: senderColor }}>
-                          User {msg.senderId.slice(0,4)}
+                          User {msg.senderId.slice(0, 4)}
                         </span>
                       )}
                       <p className="leading-relaxed">{msg.text}</p>
@@ -1075,7 +1076,7 @@ export default function SharedProjects() {
                 );
               })}
               {dashboard.chat.length === 0 && (
-                <motion.div 
+                <motion.div
                   className="flex flex-col items-center justify-center h-full text-gray-400 space-y-3 opacity-60 py-12"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -1095,7 +1096,7 @@ export default function SharedProjects() {
                 placeholder="Scrivi un messaggio..."
                 className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl pl-4 pr-12 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
               />
-              <button 
+              <button
                 type="submit"
                 disabled={!chatDraft.trim()}
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
