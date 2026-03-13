@@ -2,7 +2,7 @@ import logging
 from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from app.db.models import (
     DashboardState, SharedDashboard, Project, Task, QuickTask, 
     Habit, HabitLog, ChatMessage
@@ -14,36 +14,51 @@ logger = logging.getLogger(__name__)
 # --- Dashboard (Aggregated View for Frontend) ---
 
 async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default"):
-    # 1. Habits
+    # 1. Habits (Templates)
     habits_result = await db.execute(select(Habit).order_by(Habit.ordinal))
     habits = habits_result.scalars().all()
     dailyTaskTemplates = [{"id": h.id, "title": h.title, "locked": bool(h.locked), "ordinal": h.ordinal} for h in habits]
 
-    # 2. Habit Logs
-    logs_result = await db.execute(select(HabitLog))
+    # 2. Habit Logs (Bounded to last 60 days for performance)
+    sixty_days_ago = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
+    logs_result = await db.execute(select(HabitLog).filter(HabitLog.date >= sixty_days_ago))
     logs = logs_result.scalars().all()
     dailyTaskLogs = {}
     for l in logs:
         if l.date not in dailyTaskLogs: dailyTaskLogs[l.date] = []
         dailyTaskLogs[l.date].append({"id": l.habit_id, "done": bool(l.status)})
 
-    # 3. Quick Tasks — will use blob if present (has parentId, lifeGoalId)
-    # 4. Personal Projects
+    # 3. Personal Projects & Tasks (Single-pass tree builder)
     projs_result = await db.execute(select(Project).filter(Project.share_id == None).order_by(Project.created_at.desc()))
     projs = projs_result.scalars().all()
-    
-    async def get_task_tree(project_id, parent_id=None):
-        res = await db.execute(select(Task).filter(Task.project_id == project_id, Task.parent_id == parent_id).order_by(Task.created_at))
-        tree = []
-        for t in res.scalars().all():
-            tree.append({"id": t.id, "title": t.title, "done": bool(t.done), "deadline": t.deadline, "children": await get_task_tree(project_id, t.id)})
-        return tree
+    proj_ids = [p.id for p in projs]
 
-    projects = []
-    for p in projs:
-        projects.append({"id": p.id, "title": p.title, "tasks": await get_task_tree(p.id)})
+    tasks_result = await db.execute(select(Task).filter(Task.project_id.in_(proj_ids)).order_by(Task.created_at))
+    all_tasks = tasks_result.scalars().all()
 
-    # DashboardState for other fields (prayerLogs, quickTasks, lifeGoals, etc.)
+    # Build memory map of tasks
+    tasks_by_project = {pid: [] for pid in proj_ids}
+    for t in all_tasks:
+        tasks_by_project[t.project_id].append(t)
+
+    def build_tree(task_list, parent_id=None):
+        nodes = []
+        for t in [x for x in task_list if x.parent_id == parent_id]:
+            nodes.append({
+                "id": t.id,
+                "title": t.title,
+                "done": bool(t.done),
+                "deadline": t.deadline,
+                "children": build_tree(task_list, t.id)
+            })
+        return nodes
+
+    projects = [
+        {"id": p.id, "title": p.title, "tasks": build_tree(tasks_by_project.get(p.id, []))}
+        for p in projs
+    ]
+
+    # 4. Misc fields from DashboardState blob
     res_ds = await db.execute(select(DashboardState).filter(DashboardState.key == key))
     ds = res_ds.scalar_one_or_none()
     ds_data = _parse_json(ds.data, {}) if ds else {}

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Text, Float, ForeignKey, DateTime, Enum, JSON
+from sqlalchemy import Column, Integer, String, Text, Float, ForeignKey, DateTime, Enum, JSON, Index
 from sqlalchemy.orm import relationship, backref
 from app.db.session import Base
 import enum
@@ -176,6 +176,10 @@ class WorkoutDayExercise(Base):
     template = relationship("WorkoutDayTemplate", back_populates="exercises")
     exercise = relationship("Exercise", back_populates="template_exercises")
 
+    __table_args__ = (
+        Index("idx_workout_day_exercises_tmpl_ordinal", "template_id", "ordinal"),
+    )
+
 
 class WorkoutLog(Base):
     __tablename__ = "workout_logs"
@@ -221,6 +225,10 @@ class HabitLog(Base):
     date = Column(String(10), nullable=False, index=True) # YYYY-MM-DD
     status = Column(Integer, default=0) # 0 = not done, 1 = done
 
+    __table_args__ = (
+        Index("idx_habit_logs_habit_date", "habit_id", "date"),
+    )
+
 class Project(Base):
     __tablename__ = "projects"
     id = Column(String(64), primary_key=True)
@@ -243,6 +251,10 @@ class Task(Base):
 
     project = relationship("Project", back_populates="tasks")
     children = relationship("Task", backref=backref("parent", remote_side=[id]), cascade="all, delete-orphan", single_parent=True)
+
+    __table_args__ = (
+        Index("idx_tasks_project_parent", "project_id", "parent_id"),
+    )
 
 class QuickTask(Base):
     __tablename__ = "quick_tasks"

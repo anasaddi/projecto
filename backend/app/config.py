@@ -10,6 +10,11 @@ class Settings(BaseSettings):
     environment: str = "development"
     log_level: str = "INFO"
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+    admin_access_key: str = "master-key"  # Override via ADMIN_ACCESS_KEY env var in production
+
+    @property
+    def is_production(self) -> bool:
+        return self.environment.lower() in ("production", "prod")
 
     @property
     def async_database_url(self) -> str:

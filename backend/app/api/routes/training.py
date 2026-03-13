@@ -17,8 +17,10 @@ router = APIRouter()
 
 # --- Security Dependency ---
 def check_admin_access(x_km_access: Optional[str] = Header(None)):
-    """Simple header check to block unauthorized access to private routes."""
-    if x_km_access != "master-key":
+    """Check admin access using env-configured key."""
+    from app.config import get_settings
+    settings = get_settings()
+    if x_km_access != settings.admin_access_key:
         raise HTTPException(status_code=403, detail="Accesso negato: sezione privata.")
     return True
 

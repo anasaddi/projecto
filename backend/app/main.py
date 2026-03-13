@@ -116,11 +116,10 @@ def create_app() -> FastAPI:
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request, exc):
         logger.error(f"Unhandled exception: {exc}", exc_info=True)
-        tb = traceback.format_exc()
-        return JSONResponse(
-            status_code=500,
-            content={"detail": str(exc), "traceback": tb},
-        )
+        content = {"detail": str(exc)}
+        if not settings.is_production:
+            content["traceback"] = traceback.format_exc()
+        return JSONResponse(status_code=500, content=content)
 
     # Middleware stack (order matters: last added = first executed)
     # 1. CORS
