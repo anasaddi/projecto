@@ -27,10 +27,7 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default")
         if l.date not in dailyTaskLogs: dailyTaskLogs[l.date] = []
         dailyTaskLogs[l.date].append({"id": l.habit_id, "done": bool(l.status)})
 
-    # 3. Quick Tasks
-    qt_result = await db.execute(select(QuickTask).order_by(QuickTask.created_at.desc()))
-    quickTasks = [{"id": q.id, "title": q.title, "done": bool(q.done), "deadline": q.deadline} for q in qt_result.scalars().all()]
-
+    # 3. Quick Tasks — will use blob if present (has parentId, lifeGoalId)
     # 4. Personal Projects
     projs_result = await db.execute(select(Project).filter(Project.share_id == None).order_by(Project.created_at.desc()))
     projs = projs_result.scalars().all()
@@ -46,10 +43,15 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default")
     for p in projs:
         projects.append({"id": p.id, "title": p.title, "tasks": await get_task_tree(p.id)})
 
-    # DashboardState for other fields (prayerLogs, etc.)
+    # DashboardState for other fields (prayerLogs, quickTasks, lifeGoals, etc.)
     res_ds = await db.execute(select(DashboardState).filter(DashboardState.key == key))
     ds = res_ds.scalar_one_or_none()
     ds_data = _parse_json(ds.data, {}) if ds else {}
+
+    quickTasks = ds_data.get("quickTasks")
+    if quickTasks is None:
+        qt_result = await db.execute(select(QuickTask).order_by(QuickTask.created_at.desc()))
+        quickTasks = [{"id": q.id, "title": q.title, "done": bool(q.done), "deadline": q.deadline} for q in qt_result.scalars().all()]
 
     return {
         "dailyTaskTemplates": dailyTaskTemplates,

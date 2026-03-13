@@ -461,6 +461,34 @@ export default function SharedProjects() {
     };
   };
 
+  const refetchFromApi = () => {
+    if (!id) return;
+    api.training.getSharedDashboard(id)
+      .then((data) => {
+        if (!mountedRef.current) return;
+        const payload = data?.data || data;
+        const projects = Array.isArray(payload?.projects) ? payload.projects : [];
+        const quickTasks = Array.isArray(payload?.quickTasks) ? payload.quickTasks : [];
+        const chat = Array.isArray(payload?.chat) ? payload.chat : [];
+        setDashboard(prev => ({
+          ...prev,
+          projects,
+          quickTasks,
+          chat,
+          title: data?.title || prev.title,
+        }));
+      })
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && id) refetchFromApi();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [id]);
+
   // Caricamento iniziale via REST (fallback robusto se WS fallisce)
   useEffect(() => {
     mountedRef.current = true;

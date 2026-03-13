@@ -1209,6 +1209,24 @@ export default function DashboardV2() {
     };
   }, [isLoaded, sharedDashboards]);
 
+  const refetchSharedDashboards = () => {
+    if (sharedDashboards.length === 0) return;
+    api.training.listSharedDashboards()
+      .then((arr) => {
+        const list = Array.isArray(arr) ? arr : (Array.isArray(arr?.data) ? arr.data : []);
+        if (list.length > 0) setSharedDashboards(list);
+      })
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isLoaded) refetchSharedDashboards();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [isLoaded]);
+
   // 1. Initial Load from DB
   useEffect(() => {
     async function fetchDB() {
