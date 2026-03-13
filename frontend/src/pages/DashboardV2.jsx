@@ -1160,7 +1160,7 @@ export default function DashboardV2() {
       if (wsConnections.current[shareId]) return;
 
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.hostname === 'localhost' ? 'localhost:8000' : 'projecto-production-feda.up.railway.app';
+      const host = window.location.hostname === 'localhost' ? 'localhost:8000' : window.location.host;
       const wsUrl = `${protocol}//${host}/api/training/ws/shared-dashboard/${encodeURIComponent(shareId)}`;
       
       const socket = new WebSocket(wsUrl);
@@ -1750,16 +1750,8 @@ export default function DashboardV2() {
       {/* HEADER — Dashboard bar: stats + date + actions */}
       <header className="shrink-0 border-b border-zinc-200/80 dark:border-white/[0.06] bg-white/95 dark:bg-[#0f1116]/95 backdrop-blur-xl shadow-sm shadow-zinc-900/5 dark:shadow-black/20 px-5 py-3">
         <div className="flex items-center justify-between gap-4">
-          {/* Left: Quick nav (coherente con Layout) */}
-          <div className="flex items-center gap-2 shrink-0">
-            <Link to="/shared" className="hidden sm:flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06] hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors">
-              <Icons.MessageCircle className="h-3.5 w-3.5" />
-              Condivisi
-            </Link>
-            <Link to="/training" className="hidden sm:flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06] hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors">
-              Training
-            </Link>
-          </div>
+          {/* Left: spacer */}
+          <div className="w-0 sm:w-4 shrink-0" />
 
           {/* Center: Live stats */}
           <div className="flex items-center gap-3 flex-1 justify-center min-w-0">
