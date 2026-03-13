@@ -10,8 +10,7 @@ const Reader = lazy(() => import('./pages/vecchi/Reader'))
 const YouTubeViewer = lazy(() => import('./pages/YouTubeViewer'))
 const DashboardV2 = lazy(() => import('./pages/DashboardV2'))
 const SharedProjects = lazy(() => import('./pages/SharedProjects'))
-const Training = lazy(() => import('./pages/Training'))
-const Training2 = lazy(() => import('./pages/Training2'))
+const Training = lazy(() => import('./pages/Training2'))
 const Welcome = lazy(() => import('./pages/Welcome'))
 
 function RouteLoader() {
@@ -82,7 +81,6 @@ export default function App() {
                 <Route path="/shared/:shareId" element={<SharedProjects />} />
                 <Route path="/youtube" element={<AdminRoute><YouTubeViewer /></AdminRoute>} />
                 <Route path="/training" element={<AdminRoute><Training /></AdminRoute>} />
-                <Route path="/training2" element={<AdminRoute><Training2 /></AdminRoute>} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Suspense>

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../api/client';
 
@@ -21,6 +21,8 @@ const Icons = {
   Trash: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
   MessageCircle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
   Send: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
+  ExternalLink: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 22 3 22 9"/><line x1="10" y1="14" x2="22" y2="3"/></svg>,
+  Copy: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>,
 };
 
 /**
@@ -233,9 +235,132 @@ function SharedTaskNode({ node, depth, projectId, projectAccent, onToggle, onDel
   );
 }
 
+/**
+ * Lista di tutti i shared dashboards dell'utente (visibile su /shared senza id)
+ */
+function SharedListDashboard() {
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
+
+  useEffect(() => {
+    api.training.listSharedDashboards()
+      .then((data) => {
+        const arr = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+        setList(arr);
+        setError(null);
+      })
+      .catch((err) => setError(err?.message || 'Impossibile caricare i dashboard condivisi'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const copyLink = (sid) => {
+    const url = `${window.location.origin}/shared/${sid}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedId(sid);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620]">
+      <div className="text-gray-500 font-medium">Caricamento...</div>
+    </div>
+  );
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] p-4">
+      <div className="text-center max-w-md">
+        <p className="text-red-500 dark:text-red-400 font-medium mb-2">{error}</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] text-gray-900 dark:text-gray-100 p-6 sm:p-10">
+      <div className="max-w-4xl mx-auto">
+        <header className="mb-10">
+          <h1 className="text-3xl font-black tracking-tight text-gray-900 dark:text-white mb-2">I miei Condivisi</h1>
+          <p className="text-gray-500 dark:text-gray-400 font-medium">Dashboard condivise collegate alla tua area</p>
+        </header>
+
+        {list.length === 0 ? (
+          <div className="rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-white/5 p-12 text-center">
+            <Icons.MessageCircle className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+            <p className="text-gray-500 dark:text-gray-400 font-medium mb-2">Nessun dashboard condiviso</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">I dashboard condivisi appariranno qui quando ne creerai o ne riceverai.</p>
+            <Link to="/dashboard" className="inline-flex items-center gap-2 mt-6 px-4 py-2 rounded-lg bg-indigo-500 text-white font-medium hover:bg-indigo-600 transition-colors">
+              Vai al Dashboard
+              <Icons.ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {list.map((sd) => {
+              const sid = sd.share_id || sd.shareId;
+              const title = sd.title || 'Senza titolo';
+              const projects = Array.isArray(sd.data?.projects) ? sd.data.projects : (Array.isArray(sd.projects) ? sd.projects : []);
+              const quickTasks = Array.isArray(sd.data?.quickTasks) ? sd.data.quickTasks : (Array.isArray(sd.quickTasks) ? sd.quickTasks : []);
+              const totalTasks = projects.reduce((acc, p) => acc + countTreeStats(p.tasks || []).total, 0);
+              const completedTasks = projects.reduce((acc, p) => acc + countTreeStats(p.tasks || []).completed, 0);
+              const pct = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+              return (
+                <Link
+                  key={sid}
+                  to={`/shared/${sid}`}
+                  className="group block rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 p-5 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/10 transition-all"
+                >
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <h3 className="font-bold text-gray-900 dark:text-white truncate flex-1">{title}</h3>
+                    <span className="shrink-0 px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-wider">
+                      Shared
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 mb-4">
+                    <span>{projects.length} progetti</span>
+                    <span>·</span>
+                    <span>{quickTasks.length} quick tasks</span>
+                  </div>
+                  {totalTasks > 0 && (
+                    <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mb-4">
+                      <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full" style={{ width: `${pct}%` }} />
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500 truncate">/shared/{sid}</span>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); copyLink(sid); }}
+                      className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-indigo-600 dark:hover:bg-gray-700 dark:hover:text-indigo-400 transition-colors"
+                      title="Copia link"
+                    >
+                      {copiedId === sid ? (
+                        <span className="text-[10px] font-medium text-emerald-500">Copiato!</span>
+                      ) : (
+                        <Icons.Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Icons.ExternalLink className="w-3.5 h-3.5" />
+                    Apri dashboard
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function SharedProjects() {
   const { shareId } = useParams();
   const id = (shareId || '').trim();
+
+  if (!id) return <SharedListDashboard />;
   
   // Stato unico per tutto il dashboard
   const [dashboard, setDashboard] = useState({
@@ -498,6 +623,14 @@ export default function SharedProjects() {
 
   const [projectTaskDrafts, setProjectTaskDrafts] = useState({});
   const [quickTaskDraft, setQuickTaskDraft] = useState("");
+  const [linkCopied, setLinkCopied] = useState(false);
+  const copyShareLink = () => {
+    const url = `${window.location.origin}/shared/${id}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    });
+  };
 
   // Calcolo statistiche globali per tutti i progetti
   const globalStats = useMemo(() => {
@@ -547,6 +680,15 @@ export default function SharedProjects() {
                 </div>
                 <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
                   Spazio di lavoro condiviso
+                  <span className="font-mono text-[11px] text-gray-400 dark:text-gray-500">/shared/{id}</span>
+                  <button
+                    type="button"
+                    onClick={copyShareLink}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
+                    title="Copia link completo"
+                  >
+                    {linkCopied ? <span>Copiato!</span> : <><Icons.Copy className="w-3.5 h-3.5" /> Copia link</>}
+                  </button>
                 </p>
               </div>
 

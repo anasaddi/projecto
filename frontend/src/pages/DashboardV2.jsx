@@ -524,46 +524,46 @@ function PomodoroCompact() {
   const progress = 1 - remaining / POMODORO_DURATION;
 
   return (
-    <div className="dashboard-panel p-4 flex flex-col gap-2.5 relative overflow-hidden select-none">
+    <div className="dashboard-panel p-5 flex flex-col gap-2 relative overflow-hidden select-none">
       <div className="flex justify-between items-center z-10">
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
-          <Icons.Clock className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" /> Focus
-        </div>
-        <div className="text-[10px] font-bold bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded">
+        <h3 className="flex items-center gap-1.5 dashboard-section-title text-indigo-500 dark:text-indigo-400">
+          <Icons.Clock className="w-3.5 h-3.5" /> Focus
+        </h3>
+        <div className="text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/20">
           {sessionsToday} sess
         </div>
       </div>
       
-      <div className="flex items-center justify-between z-10">
-        <div className="text-2xl font-black tracking-tighter tabular-nums text-zinc-900 dark:text-zinc-50">
+      <div className="flex items-center justify-between z-10 mt-2">
+        <div className="text-4xl font-black tracking-tighter tabular-nums text-zinc-900 dark:text-zinc-50 leading-none">
           {String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-2">
            {status === 'idle' && (
-            <button onClick={() => { setStatus('running'); setRemaining(POMODORO_DURATION); }} className="bg-indigo-600 hover:bg-indigo-500 text-white w-7 h-7 flex items-center justify-center rounded-lg active:scale-95 transition-all">
-              <Icons.Play className="w-3.5 h-3.5 fill-current" />
+            <button onClick={() => { setStatus('running'); setRemaining(POMODORO_DURATION); }} className="bg-indigo-600 hover:bg-indigo-500 text-white w-9 h-9 flex items-center justify-center rounded-xl shadow-[0_0_16px_rgba(99,102,241,0.25)] dark:shadow-[0_0_16px_rgba(99,102,241,0.4)] active:scale-95 transition-all">
+              <Icons.Play className="w-4 h-4 fill-current" />
             </button>
           )}
           {status === 'running' && (
-            <button onClick={() => setStatus('paused')} className="bg-amber-500 hover:bg-amber-400 text-white w-7 h-7 flex items-center justify-center rounded-lg active:scale-95 transition-all">
-              <Icons.Pause className="w-3.5 h-3.5 fill-current" />
+            <button onClick={() => setStatus('paused')} className="bg-amber-500 hover:bg-amber-400 text-white w-9 h-9 flex items-center justify-center rounded-xl shadow-[0_0_16px_rgba(245,158,11,0.3)] dark:shadow-[0_0_16px_rgba(245,158,11,0.4)] active:scale-95 transition-all">
+              <Icons.Pause className="w-4 h-4 fill-current" />
             </button>
           )}
           {status === 'paused' && (
             <>
-              <button onClick={() => setStatus('running')} className="bg-indigo-600 hover:bg-indigo-500 text-white w-7 h-7 flex items-center justify-center rounded-lg active:scale-95 transition-all">
-                <Icons.Play className="w-3.5 h-3.5 fill-current" />
+              <button onClick={() => setStatus('running')} className="bg-indigo-600 hover:bg-indigo-500 text-white w-9 h-9 flex items-center justify-center rounded-xl shadow-[0_0_16px_rgba(99,102,241,0.25)] dark:shadow-[0_0_16px_rgba(99,102,241,0.4)] active:scale-95 transition-all">
+                <Icons.Play className="w-4 h-4 fill-current" />
               </button>
-              <button onClick={() => { setStatus('idle'); setRemaining(POMODORO_DURATION); }} className="bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 w-7 h-7 flex items-center justify-center rounded-lg active:scale-95 transition-all">
-                <Icons.Square className="w-3 h-3 fill-current" />
+              <button onClick={() => { setStatus('idle'); setRemaining(POMODORO_DURATION); }} className="bg-zinc-200 dark:bg-white/[0.06] hover:bg-zinc-300 dark:hover:bg-white/[0.1] text-zinc-700 dark:text-zinc-100 w-9 h-9 flex items-center justify-center rounded-xl active:scale-95 transition-all border border-zinc-200 dark:border-white/[0.06]">
+                <Icons.Square className="w-3.5 h-3.5 fill-current" />
               </button>
             </>
           )}
         </div>
       </div>
       
-      <div className="h-1 w-full bg-zinc-100 dark:bg-zinc-700/60 rounded-full overflow-hidden mt-1">
-        <div className="h-full bg-indigo-500 dark:bg-indigo-400 rounded-full transition-all duration-1000 ease-linear" style={{ width: `${progress * 100}%` }} />
+      <div className="h-[3px] w-full bg-zinc-100 dark:bg-white/[0.04] rounded-full overflow-hidden mt-4">
+        <div className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-1000 ease-linear" style={{ width: `${progress * 100}%` }} />
       </div>
     </div>
   );
@@ -591,14 +591,10 @@ function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHab
 
   const getColor = (score) => {
     if (score >= 0.9) return 'bg-emerald-600 dark:bg-emerald-500';
-    if (score >= 0.8) return 'bg-emerald-500 dark:bg-emerald-600';
-    if (score >= 0.65) return 'bg-lime-600 dark:bg-lime-500';
-    if (score >= 0.5) return 'bg-lime-500 dark:bg-lime-600';
-    if (score >= 0.35) return 'bg-amber-500 dark:bg-amber-600';
-    if (score >= 0.2) return 'bg-yellow-500 dark:bg-yellow-600';
-    if (score >= 0.1) return 'bg-yellow-400 dark:bg-yellow-700/70';
-    if (score > 0) return 'bg-yellow-200 dark:bg-yellow-900/50';
-    return 'bg-zinc-100 dark:bg-zinc-800/80';
+    if (score >= 0.65) return 'bg-emerald-500 dark:bg-emerald-400';
+    if (score >= 0.4) return 'bg-amber-400 dark:bg-amber-500';
+    if (score > 0) return 'bg-amber-200 dark:bg-amber-500/40';
+    return 'bg-zinc-100 dark:bg-white/[0.04]';
   };
 
   const streak = useMemo(() => {
@@ -611,42 +607,37 @@ function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHab
   }, [heatmapDays]);
 
   return (
-    <div className="dashboard-panel p-4 flex flex-col gap-2.5 select-none">
+    <div className="dashboard-panel p-5 flex flex-col gap-4 select-none">
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-emerald-400" />
-          <h3 className="text-[11px] font-medium text-zinc-400 dark:text-zinc-400 uppercase tracking-[0.18em]">
-            30 days
-          </h3>
-        </div>
+        <h3 className="flex items-center gap-1.5 dashboard-section-title text-emerald-500 dark:text-emerald-400">
+          <Icons.Flame className="w-3.5 h-3.5" /> Ultimi 30 giorni
+        </h3>
         {streak > 0 && (
-          <span className="text-[10px] font-bold bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded">
+          <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full">
             {streak}d streak
           </span>
         )}
       </div>
-      <div className="grid grid-cols-10 gap-0.5">
+      <div className="grid grid-cols-10 gap-2">
         {heatmapDays.map(({ key, score, isToday }) => (
           <div
             key={key}
             title={`${Math.round(score * 100)}% · ${key}`}
-            className={`aspect-square rounded-[2px] ${getColor(score)} ${isToday ? 'ring-1 ring-emerald-500 ring-offset-1 dark:ring-offset-[#161920]' : ''} transition-colors`}
+            className={`w-5 h-5 rounded-md ${getColor(score)} ${isToday ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-indigo-400 ring-offset-white dark:ring-offset-[#161920]' : ''} transition-colors`}
           />
         ))}
       </div>
-      <div className="flex justify-between items-center text-[9px] text-zinc-400 font-medium">
-        <span>Less</span>
-        <div className="flex gap-0.5">
-          <div className="w-2 h-2 rounded-sm bg-zinc-100 dark:bg-zinc-800/80" />
-          <div className="w-2 h-2 rounded-sm bg-yellow-200 dark:bg-yellow-900/50" />
-          <div className="w-2 h-2 rounded-sm bg-yellow-400 dark:bg-yellow-700/70" />
-          <div className="w-2 h-2 rounded-sm bg-amber-500 dark:bg-amber-600" />
-          <div className="w-2 h-2 rounded-sm bg-lime-500 dark:bg-lime-500" />
-          <div className="w-2 h-2 rounded-sm bg-emerald-600 dark:bg-emerald-500" />
+      <div className="flex items-center gap-2 text-[9px] text-zinc-500 dark:text-zinc-400">
+        <span>Meno</span>
+        <div className="flex items-center gap-0.5">
+          <div className="w-3 h-3 rounded-[2px] bg-zinc-100 dark:bg-white/[0.04]" title="0%" />
+          <div className="w-3 h-3 rounded-[2px] bg-amber-200 dark:bg-amber-500/40" title="&gt;0%" />
+          <div className="w-3 h-3 rounded-[2px] bg-amber-400 dark:bg-amber-500" title="≥40%" />
+          <div className="w-3 h-3 rounded-[2px] bg-emerald-500 dark:bg-emerald-400" title="≥65%" />
+          <div className="w-3 h-3 rounded-[2px] bg-emerald-600 dark:bg-emerald-500" title="≥90%" />
         </div>
-        <span>100%</span>
+        <span>Più</span>
       </div>
-      <p className="text-[9px] text-zinc-400 italic">Habits + Prayers + Tasks</p>
       <LightAnalyticsInner dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} now={now} />
     </div>
   );
@@ -825,7 +816,7 @@ function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDele
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); setDeadlineInput(node.deadline || ''); setShowDeadline(true); }}
-              className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${getDeadlineColorClass(node.deadline, node.done)}`}
+              className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${getDeadlineColorClass(node.deadline, node.done)}`}
             >
               {formatDeadline(node.deadline)}
             </button>
@@ -935,15 +926,15 @@ function StandardProjectCard({
 
   return (
     <div className="dashboard-panel group/proj flex flex-col overflow-hidden transition-all">
-      {/* Header — sempre visibile */}
+      {/* Header — stile dashboard3 */}
       <div
-        className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-zinc-50/60 dark:hover:bg-white/[0.03]"
+        className="flex cursor-pointer items-center gap-3 p-4 hover:bg-zinc-50/60 dark:hover:bg-white/[0.02] transition-colors duration-150"
         onClick={() => setExpanded(e => !e)}
       >
-        {/* Accent stripe */}
-        <div className={`h-5 w-1 shrink-0 rounded-full ${accentBar}`} />
+        {/* Accent stripe con shadow */}
+        <div className={`h-5 w-1 shrink-0 rounded-full ${accentBar} shadow-[0_0_8px_rgba(0,0,0,0.08)] dark:shadow-[0_0_8px_rgba(255,255,255,0.06)]`} />
 
-        {/* Title — seamless */}
+        {/* Title */}
         <input
           value={project.title}
           onChange={(e) => { e.stopPropagation(); onTitleChange(e.target.value); }}
@@ -957,7 +948,7 @@ function StandardProjectCard({
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); setProjectDeadlineInput(project.deadline || ''); setProjectDeadlineEditing(project.id); }}
-              className={`text-xs ${getDeadlineColorClass(project.deadline, false)}`}
+              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border border-zinc-200 dark:border-white/[0.04] transition-colors ${getDeadlineColorClass(project.deadline, false)}`}
             >
               {formatDeadline(project.deadline)}
             </button>
@@ -978,12 +969,12 @@ function StandardProjectCard({
             />
           )}
           
-          {/* Progress bar + % */}
+          {/* Progress bar h-[3px] stile dashboard3 */}
           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-            <div className="h-1 w-20 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+            <div className="h-[3px] w-16 overflow-hidden rounded-full bg-zinc-200 dark:bg-white/[0.06]">
               <div className={`h-full ${accentBar} transition-all duration-500`} style={{ width: `${percentage}%` }} />
             </div>
-            <span className={`w-8 text-right text-xs tabular-nums font-medium ${accentText}`}>{percentage}%</span>
+            <span className="w-8 text-right text-xs font-bold tabular-nums text-zinc-500 dark:text-zinc-400">{percentage}%</span>
           </div>
 
           {isShared && (
@@ -996,13 +987,13 @@ function StandardProjectCard({
             <KebabMenu items={menuItems} />
           </div>
 
-          <Icons.ChevronDown className={`h-3.5 w-3.5 text-zinc-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+          <Icons.ChevronDown className={`h-4 w-4 text-zinc-400 dark:text-zinc-500 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
         </div>
       </div>
 
       {/* Tasks — espandibili */}
       {expanded && (
-        <div className="animate-slide-down border-t border-zinc-100 px-4 py-3 dark:border-white/[0.06]">
+        <div className="animate-slide-down border-t border-zinc-100 dark:border-white/[0.06] p-4 pt-3 flex flex-col gap-1">
           {renderTasks()}
         </div>
       )}
@@ -1285,7 +1276,16 @@ export default function DashboardV2() {
   const activeHabits = useMemo(() => dailyTaskTemplates.filter((t) => !t.locked), [dailyTaskTemplates]);
   const todayDone = activeHabits.reduce((acc, t) => acc + (todayTaskLog[t.id] ? 1 : 0), 0);
   const prayerDone = PRAYERS.reduce((acc, p) => acc + (todayPrayerLog[p] ? 1 : 0), 0);
-  const top3Resolved = useMemo(() => resolveTop3Slots(projects, top3Manual, quickTasks, lifeGoals), [projects, top3Manual, quickTasks, lifeGoals]);
+  const allQuickTasks = useMemo(() => {
+    const local = quickTasks.filter(t => !t.parentId).map(t => ({ ...t, shareId: null }));
+    const fromShared = sharedDashboards.flatMap(sd => {
+      const list = Array.isArray((sd.data || {}).quickTasks) ? (sd.data || {}).quickTasks : [];
+      return list.filter(t => !t.parentId).map(t => ({ ...t, shareId: sd.share_id, sharedTitle: sd.title }));
+    });
+    return [...local, ...fromShared];
+  }, [quickTasks, sharedDashboards]);
+
+  const top3Resolved = useMemo(() => resolveTop3Slots(projects, top3Manual, allQuickTasks, lifeGoals), [projects, top3Manual, allQuickTasks, lifeGoals]);
   const top3DoneCount = top3Resolved.filter((s) => s && !s.missing && s.done).length;
 
   const totalFocusItems = activeHabits.length + PRAYERS.length + 3;
@@ -1437,6 +1437,52 @@ export default function DashboardV2() {
 
       return next;
     });
+  };
+
+  const updateSharedDashboardData = (shareId, updater) => {
+    let updatedData = null;
+    let title = null;
+    setSharedDashboards(prev => {
+      const next = prev.map(sd => {
+        if (sd.share_id === shareId) {
+          const newData = updater({ ...(sd.data || {}) });
+          updatedData = newData;
+          title = sd.title;
+          return { ...sd, data: newData };
+        }
+        return sd;
+      });
+      if (updatedData) {
+        const socket = wsConnections.current[shareId];
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: 'sync', title, data: updatedData }));
+        } else {
+          api.training.updateSharedDashboard(shareId, updatedData, title).catch(err => {
+            console.error("Failed to update shared dashboard (REST):", err);
+          });
+        }
+      }
+      return next;
+    });
+  };
+  const toggleSharedQuickTask = (shareId, taskId, val) => {
+    updateSharedDashboardData(shareId, data => ({
+      ...data,
+      quickTasks: (data.quickTasks || []).map(t => t.id === taskId ? { ...t, done: val } : t)
+    }));
+  };
+  const removeSharedQuickTask = (shareId, taskId) => {
+    setTop3Manual(prev => prev.map(s => (s && s.quickTaskId === taskId) ? null : s));
+    updateSharedDashboardData(shareId, data => ({
+      ...data,
+      quickTasks: (data.quickTasks || []).filter(t => t.id !== taskId && t.parentId !== taskId)
+    }));
+  };
+  const updateSharedQuickTask = (shareId, taskId, updater) => {
+    updateSharedDashboardData(shareId, data => ({
+      ...data,
+      quickTasks: (data.quickTasks || []).map(t => t.id === taskId ? updater(t) : t)
+    }));
   };
 
   const deleteSharedDashboardProject = (shareId, projectId) => {
@@ -1699,50 +1745,48 @@ export default function DashboardV2() {
   };
 
   return (
-    <div className="h-full w-full bg-[#e4e5ea] dark:bg-[#0c0e14] text-gray-900 dark:text-zinc-100 flex flex-col overflow-hidden font-sans select-none selection:bg-indigo-500/30 antialiased">
+    <div className="h-full w-full bg-[#e4e5ea] dark:bg-[#0c0e14] text-gray-900 dark:text-zinc-100 flex flex-col overflow-hidden font-sans font-medium select-none selection:bg-indigo-500/30 antialiased">
       
-      {/* HEADER - Premium Redesign */}
-      <header className="shrink-0 border-b border-zinc-300/60 bg-[#eaebef]/95 px-6 py-3.5 backdrop-blur-xl transition-all dark:border-white/[0.06] dark:bg-[#111318]/95">
-        <div className="flex items-center justify-between">
-          {/* Left: Branding */}
-          <div className="flex items-center gap-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/25">
-              <Icons.Target className="h-5 w-5" />
-            </div>
-            <div className="hidden flex-col sm:flex">
-              <h1 className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">Dashboard</h1>
-              <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500">Daily Focus OS</span>
-            </div>
+      {/* HEADER — Dashboard bar: stats + date + actions */}
+      <header className="shrink-0 border-b border-zinc-200/80 dark:border-white/[0.06] bg-white/95 dark:bg-[#0f1116]/95 backdrop-blur-xl shadow-sm shadow-zinc-900/5 dark:shadow-black/20 px-5 py-3">
+        <div className="flex items-center justify-between gap-4">
+          {/* Left: Quick nav (coherente con Layout) */}
+          <div className="flex items-center gap-2 shrink-0">
+            <Link to="/shared" className="hidden sm:flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06] hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors">
+              <Icons.MessageCircle className="h-3.5 w-3.5" />
+              Condivisi
+            </Link>
+            <Link to="/training" className="hidden sm:flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06] hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors">
+              Training
+            </Link>
           </div>
 
-          {/* Center: Live Stats */}
-          <div className="flex items-center gap-3">
+          {/* Center: Live stats */}
+          <div className="flex items-center gap-3 flex-1 justify-center min-w-0">
             {focusStreak > 0 && (
-              <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 px-3 py-1.5 text-amber-700 ring-1 ring-amber-200/50 dark:from-amber-900/20 dark:to-orange-900/20 dark:text-amber-300 dark:ring-amber-700/30">
-                <Icons.Flame className="h-3.5 w-3.5" />
-                <span className="text-[11px] font-bold">{focusStreak}</span>
+              <div className="flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200/60 dark:ring-amber-700/30">
+                <Icons.Flame className="h-3.5 w-3.5 shrink-0" />
+                <span className="text-[11px] font-bold tabular-nums">{focusStreak}d</span>
               </div>
             )}
-            
-            {/* Focus Score */}
-            <div className="flex items-center gap-2 rounded-full bg-zinc-50 px-3 py-1.5 ring-1 ring-zinc-200/60 dark:bg-white/[0.06] dark:ring-white/[0.08]">
-              <div className="relative h-1.5 w-24 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700/80">
-                <div 
-                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-700"
+            <div className="flex items-center gap-2 rounded-full bg-zinc-100/80 dark:bg-white/[0.06] px-3 py-1.5 ring-1 ring-zinc-200/60 dark:ring-white/[0.08]">
+              <div className="relative h-2 w-20 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700/80">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500"
                   style={{ width: `${Math.round(todayFocusScore * 100)}%` }}
                 />
               </div>
-              <span className="min-w-[2rem] text-[11px] font-black tabular-nums text-zinc-700 dark:text-zinc-200">
+              <span className="min-w-[2.25rem] text-[11px] font-bold tabular-nums text-zinc-700 dark:text-zinc-200">
                 {Math.round(todayFocusScore * 100)}%
               </span>
             </div>
           </div>
 
-          {/* Right: Date & Actions */}
-          <div className="flex items-center gap-3">
-            <div className="hidden rounded-lg bg-zinc-100/80 px-3 py-1.5 text-xs font-medium text-zinc-600 dark:bg-white/[0.06] dark:text-zinc-300 sm:block">
-              {now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-            </div>
+          {/* Right: Date + Reset */}
+          <div className="flex items-center gap-2 shrink-0">
+            <time className="hidden sm:block text-[11px] font-medium text-zinc-500 dark:text-zinc-400 tabular-nums">
+              {now.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })}
+            </time>
             <button
               type="button"
               onClick={() => {
@@ -1755,7 +1799,7 @@ export default function DashboardV2() {
                   } catch (_) {}
                 }
               }}
-              className="rounded-lg p-2 text-gray-400 transition-all hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+              className="rounded-lg p-2 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors"
               title="Reset dashboard"
             >
               <Icons.X className="h-4 w-4" />
@@ -1768,12 +1812,11 @@ export default function DashboardV2() {
       <div className="shrink-0 px-5 py-4">
         <div className="dashboard-panel px-4 py-3">
           <div className="flex items-center gap-6">
-            {/* Prayers — prende lo spazio disponibile */}
+            {/* Prayers */}
             <div className="flex flex-1 items-center gap-4 min-w-0">
-              <div className="flex shrink-0 items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                <span className="dashboard-section-title">Prayers</span>
-              </div>
+              <h3 className="flex shrink-0 items-center gap-2 dashboard-section-title text-emerald-500 dark:text-emerald-400">
+                <Icons.CheckCircle className="w-3.5 h-3.5" /> Prayers
+              </h3>
               <div className="flex flex-wrap gap-1.5">
                 {PRAYERS.map((prayer) => {
                   const isDone = todayPrayerLog[prayer];
@@ -1793,7 +1836,7 @@ export default function DashboardV2() {
 
             {/* Time Remaining — ancorato a destra */}
             <div className="hidden md:flex shrink-0 items-center gap-4">
-              <span className="dashboard-section-title">Remaining</span>
+              <h3 className="dashboard-section-title">Remaining</h3>
               <div className="flex items-center gap-5">
                 {countdowns.map(c => (
                   <div key={c.label} className="flex items-center gap-2">
@@ -1818,13 +1861,12 @@ export default function DashboardV2() {
           <PomodoroCompact />
           
           {/* Quick Tasks */}
-          <div className="dashboard-panel flex min-h-0 shrink-0 flex-col overflow-hidden px-3 py-3">
-            <div className="mb-2 flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-rose-400" />
-                <span className="dashboard-section-title">Quick Tasks</span>
-              </div>
-              <span className="text-xs text-zinc-400">{quickTasks.filter(t => !t.parentId && t.done).length}/{quickTasks.filter(t => !t.parentId).length}</span>
+          <div className="dashboard-panel flex min-h-0 shrink-0 flex-col overflow-hidden px-4 py-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="flex items-center gap-2 dashboard-section-title text-rose-500 dark:text-rose-400">
+                <Icons.CheckCircle className="w-3.5 h-3.5" /> Quick Tasks
+              </h3>
+              <span className="text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full">{allQuickTasks.filter(t => t.done).length}/{allQuickTasks.length}</span>
             </div>
             
             <div className="mb-2 flex gap-1.5">
@@ -1845,45 +1887,48 @@ export default function DashboardV2() {
             </div>
             
             <div className="max-h-36 overflow-y-auto">
-              {quickTasks.filter(t => !t.parentId).map((task, idx) => {
+              {allQuickTasks.map((task, idx) => {
+                const isShared = !!task.shareId;
+                const localIdx = isShared ? -1 : quickTasks.filter(t => !t.parentId).findIndex(t => t.id === task.id);
                 return (
                   <div 
-                    key={task.id}
-                    className="group task-row cursor-grab active:cursor-grabbing"
-                    draggable
-                    onDragStart={(e) => { e.dataTransfer.setData('application/json', JSON.stringify({ type: 'quick', quickTaskId: task.id, fromIndex: idx })); e.dataTransfer.effectAllowed = 'move'; }}
-                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-zinc-50'); }}
-                    onDragLeave={(e) => e.currentTarget.classList.remove('bg-zinc-50')}
-                    onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-zinc-50'); try { const p = JSON.parse(e.dataTransfer.getData('application/json')); if (p.type === 'quick') reorderQuickTasks(p.fromIndex, idx); } catch (_) {} }}
+                    key={isShared ? `shared-${task.shareId}-${task.id}` : task.id}
+                    className={`group task-row ${isShared ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}`}
+                    draggable={!isShared}
+                    onDragStart={!isShared ? (e) => { e.dataTransfer.setData('application/json', JSON.stringify({ type: 'quick', quickTaskId: task.id, fromIndex: localIdx })); e.dataTransfer.effectAllowed = 'move'; } : undefined}
+                    onDragOver={!isShared ? (e) => { e.preventDefault(); e.currentTarget.classList.add('bg-zinc-50'); } : undefined}
+                    onDragLeave={!isShared ? (e) => e.currentTarget.classList.remove('bg-zinc-50') : undefined}
+                    onDrop={!isShared ? (e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-zinc-50'); try { const p = JSON.parse(e.dataTransfer.getData('application/json')); if (p.type === 'quick') { const targetLocalIdx = allQuickTasks.slice(0, idx).filter(t => !t.shareId).length; reorderQuickTasks(p.fromIndex, targetLocalIdx); } } catch (_) {} } : undefined}
                   >
-                    <TaskCheckbox done={task.done} onClick={() => toggleQuickTask(task.id, !task.done)} />
+                    <TaskCheckbox done={task.done} onClick={() => isShared ? toggleSharedQuickTask(task.shareId, task.id, !task.done) : toggleQuickTask(task.id, !task.done)} />
                     
-                    <div className="flex flex-1 min-w-0 items-center gap-2" onClick={() => toggleQuickTask(task.id, !task.done)}>
-                      {quickTaskEditingId === task.id ? (
+                    <div className="flex flex-1 min-w-0 items-center gap-2" onClick={() => isShared ? toggleSharedQuickTask(task.shareId, task.id, !task.done) : toggleQuickTask(task.id, !task.done)}>
+                      {quickTaskEditingId === (isShared ? `shared-${task.shareId}-${task.id}` : task.id) ? (
                         <input
                           autoFocus
                           value={quickTaskEditingTitle}
                           onChange={(e) => setQuickTaskEditingTitle(e.target.value)}
-                          onBlur={() => { const t = quickTaskEditingTitle.trim(); if (t) updateQuickTask(task.id, qt => ({ ...qt, title: t })); setQuickTaskEditingId(null); }}
-                          onKeyDown={(e) => { if (e.key === 'Enter') { const t = quickTaskEditingTitle.trim(); if (t) updateQuickTask(task.id, qt => ({ ...qt, title: t })); setQuickTaskEditingId(null); } if (e.key === 'Escape') setQuickTaskEditingId(null); }}
+                          onBlur={() => { const t = quickTaskEditingTitle.trim(); if (t) (isShared ? updateSharedQuickTask(task.shareId, task.id, qt => ({ ...qt, title: t })) : updateQuickTask(task.id, qt => ({ ...qt, title: t }))); setQuickTaskEditingId(null); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { const t = quickTaskEditingTitle.trim(); if (t) (isShared ? updateSharedQuickTask(task.shareId, task.id, qt => ({ ...qt, title: t })) : updateQuickTask(task.id, qt => ({ ...qt, title: t }))); setQuickTaskEditingId(null); } if (e.key === 'Escape') setQuickTaskEditingId(null); }}
                           onClick={(e) => e.stopPropagation()}
                           className="seamless-input text-sm text-zinc-800 dark:text-zinc-100"
                         />
                       ) : (
                         <span
-                          onDoubleClick={(e) => { e.stopPropagation(); setQuickTaskEditingId(task.id); setQuickTaskEditingTitle(task.title); }}
+                          onDoubleClick={(e) => { e.stopPropagation(); setQuickTaskEditingId(isShared ? `shared-${task.shareId}-${task.id}` : task.id); setQuickTaskEditingTitle(task.title); }}
                           className={`cursor-pointer select-text text-sm leading-none ${task.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}
                         >
                           {task.title}
+                          {isShared && task.sharedTitle && <span className="ml-1 text-[9px] text-zinc-400">({task.sharedTitle})</span>}
                         </span>
                       )}
-                      {task.deadline && quickTaskDeadlineEditing !== task.id && (
-                        <button type="button" onClick={(e) => { e.stopPropagation(); setQuickTaskDeadlineInput(task.deadline || ''); setQuickTaskDeadlineEditing(task.id); }} className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${getDeadlineColorClass(task.deadline, task.done)}`}>{formatDeadline(task.deadline)}</button>
+                      {task.deadline && quickTaskDeadlineEditing !== (isShared ? `shared-${task.shareId}-${task.id}` : task.id) && (
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setQuickTaskDeadlineInput(task.deadline || ''); setQuickTaskDeadlineEditing(isShared ? `shared-${task.shareId}-${task.id}` : task.id); }} className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${getDeadlineColorClass(task.deadline, task.done)}`}>{formatDeadline(task.deadline)}</button>
                       )}
-                      {quickTaskDeadlineEditing === task.id && (
+                      {quickTaskDeadlineEditing === (isShared ? `shared-${task.shareId}-${task.id}` : task.id) && (
                         <input type="date" autoFocus value={quickTaskDeadlineInput} onChange={(e) => setQuickTaskDeadlineInput(e.target.value)}
-                          onBlur={() => { updateQuickTask(task.id, t => ({ ...t, deadline: quickTaskDeadlineInput.trim() || undefined })); setQuickTaskDeadlineEditing(null); }}
-                          onKeyDown={(e) => { if (e.key === 'Enter') { updateQuickTask(task.id, t => ({ ...t, deadline: quickTaskDeadlineInput.trim() || undefined })); setQuickTaskDeadlineEditing(null); } if (e.key === 'Escape') setQuickTaskDeadlineEditing(null); }}
+                          onBlur={() => { (isShared ? updateSharedQuickTask(task.shareId, task.id, t => ({ ...t, deadline: quickTaskDeadlineInput.trim() || undefined })) : updateQuickTask(task.id, t => ({ ...t, deadline: quickTaskDeadlineInput.trim() || undefined }))); setQuickTaskDeadlineEditing(null); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { (isShared ? updateSharedQuickTask(task.shareId, task.id, t => ({ ...t, deadline: quickTaskDeadlineInput.trim() || undefined })) : updateQuickTask(task.id, t => ({ ...t, deadline: quickTaskDeadlineInput.trim() || undefined }))); setQuickTaskDeadlineEditing(null); } if (e.key === 'Escape') setQuickTaskDeadlineEditing(null); }}
                           onClick={(e) => e.stopPropagation()}
                           className="dashboard-input w-28 py-0.5 text-xs"
                         />
@@ -1892,8 +1937,8 @@ export default function DashboardV2() {
 
                     {/* Actions al hover */}
                     <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                      {!task.deadline && quickTaskDeadlineEditing !== task.id && (
-                        <button type="button" onClick={() => { setQuickTaskDeadlineInput(''); setQuickTaskDeadlineEditing(task.id); }} className="dashboard-action-btn p-1 hover:text-amber-500" title="Scadenza">
+                      {!task.deadline && quickTaskDeadlineEditing !== (isShared ? `shared-${task.shareId}-${task.id}` : task.id) && (
+                        <button type="button" onClick={() => { setQuickTaskDeadlineInput(''); setQuickTaskDeadlineEditing(isShared ? `shared-${task.shareId}-${task.id}` : task.id); }} className="dashboard-action-btn p-1 hover:text-amber-500" title="Scadenza">
                           <Icons.Calendar className="h-3 w-3" />
                         </button>
                       )}
@@ -1906,15 +1951,18 @@ export default function DashboardV2() {
                       >
                         <Icons.Target className="h-3 w-3" />
                       </button>
-                      <button type="button" onClick={() => removeQuickTask(task.id)} className="dashboard-action-btn p-1 hover:text-red-500" title="Elimina">
+                      <button type="button" onClick={() => isShared ? removeSharedQuickTask(task.shareId, task.id) : removeQuickTask(task.id)} className="dashboard-action-btn p-1 hover:text-red-500" title="Elimina">
                         <Icons.X className="h-3 w-3" />
                       </button>
                     </div>
                   </div>
                 );
               })}
-              {quickTasks.filter(t => !t.parentId).length === 0 && (
-                <p className="py-3 text-center text-xs text-zinc-400">Nessun task</p>
+              {allQuickTasks.length === 0 && (
+                <div className="relative overflow-hidden min-h-[3.25rem] rounded-xl border border-dashed border-zinc-200 dark:border-white/[0.06] flex items-center">
+                  <span className="absolute -right-2 -bottom-3 text-[4rem] font-black text-zinc-200 dark:text-white/[0.04] pointer-events-none select-none leading-none z-0">+</span>
+                  <span className="relative z-10 pl-4 text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Trascina qui</span>
+                </div>
               )}
             </div>
           </div>
@@ -1925,17 +1973,16 @@ export default function DashboardV2() {
         {/* COL 2: Top 3, Habits */}
         <div className="md:col-span-3 flex flex-col gap-4 min-h-0">
           
-          {/* Top 3 */}
-          <div className="dashboard-panel flex flex-col shrink-0 overflow-hidden px-3 py-3">
-            <div className="mb-2 flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-amber-400" />
-                <span className="dashboard-section-title">Top 3 Focus</span>
-              </div>
-              <span className="text-xs text-zinc-400">{top3DoneCount}/3</span>
+          {/* Top 3 — stile dashboard3 */}
+          <div className="dashboard-panel flex flex-col shrink-0 overflow-hidden px-4 py-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="flex items-center gap-2 dashboard-section-title text-amber-500 dark:text-amber-400">
+                <Icons.Target className="w-3.5 h-3.5" /> Top 3 Focus
+              </h3>
+              <span className="text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full">{top3DoneCount}/3</span>
             </div>
             
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-3">
               {[0, 1, 2].map((idx) => {
                 const slot = top3Resolved[idx];
                 const filled = slot && !slot.missing;
@@ -1947,11 +1994,11 @@ export default function DashboardV2() {
                     data-slot-index={idx}
                     draggable={filled}
                     onDragStart={filled ? (e) => { e.dataTransfer.setData('application/json', JSON.stringify({ type: 'top3', fromIndex: idx })); e.dataTransfer.effectAllowed = 'move'; } : undefined}
-                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-zinc-50', 'dark:bg-white/[0.03]'); }}
-                    onDragLeave={(e) => e.currentTarget.classList.remove('bg-zinc-50', 'dark:bg-white/[0.03]')}
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-amber-400'); }}
+                    onDragLeave={(e) => e.currentTarget.classList.remove('border-amber-400')}
                     onDrop={(e) => {
                       e.preventDefault();
-                      e.currentTarget.classList.remove('bg-zinc-50', 'dark:bg-white/[0.03]');
+                      e.currentTarget.classList.remove('border-amber-400');
                       const toIndex = Number(e.currentTarget.dataset.slotIndex);
                       try {
                         const raw = e.dataTransfer.getData('application/json');
@@ -1962,27 +2009,26 @@ export default function DashboardV2() {
                         else if (payload.type === 'quick' && payload.quickTaskId) setTop3SlotAtIndex(toIndex, { quickTaskId: payload.quickTaskId });
                       } catch (_) {}
                     }}
-                    className={`group task-row ${filled ? 'cursor-grab active:cursor-grabbing' : 'border border-dashed border-zinc-200 dark:border-white/5'}`}
+                    className={`relative overflow-hidden min-h-[3.25rem] rounded-xl border flex items-center transition-all duration-150 ${filled ? 'border-zinc-200 dark:border-white/[0.06] dark:hover:border-white/[0.1] bg-zinc-50/50 dark:bg-white/[0.02] cursor-grab active:cursor-grabbing' : 'border-dashed border-zinc-200 dark:border-white/[0.06] bg-transparent'}`}
                   >
-                    {/* Priority number */}
-                    <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded text-[10px] font-bold tabular-nums ${
-                      filled ? (isDone ? 'bg-emerald-500 text-white' : 'bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900') : 'bg-zinc-200 text-zinc-400 dark:bg-zinc-700'
-                    }`}>
-                      {idx + 1}
-                    </span>
-                    
+                    <span className="absolute -right-2 -bottom-3 text-[4rem] font-black text-zinc-200 dark:text-white/[0.04] pointer-events-none select-none leading-none z-0">{idx + 1}</span>
                     {filled ? (
                       <>
-                        <div onClick={() => toggleTop3Slot(slot)} className="flex flex-1 min-w-0 flex-col cursor-pointer">
-                          <span className={`text-sm leading-none truncate ${isDone ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}>{slot.title}</span>
-                          {slot.projectTitle && <span className="mt-0.5 text-[10px] text-zinc-400 truncate">{slot.projectTitle}</span>}
+                        <div onClick={() => toggleTop3Slot(slot)} className="relative z-10 flex items-center gap-3 pl-4 w-full cursor-pointer">
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <TaskCheckbox done={isDone} onClick={() => toggleTop3Slot(slot)} />
+                          </div>
+                          <div className="flex flex-col flex-1 min-w-0">
+                            <span className={`text-sm font-semibold truncate transition-colors duration-150 ${isDone ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-100'}`}>{slot.title}</span>
+                            {slot.projectTitle && <span className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-0.5 truncate">{slot.projectTitle}</span>}
+                          </div>
                         </div>
-                        <button type="button" onClick={(e) => { e.stopPropagation(); removeFromTop3(idx); }} className="shrink-0 rounded p-1 text-zinc-400 opacity-0 hover:text-red-500 group-hover:opacity-100 transition-opacity">
-                          <Icons.X className="h-3 w-3" />
+                        <button type="button" onClick={(e) => { e.stopPropagation(); removeFromTop3(idx); }} className="relative z-10 p-3 text-zinc-400 hover:text-red-500 dark:hover:text-red-400 transition-colors duration-150">
+                          <Icons.X className="w-4 h-4" />
                         </button>
                       </>
                     ) : (
-                      <span className="text-xs text-zinc-400">Trascina qui</span>
+                      <span className="relative z-10 pl-4 text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Trascina qui</span>
                     )}
                   </div>
                 );
@@ -1991,13 +2037,12 @@ export default function DashboardV2() {
           </div>
 
           {/* Habits */}
-          <div className="dashboard-panel flex min-h-0 flex-1 flex-col overflow-hidden px-3 py-3">
-            <div className="mb-2 flex shrink-0 items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-sky-400" />
-                <span className="dashboard-section-title">Habits</span>
-              </div>
-              <span className="text-xs text-zinc-400">{todayDone}/{activeHabits.length}</span>
+          <div className="dashboard-panel flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-4">
+            <div className="mb-3 flex shrink-0 items-center justify-between">
+              <h3 className="flex items-center gap-2 dashboard-section-title text-sky-500 dark:text-sky-400">
+                <Icons.Flame className="w-3.5 h-3.5" /> Habits
+              </h3>
+              <span className="text-[10px] font-bold bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 px-2 py-0.5 rounded-full">{todayDone}/{activeHabits.length}</span>
             </div>
             
             <div className="mb-2 flex shrink-0 gap-1.5">
@@ -2071,15 +2116,14 @@ export default function DashboardV2() {
         </div>
 
         {/* COL 3 - Projects */}
-        <div className="dashboard-panel overflow-hidden md:col-span-6 flex min-h-0 flex-col p-4">
+        <div className="dashboard-panel overflow-hidden md:col-span-6 flex min-h-0 flex-col p-5">
           <div className="mb-4 flex shrink-0 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-indigo-400" />
-              <span className="dashboard-section-title">Projects</span>
-            </div>
+            <h2 className="flex items-center gap-2 dashboard-section-title text-indigo-500 dark:text-indigo-400">
+              <Icons.Square className="w-3.5 h-3.5" /> Projects
+            </h2>
             <button 
               onClick={createProject} 
-              className="flex h-7 items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 text-xs font-medium text-indigo-600 transition-all hover:bg-indigo-100 active:scale-95 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-500/20"
+              className="flex h-7 items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 text-xs font-semibold text-indigo-600 transition-all hover:bg-indigo-100 active:scale-95 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-500/20"
             >
               <Icons.Plus className="h-3 w-3" />
               <span>Nuovo</span>
@@ -2172,8 +2216,9 @@ export default function DashboardV2() {
             {sharedDashboards.length > 0 && (
               <div className="flex flex-col gap-3 mt-2">
                 <div className="flex items-center gap-2 shrink-0 border-t border-zinc-100 dark:border-white/[0.05] pt-3">
-                  <Icons.MessageCircle className="w-3.5 h-3.5 text-zinc-400" />
-                  <span className="dashboard-section-title">Shared</span>
+                  <h3 className="flex items-center gap-2 dashboard-section-title text-indigo-500 dark:text-indigo-400">
+                    <Icons.MessageCircle className="w-3.5 h-3.5" /> Shared
+                  </h3>
                 </div>
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
                   {sharedDashboards.map((shared, sIdx) => {
@@ -2284,10 +2329,9 @@ export default function DashboardV2() {
       <div className="shrink-0 px-5 pb-10">
         <div className="dashboard-panel flex flex-col gap-3 p-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-violet-400" />
-              <span className="dashboard-section-title">Life Goals</span>
-            </div>
+            <h2 className="flex items-center gap-2 dashboard-section-title text-violet-500 dark:text-violet-400">
+              <Icons.Target className="w-3.5 h-3.5" /> Life Goals
+            </h2>
             <button 
               onClick={() => updateLifeGoals(p => ({ ...p, collapsed: !p.collapsed }))}
               className="dashboard-action-btn"
@@ -2329,6 +2373,12 @@ export default function DashboardV2() {
 
                     {!tier.collapsed && (
                       <div className="animate-slide-down flex flex-col gap-3 px-3 pb-3">
+                        {tier.goals.length === 0 && (
+                          <div className="relative overflow-hidden min-h-[3.25rem] rounded-xl border border-dashed border-zinc-200 dark:border-white/[0.06] flex items-center">
+                            <span className="absolute -right-2 -bottom-3 text-[4rem] font-black text-zinc-200 dark:text-white/[0.04] pointer-events-none select-none leading-none z-0">+</span>
+                            <span className="relative z-10 pl-4 text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Trascina qui</span>
+                          </div>
+                        )}
                         {/* QUICK GOALS */}
                         {tier.goals.some(g => g.type === 'quick') && (
                           <div className="flex flex-col gap-1.5">
@@ -2361,7 +2411,7 @@ export default function DashboardV2() {
                         {/* PROJECT GOALS */}
                         {tier.goals.some(g => g.type === 'project') && (
                           <div className="flex flex-col gap-1.5">
-                            <span className="px-1 text-[10px] font-medium uppercase tracking-[0.15em] text-zinc-400">Projects</span>
+                            <span className="px-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-400">Projects</span>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                               {tier.goals.filter(g => g.type === 'project').map((goal) => {
                                 const stats = countTreeStats(goal.tasks);

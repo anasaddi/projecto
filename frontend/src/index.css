@@ -174,15 +174,15 @@ input[type=number] {
            dark:border-white/[0.05] dark:bg-white/[0.04];
   }
 
-  /* Section title */
+  /* Section title — stile dashboard3 */
   .dashboard-section-title {
-    @apply text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-400;
+    @apply text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500;
   }
 
   /* Chip: badge neutro */
   .dashboard-chip {
     @apply inline-flex items-center gap-1 rounded-md border border-zinc-200/70 bg-zinc-50 px-2 py-0.5
-           text-[11px] font-medium text-zinc-500
+           text-[11px] font-semibold text-zinc-500
            dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-zinc-300;
   }
 
@@ -212,7 +212,7 @@ input[type=number] {
 
   /* Row task standard: h-9, padding uniforme */
   .task-row {
-    @apply flex h-9 w-full items-center gap-2.5 rounded-lg px-2 transition-colors
+    @apply flex h-9 w-full items-center gap-2.5 rounded-lg px-2 font-medium transition-colors
            hover:bg-zinc-50 dark:hover:bg-white/[0.04];
   }
 

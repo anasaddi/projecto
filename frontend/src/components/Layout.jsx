@@ -7,7 +7,7 @@ export default function Layout({ children }) {
   const isYouTube = pathname === '/youtube'
   const isDashboard = pathname === '/dashboard'
   const isTraining = pathname === '/training'
-  const isShared = pathname.startsWith('/shared/')
+  const isShared = pathname.startsWith('/shared')
   const isWorkspace = isYouTube || isDashboard || isTraining || isShared
   const { stats } = useDashboardStats()
 
@@ -17,11 +17,11 @@ export default function Layout({ children }) {
     localStorage.setItem('km-theme', isDark ? 'dark' : 'light')
   }, [isDark])
 
-  // Se è una pagina condivisa o l'utente è un guest, mostriamo un layout minimale
+  // Layout minimale solo per guest (visualizza condivisi) o home per non-admin
   const isGuest = localStorage.getItem('km-user-role') === 'guest'
   const isAdmin = localStorage.getItem('km-user-role') === 'admin' && localStorage.getItem('km-admin-token') === 'master-key'
   
-  if (isShared || isGuest || (!isAdmin && pathname === '/')) {
+  if (isGuest || (!isAdmin && pathname === '/')) {
     return (
       <div className="min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors flex flex-col">
         <main className="flex-1 overflow-auto">
@@ -39,38 +39,44 @@ export default function Layout({ children }) {
     )
   }
 
+  const navLinks = [
+    { to: '/dashboard', label: 'Dashboard', active: isDashboard },
+    { to: '/shared', label: 'Condivisi', active: isShared },
+    { to: '/training', label: 'Training', active: isTraining },
+    { to: '/youtube', label: 'Transcript', active: isYouTube },
+  ];
+
   return (
     <div className={`min-h-screen bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 transition-colors ${isWorkspace ? 'flex flex-col' : ''}`}>
-      <header className="sticky top-0 z-50 border-b border-stone-200 dark:border-stone-700 bg-white/95 dark:bg-stone-900/95 backdrop-blur-sm px-4 py-3 flex items-center gap-4 shrink-0 transition-colors">
-        <Link to="/" className="font-semibold text-stone-800 dark:text-stone-200 hover:text-stone-600 dark:hover:text-stone-400 transition-colors">
-          KM Personal
+      <header className="sticky top-0 z-50 border-b border-stone-200/80 dark:border-stone-700/80 bg-white/98 dark:bg-stone-900/98 backdrop-blur-md shadow-sm shadow-stone-900/5 dark:shadow-black/20 px-5 py-3 flex items-center gap-6 shrink-0 transition-colors">
+        <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/20 group-hover:shadow-indigo-500/30 transition-shadow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          </div>
+          <span className="font-bold text-stone-800 dark:text-stone-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors hidden sm:inline">
+            Focus OS
+          </span>
         </Link>
+        <nav className="flex items-center gap-1">
+          {navLinks.map(({ to, label, active }) => (
+            <Link
+              key={to}
+              to={to}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                active
+                  ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400'
+                  : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-800 dark:hover:text-stone-200'
+              }`}
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
         {isDashboard && stats && (
-          <span className="rounded-md bg-stone-800 dark:bg-sky-900/80 text-white dark:text-sky-100 px-2.5 py-1 text-[11px] font-medium tabular-nums">
+          <span className="rounded-lg bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 text-xs font-semibold tabular-nums border border-indigo-500/20">
             {stats.doneFocusItems} / {stats.totalFocusItems}
           </span>
         )}
-        <Link to="/dashboard" className="text-sm text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 transition-colors">
-          Dashboard
-        </Link>
-        <Link to="/training" className={`text-sm transition-colors ${isTraining ? 'font-medium text-emerald-600 dark:text-emerald-500' : 'text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200'}`}>
-          Training UI
-        </Link>
-        <div className="relative group">
-          <span className="text-sm text-stone-600 dark:text-stone-400 group-hover:text-stone-800 dark:group-hover:text-stone-200 transition-colors cursor-default">
-            Learning
-          </span>
-          <div className="absolute left-0 top-full pt-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
-            <div className="rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 shadow-lg py-1 min-w-[10rem]">
-              <Link
-                to="/youtube"
-                className="block px-4 py-2 text-sm text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-800 dark:hover:text-stone-200"
-              >
-                Transcript
-              </Link>
-            </div>
-          </div>
-        </div>
         <button
           type="button"
           onClick={() => setIsDark((d) => !d)}
