@@ -108,6 +108,7 @@ function KebabMenu({ items }) {
  * ----------------------------------------------------------------------
  */
 const STORAGE_KEY = 'km-dashboard-v2';
+const BC_CHANNEL = 'km-dashboard-v2-sync';
 const MAX_TASK_DEPTH = 2;
 const PRAYERS = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
@@ -1265,19 +1266,28 @@ export default function DashboardV2() {
     return () => clearInterval(timer);
   }, []);
 
-  // 2. Sync to LocalStorage (Fallback) and DB (Primary)
+  // 2. Sync to LocalStorage, DB, BroadcastChannel (sync istantaneo tra tab)
   const syncTimeoutRef = useRef(null);
+  const applyingFromBCRef = useRef(false);
   useEffect(() => {
     if (!isLoaded) return;
 
     const state = { dailyTaskTemplates, dailyTaskLogs, projects, prayerLogs, top3Manual, quickTasks, dailyCompletionLog, lifeGoals };
-    
-    // LocalStorage Sync
+    const skipBroadcast = applyingFromBCRef.current;
+    if (applyingFromBCRef.current) applyingFromBCRef.current = false;
+
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (_) {}
 
-    // DB Sync (Debounced)
+    if (!skipBroadcast) {
+      try {
+        const bc = new BroadcastChannel(BC_CHANNEL);
+        bc.postMessage(state);
+        bc.close();
+      } catch (_) {}
+    }
+
     if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
     syncTimeoutRef.current = setTimeout(async () => {
       try {
@@ -1285,8 +1295,28 @@ export default function DashboardV2() {
       } catch (err) {
         console.error("Failed to sync dashboard to DB:", err);
       }
-    }, 2000);
+    }, 500);
   }, [isLoaded, dailyTaskTemplates, dailyTaskLogs, projects, prayerLogs, top3Manual, quickTasks, dailyCompletionLog, lifeGoals]);
+
+  // BroadcastChannel listener: ricevi aggiornamenti da altre tab
+  useEffect(() => {
+    if (!isLoaded) return;
+    const bc = new BroadcastChannel(BC_CHANNEL);
+    bc.onmessage = (e) => {
+      const s = e?.data;
+      if (!s || applyingFromBCRef.current) return;
+      applyingFromBCRef.current = true;
+      if (Array.isArray(s.dailyTaskTemplates)) setDailyTaskTemplates(s.dailyTaskTemplates);
+      if (s.dailyTaskLogs && typeof s.dailyTaskLogs === 'object') setDailyTaskLogs(s.dailyTaskLogs);
+      if (Array.isArray(s.projects)) setProjects(s.projects);
+      if (s.prayerLogs && typeof s.prayerLogs === 'object') setPrayerLogs(s.prayerLogs);
+      if (Array.isArray(s.top3Manual)) setTop3Manual(s.top3Manual);
+      if (Array.isArray(s.quickTasks)) setQuickTasks(s.quickTasks);
+      if (s.dailyCompletionLog && typeof s.dailyCompletionLog === 'object') setDailyCompletionLog(s.dailyCompletionLog);
+      if (s.lifeGoals) setLifeGoals(s.lifeGoals);
+    };
+    return () => bc.close();
+  }, [isLoaded]);
 
   const todayKey = toDateKey(now);
   const todayTaskLog = dailyTaskLogs[todayKey] || {};

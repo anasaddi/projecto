@@ -380,6 +380,7 @@ export default function SharedProjects() {
   const reconnectTimeout = useRef(null);
   const heartbeatInterval = useRef(null);
   const restDebounceRef = useRef(null);
+  const pollInterval = useRef(null);
   const mountedRef = useRef(true);
 
   // WebSocket: Vercel non supporta WS proxy → connessione diretta a Railway in prod
@@ -489,6 +490,32 @@ export default function SharedProjects() {
     return () => document.removeEventListener('visibilitychange', onVisibilityChange);
   }, [id]);
 
+  // BroadcastChannel: sync istantaneo tra tab SharedProjects (stesso share_id)
+  useEffect(() => {
+    if (!id) return;
+    const bc = new BroadcastChannel(`km-shared-${id}`);
+    bc.onmessage = (e) => {
+      const msg = e?.data;
+      if (!msg || applyingFromBCRef.current) return;
+      applyingFromBCRef.current = true;
+      applyDashboardFromPayload(msg);
+      setTimeout(() => { applyingFromBCRef.current = false; }, 0);
+    };
+    return () => bc.close();
+  }, [id]);
+
+  // Polling fallback quando WebSocket non connesso (aggiornamenti ogni 4s)
+  useEffect(() => {
+    if (!id || dashboard.isConnected) return;
+    pollInterval.current = setInterval(refetchFromApi, 4000);
+    return () => {
+      if (pollInterval.current) {
+        clearInterval(pollInterval.current);
+        pollInterval.current = null;
+      }
+    };
+  }, [id, dashboard.isConnected]);
+
   // Caricamento iniziale via REST (fallback robusto se WS fallisce)
   useEffect(() => {
     mountedRef.current = true;
@@ -547,7 +574,8 @@ export default function SharedProjects() {
     };
   }, [id]);
 
-  // Invio aggiornamenti: WebSocket se connesso, altrimenti REST (debounced)
+  // Invio aggiornamenti: WebSocket se connesso, altrimenti REST (debounced). BroadcastChannel per sync tra tab.
+  const applyingFromBCRef = useRef(false);
   const sendUpdate = (newState) => {
     const payload = {
       type: 'sync',
@@ -561,6 +589,13 @@ export default function SharedProjects() {
       restDebounceRef.current = setTimeout(() => {
         api.training.updateSharedDashboard(id, payload.data, payload.title).catch(() => {});
       }, 600);
+    }
+    if (!applyingFromBCRef.current && id) {
+      try {
+        const bc = new BroadcastChannel(`km-shared-${id}`);
+        bc.postMessage(payload);
+        bc.close();
+      } catch (_) {}
     }
   };
 
