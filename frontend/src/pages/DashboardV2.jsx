@@ -9,25 +9,25 @@ import { api } from '../api/client';
  * ----------------------------------------------------------------------
  */
 const Icons = {
-  CheckCircle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
-  Circle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/></svg>,
-  Plus: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
-  X: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
-  Clock: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
-  Target: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
-  Flame: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>,
-  Lock: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
-  Play: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="5 3 19 12 5 21 5 3"/></svg>,
-  Pause: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>,
-  Square: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>,
-  ChevronDown: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="6 9 12 15 18 9"/></svg>,
-  ChevronUp: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="18 15 12 9 6 15"/></svg>,
-  ChevronRight: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6"/></svg>,
-  Calendar: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
-  ExternalLink: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 22 3 22 9"/><line x1="10" y1="14" x2="22" y2="3"/></svg>,
-  MessageCircle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
-  MoreHorizontal: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>,
-  Check: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>,
+  CheckCircle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>,
+  Circle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10" /></svg>,
+  Plus: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>,
+  X: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>,
+  Clock: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>,
+  Target: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>,
+  Flame: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" /></svg>,
+  Lock: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>,
+  Play: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="5 3 19 12 5 21 5 3" /></svg>,
+  Pause: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>,
+  Square: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /></svg>,
+  ChevronDown: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="6 9 12 15 18 9" /></svg>,
+  ChevronUp: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="18 15 12 9 6 15" /></svg>,
+  ChevronRight: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6" /></svg>,
+  Calendar: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>,
+  ExternalLink: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 22 3 22 9" /><line x1="10" y1="14" x2="22" y2="3" /></svg>,
+  MessageCircle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>,
+  MoreHorizontal: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>,
+  Check: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12" /></svg>,
 };
 
 /**
@@ -85,11 +85,10 @@ function KebabMenu({ items }) {
                 key={i}
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setOpen(false); item.onClick(e); }}
-                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors ${
-                  item.danger
-                    ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-                    : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-white/[0.04]'
-                }`}
+                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors ${item.danger
+                  ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                  : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-white/[0.04]'
+                  }`}
               >
                 {item.icon && <span className="h-3.5 w-3.5 shrink-0">{item.icon}</span>}
                 {item.label}
@@ -150,8 +149,8 @@ function formatCountdown(ms) {
 }
 
 function buildDefaultLifeGoals() {
-  const mkG = (title, category, type = 'quick', done = false) => ({ 
-    id: uid('goal'), title, category, type, done, deadline: null, tasks: [] 
+  const mkG = (title, category, type = 'quick', done = false) => ({
+    id: uid('goal'), title, category, type, done, deadline: null, tasks: []
   });
   return {
     collapsed: false,
@@ -380,7 +379,7 @@ function findTaskInProjects(projects, projectId, taskId, lifeGoals = null) {
         let found = null;
         // Se il taskId coincide col projectId, è un Quick Goal pinnato direttamente
         if (lgProj.id === taskId) return { node: lgProj, projectTitle: `LG: ${tier.name}` };
-        
+
         // Altrimenti cerca nelle subtask
         function walkLG(nodes) {
           for (const n of nodes || []) {
@@ -485,7 +484,7 @@ const POMODORO_DURATION = 25 * 60;
 const POMODORO_STORAGE = 'km-pomodoro-v2';
 function PomodoroCompact() {
   const [remaining, setRemaining] = useState(POMODORO_DURATION);
-  const [status, setStatus] = useState('idle'); 
+  const [status, setStatus] = useState('idle');
   const [sessionsToday, setSessionsToday] = useState(0);
   const intervalRef = useRef(null);
   const todayKey = toDateKey(new Date());
@@ -497,7 +496,7 @@ function PomodoroCompact() {
         const { date, sessions } = JSON.parse(stored);
         if (date === todayKey) setSessionsToday(sessions || 0);
       }
-    } catch (_) {}
+    } catch (_) { }
   }, [todayKey]);
 
   useEffect(() => {
@@ -508,7 +507,7 @@ function PomodoroCompact() {
           setStatus('idle');
           setSessionsToday((s) => {
             const next = s + 1;
-            try { localStorage.setItem(POMODORO_STORAGE, JSON.stringify({ date: todayKey, sessions: next })); } catch (_) {}
+            try { localStorage.setItem(POMODORO_STORAGE, JSON.stringify({ date: todayKey, sessions: next })); } catch (_) { }
             if (typeof window !== 'undefined' && window.Notification?.permission === 'granted') new window.Notification('Pomodoro completato!');
             return next;
           });
@@ -534,13 +533,13 @@ function PomodoroCompact() {
           {sessionsToday} sess
         </div>
       </div>
-      
+
       <div className="flex items-center justify-between z-10 mt-2">
         <div className="text-4xl font-black tracking-tighter tabular-nums text-zinc-900 dark:text-zinc-50 leading-none">
           {String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}
         </div>
         <div className="flex gap-2">
-           {status === 'idle' && (
+          {status === 'idle' && (
             <button onClick={() => { setStatus('running'); setRemaining(POMODORO_DURATION); }} className="bg-indigo-600 hover:bg-indigo-500 text-white w-9 h-9 flex items-center justify-center rounded-xl shadow-[0_0_16px_rgba(99,102,241,0.25)] dark:shadow-[0_0_16px_rgba(99,102,241,0.4)] active:scale-95 transition-all">
               <Icons.Play className="w-4 h-4 fill-current" />
             </button>
@@ -562,7 +561,7 @@ function PomodoroCompact() {
           )}
         </div>
       </div>
-      
+
       <div className="h-[3px] w-full bg-zinc-100 dark:bg-white/[0.04] rounded-full overflow-hidden mt-4">
         <div className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-1000 ease-linear" style={{ width: `${progress * 100}%` }} />
       </div>
@@ -759,7 +758,7 @@ function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDele
   };
 
   return (
-    <div 
+    <div
       className="group/task flex flex-col w-full"
       onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.add('bg-zinc-50'); }}
       onDragLeave={(e) => { e.currentTarget.classList.remove('bg-zinc-50'); }}
@@ -772,10 +771,10 @@ function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDele
           if (payload.type === 'project-task' && payload.projectId === projectId && payload.parentId === parentId) {
             onMove(payload.taskId);
           }
-        } catch (_) {}
+        } catch (_) { }
       }}
     >
-      <div 
+      <div
         draggable
         onDragStart={handleDragStart}
         className="group/row task-row cursor-grab active:cursor-grabbing"
@@ -791,7 +790,7 @@ function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDele
 
         {/* Checkbox universale */}
         <TaskCheckbox done={node.done} onClick={() => onToggle(node.id, !node.done)} />
-        
+
         {/* Title - seamless editing */}
         <div className="flex flex-1 min-w-0 items-center gap-2" onClick={() => !editing && onToggle(node.id, !node.done)}>
           {editing ? (
@@ -881,7 +880,7 @@ function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDele
           {node.children.map((child, cIdx) => (
             <DenseTaskNode
               key={child.id} node={child} depth={depth + 1} projectId={projectId} projectAccent={projectAccent}
-              onToggle={onToggle} onDelete={onDelete} onRename={onRename} onDeadline={onDeadline} onAddChild={onAddChild} onAddToTop3={onAddToTop3} 
+              onToggle={onToggle} onDelete={onDelete} onRename={onRename} onDeadline={onDeadline} onAddChild={onAddChild} onAddToTop3={onAddToTop3}
               onMove={(tid) => onMove(tid, cIdx, node.id)} hasFreeTop3Slot={hasFreeTop3Slot} parentId={node.id}
             />
           ))}
@@ -892,12 +891,12 @@ function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDele
 }
 
 // 3. Standardized Project Card — collapsible by default
-function StandardProjectCard({ 
-  project, 
-  stats, 
-  percentage, 
-  accent, 
-  isShared, 
+function StandardProjectCard({
+  project,
+  stats,
+  percentage,
+  accent,
+  isShared,
   shareId,
   onTitleChange,
   onDelete,
@@ -969,7 +968,7 @@ function StandardProjectCard({
               className="dashboard-input w-28 py-0.5 text-xs"
             />
           )}
-          
+
           {/* Progress bar h-[3px] stile dashboard3 */}
           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             <div className="h-[3px] w-16 overflow-hidden rounded-full bg-zinc-200 dark:bg-white/[0.06]">
@@ -1027,7 +1026,7 @@ function LifeGoalCard({
     >
       {/* Accent stripe */}
       <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${accentBar}`} />
-      
+
       <div className="flex items-center gap-2 pl-3 pr-2 py-2 cursor-grab active:cursor-grabbing">
         {/* Checkbox */}
         <button
@@ -1061,7 +1060,7 @@ function LifeGoalCard({
               <Icons.Target className="h-3 w-3" />
             </button>
           )}
-          
+
           {isProject ? (
             <button onClick={() => onPromoteProject(goal.id)} className={`rounded p-1 ${isLinkedToProject ? 'text-sky-500' : 'text-gray-400 hover:text-sky-500'}`} title="Projects">
               <Icons.Play className="h-3 w-3" />
@@ -1077,7 +1076,7 @@ function LifeGoalCard({
               <Icons.ChevronDown className={`h-3 w-3 transition-transform ${showTasks ? 'rotate-180' : ''}`} />
             </button>
           )}
-          
+
           {deadlineEditing === goal.id ? (
             <input
               type="date"
@@ -1096,13 +1095,13 @@ function LifeGoalCard({
               <Icons.Calendar className="h-3 w-3" />
             </button>
           )}
-          
+
           <button onClick={() => onDelete(goal.id)} className="rounded p-1 text-gray-400 hover:text-red-500">
             <Icons.X className="h-3 w-3" />
           </button>
         </div>
       </div>
-      
+
       {/* Subtasks */}
       {isProject && showTasks && (
         <div className="border-t border-gray-100 bg-gray-50/50 px-2 py-2 dark:border-white/5 dark:bg-black/20">
@@ -1123,7 +1122,7 @@ function LifeGoalCard({
  */
 export default function DashboardV2() {
   const initial = useMemo(() => loadState(), []);
-  const { setStats } = useDashboardStats() || { setStats: () => {} };
+  const { setStats } = useDashboardStats() || { setStats: () => { } };
 
   const [dailyTaskTemplates, setDailyTaskTemplates] = useState(initial.dailyTaskTemplates);
   const [dailyTaskLogs, setDailyTaskLogs] = useState(initial.dailyTaskLogs);
@@ -1149,7 +1148,7 @@ export default function DashboardV2() {
   const [goalDeadlineInput, setGoalDeadlineInput] = useState('');
   const [sharedDashboards, setSharedDashboards] = useState([]);
   const wsConnections = useRef({}); // { shareId: WebSocket }
-  
+
   const [isLoaded, setIsLoaded] = useState(false);
 
   // WebSocket management for shared dashboards
@@ -1161,12 +1160,18 @@ export default function DashboardV2() {
       if (wsConnections.current[shareId]) return;
 
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const isLocal = window.location.hostname === 'localhost';
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       const host = isLocal ? 'localhost:8000' : (import.meta.env.VITE_WS_HOST || 'projecto-production-feda.up.railway.app');
       const wsUrl = `${protocol}//${host}/api/training/ws/shared-dashboard/${encodeURIComponent(shareId)}`;
-      
+
       const socket = new WebSocket(wsUrl);
       wsConnections.current[shareId] = socket;
+
+      const hb = setInterval(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: 'ping' }));
+        }
+      }, 25000);
 
       socket.onopen = () => {
         console.log(`WS Connected for ${shareId}`);
@@ -1177,7 +1182,7 @@ export default function DashboardV2() {
           const message = JSON.parse(event.data);
           if (message.type === 'sync') {
             const data = message.data || message;
-            setSharedDashboards(prev => prev.map(item => 
+            setSharedDashboards(prev => prev.map(item =>
               item.share_id === shareId ? { ...item, data: data } : item
             ));
           }
@@ -1192,6 +1197,7 @@ export default function DashboardV2() {
 
       socket.onclose = () => {
         console.log(`WS Disconnected for ${shareId}`);
+        clearInterval(hb);
         delete wsConnections.current[shareId];
         // Reconnect after 3s
         setTimeout(() => {
@@ -1218,7 +1224,7 @@ export default function DashboardV2() {
         const list = Array.isArray(arr) ? arr : (Array.isArray(arr?.data) ? arr.data : []);
         if (list.length > 0) setSharedDashboards(list);
       })
-      .catch(() => {});
+      .catch(() => { });
   };
 
   useEffect(() => {
@@ -1278,14 +1284,14 @@ export default function DashboardV2() {
 
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (_) {}
+    } catch (_) { }
 
     if (!skipBroadcast) {
       try {
         const bc = new BroadcastChannel(BC_CHANNEL);
         bc.postMessage(state);
         bc.close();
-      } catch (_) {}
+      } catch (_) { }
     }
 
     if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
@@ -1365,7 +1371,7 @@ export default function DashboardV2() {
   }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, now]);
 
   useEffect(() => {
-    if(setStats) setStats({ doneFocusItems, totalFocusItems });
+    if (setStats) setStats({ doneFocusItems, totalFocusItems });
   }, [doneFocusItems, totalFocusItems, setStats]);
 
   // Actions
@@ -1456,63 +1462,46 @@ export default function DashboardV2() {
   const updateProject = (id, updater) => setProjects(p => p.map(x => x.id === id ? updater(x) : x));
 
   const updateSharedDashboardProject = (shareId, projectId, updater) => {
-    let updatedData = null;
-    let title = null;
+    const currentShared = sharedDashboards.find(sd => sd.share_id === shareId);
+    if (!currentShared) return;
 
-    setSharedDashboards(prev => {
-      const next = prev.map(sd => {
-        if (sd.share_id === shareId) {
-          const newData = { ...sd.data };
-          newData.projects = (newData.projects || []).map(p => p.id === projectId ? updater(p) : p);
-          updatedData = newData;
-          title = sd.title;
-          return { ...sd, data: newData };
-        }
-        return sd;
+    const newData = { ...(currentShared.data || {}) };
+    newData.projects = (newData.projects || []).map(p => p.id === projectId ? updater(p) : p);
+    const title = currentShared.title;
+
+    setSharedDashboards(prev => prev.map(sd =>
+      sd.share_id === shareId ? { ...sd, data: newData } : sd
+    ));
+
+    const socket = wsConnections.current[shareId];
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'sync', title, data: newData }));
+    } else {
+      api.training.updateSharedDashboard(shareId, newData, title).catch(err => {
+        console.error("Failed to update shared dashboard project (REST):", err);
       });
-
-      // Ora che abbiamo calcolato updatedData (perché map è sincrono), 
-      // possiamo inviare l'aggiornamento.
-      if (updatedData) {
-        const socket = wsConnections.current[shareId];
-        if (socket && socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ type: 'sync', title, data: updatedData }));
-        } else {
-          api.training.updateSharedDashboard(shareId, updatedData, title).catch(err => {
-            console.error("Failed to update shared dashboard (REST):", err);
-          });
-        }
-      }
-
-      return next;
-    });
+    }
   };
 
   const updateSharedDashboardData = (shareId, updater) => {
-    let updatedData = null;
-    let title = null;
-    setSharedDashboards(prev => {
-      const next = prev.map(sd => {
-        if (sd.share_id === shareId) {
-          const newData = updater({ ...(sd.data || {}) });
-          updatedData = newData;
-          title = sd.title;
-          return { ...sd, data: newData };
-        }
-        return sd;
+    const currentShared = sharedDashboards.find(sd => sd.share_id === shareId);
+    if (!currentShared) return;
+
+    const newData = updater({ ...(currentShared.data || {}) });
+    const title = currentShared.title;
+
+    setSharedDashboards(prev => prev.map(sd =>
+      sd.share_id === shareId ? { ...sd, data: newData } : sd
+    ));
+
+    const socket = wsConnections.current[shareId];
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'sync', title, data: newData }));
+    } else {
+      api.training.updateSharedDashboard(shareId, newData, title).catch(err => {
+        console.error("Failed to update shared dashboard (REST):", err);
       });
-      if (updatedData) {
-        const socket = wsConnections.current[shareId];
-        if (socket && socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ type: 'sync', title, data: updatedData }));
-        } else {
-          api.training.updateSharedDashboard(shareId, updatedData, title).catch(err => {
-            console.error("Failed to update shared dashboard (REST):", err);
-          });
-        }
-      }
-      return next;
-    });
+    }
   };
   const toggleSharedQuickTask = (shareId, taskId, val) => {
     updateSharedDashboardData(shareId, data => ({
@@ -1536,35 +1525,26 @@ export default function DashboardV2() {
 
   const deleteSharedDashboardProject = (shareId, projectId) => {
     if (!window.confirm("Sei sicuro di voler eliminare questo progetto condiviso?")) return;
-    
-    let updatedData = null;
-    let title = null;
 
-    setSharedDashboards(prev => {
-      const next = prev.map(sd => {
-        if (sd.share_id === shareId) {
-          const newData = { ...sd.data };
-          newData.projects = (newData.projects || []).filter(p => p.id !== projectId);
-          updatedData = newData;
-          title = sd.title;
-          return { ...sd, data: newData };
-        }
-        return sd;
+    const currentShared = sharedDashboards.find(sd => sd.share_id === shareId);
+    if (!currentShared) return;
+
+    const newData = { ...(currentShared.data || {}) };
+    newData.projects = (newData.projects || []).filter(p => p.id !== projectId);
+    const title = currentShared.title;
+
+    setSharedDashboards(prev => prev.map(sd =>
+      sd.share_id === shareId ? { ...sd, data: newData } : sd
+    ));
+
+    const socket = wsConnections.current[shareId];
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'sync', title, data: newData }));
+    } else {
+      api.training.updateSharedDashboard(shareId, newData, title).catch(err => {
+        console.error("Failed to delete shared dashboard project (REST):", err);
       });
-
-      if (updatedData) {
-        const socket = wsConnections.current[shareId];
-        if (socket && socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ type: 'sync', title, data: updatedData }));
-        } else {
-          api.training.updateSharedDashboard(shareId, updatedData, title).catch(err => {
-            console.error("Failed to delete shared dashboard project (REST):", err);
-          });
-        }
-      }
-
-      return next;
-    });
+    }
   };
   const reorderProjectTasks = (projectId, fromIndex, toIndex) => {
     if (fromIndex === toIndex) return;
@@ -1726,7 +1706,7 @@ export default function DashboardV2() {
   const toggleProjectTask = (projectId, taskId, val) => {
     updateProject(projectId, p => {
       const nextTasks = updateNodeInTree(p.tasks, taskId, n => ({ ...n, done: val }));
-      
+
       // Se il progetto è collegato a un Life Goal, sincronizza il task corrispondente
       if (p.lifeGoalId) {
         updateGoal(p.lifeGoalId, g => ({
@@ -1734,7 +1714,7 @@ export default function DashboardV2() {
           tasks: updateNodeInTree(g.tasks, taskId, n => ({ ...n, done: val }))
         }));
       }
-      
+
       return { ...p, tasks: nextTasks };
     });
     setDailyCompletionLog(prev => {
@@ -1795,7 +1775,7 @@ export default function DashboardV2() {
 
   return (
     <div className="h-full w-full bg-[#e4e5ea] dark:bg-[#0c0e14] text-gray-900 dark:text-zinc-100 flex flex-col overflow-hidden font-sans font-medium select-none selection:bg-indigo-500/30 antialiased">
-      
+
       {/* HEADER — Dashboard bar: stats + date + actions */}
       <header className="shrink-0 border-b border-zinc-200/80 dark:border-white/[0.06] bg-white/95 dark:bg-[#0f1116]/95 backdrop-blur-xl shadow-sm shadow-zinc-900/5 dark:shadow-black/20 px-5 py-3">
         <div className="flex items-center justify-between gap-4">
@@ -1837,7 +1817,7 @@ export default function DashboardV2() {
                     localStorage.removeItem('km-dashboard-v1');
                     localStorage.removeItem(POMODORO_STORAGE);
                     window.location.reload();
-                  } catch (_) {}
+                  } catch (_) { }
                 }
               }}
               className="rounded-lg p-2 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors"
@@ -1896,11 +1876,11 @@ export default function DashboardV2() {
 
       {/* MAIN GRID */}
       <div className="flex-1 min-h-0 p-5 pt-0 grid grid-cols-1 md:grid-cols-12 gap-5 overflow-hidden">
-        
+
         {/* COL 1: Pomodoro, Quick Tasks, Prayers, Countdowns - Span 3 */}
         <div className="md:col-span-3 flex flex-col gap-4 min-h-0">
           <PomodoroCompact />
-          
+
           {/* Quick Tasks */}
           <div className="dashboard-panel flex min-h-0 shrink-0 flex-col overflow-hidden px-4 py-4">
             <div className="mb-3 flex items-center justify-between">
@@ -1909,40 +1889,40 @@ export default function DashboardV2() {
               </h3>
               <span className="text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full">{allQuickTasks.filter(t => t.done).length}/{allQuickTasks.length}</span>
             </div>
-            
+
             <div className="mb-2 flex gap-1.5">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={quickTaskDraft}
                 onChange={(e) => setQuickTaskDraft(e.target.value)}
                 onKeyDown={addQuickTask}
-                placeholder="Nuova task..." 
+                placeholder="Nuova task..."
                 className="dashboard-input flex-1 py-1.5 text-sm"
               />
-              <button 
-                onClick={() => { const t = quickTaskDraft.trim(); if (t) { setQuickTasks(p => [...p, { id: uid('quick'), title: t, done: false }]); setQuickTaskDraft(''); } }} 
+              <button
+                onClick={() => { const t = quickTaskDraft.trim(); if (t) { setQuickTasks(p => [...p, { id: uid('quick'), title: t, done: false }]); setQuickTaskDraft(''); } }}
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-500 text-white transition-all hover:bg-rose-600 active:scale-95"
               >
                 <Icons.Plus className="h-3.5 w-3.5" />
               </button>
             </div>
-            
+
             <div className="max-h-36 overflow-y-auto">
               {allQuickTasks.map((task, idx) => {
                 const isShared = !!task.shareId;
                 const localIdx = isShared ? -1 : quickTasks.filter(t => !t.parentId).findIndex(t => t.id === task.id);
                 return (
-                  <div 
+                  <div
                     key={isShared ? `shared-${task.shareId}-${task.id}` : task.id}
                     className={`group task-row ${isShared ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}`}
                     draggable={!isShared}
                     onDragStart={!isShared ? (e) => { e.dataTransfer.setData('application/json', JSON.stringify({ type: 'quick', quickTaskId: task.id, fromIndex: localIdx })); e.dataTransfer.effectAllowed = 'move'; } : undefined}
                     onDragOver={!isShared ? (e) => { e.preventDefault(); e.currentTarget.classList.add('bg-zinc-50'); } : undefined}
                     onDragLeave={!isShared ? (e) => e.currentTarget.classList.remove('bg-zinc-50') : undefined}
-                    onDrop={!isShared ? (e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-zinc-50'); try { const p = JSON.parse(e.dataTransfer.getData('application/json')); if (p.type === 'quick') { const targetLocalIdx = allQuickTasks.slice(0, idx).filter(t => !t.shareId).length; reorderQuickTasks(p.fromIndex, targetLocalIdx); } } catch (_) {} } : undefined}
+                    onDrop={!isShared ? (e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-zinc-50'); try { const p = JSON.parse(e.dataTransfer.getData('application/json')); if (p.type === 'quick') { const targetLocalIdx = allQuickTasks.slice(0, idx).filter(t => !t.shareId).length; reorderQuickTasks(p.fromIndex, targetLocalIdx); } } catch (_) { } } : undefined}
                   >
                     <TaskCheckbox done={task.done} onClick={() => isShared ? toggleSharedQuickTask(task.shareId, task.id, !task.done) : toggleQuickTask(task.id, !task.done)} />
-                    
+
                     <div className="flex flex-1 min-w-0 items-center gap-2" onClick={() => isShared ? toggleSharedQuickTask(task.shareId, task.id, !task.done) : toggleQuickTask(task.id, !task.done)}>
                       {quickTaskEditingId === (isShared ? `shared-${task.shareId}-${task.id}` : task.id) ? (
                         <input
@@ -2007,13 +1987,13 @@ export default function DashboardV2() {
               )}
             </div>
           </div>
-          
+
           <FocusHeatmap dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} now={now} />
         </div>
 
         {/* COL 2: Top 3, Habits */}
         <div className="md:col-span-3 flex flex-col gap-4 min-h-0">
-          
+
           {/* Top 3 — stile dashboard3 */}
           <div className="dashboard-panel flex flex-col shrink-0 overflow-hidden px-4 py-4">
             <div className="flex justify-between items-center mb-4">
@@ -2022,13 +2002,13 @@ export default function DashboardV2() {
               </h3>
               <span className="text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full">{top3DoneCount}/3</span>
             </div>
-            
+
             <div className="flex flex-col gap-3">
               {[0, 1, 2].map((idx) => {
                 const slot = top3Resolved[idx];
                 const filled = slot && !slot.missing;
                 const isDone = slot?.done;
-                
+
                 return (
                   <div
                     key={idx}
@@ -2048,7 +2028,7 @@ export default function DashboardV2() {
                         if (payload.type === 'top3') reorderTop3(payload.fromIndex, toIndex);
                         else if (payload.type === 'project' && payload.projectId && payload.taskId) setTop3SlotAtIndex(toIndex, { projectId: payload.projectId, taskId: payload.taskId });
                         else if (payload.type === 'quick' && payload.quickTaskId) setTop3SlotAtIndex(toIndex, { quickTaskId: payload.quickTaskId });
-                      } catch (_) {}
+                      } catch (_) { }
                     }}
                     className={`relative overflow-hidden min-h-[3.25rem] rounded-xl border flex items-center transition-all duration-150 ${filled ? 'border-zinc-200 dark:border-white/[0.06] dark:hover:border-white/[0.1] bg-zinc-50/50 dark:bg-white/[0.02] cursor-grab active:cursor-grabbing' : 'border-dashed border-zinc-200 dark:border-white/[0.06] bg-transparent'}`}
                   >
@@ -2085,7 +2065,7 @@ export default function DashboardV2() {
               </h3>
               <span className="text-[10px] font-bold bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 px-2 py-0.5 rounded-full">{todayDone}/{activeHabits.length}</span>
             </div>
-            
+
             <div className="mb-2 flex shrink-0 gap-1.5">
               <input
                 value={habitDraft}
@@ -2094,62 +2074,62 @@ export default function DashboardV2() {
                 placeholder="Nuova abitudine..."
                 className="dashboard-input flex-1 py-1.5 text-sm"
               />
-              <button 
-                onClick={() => { const t = habitDraft.trim(); if (t) { setDailyTaskTemplates(p => [...p, { id: uid('daily'), title: t, locked: false }]); setHabitDraft(''); } }} 
+              <button
+                onClick={() => { const t = habitDraft.trim(); if (t) { setDailyTaskTemplates(p => [...p, { id: uid('daily'), title: t, locked: false }]); setHabitDraft(''); } }}
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500 text-white transition-all hover:bg-sky-600 active:scale-95"
               >
                 <Icons.Plus className="h-3.5 w-3.5" />
               </button>
             </div>
-            
+
             <div className="flex-1 min-h-0 overflow-y-auto">
               {dailyTaskTemplates.map((task, idx) => {
                 const isLocked = task.locked;
                 const isDone = todayTaskLog[task.id];
-                  return (
-                    <div
-                      key={task.id}
-                      data-habit-index={idx}
-                      draggable={!isLocked}
-                      onDragStart={(e) => { e.dataTransfer.setData('application/json', JSON.stringify({ type: 'habit', fromIndex: idx })); e.dataTransfer.effectAllowed = 'move'; }}
-                      onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-zinc-50'); }}
-                      onDragLeave={(e) => e.currentTarget.classList.remove('bg-zinc-50')}
-                      onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-zinc-50'); try { const p = JSON.parse(e.dataTransfer.getData('application/json')); if (p.type === 'habit') reorderHabits(p.fromIndex, idx); } catch (_) {} }}
-                      className={`group task-row ${isLocked ? 'opacity-40' : 'cursor-grab active:cursor-grabbing'}`}
-                    >
-                      <TaskCheckbox done={isDone} onClick={() => !isLocked && toggleDailyTask(task.id, !isDone)} />
-                    
-                      <div className="flex flex-1 min-w-0 items-center" onClick={() => !isLocked && toggleDailyTask(task.id, !isDone)}>
-                        {habitEditingId === task.id ? (
-                          <input
-                            autoFocus
-                            value={habitEditingTitle}
-                            onChange={(e) => setHabitEditingTitle(e.target.value)}
-                            onBlur={() => { const t = habitEditingTitle.trim(); if (t) setDailyTaskTemplates(p => p.map(h => h.id === task.id ? { ...h, title: t } : h)); setHabitEditingId(null); }}
-                            onKeyDown={(e) => { if (e.key === 'Enter') { const t = habitEditingTitle.trim(); if (t) setDailyTaskTemplates(p => p.map(h => h.id === task.id ? { ...h, title: t } : h)); setHabitEditingId(null); } if (e.key === 'Escape') setHabitEditingId(null); }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="seamless-input text-sm text-zinc-800 dark:text-zinc-100"
-                          />
-                        ) : (
-                          <span
-                            onDoubleClick={(e) => { e.stopPropagation(); setHabitEditingId(task.id); setHabitEditingTitle(task.title); }}
-                            className={`cursor-pointer select-text text-sm leading-none ${isDone ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}
-                          >
-                            {task.title}
-                          </span>
-                        )}
-                      </div>
-                    
-                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                        <button type="button" onClick={() => toggleHabitLock(task.id)} className={`dashboard-action-btn p-1 ${isLocked ? 'text-amber-500' : 'hover:text-amber-500'}`} title={isLocked ? 'Sblocca' : 'Blocca'}>
-                          <Icons.Lock className="h-3 w-3" />
-                        </button>
-                        <button type="button" onClick={() => removeDailyTask(task.id)} className="dashboard-action-btn p-1 hover:text-red-500" title="Elimina">
-                          <Icons.X className="h-3 w-3" />
-                        </button>
-                      </div>
+                return (
+                  <div
+                    key={task.id}
+                    data-habit-index={idx}
+                    draggable={!isLocked}
+                    onDragStart={(e) => { e.dataTransfer.setData('application/json', JSON.stringify({ type: 'habit', fromIndex: idx })); e.dataTransfer.effectAllowed = 'move'; }}
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-zinc-50'); }}
+                    onDragLeave={(e) => e.currentTarget.classList.remove('bg-zinc-50')}
+                    onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-zinc-50'); try { const p = JSON.parse(e.dataTransfer.getData('application/json')); if (p.type === 'habit') reorderHabits(p.fromIndex, idx); } catch (_) { } }}
+                    className={`group task-row ${isLocked ? 'opacity-40' : 'cursor-grab active:cursor-grabbing'}`}
+                  >
+                    <TaskCheckbox done={isDone} onClick={() => !isLocked && toggleDailyTask(task.id, !isDone)} />
+
+                    <div className="flex flex-1 min-w-0 items-center" onClick={() => !isLocked && toggleDailyTask(task.id, !isDone)}>
+                      {habitEditingId === task.id ? (
+                        <input
+                          autoFocus
+                          value={habitEditingTitle}
+                          onChange={(e) => setHabitEditingTitle(e.target.value)}
+                          onBlur={() => { const t = habitEditingTitle.trim(); if (t) setDailyTaskTemplates(p => p.map(h => h.id === task.id ? { ...h, title: t } : h)); setHabitEditingId(null); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { const t = habitEditingTitle.trim(); if (t) setDailyTaskTemplates(p => p.map(h => h.id === task.id ? { ...h, title: t } : h)); setHabitEditingId(null); } if (e.key === 'Escape') setHabitEditingId(null); }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="seamless-input text-sm text-zinc-800 dark:text-zinc-100"
+                        />
+                      ) : (
+                        <span
+                          onDoubleClick={(e) => { e.stopPropagation(); setHabitEditingId(task.id); setHabitEditingTitle(task.title); }}
+                          className={`cursor-pointer select-text text-sm leading-none ${isDone ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}
+                        >
+                          {task.title}
+                        </span>
+                      )}
                     </div>
-                  );
+
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                      <button type="button" onClick={() => toggleHabitLock(task.id)} className={`dashboard-action-btn p-1 ${isLocked ? 'text-amber-500' : 'hover:text-amber-500'}`} title={isLocked ? 'Sblocca' : 'Blocca'}>
+                        <Icons.Lock className="h-3 w-3" />
+                      </button>
+                      <button type="button" onClick={() => removeDailyTask(task.id)} className="dashboard-action-btn p-1 hover:text-red-500" title="Elimina">
+                        <Icons.X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                );
               })}
             </div>
             <ThisWeekWidget dailyTaskLogs={dailyTaskLogs} activeHabits={activeHabits} now={now} />
@@ -2162,8 +2142,8 @@ export default function DashboardV2() {
             <h2 className="flex items-center gap-2 dashboard-section-title text-indigo-500 dark:text-indigo-400">
               <Icons.Square className="w-3.5 h-3.5" /> Projects
             </h2>
-            <button 
-              onClick={createProject} 
+            <button
+              onClick={createProject}
               className="flex h-7 items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 text-xs font-semibold text-indigo-600 transition-all hover:bg-indigo-100 active:scale-95 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-500/20"
             >
               <Icons.Plus className="h-3 w-3" />
@@ -2219,7 +2199,7 @@ export default function DashboardV2() {
                             }}
                             onRename={(tid, val) => updateProject(project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, title: val })) }))}
                             onDeadline={(tid, val) => updateProject(project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, deadline: val || undefined })) }))}
-                            onAddChild={(tid, val) => updateProject(project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, children: [...(n.children||[]), createTaskNode(val)] })) }))}
+                            onAddChild={(tid, val) => updateProject(project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, children: [...(n.children || []), createTaskNode(val)] })) }))}
                             onAddToTop3={(pid, tid) => {
                               const free = top3Manual.findIndex(s => !s);
                               if (free !== -1) setTop3SlotAtIndex(free, { projectId: pid, taskId: tid });
@@ -2229,7 +2209,7 @@ export default function DashboardV2() {
                           />
                         ))}
                         <div className="pt-1 pl-1">
-                          <input 
+                          <input
                             value={projectTaskDrafts[project.id] ?? ''}
                             onChange={(e) => setProjectTaskDrafts(prev => ({ ...prev, [project.id]: e.target.value }))}
                             onKeyDown={(e) => {
@@ -2237,7 +2217,7 @@ export default function DashboardV2() {
                                 e.preventDefault();
                                 const title = (projectTaskDrafts[project.id] ?? '').trim();
                                 if (title) {
-                                  updateProject(project.id, p => ({ ...p, tasks: [...(p.tasks||[]), createTaskNode(title)] }));
+                                  updateProject(project.id, p => ({ ...p, tasks: [...(p.tasks || []), createTaskNode(title)] }));
                                   setProjectTaskDrafts(prev => ({ ...prev, [project.id]: '' }));
                                 }
                               }
@@ -2265,7 +2245,7 @@ export default function DashboardV2() {
                   {sharedDashboards.map((shared, sIdx) => {
                     const sharedData = shared.data || {};
                     const sharedProjects = Array.isArray(sharedData.projects) ? sharedData.projects : (Array.isArray(sharedData) ? sharedData : []);
-                    
+
                     return sharedProjects.map((project, pIdx) => {
                       const stats = countTreeStats(project.tasks);
                       const percentage = Math.round(stats.ratio * 100);
@@ -2301,7 +2281,7 @@ export default function DashboardV2() {
                                   onDelete={(tid) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: removeNodeFromTree(p.tasks, tid) }))}
                                   onRename={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, title: val })) }))}
                                   onDeadline={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, deadline: val || undefined })) }))}
-                                  onAddChild={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, children: [...(n.children||[]), createTaskNode(val)] })) }))}
+                                  onAddChild={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, children: [...(n.children || []), createTaskNode(val)] })) }))}
                                   onAddToTop3={(pid, tid) => {
                                     // Top3 is local only for now, but we can enable it if needed
                                     const free = top3Manual.findIndex(s => !s);
@@ -2335,7 +2315,7 @@ export default function DashboardV2() {
                                 />
                               ))}
                               <div className="pt-1 pl-1">
-                                <input 
+                                <input
                                   value={projectTaskDrafts[`${shared.share_id}-${project.id}`] ?? ''}
                                   onChange={(e) => setProjectTaskDrafts(prev => ({ ...prev, [`${shared.share_id}-${project.id}`]: e.target.value }))}
                                   onKeyDown={(e) => {
@@ -2343,7 +2323,7 @@ export default function DashboardV2() {
                                       e.preventDefault();
                                       const title = (projectTaskDrafts[`${shared.share_id}-${project.id}`] ?? '').trim();
                                       if (title) {
-                                        updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: [...(p.tasks||[]), createTaskNode(title)] }));
+                                        updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: [...(p.tasks || []), createTaskNode(title)] }));
                                         setProjectTaskDrafts(prev => ({ ...prev, [`${shared.share_id}-${project.id}`]: '' }));
                                       }
                                     }
@@ -2373,7 +2353,7 @@ export default function DashboardV2() {
             <h2 className="flex items-center gap-2 dashboard-section-title text-violet-500 dark:text-violet-400">
               <Icons.Target className="w-3.5 h-3.5" /> Life Goals
             </h2>
-            <button 
+            <button
               onClick={() => updateLifeGoals(p => ({ ...p, collapsed: !p.collapsed }))}
               className="dashboard-action-btn"
             >
@@ -2388,7 +2368,7 @@ export default function DashboardV2() {
                 const totalCount = tier.goals.length;
 
                 return (
-                  <div 
+                  <div
                     key={tier.id}
                     className="flex flex-col gap-2 rounded-lg border border-zinc-200/60 dark:border-white/[0.04]"
                     onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-zinc-50'); }}
@@ -2396,11 +2376,11 @@ export default function DashboardV2() {
                     onDrop={(e) => {
                       e.preventDefault();
                       e.currentTarget.classList.remove('bg-zinc-50');
-                      try { const d = JSON.parse(e.dataTransfer.getData('application/json')); if (d.type === 'lifeGoal') moveGoalToTier(d.goalId, tier.id); } catch (_) {}
+                      try { const d = JSON.parse(e.dataTransfer.getData('application/json')); if (d.type === 'lifeGoal') moveGoalToTier(d.goalId, tier.id); } catch (_) { }
                     }}
                   >
                     {/* Tier header */}
-                    <div 
+                    <div
                       className="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 transition-colors hover:bg-zinc-50/80 dark:hover:bg-white/[0.04]"
                       onClick={() => toggleTierCollapse(tier.id)}
                     >
@@ -2426,7 +2406,7 @@ export default function DashboardV2() {
                             <span className="px-1 text-[10px] font-medium uppercase tracking-[0.15em] text-zinc-400">Quick</span>
                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                               {tier.goals.filter(g => g.type === 'quick').map((goal) => (
-                                <LifeGoalCard 
+                                <LifeGoalCard
                                   key={goal.id} goal={goal} accent={tier.color} stats={{}} percentage={0}
                                   onToggle={(gid, val) => { updateGoal(gid, g => ({ ...g, done: val })); setQuickTasks(prev => prev.map(t => t.lifeGoalId === gid ? { ...t, done: val } : t)); }}
                                   onDelete={deleteGoal}
@@ -2448,7 +2428,7 @@ export default function DashboardV2() {
                             </div>
                           </div>
                         )}
-                        
+
                         {/* PROJECT GOALS */}
                         {tier.goals.some(g => g.type === 'project') && (
                           <div className="flex flex-col gap-1.5">
@@ -2458,7 +2438,7 @@ export default function DashboardV2() {
                                 const stats = countTreeStats(goal.tasks);
                                 const percentage = Math.round(stats.ratio * 100);
                                 return (
-                                  <LifeGoalCard 
+                                  <LifeGoalCard
                                     key={goal.id} goal={goal} accent={tier.color} stats={stats} percentage={percentage}
                                     onToggle={(gid, val) => { updateGoal(gid, g => ({ ...g, done: val })); setQuickTasks(prev => prev.map(t => t.lifeGoalId === gid ? { ...t, done: val } : t)); }}
                                     onDelete={deleteGoal}
@@ -2468,7 +2448,7 @@ export default function DashboardV2() {
                                     deadlineEditing={goalDeadlineEditing} deadlineInput={goalDeadlineInput}
                                     setDeadlineInput={setGoalDeadlineInput} setDeadlineEditing={setGoalDeadlineEditing}
                                     getDeadlineColorClass={getDeadlineColorClass} formatDeadline={formatDeadline}
-                                    onAddToTop3={() => {}}
+                                    onAddToTop3={() => { }}
                                     hasFreeTop3Slot={false}
                                     onPromoteProject={promoteGoalToProjects}
                                     onPromoteQuick={promoteGoalToQuickTasks}
@@ -2483,16 +2463,16 @@ export default function DashboardV2() {
                                             onDelete={(tid) => updateGoal(goal.id, g => ({ ...g, tasks: removeNodeFromTree(g.tasks, tid) }))}
                                             onRename={(tid, val) => updateGoal(goal.id, g => ({ ...g, tasks: updateNodeInTree(g.tasks, tid, n => ({ ...n, title: val })) }))}
                                             onDeadline={(tid, val) => updateGoal(goal.id, g => ({ ...g, tasks: updateNodeInTree(g.tasks, tid, n => ({ ...n, deadline: val || undefined })) }))}
-                                            onAddChild={(tid, val) => updateGoal(goal.id, g => ({ ...g, tasks: updateNodeInTree(g.tasks, tid, n => ({ ...n, children: [...(n.children||[]), createTaskNode(val)] })) }))}
+                                            onAddChild={(tid, val) => updateGoal(goal.id, g => ({ ...g, tasks: updateNodeInTree(g.tasks, tid, n => ({ ...n, children: [...(n.children || []), createTaskNode(val)] })) }))}
                                             onAddToTop3={(pid, tid) => { const free = top3Manual.findIndex(s => !s); if (free !== -1) setTop3SlotAtIndex(free, { projectId: pid, taskId: tid }); }}
                                             hasFreeTop3Slot={top3Manual.some(s => !s)}
                                           />
                                         ))}
                                         <div className="pt-1">
-                                          <input 
+                                          <input
                                             value={goalTaskDrafts[goal.id] ?? ''}
                                             onChange={(e) => setGoalTaskDrafts(prev => ({ ...prev, [goal.id]: e.target.value }))}
-                                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const title = (goalTaskDrafts[goal.id] ?? '').trim(); if (title) { updateGoal(goal.id, g => ({ ...g, tasks: [...(g.tasks||[]), createTaskNode(title)] })); setGoalTaskDrafts(prev => ({ ...prev, [goal.id]: '' })); } } }}
+                                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const title = (goalTaskDrafts[goal.id] ?? '').trim(); if (title) { updateGoal(goal.id, g => ({ ...g, tasks: [...(g.tasks || []), createTaskNode(title)] })); setGoalTaskDrafts(prev => ({ ...prev, [goal.id]: '' })); } } }}
                                             placeholder="+ task..."
                                             className="seamless-input text-sm text-zinc-500 placeholder:text-zinc-300"
                                           />
@@ -2507,13 +2487,13 @@ export default function DashboardV2() {
                         )}
 
                         <div className="flex items-center gap-2">
-                          <button 
+                          <button
                             onClick={() => { const title = window.prompt("Quick goal:"); if (title) addGoalToTier(tier.id, title, 'General', 'quick'); }}
                             className="dashboard-chip text-[10px] hover:text-zinc-600"
                           >
                             <Icons.Plus className="h-2.5 w-2.5" /> Quick
                           </button>
-                          <button 
+                          <button
                             onClick={() => { const title = window.prompt("Progetto:"); if (title) addGoalToTier(tier.id, title, 'General', 'project'); }}
                             className="dashboard-chip text-[10px] hover:text-zinc-600"
                           >

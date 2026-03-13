@@ -386,7 +386,7 @@ export default function SharedProjects() {
   // WebSocket: Vercel non supporta WS proxy → connessione diretta a Railway in prod
   const getWsUrl = (sid) => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const isLocal = window.location.hostname === 'localhost';
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const host = isLocal ? 'localhost:8000' : (import.meta.env.VITE_WS_HOST || 'projecto-production-feda.up.railway.app');
     return `${protocol}//${host}/api/training/ws/shared-dashboard/${encodeURIComponent(sid)}`;
   };
@@ -601,15 +601,13 @@ export default function SharedProjects() {
 
   // Helper per aggiornare lo stato locale e inviare subito
   const updateLocal = (updater) => {
-    setDashboard(prev => {
-      const nextPartial = typeof updater === 'function' ? updater(prev) : updater;
-      const nextState = { ...prev, ...nextPartial };
+    const nextPartial = typeof updater === 'function' ? updater(dashboard) : updater;
+    const nextState = { ...dashboard, ...nextPartial };
 
-      // Inviamo l'aggiornamento al server (fire and forget)
-      sendUpdate(nextState);
+    setDashboard(nextState);
 
-      return nextState;
-    });
+    // Inviamo l'aggiornamento al server (fire and forget)
+    sendUpdate(nextState);
   };
 
   const addQuickTask = (title) => {
