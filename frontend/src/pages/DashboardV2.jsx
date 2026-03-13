@@ -535,7 +535,7 @@ function PomodoroCompact() {
       </div>
 
       <div className="flex items-center justify-between z-10 mt-2">
-        <div className="text-4xl font-black tracking-tighter tabular-nums text-zinc-900 dark:text-zinc-50 leading-none">
+        <div className="text-3xl sm:text-4xl font-black tracking-tighter tabular-nums text-zinc-900 dark:text-zinc-50 leading-none">
           {String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}
         </div>
         <div className="flex gap-2">
@@ -1823,7 +1823,7 @@ export default function DashboardV2() {
     <div className="h-full w-full flex flex-col overflow-hidden font-sans font-medium select-none selection:bg-indigo-500/30 antialiased">
 
       {/* HEADER — Dashboard bar: stats + date + actions */}
-      <header className="shrink-0 border-b border-zinc-200/50 dark:border-white/[0.06] bg-white/70 dark:bg-[#0b0e14]/70 backdrop-blur-xl shadow-sm dark:shadow-black/50 px-5 py-3">
+      <header className="shrink-0 border-b border-zinc-200/50 dark:border-white/[0.06] bg-white/70 dark:bg-[#0b0e14]/70 backdrop-blur-xl shadow-sm dark:shadow-black/50 px-6 py-3">
         <div className="flex items-center justify-between gap-4">
           {/* Left: spacer */}
           <div className="w-0 sm:w-4 shrink-0" />
@@ -1831,19 +1831,19 @@ export default function DashboardV2() {
           {/* Center: Live stats */}
           <div className="flex items-center gap-3 flex-1 justify-center min-w-0">
             {focusStreak > 0 && (
-              <div className="flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200/60 dark:ring-amber-700/30">
-                <Icons.Flame className="h-3.5 w-3.5 shrink-0" />
-                <span className="text-[11px] font-bold tabular-nums">{focusStreak}d</span>
+              <div className="flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 px-2 sm:px-3 py-1 sm:py-1.5 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200/60 dark:ring-amber-700/30">
+                <Icons.Flame className="h-3 sm:h-3.5 w-3 sm:w-3.5 shrink-0" />
+                <span className="text-[10px] sm:text-[11px] font-bold tabular-nums">{focusStreak}d</span>
               </div>
             )}
-            <div className="flex items-center gap-2 rounded-full bg-zinc-100/80 dark:bg-white/[0.06] px-3 py-1.5 ring-1 ring-zinc-200/60 dark:ring-white/[0.08]">
-              <div className="relative h-2 w-20 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700/80">
+            <div className="flex items-center gap-2 rounded-full bg-zinc-100/80 dark:bg-white/[0.06] px-2 sm:px-3 py-1 sm:py-1.5 ring-1 ring-zinc-200/60 dark:ring-white/[0.08]">
+              <div className="relative h-1.5 sm:h-2 w-12 sm:w-20 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700/80">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500"
                   style={{ width: `${Math.round(todayFocusScore * 100)}%` }}
                 />
               </div>
-              <span className="min-w-[2.25rem] text-[11px] font-bold tabular-nums text-zinc-700 dark:text-zinc-200">
+              <span className="min-w-[1.75rem] sm:min-w-[2.25rem] text-[10px] sm:text-[11px] font-bold tabular-nums text-zinc-700 dark:text-zinc-200">
                 {Math.round(todayFocusScore * 100)}%
               </span>
             </div>
@@ -1876,21 +1876,21 @@ export default function DashboardV2() {
       </header>
 
       {/* Prayers + Time Remaining */}
-      <div className="shrink-0 px-5 py-4">
-        <div className="dashboard-panel px-4 py-3">
-          <div className="flex items-center gap-6">
+      <div className="shrink-0 px-6 pt-6 pb-3">
+        <div className="dashboard-panel px-3 sm:px-4 py-3">
+          <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
             {/* Prayers */}
-            <div className="flex flex-1 items-center gap-4 min-w-0">
+            <div className="flex flex-col sm:flex-row flex-1 sm:items-center gap-3 sm:gap-4 min-w-0">
               <h3 className="flex shrink-0 items-center gap-2 dashboard-section-title text-emerald-500 dark:text-emerald-400">
                 <Icons.CheckCircle className="w-3.5 h-3.5" /> Prayers
               </h3>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2 sm:gap-3">
                 {PRAYERS.map((prayer) => {
                   const isDone = todayPrayerLog[prayer];
                   return (
-                    <label key={prayer} className={`flex h-8 cursor-pointer items-center gap-2 rounded-lg border px-2.5 transition-all ${isDone ? 'border-emerald-400/40 bg-emerald-500/12 dark:border-emerald-500/20 dark:bg-emerald-500/8' : 'border-transparent hover:border-zinc-200 hover:bg-zinc-50 dark:hover:border-white/5 dark:hover:bg-white/[0.03]'}`}>
+                    <label key={prayer} className={`flex h-8 sm:h-9 cursor-pointer items-center gap-2 rounded-lg border px-2 sm:px-3 transition-all ${isDone ? 'border-emerald-400/40 bg-emerald-500/12 dark:border-emerald-500/20 dark:bg-emerald-500/8' : 'border-transparent hover:border-zinc-200 hover:bg-zinc-50 dark:hover:border-white/5 dark:hover:bg-white/[0.03]'}`}>
                       <TaskCheckbox done={isDone} onClick={() => togglePrayer(prayer, !isDone)} />
-                      <span className={`text-sm ${isDone ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400'}`}>{prayer}</span>
+                      <span className={`text-xs sm:text-sm font-medium ${isDone ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400'}`}>{prayer}</span>
                       <input type="checkbox" className="hidden" checked={!!isDone} readOnly />
                     </label>
                   );
@@ -1902,16 +1902,38 @@ export default function DashboardV2() {
             <div className="hidden md:block h-8 w-px shrink-0 bg-zinc-200 dark:bg-white/[0.06]" />
 
             {/* Time Remaining — ancorato a destra */}
-            <div className="hidden md:flex shrink-0 items-center gap-4">
+            <div className="hidden xl:flex shrink-0 items-center justify-end gap-6">
               <h3 className="dashboard-section-title">Remaining</h3>
-              <div className="flex items-center gap-5">
+              <div className="flex items-center gap-6">
                 {countdowns.map(c => (
-                  <div key={c.label} className="flex items-center gap-2">
-                    <span className="text-xs text-zinc-500 w-10 shrink-0">{c.label}</span>
-                    <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 tabular-nums shrink-0">{c.remaining}</span>
-                    <div className="w-14 h-1 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden shrink-0">
+                  <div key={c.label} className="flex items-center gap-3">
+                    <span className="text-xs text-zinc-500 w-10 shrink-0 font-semibold">{c.label}</span>
+                    <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300 tabular-nums shrink-0">{c.remaining}</span>
+                    <div className="w-16 h-1 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden shrink-0">
                       <div className="h-full bg-zinc-400 dark:bg-zinc-500 rounded-full transition-all" style={{ width: `${c.pct * 100}%` }} />
                     </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Tablet Countdown (lg) */}
+            <div className="hidden lg:flex xl:hidden shrink-0 items-center gap-4">
+              {countdowns.map(c => (
+                <div key={c.label} className="flex items-center gap-2 px-3 py-1 rounded-lg bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/50 dark:border-white/[0.05]">
+                  <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase">{c.label[0]}</span>
+                  <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300 tabular-nums">{c.remaining}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Mobile Countdown (below lg) */}
+            <div className="flex lg:hidden items-center justify-between gap-2 overflow-x-auto no-scrollbar py-2 border-t border-zinc-100 dark:border-white/5 mt-1">
+              <div className="flex w-full items-center justify-around gap-2">
+                {countdowns.map(c => (
+                  <div key={c.label} className="flex items-center gap-1.5 whitespace-nowrap bg-zinc-50 dark:bg-white/[0.03] px-2 py-1 rounded-md border border-zinc-100 dark:border-white/5">
+                    <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-tighter">{c.label[0]}</span>
+                    <span className="text-[11px] font-black text-zinc-800 dark:text-zinc-200">{c.remaining}</span>
                   </div>
                 ))}
               </div>
@@ -1920,11 +1942,10 @@ export default function DashboardV2() {
         </div>
       </div>
 
-      {/* MAIN GRID */}
-      <div className="flex-1 min-h-0 p-5 pt-0 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">
+      <div className="flex-1 min-h-0 px-6 pt-3 pb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 overflow-x-hidden overflow-y-auto lg:overflow-hidden">
 
-        {/* COL 1: Pomodoro, Quick Tasks, Prayers, Countdowns - Span 3 */}
-        <div className="md:col-span-3 flex flex-col gap-4 min-h-0">
+        {/* COL 1: Pomodoro, Quick Tasks, Prayers, Countdowns - Span 3 on Large */}
+        <div className="flex flex-col gap-4 min-h-0 lg:col-span-3">
           <PomodoroCompact />
 
           {/* Quick Tasks */}
@@ -1953,7 +1974,7 @@ export default function DashboardV2() {
               </button>
             </div>
 
-            <div className="max-h-36 overflow-y-auto">
+            <div className="max-h-36 sm:max-h-48 overflow-y-auto custom-scrollbar">
               {allQuickTasks.map((task, idx) => {
                 const isShared = !!task.shareId;
                 const localIdx = isShared ? -1 : quickTasks.filter(t => !t.parentId).findIndex(t => t.id === task.id);
@@ -2037,8 +2058,8 @@ export default function DashboardV2() {
           <FocusHeatmap dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} now={now} />
         </div>
 
-        {/* COL 2: Top 3, Habits */}
-        <div className="md:col-span-3 flex flex-col gap-4 min-h-0">
+        {/* COL 2: Top 3, Habits — Span 3 on Large */}
+        <div className="flex flex-col gap-4 min-h-0 lg:col-span-3">
 
           {/* Top 3 — stile dashboard3 */}
           <div className="dashboard-panel flex flex-col shrink-0 overflow-hidden px-4 py-4">
@@ -2128,7 +2149,7 @@ export default function DashboardV2() {
               </button>
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="flex-1 min-h-[150px] overflow-y-auto custom-scrollbar">
               {dailyTaskTemplates.map((task, idx) => {
                 const isLocked = task.locked;
                 const isDone = todayTaskLog[task.id];
@@ -2182,8 +2203,8 @@ export default function DashboardV2() {
           </div>
         </div>
 
-        {/* COL 3 - Projects */}
-        <div className="dashboard-panel overflow-hidden md:col-span-6 flex min-h-0 flex-col p-5">
+        {/* COL 3 - Projects — Span 6 on Large, Span 2 on Md */}
+        <div className="dashboard-panel overflow-hidden flex min-h-0 flex-col p-4 sm:p-5 md:col-span-2 lg:col-span-6">
           <div className="mb-4 flex shrink-0 items-center justify-between">
             <h2 className="flex items-center gap-2 dashboard-section-title text-indigo-500 dark:text-indigo-400">
               <Icons.Square className="w-3.5 h-3.5" /> Projects
@@ -2393,7 +2414,7 @@ export default function DashboardV2() {
       </div>
 
       {/* LIFE GOALS */}
-      <div className="shrink-0 px-5 pb-10">
+      <div className="shrink-0 px-6 pb-6">
         <div className="dashboard-panel flex flex-col gap-3 p-5">
           <div className="flex items-center justify-between">
             <h2 className="flex items-center gap-2 dashboard-section-title text-violet-500 dark:text-violet-400">
@@ -2479,7 +2500,7 @@ export default function DashboardV2() {
                         {tier.goals.some(g => g.type === 'project') && (
                           <div className="flex flex-col gap-1.5">
                             <span className="px-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-400">Projects</span>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-2">
                               {tier.goals.filter(g => g.type === 'project').map((goal) => {
                                 const stats = countTreeStats(goal.tasks);
                                 const percentage = Math.round(stats.ratio * 100);

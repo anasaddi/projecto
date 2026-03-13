@@ -63,8 +63,8 @@ export default function Layout({ children }) {
               key={to}
               to={to}
               className={`px-3 py-1.5 rounded-[8px] text-[13px] font-medium transition-all duration-200 ${active
-                  ? 'bg-zinc-900 text-white shadow-sm dark:bg-white/[0.08] dark:text-white'
-                  : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-white/[0.04] dark:hover:text-zinc-200'
+                ? 'bg-zinc-900 text-white shadow-sm dark:bg-white/[0.08] dark:text-white'
+                : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-white/[0.04] dark:hover:text-zinc-200'
                 }`}
             >
               {label}
@@ -79,8 +79,8 @@ export default function Layout({ children }) {
               key={to}
               to={to}
               className={`px-3 py-1.5 rounded-[8px] text-[12px] font-medium whitespace-nowrap transition-all duration-200 ${active
-                  ? 'bg-zinc-900 text-white shadow-sm dark:bg-white/[0.08] dark:text-white'
-                  : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-white/[0.04] dark:hover:text-zinc-200'
+                ? 'bg-zinc-900 text-white shadow-sm dark:bg-white/[0.08] dark:text-white'
+                : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-white/[0.04] dark:hover:text-zinc-200'
                 }`}
             >
               {label}
@@ -103,7 +103,7 @@ export default function Layout({ children }) {
           {isDark ? '☀️' : '🌙'}
         </button>
       </header>
-      <main className={isWorkspace ? `flex w-full max-w-[1600px] mx-auto flex-col flex-1 min-h-0 ${isTraining ? 'overflow-x-auto overflow-y-hidden min-w-0' : 'overflow-hidden'}` : 'w-full max-w-[1600px] mx-auto p-4'}>
+      <main className={isWorkspace ? `flex w-full max-w-[1600px] mx-auto flex-col flex-1 min-h-0 ${isTraining ? 'overflow-x-auto overflow-y-hidden min-w-0' : 'overflow-hidden'}` : 'w-full max-w-[1600px] mx-auto p-4 md:p-6'}>
         {children}
       </main>
     </div>
