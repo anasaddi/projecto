@@ -1820,10 +1820,10 @@ export default function DashboardV2() {
   };
 
   return (
-    <div className="h-full w-full bg-[#e4e5ea] dark:bg-[#0c0e14] text-gray-900 dark:text-zinc-100 flex flex-col overflow-hidden font-sans font-medium select-none selection:bg-indigo-500/30 antialiased">
+    <div className="h-full w-full flex flex-col overflow-hidden font-sans font-medium select-none selection:bg-indigo-500/30 antialiased">
 
       {/* HEADER — Dashboard bar: stats + date + actions */}
-      <header className="shrink-0 border-b border-zinc-200/80 dark:border-white/[0.06] bg-white/95 dark:bg-[#0f1116]/95 backdrop-blur-xl shadow-sm shadow-zinc-900/5 dark:shadow-black/20 px-5 py-3">
+      <header className="shrink-0 border-b border-zinc-200/50 dark:border-white/[0.06] bg-white/70 dark:bg-[#0b0e14]/70 backdrop-blur-xl shadow-sm dark:shadow-black/50 px-5 py-3">
         <div className="flex items-center justify-between gap-4">
           {/* Left: spacer */}
           <div className="w-0 sm:w-4 shrink-0" />
@@ -1921,7 +1921,7 @@ export default function DashboardV2() {
       </div>
 
       {/* MAIN GRID */}
-      <div className="flex-1 min-h-0 p-5 pt-0 grid grid-cols-1 md:grid-cols-12 gap-5 overflow-hidden">
+      <div className="flex-1 min-h-0 p-5 pt-0 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">
 
         {/* COL 1: Pomodoro, Quick Tasks, Prayers, Countdowns - Span 3 */}
         <div className="md:col-span-3 flex flex-col gap-4 min-h-0">

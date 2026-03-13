@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ModernInput, ModernCheckbox } from './training/TrainingUI';
 import { api } from '../api/client';
 
 // --- Utility Functions ---
@@ -42,28 +43,19 @@ const STORAGE_KEY = (id) => `strength_v2_${id}`;
 
 // --- Components ---
 const Card = ({ children, className = '' }) => (
-  <div className={`rounded-[2rem] bg-white/20 dark:bg-zinc-900/20 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-800/50 shadow-xl shadow-zinc-200/10 dark:shadow-black/20 transition-all duration-300 hover:border-zinc-300/50 dark:hover:border-zinc-700/50 hover:shadow-2xl overflow-hidden ${className}`}>
+  <div className={`rounded-xl bg-white dark:bg-[#151718] border border-zinc-200/60 dark:border-white/[0.06] shadow-sm overflow-hidden ${className}`}>
     {children}
   </div>
 );
 
-const ModernInput = ({ value, onChange, placeholder, step, className = '', small = false }) => (
-  <input
-    type="number"
-    step={step || '0.5'}
-    value={value}
-    onChange={onChange}
-    placeholder={placeholder}
-    className={`bg-white/40 dark:bg-zinc-900/40 border border-zinc-200/50 dark:border-zinc-800/50 rounded-xl text-center font-bold text-zinc-900 dark:text-zinc-100 focus:bg-white focus:dark:bg-zinc-900 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600 shadow-inner shadow-zinc-100/50 dark:shadow-black/20 mx-auto block ${small ? 'text-[10px] py-1 px-1' : 'text-xs py-1.5 px-2'} ${className}`}
-  />
-);
 
-const Checkbox = ({ checked, onChange, colorClass = 'accent-blue-500' }) => (
+
+const Checkbox = ({ checked, onChange, colorClass = 'accent-indigo-500' }) => (
   <input
     type="checkbox"
     checked={checked}
     onChange={onChange}
-    className={`w-[18px] h-[18px] rounded-lg border-2 border-zinc-300/80 dark:border-zinc-700/80 bg-white/50 dark:bg-zinc-900/50 transition-all cursor-pointer hover:scale-110 shadow-sm ${colorClass}`}
+    className={`w-4 h-4 rounded border border-zinc-300 dark:border-white/[0.1] bg-white dark:bg-zinc-950 transition-all cursor-pointer ${colorClass}`}
   />
 );
 
@@ -96,7 +88,7 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
     async function loadData() {
       try {
         const backendData = await api.training.getProgression(exercise_id);
-        
+
         if (backendData?.data) {
           const { tmAnas, tmFlavio, tmByMonth, dataByMonth } = backendData.data;
           if (tmAnas != null) setTmAnas(String(tmAnas));
@@ -113,7 +105,7 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
               if (parsed.tmFlavio != null) setTmFlavio(String(parsed.tmFlavio));
               if (Array.isArray(parsed.tmByMonth)) setTmByMonth(parsed.tmByMonth);
               if (Array.isArray(parsed.dataByMonth)) setDataByMonth(parsed.dataByMonth);
-              
+
               // Salva subito nel backend per migrare
               await api.training.updateProgression(exercise_id, parsed);
             } catch (e) {
@@ -167,7 +159,7 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
     if (!isNaN(tm) && tm >= 0) {
       const isPullup = exercise_id === 'pu_str';
       const bw = BODYWEIGHTS.anas;
-      
+
       setDataByMonth(prev => prev.map((month, mi) =>
         mi === 0 ? month.map((row, wi) => {
           const percent = WEEK_CONFIGS[wi].percent;
@@ -244,7 +236,7 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
             // Se c'è un TM manuale inserito per questo mese, usalo sempre (anche se AMRAP non è checkato)
             if (manualTm && !isNaN(parseFloat(manualTm)) && manualTm !== '') {
               tm = parseFloat(manualTm);
-            } 
+            }
             // Altrimenti calcola da AMRAP, ma SOLO se l'AMRAP è stato completato (checkato)
             else if (amrapRow[athlete].completed) {
               const tableWeight = parseFloat(amrapRow[athlete].weight) || 0;
@@ -345,10 +337,10 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
   return (
     <Card className="overflow-hidden border-blue-100/60 dark:border-blue-900/20">
       {/* Header */}
-      <div className="px-4 py-3 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-500/10 dark:to-transparent border-b border-gray-100 dark:border-zinc-800/80">
-        <div className="flex flex-col items-center gap-1">
-          <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-widest text-center">{exercise_name}</h3>
-          <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-100/50 dark:bg-blue-500/20 px-1.5 py-0.5 rounded">Mese {currentMonth}</span>
+      <div className="px-3 py-2 flex items-center justify-between bg-zinc-50/50 dark:bg-white/[0.02] border-b border-zinc-100 dark:border-white/[0.06]">
+        <div className="flex flex-col">
+          <h3 className="text-[12px] font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">{exercise_name}</h3>
+          <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-tighter">Mese {currentMonth}</span>
         </div>
 
         {/* TM Input - centered below title if needed, or keeping them in a row */}
@@ -393,7 +385,7 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
                   placeholder={(() => {
                     const prevAmrap = dataByMonth[currentMonth - 2]?.[2];
                     if (!prevAmrap) return 'TM';
-                    
+
                     const isPullup = exercise_id === 'pu_str';
                     const bw = BODYWEIGHTS.anas;
                     const w = parseFloat(prevAmrap.anas.weight) || 0;
@@ -417,7 +409,7 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
                   placeholder={(() => {
                     const prevAmrap = dataByMonth[currentMonth - 2]?.[2];
                     if (!prevAmrap) return 'TM';
-                    
+
                     const isPullup = exercise_id === 'pu_str';
                     const bw = BODYWEIGHTS.flavio;
                     const w = parseFloat(prevAmrap.flavio.weight) || 0;
@@ -436,18 +428,18 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
       </div>
 
       {/* Month Selector */}
-      <div className="px-4 py-2.5 border-b border-gray-100 dark:border-zinc-800/80">
-        <div className="flex items-center gap-1 bg-gray-100/50 dark:bg-zinc-800/50 p-1 rounded-xl">
+      <div className="px-3 py-1.5 border-b border-zinc-100 dark:border-white/[0.06]">
+        <div className="flex items-center gap-0.5 bg-zinc-100/50 dark:bg-white/[0.04] p-0.5 rounded-lg">
           {[1, 2, 3, 4, 5, 6].map(m => (
             <button
               key={m}
               onClick={() => setCurrentMonth(m)}
-              className={`flex-1 h-7 rounded-lg text-xs font-bold transition-all ${currentMonth === m
-                ? 'bg-white dark:bg-zinc-700 shadow-sm text-blue-600 dark:text-blue-400'
-                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              className={`flex-1 h-6 rounded text-[10px] font-bold transition-all ${currentMonth === m
+                ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600'
+                : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'
                 }`}
             >
-              {m}
+              M{m}
             </button>
           ))}
         </div>
@@ -455,36 +447,48 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
 
       {/* Main Table */}
       <div className="p-3">
-        <div className="rounded-xl overflow-hidden border border-gray-200/70 dark:border-zinc-700/70 shadow-sm">
-          <table className="w-full text-[11px]">
+        <div className="rounded-2xl overflow-hidden border border-zinc-200/60 dark:border-white/10 shadow-lg shadow-black/[0.02]">
+          <table className="w-full text-[11px] border-collapse">
             <thead>
-              <tr className="bg-gradient-to-r from-gray-50 to-gray-100/80 dark:from-zinc-800 dark:to-zinc-800/90">
+              <tr className="bg-zinc-50/80 dark:bg-white/[0.02] border-b border-zinc-200/60 dark:border-white/10">
                 <th className="py-2 px-1 w-6 text-center">
-                  <span className="text-[9px] font-bold text-gray-500 dark:text-gray-400">W</span>
+                  <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">W</span>
                 </th>
                 <th className="py-2 px-1 w-12 text-center">
-                  <span className="text-[9px] font-bold text-gray-500 dark:text-gray-400">SCH</span>
+                  <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">SCH</span>
                 </th>
                 <th className="py-2 px-1 w-8 text-center">
-                  <span className="text-[9px] font-bold text-gray-500 dark:text-gray-400">%</span>
+                  <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">%</span>
                 </th>
-                <th className="py-2 px-1 text-center">
-                  <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400">KG</span>
+                <th className="py-2 px-1 text-center font-black">
+                  <div className="flex flex-col items-center">
+                    <span className="text-[7px] text-zinc-400 uppercase tracking-widest mb-0.5">Anas</span>
+                    <span className="text-[8px] text-indigo-500 font-black">KG</span>
+                  </div>
                 </th>
-                <th className="py-2 px-1 text-center">
-                  <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400">1RM</span>
-                </th>
-                <th className="py-2 px-1 w-8 text-center">
-                  <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400">✓</span>
-                </th>
-                <th className="py-2 px-1 text-center">
-                  <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">KG</span>
-                </th>
-                <th className="py-2 px-1 text-center">
-                  <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">1RM</span>
+                <th className="py-2 px-1 text-center font-black">
+                  <div className="flex flex-col items-center">
+                    <span className="text-[7px] text-zinc-400 uppercase tracking-widest mb-0.5">Anas</span>
+                    <span className="text-[8px] text-indigo-500 font-black">1RM</span>
+                  </div>
                 </th>
                 <th className="py-2 px-1 w-8 text-center">
-                  <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">✓</span>
+                  <span className="text-[9px] font-black text-indigo-400/50">✓</span>
+                </th>
+                <th className="py-2 px-1 text-center font-black">
+                  <div className="flex flex-col items-center">
+                    <span className="text-[7px] text-zinc-400 uppercase tracking-widest mb-0.5">Flavio</span>
+                    <span className="text-[8px] text-indigo-500 font-black">KG</span>
+                  </div>
+                </th>
+                <th className="py-2 px-1 text-center font-black">
+                  <div className="flex flex-col items-center">
+                    <span className="text-[7px] text-zinc-400 uppercase tracking-widest mb-0.5">Flavio</span>
+                    <span className="text-[8px] text-indigo-500 font-black">1RM</span>
+                  </div>
+                </th>
+                <th className="py-2 px-1 w-8 text-center">
+                  <span className="text-[9px] font-black text-indigo-400/50">✓</span>
                 </th>
               </tr>
             </thead>
@@ -575,14 +579,12 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
                     {/* Anas Check */}
                     <td className="py-1.5 px-1 text-center">
                       <div className="flex flex-col items-center gap-1">
-                        <input
-                          type="checkbox"
+                        <ModernCheckbox
                           checked={r.anas.completed}
-                          onChange={(e) => {
+                          onChange={() => {
                             toggleComplete(currentMonth - 1, idx, 'anas');
-                            if (e.target.checked) import('canvas-confetti').then(m => m.default({ particleCount: 40, spread: 60, origin: { y: 0.8 } }));
+                            if (!r.anas.completed) import('canvas-confetti').then(m => m.default({ particleCount: 40, spread: 60, origin: { y: 0.8 } }));
                           }}
-                          className="w-4 h-4 rounded border-2 border-blue-300 dark:border-blue-700 accent-blue-500 cursor-pointer"
                         />
                         {r.anas.completed && (
                           <input
@@ -642,14 +644,12 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
                     {/* Flavio Check */}
                     <td className="py-1.5 px-1 text-center">
                       <div className="flex flex-col items-center gap-1">
-                        <input
-                          type="checkbox"
+                        <ModernCheckbox
                           checked={r.flavio.completed}
-                          onChange={(e) => {
+                          onChange={() => {
                             toggleComplete(currentMonth - 1, idx, 'flavio');
-                            if (e.target.checked) import('canvas-confetti').then(m => m.default({ particleCount: 40, spread: 60, origin: { y: 0.8 }, colors: ['#10b981', '#34d399'] }));
+                            if (!r.flavio.completed) import('canvas-confetti').then(m => m.default({ particleCount: 40, spread: 60, origin: { y: 0.8 }, colors: ['#10b981', '#34d399'] }));
                           }}
-                          className="w-4 h-4 rounded border-2 border-emerald-300 dark:border-emerald-700 accent-emerald-500 cursor-pointer"
                         />
                         {r.flavio.completed && (
                           <input

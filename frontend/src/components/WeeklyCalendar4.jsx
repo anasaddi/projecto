@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Zap, 
-  Target, 
-  Dumbbell, 
-  CheckCircle2, 
-  Eye, 
-  EyeOff, 
+import {
+  Zap,
+  Target,
+  Dumbbell,
+  CheckCircle2,
+  Eye,
+  EyeOff,
   Edit2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -39,13 +39,13 @@ function AwMiniCard({ type, title, week, awProgram }) {
     : null;
 
   return (
-    <div className={`relative group flex flex-col rounded-[1.25rem] border ${cycle.border} ${cycle.bg} p-2 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden justify-center min-h-[5rem] text-center`}>
-      <div className="flex flex-col items-center justify-center w-full gap-1.5">
-        <div className={`w-5 h-5 rounded-md ${cycle.badge} shadow-sm flex items-center justify-center shrink-0`}>
-          <Target size={10} className="text-white" />
+    <div className={`relative group flex flex-col rounded-xl border ${cycle.border} ${cycle.bg} p-1.5 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden justify-center min-h-[4.5rem] text-center`}>
+      <div className="flex flex-col items-center justify-center w-full gap-1">
+        <div className={`w-4 h-4 rounded ${cycle.badge} shadow-sm flex items-center justify-center shrink-0`}>
+          <Target size={9} className="text-white" />
         </div>
-        <span className={`text-[10px] font-black uppercase tracking-tight text-center px-1 line-clamp-2 leading-tight ${cycle.label}`}>{title}</span>
-        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md ${cycle.badge} text-white shadow-sm shrink-0 whitespace-nowrap`}>W{week}</span>
+        <span className={`text-[10px] font-bold uppercase tracking-tight text-center px-1 line-clamp-1 leading-tight ${cycle.label}`}>{title}</span>
+        <span className={`text-[8px] font-bold px-1 py-0.5 rounded bg-white/20 dark:bg-black/20 ${cycle.label} shrink-0 whitespace-nowrap`}>W{week}</span>
       </div>
 
       {type === 'max' && (
@@ -119,56 +119,19 @@ function WeeklyCalendar4({ onSelectDay, progressions, schedule, loading, onEditA
 
   return (
     <div className="w-full select-none">
-      {/* Tool Header */}
-      <div className="flex items-center justify-between mb-6 px-2">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-zinc-900 dark:bg-white flex items-center justify-center">
-            <Zap className="text-white dark:text-zinc-900 w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-lg font-black text-zinc-900 dark:text-white tracking-tight uppercase">Programma</h2>
-            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Weekly Protocol</p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={() => setShowMuscleNames(!showMuscleNames)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all
-              ${showMuscleNames 
-                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' 
-                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-              }`}
-          >
-            {showMuscleNames ? <Eye size={12} /> : <EyeOff size={12} />}
-            <span>{showMuscleNames ? 'Dettagli' : 'Compatto'}</span>
-          </button>
-
-          <button 
-            onClick={() => setIsEditMode(!isEditMode)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all
-              ${isEditMode 
-                ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' 
-                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-              }`}
-          >
-            <Edit2 size={12} />
-            <span>{isEditMode ? 'Fine' : 'Gestisci'}</span>
-          </button>
-        </div>
-      </div>
 
       {/* Horizontal Scroll Area — grid con righe condivise e carte unite */}
       {/* Horizontal Scroll Area — grid con righe condivise e carte unite */}
-      <div 
+      <div
         ref={scrollRef}
         className="overflow-x-auto pb-6 pt-4 px-4 snap-x snap-mandatory custom-scrollbar"
         style={{ scrollPadding: '1rem' }}
       >
         <div
-          className="grid gap-x-5 min-w-max items-start"
+          className="grid gap-x-2 min-w-max items-start"
           style={{
-            gridTemplateColumns: `repeat(${schedule?.length || 1}, 210px)`,
+            gridTemplateColumns: `repeat(${schedule?.length || 1}, 155px)`,
             gridTemplateRows: 'auto auto auto auto',
           }}
         >
@@ -199,7 +162,7 @@ function WeeklyCalendar4({ onSelectDay, progressions, schedule, loading, onEditA
                 const hasIsoHeavy = exs.some(e => (e.exercise_id || '').includes('iso') && ((e.exercise_name || '').toLowerCase().includes('heavy') || (e.exercise_name || '').toLowerCase().includes('pesante') || (e.exercise_id || '').includes('heavy')));
                 const id = (e) => (e.exercise_id || '').toLowerCase();
                 const isIsoBlock = (e) => id(e).includes('iso_light') || id(e).includes('iso_heavy') || id(e) === 'aw_iso_l' || id(e) === 'aw_iso_h';
-                const isMaxDay  = (e) => id(e).includes('aw_max') || (e.exercise_name || '').toLowerCase().includes('max day');
+                const isMaxDay = (e) => id(e).includes('aw_max') || (e.exercise_name || '').toLowerCase().includes('max day');
                 const others = exs.filter(e => !e.exercise_id?.startsWith('aw_v1_') && !e.exercise_id?.startsWith('aw_v2_') && !isIsoBlock(e) && !isMaxDay(e) && e.is_active !== 0);
                 const inactive = exs.filter(e => e.is_active === 0 && !isMaxDay(e));
                 const compacted = [];
@@ -217,49 +180,61 @@ function WeeklyCalendar4({ onSelectDay, progressions, schedule, loading, onEditA
               <React.Fragment key={idx}>
                 {/* Background spanning all rows */}
                 <div
-                  className={`snap-start rounded-[2.5rem] border transition-all duration-500 z-0
-                    ${isToday ? 'is-today-marker bg-white dark:bg-zinc-900 border-amber-500/50 shadow-2xl shadow-amber-500/10' : 'bg-white/10 dark:bg-zinc-900/10 border-zinc-200/50 dark:border-zinc-800/50 group-hover:border-zinc-300/30 dark:group-hover:border-zinc-700/30 group-hover:bg-white/20 dark:group-hover:bg-zinc-900/20'}
-                    ${isSelected && !isToday ? 'border-blue-500/50 shadow-xl shadow-blue-500/5 bg-blue-50/10 dark:bg-blue-900/5' : ''}
+                  className={`snap-start rounded-2xl border transition-all duration-500 z-0
+                    ${isToday ? 'is-today-marker bg-white dark:bg-zinc-900 border-indigo-500/50 shadow-xl shadow-indigo-500/5' : 'bg-white/10 dark:bg-zinc-900/10 border-zinc-200 dark:border-white/[0.06]'}
+                    ${isSelected && !isToday ? 'border-indigo-500/50 shadow-lg bg-indigo-50/10 dark:bg-indigo-900/5' : ''}
                     ${day.is_completed ? 'border-emerald-500/30' : ''}
                     ${isSunday ? 'opacity-50 grayscale' : ''}
-                    ${isToday ? 'scale-[1.01] -translate-y-1' : ''}`}
+                    ${isToday ? 'scale-[1.01]' : ''}`}
                   style={{ gridColumn: col, gridRow: '1 / 5' }}
                 />
 
-                {/* Header (Row 1) */}
-                <div 
-                  className={`px-5 pt-5 pb-3 z-10 flex flex-col gap-1 transition-all rounded-t-[2.5rem] ${isSelected && !isToday ? 'bg-blue-500/5 dark:bg-blue-500/10' : ''} ${isToday ? 'scale-[1.01] -translate-y-1' : ''} ${!isSunday ? 'cursor-pointer' : ''}`} 
+                {/* Header (Row 1) - Enhanced Forecast Button Style */}
+                <div
+                  className="px-2 pt-3 pb-2 z-10"
                   style={{ gridColumn: col, gridRow: 1 }}
-                  onClick={() => template && !isSunday && onSelectDay(template, dayStr)}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className={`text-[10px] font-black uppercase tracking-widest ${isToday ? 'text-amber-500' : isSelected ? 'text-blue-500' : 'text-zinc-400'}`}>{dayName}</span>
-                      <span className={`text-[13px] font-black uppercase tracking-tight ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-900 dark:text-zinc-100'}`}>{dateLabel}</span>
-                    </div>
-                    {isSelected && !isToday && (
-                      <div className="flex items-center justify-center px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 shadow-sm">
-                        <span className="text-[7px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-tighter">Attiva</span>
+                  <div className="relative">
+                    <button
+                      onClick={() => template && !isSunday && onSelectDay(template, dayStr)}
+                      className={`flex flex-col items-center gap-0.5 py-3 rounded-2xl transition-all duration-300 w-full border shadow-sm
+                        ${isSelected
+                          ? 'bg-zinc-900 border-zinc-900 shadow-xl shadow-zinc-900/10 dark:bg-white dark:border-white'
+                          : isToday
+                            ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/30'
+                            : 'bg-white border-zinc-200/60 dark:bg-white/[0.02] dark:border-white/[0.06] hover:border-zinc-300 dark:hover:border-white/[0.12]'
+                        }`}
+                    >
+                      <span className={`text-[8px] font-black uppercase tracking-widest ${isSelected ? 'text-zinc-400 dark:text-zinc-500' :
+                        isToday ? 'text-indigo-500' : 'text-zinc-400'
+                        }`}>{dayName}</span>
+                      <span className={`text-[15px] font-black leading-none tabular-nums ${isSelected ? 'text-white dark:text-zinc-950' :
+                        isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-800 dark:text-zinc-100'
+                        }`}>{dateObj.getDate()}</span>
+
+                      <div className="flex gap-1 h-1 items-center mt-1">
+                        {template?.exercises?.some(e => e.category === 'STRENGTH' && e.is_active !== 0) && <div className="w-1 h-1 rounded-full bg-indigo-500" />}
+                        {template?.exercises?.some(e => e.category === 'AW' && e.is_active !== 0) && <div className="w-1 h-1 rounded-full bg-amber-500" />}
+                        {template?.exercises?.some(e => e.category === 'HYPERTROPHY' && e.is_active !== 0) && <div className="w-1 h-1 rounded-full bg-emerald-500" />}
                       </div>
-                    )}
+                    </button>
+
                     {!isSunday && (
-                      <motion.button
-                        whileHover={{ scale: 1.15 }}
-                        whileTap={{ scale: 0.9 }}
+                      <button
                         onClick={(e) => { e.stopPropagation(); toggleComplete(day.date || day.date_, day.is_completed); }}
-                        className={`p-2 rounded-2xl transition-all shadow-lg ${day.is_completed ? 'text-white bg-emerald-500 shadow-emerald-500/20' : 'text-zinc-400 bg-zinc-100 dark:bg-zinc-800 hover:text-amber-500 hover:bg-amber-500/10'}`}
+                        className={`absolute top-1.5 right-1.5 p-1 rounded-lg transition-all z-20 ${day.is_completed ? 'text-white bg-emerald-500 shadow-sm' : 'text-zinc-300 dark:text-zinc-600 hover:text-indigo-500'}`}
                       >
-                        <CheckCircle2 size={14} />
-                      </motion.button>
+                        <CheckCircle2 size={10} />
+                      </button>
                     )}
                   </div>
                 </div>
 
                 {/* FORZA (Row 2) */}
-                <div className={`px-3 py-4 z-10 flex flex-col gap-2 transition-all border-x border-transparent ${isSelected ? 'bg-blue-500/[0.02] dark:bg-blue-500/[0.04] border-blue-500/10' : ''} ${isToday ? 'scale-[1.01] -translate-y-1' : ''}`} style={{ gridColumn: col, gridRow: 2 }}>
-                  <div className="flex items-center gap-1.5 px-2 opacity-40 mb-1">
-                    <Zap size={12} className="text-blue-500" />
-                    <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">FORZA</span>
+                <div className={`px-2 py-2 z-10 flex flex-col gap-1 transition-all border-x border-transparent ${isSelected ? 'bg-indigo-500/[0.02] dark:bg-indigo-500/[0.04] border-indigo-500/10' : ''} ${isToday ? 'scale-[1.01]' : ''}`} style={{ gridColumn: col, gridRow: 2 }}>
+                  <div className="flex items-center gap-1 px-1 opacity-40">
+                    <Zap size={9} className="text-blue-500" />
+                    <span className="text-[7px] font-bold tracking-widest text-zinc-500 uppercase">FORZA</span>
                   </div>
                   <div className="flex flex-col gap-2.5 h-full">
                     {getExercises('strength').map((ex, eIdx) => (
@@ -274,10 +249,10 @@ function WeeklyCalendar4({ onSelectDay, progressions, schedule, loading, onEditA
                 </div>
 
                 {/* AW (Row 3) */}
-                <div className={`px-3 py-4 z-10 flex flex-col gap-2 transition-all border-x border-transparent ${isSelected ? 'bg-amber-500/[0.02] dark:bg-amber-500/[0.04] border-amber-500/10' : ''} ${isToday ? 'scale-[1.01] -translate-y-1' : ''}`} style={{ gridColumn: col, gridRow: 3 }}>
-                  <div className="flex items-center gap-1.5 px-2 opacity-40 mb-1">
-                    <Target size={12} className="text-amber-500" />
-                    <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">AW</span>
+                <div className={`px-2 py-2 z-10 flex flex-col gap-1 transition-all border-x border-transparent ${isSelected ? 'bg-indigo-500/[0.02] dark:bg-indigo-500/[0.04] border-indigo-500/10' : ''} ${isToday ? 'scale-[1.01]' : ''}`} style={{ gridColumn: col, gridRow: 3 }}>
+                  <div className="flex items-center gap-1 px-1 opacity-40">
+                    <Target size={9} className="text-amber-500" />
+                    <span className="text-[7px] font-bold tracking-widest text-zinc-500 uppercase">AW</span>
                   </div>
                   <div className="flex flex-col gap-2.5 h-full">
                     {!isEditMode ? getExercises('aw').map((ex, eIdx) => {
@@ -295,10 +270,10 @@ function WeeklyCalendar4({ onSelectDay, progressions, schedule, loading, onEditA
                 </div>
 
                 {/* IPER (Row 4) */}
-                <div className={`px-3 pt-4 pb-8 z-10 flex flex-col gap-2 transition-all border-x border-transparent rounded-b-[2.5rem] ${isSelected ? 'bg-emerald-500/[0.02] dark:bg-emerald-500/[0.04] border-emerald-500/10' : ''} ${isToday ? 'scale-[1.01] -translate-y-1' : ''}`} style={{ gridColumn: col, gridRow: 4 }}>
-                  <div className="flex items-center gap-1.5 px-2 opacity-40 mb-1">
-                    <Dumbbell size={12} className="text-emerald-500" />
-                    <span className="text-[9px] font-black tracking-widest text-zinc-500 uppercase">IPER</span>
+                <div className={`px-2 pt-2 pb-4 z-10 flex flex-col gap-1 transition-all border-x border-transparent rounded-b-2xl ${isSelected ? 'bg-indigo-500/[0.02] dark:bg-indigo-500/[0.04] border-indigo-500/10' : ''} ${isToday ? 'scale-[1.01]' : ''}`} style={{ gridColumn: col, gridRow: 4 }}>
+                  <div className="flex items-center gap-1 px-1 opacity-40">
+                    <Dumbbell size={9} className="text-emerald-500" />
+                    <span className="text-[7px] font-bold tracking-widest text-zinc-500 uppercase">IPER</span>
                   </div>
                   <div className="flex flex-col gap-2.5 h-full">
                     {getExercises('hyper').map((ex, eIdx) => (
@@ -317,7 +292,8 @@ function WeeklyCalendar4({ onSelectDay, progressions, schedule, loading, onEditA
         </div>
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .custom-scrollbar::-webkit-scrollbar { height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }

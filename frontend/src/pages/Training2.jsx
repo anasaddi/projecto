@@ -19,16 +19,16 @@ import FocusMode from '../components/training/FocusMode';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 
 // Import utilities
-import { 
-  sanitizeProgressionData, 
-  getActiveMonth, 
-  getActiveWeek 
+import {
+  sanitizeProgressionData,
+  getActiveMonth,
+  getActiveWeek
 } from '../utils/trainingUtils';
 import { groupAwExercises } from '../utils/awGrouping';
 
-  // --- MAIN PAGE ---
-  export default function Training2() {
-    const [selectedDay, setSelectedDay] = useState(null);
+// --- MAIN PAGE ---
+export default function Training2() {
+  const [selectedDay, setSelectedDay] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [weekData, setWeekData] = useState([]);
   const [setsByExercise, setSetsByExercise] = useState({});
@@ -95,7 +95,7 @@ import { groupAwExercises } from '../utils/awGrouping';
 
       setWeekData(mergedData);
       setAwProgram(awData && Object.keys(awData).length ? awData : AW_PROGRAM_FALLBACK);
-      
+
       const progMap = {};
       (progressions || []).forEach(p => { progMap[p.exercise_id] = sanitizeProgressionData(p.data); });
       setAllProgressions(progMap);
@@ -104,7 +104,7 @@ import { groupAwExercises } from '../utils/awGrouping';
         // Seleziona il giorno corrente nello schedule
         const todayStr = new Date().toDateString();
         const todayDay = mergedData.find(d => new Date(d.date || d.date_).toDateString() === todayStr) || mergedData[0];
-        
+
         if (todayDay) {
           setSelectedDay(todayDay.template);
           setSelectedDate(todayDay.date || todayDay.date_);
@@ -141,8 +141,8 @@ import { groupAwExercises } from '../utils/awGrouping';
 
   // Calcolo progresso sessione
   const totalExpectedSets = useMemo(() => activeExercises.reduce((acc, ex) => {
-    if (ex.category === 'HYPERTROPHY') return acc + 2; 
-    if (ex.category === 'AW') return acc + 5; 
+    if (ex.category === 'HYPERTROPHY') return acc + 2;
+    if (ex.category === 'AW') return acc + 5;
     if (ex.category === 'STRENGTH') return acc + (ex.base_sets || 4);
     return acc + (ex.base_sets || 3);
   }, 0) || 1, [activeExercises]);
@@ -321,264 +321,209 @@ import { groupAwExercises } from '../utils/awGrouping';
         <div className="absolute inset-0 bg-gradient-to-b from-zinc-50 to-white dark:from-zinc-950 dark:to-black"></div>
         <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] bg-[radial-gradient(#808080_1px,transparent_1px)] [background-size:20px_24px]"></div>
       </div>
-      
+
       {/* Contenuto principale */}
       <div className="relative z-10 bg-transparent">
         {/* Focus Mode Component */}
-      <FocusMode 
-        isOpen={isFocusMode}
-        onClose={() => setIsFocusMode(false)}
-        strengthEx={strengthEx}
-        awEx={awEx}
-        hypEx={hypEx}
-        focusExIndex={focusExIndex}
-        setFocusExIndex={setFocusExIndex}
-        isSuperSetLinked={isSuperSetLinked}
-        setIsSuperSetLinked={setIsSuperSetLinked}
-        progressPercent={progressPercent}
-        selectedDay={selectedDay}
-        allProgressions={allProgressions}
-        handleRowsChange={handleRowsChange}
-        handleProgressionChange={handleProgressionChange}
-        setsByExercise={setsByExercise}
-        selectedDate={selectedDate}
-        getActiveMonth={getActiveMonth}
-      />
+        <FocusMode
+          isOpen={isFocusMode}
+          onClose={() => setIsFocusMode(false)}
+          strengthEx={strengthEx}
+          awEx={awEx}
+          hypEx={hypEx}
+          focusExIndex={focusExIndex}
+          setFocusExIndex={setFocusExIndex}
+          isSuperSetLinked={isSuperSetLinked}
+          setIsSuperSetLinked={setIsSuperSetLinked}
+          progressPercent={progressPercent}
+          selectedDay={selectedDay}
+          allProgressions={allProgressions}
+          handleRowsChange={handleRowsChange}
+          handleProgressionChange={handleProgressionChange}
+          setsByExercise={setsByExercise}
+          selectedDate={selectedDate}
+          getActiveMonth={getActiveMonth}
+        />
 
-      {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-zinc-800/60 supports-[backdrop-filter]:bg-white/60">
-        <div className="max-w-[95vw] mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
-              <Activity className="text-white" size={20} />
-            </div>
-            <div>
-              <h1 className="text-base font-black text-gray-900 dark:text-white leading-tight uppercase tracking-tight">Training Protocol</h1>
-              <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                {new Date().toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })} · Anas & Flavio
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {isSaving && (
-              <div className="flex items-center gap-1.5 bg-blue-500/10 px-2 py-0.5 rounded-full">
-                <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
-                <span className="text-[8px] font-black text-blue-600 uppercase">Saving...</span>
+        {/* Top Navigation Bar */}
+        <header className="sticky top-0 z-40 border-b border-zinc-200/50 dark:border-white/[0.06] bg-white/70 dark:bg-[#0b0e14]/70 backdrop-blur-xl shrink-0 transition-colors">
+          <div className="max-w-[1600px] mx-auto px-5 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-[12px] bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0 transition-transform active:scale-95">
+                <Activity className="text-white" size={20} />
               </div>
-            )}
-            
-            <button
-              onClick={handleSkipToday}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-xs font-black uppercase tracking-widest hover:bg-amber-500/10 hover:text-amber-600 active:scale-[0.98] transition-all"
-            >
-              <SkipForward size={14} /> Salta Oggi
-            </button>
-            <button 
-              onClick={() => setIsFocusMode(true)}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-blue-500/20"
-            >
-              <Target size={14} /> Focus Mode
-            </button>
-          </div>
-        </div>
-        <div className="w-full h-1 bg-gray-100 dark:bg-zinc-800 overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
-        </div>
-      </header>
-
-      <main className="max-w-[95vw] mx-auto px-4 py-4 space-y-4 bg-transparent">
-        {/* Status bar */}
-        <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-black text-zinc-500 uppercase tracking-widest">{selectedDay?.day_name || 'Rest Day'}</span>
-            <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg px-2 py-1">
-              <div className="w-16 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+              <div>
+                <h1 className="text-[15px] font-bold text-zinc-900 dark:text-white leading-tight tracking-tight">Training Protocol</h1>
+                <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.1em]">
+                  {new Date().toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })} · Focus OS
+                </p>
               </div>
-              <span className="text-[10px] font-black text-zinc-500">{progressPercent}%</span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {isSaving && (
+                <div className="flex items-center gap-2 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
+                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Syncing</span>
+                </div>
+              )}
+
+              <button
+                onClick={handleSkipToday}
+                className="hidden sm:flex items-center justify-center h-9 px-4 rounded-[10px] bg-zinc-100 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400 text-[11px] font-bold uppercase tracking-widest hover:bg-amber-500/10 hover:text-amber-600 active:scale-95 transition-all border border-transparent hover:border-amber-500/20"
+              >
+                <SkipForward size={14} className="mr-2" /> Salta Oggi
+              </button>
+              <button
+                onClick={() => setIsFocusMode(true)}
+                className="hidden sm:flex items-center justify-center h-9 px-4 rounded-[10px] bg-zinc-900 dark:bg-indigo-500 text-white dark:text-white text-[11px] font-bold uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all shadow-sm dark:shadow-indigo-500/20"
+              >
+                <Target size={14} className="mr-2" /> Focus Mode
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <button onClick={handleUndo} disabled={historyIndex <= 0} className="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:text-blue-500 disabled:opacity-30"><Undo2 size={13} /></button>
-            <button onClick={handleRedo} disabled={historyIndex >= history.length - 1} className="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:text-blue-500 disabled:opacity-30"><Redo2 size={13} /></button>
+          <div className="w-full h-[2px] bg-zinc-100 dark:bg-zinc-800/50 overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 transition-all duration-700 ease-out" style={{ width: `${progressPercent}%` }} />
           </div>
-        </div>
+        </header>
 
-        {/* TODAY CARD — compact session overview */}
-        {selectedDay && (
-          <TodayCard
-            selectedDay={selectedDay}
-            allProgressions={allProgressions}
-            selectedDate={selectedDate}
-            progressPercent={progressPercent}
-            isToday={isToday}
-            onProgressionChange={handleProgressionChange}
-            awProgram={awProgram}
-          />
-        )}
-
-        {/* Calendar Section */}
-        <div style={{ marginTop: '50px' }}>
-        <ErrorBoundary>
-        <section className="space-y-2">
-          {/* Strip header — toggle right-aligned */}
-          <div className="flex items-center justify-between">
-            <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 pl-1">Settimana</span>
-            <button
-              onClick={() => setCalendarOpen(v => !v)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200/60 dark:border-zinc-700/40 text-zinc-500 dark:text-zinc-400 transition-all shrink-0"
-              title={calendarOpen ? 'Nascondi calendario' : 'Mostra calendario'}
-            >
-              <CalendarIcon size={12} />
-              {calendarOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-            </button>
-          </div>
-          {/* Compact 7-day strip nav — full width */}
-          <div className="flex gap-1.5 w-full pb-0.5" style={{ marginBottom: '40px' }}>
-              {weekData.slice(0, 7).map(day => {
-                const dateStr = (day.date || day.date_ || '').slice(0, 10);
-                const d = new Date(dateStr + 'T12:00:00');
-                const isDayToday = dateStr === todayDateStr;
-                const isDaySelected = dateStr === selectedDate?.slice(0, 10);
-                const exs = day.template?.exercises?.filter(e => e.is_active !== 0) || [];
-                const hasStr = exs.some(e => e.category === 'STRENGTH');
-                const hasAw = exs.some(e => e.category === 'AW');
-                const hasHyp = exs.some(e => e.category === 'HYPERTROPHY');
-                const hasAny = exs.length > 0;
-                const dayNames = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
-                return (
-                  <button
-                    key={dateStr}
-                    onClick={() => handleDaySelect(day.template, day.date || day.date_)}
-                    className={`flex flex-col items-center gap-0.5 py-1.5 rounded-2xl transition-all duration-200 flex-1 ${
-                      isDaySelected
-                        ? 'bg-zinc-900 dark:bg-white shadow-md'
-                        : isDayToday
-                          ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200/60 dark:border-blue-800/40'
-                          : 'bg-zinc-50 dark:bg-zinc-800/40 hover:bg-zinc-100 dark:hover:bg-zinc-800/70'
-                    }`}
-                  >
-                    <span className={`text-[7px] font-black uppercase tracking-widest ${
-                      isDaySelected ? 'text-zinc-400 dark:text-zinc-600' :
-                      isDayToday ? 'text-blue-400' : 'text-zinc-400'
-                    }`}>{dayNames[d.getDay()]}</span>
-                    <span className={`text-[13px] font-black leading-tight ${
-                      isDaySelected ? 'text-white dark:text-zinc-900' :
-                      isDayToday ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-700 dark:text-zinc-300'
-                    }`}>{d.getDate()}</span>
-                    <div className="flex gap-0.5 h-1.5 items-center">
-                      {hasStr && <div className="w-1 h-1 rounded-full bg-blue-500" />}
-                      {hasAw && <div className="w-1 h-1 rounded-full bg-amber-500" />}
-                      {hasHyp && <div className="w-1 h-1 rounded-full bg-emerald-500" />}
-                      {!hasAny && <div className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-600" />}
-                    </div>
-                  </button>
-                );
-              })}
+        <main className="max-w-[1280px] mx-auto px-4 py-2 space-y-3 bg-transparent">
+          {/* Status bar */}
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-black text-zinc-500 uppercase tracking-widest">{selectedDay?.day_name || 'Rest Day'}</span>
+              <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg px-2 py-1">
+                <div className="w-16 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+                </div>
+                <span className="text-[10px] font-black text-zinc-500">{progressPercent}%</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <button onClick={handleUndo} disabled={historyIndex <= 0} className="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:text-blue-500 disabled:opacity-30"><Undo2 size={13} /></button>
+              <button onClick={handleRedo} disabled={historyIndex >= history.length - 1} className="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:text-blue-500 disabled:opacity-30"><Redo2 size={13} /></button>
+            </div>
           </div>
 
-          {/* Full calendar — collapsible */}
-          {calendarOpen && (
-            <WeeklyCalendar4
-              schedule={weekData}
-              progressions={allProgressions}
-              onSelectDay={handleDaySelect}
-              onEditAction={handleUpdateTemplate}
-              onToggleComplete={handleToggleDayComplete}
-              awProgram={awProgram}
-              currentMaxDayWeek={getActiveWeek(allProgressions['aw_max']) || 1}
-              onRefreshWeek={() => loadWeekData(false)}
-              loading={loading}
+          {/* TODAY CARD — compact session overview */}
+          {selectedDay && (
+            <TodayCard
+              selectedDay={selectedDay}
+              allProgressions={allProgressions}
               selectedDate={selectedDate}
+              progressPercent={progressPercent}
+              isToday={isToday}
+              onProgressionChange={handleProgressionChange}
+              awProgram={awProgram}
             />
           )}
-        </section>
-        </ErrorBoundary>
-        </div>
 
-        {/* Exercises Grid */}
-        <div className="pt-8 space-y-6">
-          <ErrorBoundary>
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-8 gap-y-6 items-start">
-            {/* Main Strength */}
-            {strengthEx.length > 0 && (
-              <section className="min-w-0 space-y-3">
-                <div className="flex items-center gap-3 px-2 mb-2">
-                  <div className="p-2 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.15)]">
-                    <Swords size={16} className="text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <span className="text-sm font-black uppercase tracking-[0.25em] text-zinc-800 dark:text-zinc-200 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">Forza</span>
-                </div>
-                {strengthEx.map(ex => (
-                  <StrengthTable2
-                    key={`v2-${ex.exercise_id}`}
-                    exercise={ex}
-                    onRowsChange={handleRowsChange}
-                    onProgressionChange={handleProgressionChange}
-                    initialMonth={getActiveMonth(allProgressions[ex.exercise_id])}
-                    resetTrigger={selectedDate}
+          {/* Calendar Section */}
+          <div style={{ marginTop: '20px' }}>
+            <ErrorBoundary>
+              <section className="space-y-4">
+                {/* Full calendar — collapsible */}
+                {calendarOpen && (
+                  <WeeklyCalendar4
+                    schedule={weekData}
+                    progressions={allProgressions}
+                    onSelectDay={handleDaySelect}
+                    onEditAction={handleUpdateTemplate}
+                    onToggleComplete={handleToggleDayComplete}
+                    awProgram={awProgram}
+                    currentMaxDayWeek={getActiveWeek(allProgressions['aw_max']) || 1}
+                    onRefreshWeek={() => loadWeekData(false)}
+                    loading={loading}
+                    selectedDate={selectedDate}
                   />
-                ))}
+                )}
               </section>
-            )}
-
-            {/* Armwrestling */}
-            {awEx.length > 0 && (
-              <section className="min-w-0 space-y-3">
-                <div className="flex items-center gap-3 px-2 mb-2">
-                  <div className="p-2 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
-                    <Target size={16} className="text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <span className="text-sm font-black uppercase tracking-[0.25em] text-zinc-800 dark:text-zinc-200 bg-clip-text text-transparent bg-gradient-to-r from-amber-600 to-orange-600 dark:from-amber-400 dark:to-orange-400">Armwrestling</span>
-                </div>
-                {awGroups.vol1.length > 0 && <AWVolumeTableGroup title="Volume 1" exercises={awGroups.vol1} onRowsChange={handleRowsChange} progressions={allProgressions} initialWeek={getActiveWeek(allProgressions[awGroups.vol1[0]?.exercise_id])} resetTrigger={selectedDate} />}
-                {awGroups.vol2.length > 0 && <AWVolumeTableGroup title="Volume 2" exercises={awGroups.vol2} onRowsChange={handleRowsChange} progressions={allProgressions} initialWeek={getActiveWeek(allProgressions[awGroups.vol2[0]?.exercise_id])} resetTrigger={selectedDate} />}
-                {awGroups.isoLight.length > 0 && <AWIsoTableGroup title="Isometria Leggera" exercises={awGroups.isoLight} onRowsChange={handleRowsChange} programData={awProgram?.light} progressions={allProgressions} initialWeek={getActiveWeek(allProgressions[awGroups.isoLight[0]?.exercise_id])} resetTrigger={selectedDate} />}
-                {awGroups.isoHeavy.length > 0 && <AWIsoTableGroup title="Isometria Pesante" exercises={awGroups.isoHeavy} onRowsChange={handleRowsChange} programData={awProgram?.heavy} progressions={allProgressions} initialWeek={getActiveWeek(allProgressions[awGroups.isoHeavy[0]?.exercise_id])} resetTrigger={selectedDate} />}
-                {awGroups.maxDay?.map(ex => (
-                    <AWMaxDayTable
-                      key={ex.exercise_id}
-                      exercise={ex}
-                      programData={awProgram?.max_day}
-                      progressions={allProgressions}
-                      initialWeek={getActiveWeek(allProgressions[ex.exercise_id])}
-                      resetTrigger={selectedDate}
-                      onRowsChange={handleRowsChange}
-                    />
-                  ))}
-                {awGroups.speed?.length > 0 && <AWSpeedTable exercises={awGroups.speed} progressions={allProgressions} />}
-                {awGroups.others.map(ex => <ExerciseTable key={ex.exercise_id} exercise={ex} onRowsChange={handleRowsChange} initialData={allProgressions[ex.exercise_id]} />)}
-              </section>
-            )}
+            </ErrorBoundary>
           </div>
 
-          {/* Hypertrophy */}
-          {hypEx.length > 0 && (
-            <div className="pt-6">
-              <ErrorBoundary>
-              <div className="flex items-center gap-3 px-2 mb-4">
-                <div className="p-2 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
-                  <Dumbbell size={16} className="text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <span className="text-sm font-black uppercase tracking-[0.25em] text-zinc-800 dark:text-zinc-200 bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400">Ipertrofia</span>
+          {/* Exercises Grid */}
+          <div className="pt-8 space-y-6">
+            <ErrorBoundary>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-8 gap-y-6 items-start">
+                {/* Main Strength */}
+                {strengthEx.length > 0 && (
+                  <section className="min-w-0 space-y-3">
+                    <div className="flex items-center gap-3 px-2 mb-2">
+                      <div className="p-2 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.15)]">
+                        <Swords size={16} className="text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <span className="text-sm font-black uppercase tracking-[0.25em] text-zinc-800 dark:text-zinc-200 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">Forza</span>
+                    </div>
+                    {strengthEx.map(ex => (
+                      <StrengthTable2
+                        key={`v2-${ex.exercise_id}`}
+                        exercise={ex}
+                        onRowsChange={handleRowsChange}
+                        onProgressionChange={handleProgressionChange}
+                        initialMonth={getActiveMonth(allProgressions[ex.exercise_id])}
+                        resetTrigger={selectedDate}
+                      />
+                    ))}
+                  </section>
+                )}
+
+                {/* Armwrestling */}
+                {awEx.length > 0 && (
+                  <section className="min-w-0 space-y-3">
+                    <div className="flex items-center gap-3 px-2 mb-2">
+                      <div className="p-2 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
+                        <Target size={16} className="text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <span className="text-sm font-black uppercase tracking-[0.25em] text-zinc-800 dark:text-zinc-200 bg-clip-text text-transparent bg-gradient-to-r from-amber-600 to-orange-600 dark:from-amber-400 dark:to-orange-400">Armwrestling</span>
+                    </div>
+                    {awGroups.vol1.length > 0 && <AWVolumeTableGroup title="Volume 1" exercises={awGroups.vol1} onRowsChange={handleRowsChange} progressions={allProgressions} initialWeek={getActiveWeek(allProgressions[awGroups.vol1[0]?.exercise_id])} resetTrigger={selectedDate} />}
+                    {awGroups.vol2.length > 0 && <AWVolumeTableGroup title="Volume 2" exercises={awGroups.vol2} onRowsChange={handleRowsChange} progressions={allProgressions} initialWeek={getActiveWeek(allProgressions[awGroups.vol2[0]?.exercise_id])} resetTrigger={selectedDate} />}
+                    {awGroups.isoLight.length > 0 && <AWIsoTableGroup title="Isometria Leggera" exercises={awGroups.isoLight} onRowsChange={handleRowsChange} programData={awProgram?.light} progressions={allProgressions} initialWeek={getActiveWeek(allProgressions[awGroups.isoLight[0]?.exercise_id])} resetTrigger={selectedDate} />}
+                    {awGroups.isoHeavy.length > 0 && <AWIsoTableGroup title="Isometria Pesante" exercises={awGroups.isoHeavy} onRowsChange={handleRowsChange} programData={awProgram?.heavy} progressions={allProgressions} initialWeek={getActiveWeek(allProgressions[awGroups.isoHeavy[0]?.exercise_id])} resetTrigger={selectedDate} />}
+                    {awGroups.maxDay?.map(ex => (
+                      <AWMaxDayTable
+                        key={ex.exercise_id}
+                        exercise={ex}
+                        programData={awProgram?.max_day}
+                        progressions={allProgressions}
+                        initialWeek={getActiveWeek(allProgressions[ex.exercise_id])}
+                        resetTrigger={selectedDate}
+                        onRowsChange={handleRowsChange}
+                      />
+                    ))}
+                    {awGroups.speed?.length > 0 && <AWSpeedTable exercises={awGroups.speed} progressions={allProgressions} />}
+                    {awGroups.others.map(ex => <ExerciseTable key={ex.exercise_id} exercise={ex} onRowsChange={handleRowsChange} initialData={allProgressions[ex.exercise_id]} />)}
+                  </section>
+                )}
               </div>
-              <HypertrophySection
-                exercises={hypEx}
-                onRowsChange={handleRowsChange}
-                onProgressionChange={handleProgressionChange}
-                setsByExercise={setsByExercise}
-                allProgressions={allProgressions}
-              />
-              </ErrorBoundary>
-            </div>
-          )}
-          </ErrorBoundary>
-        </div>
-      </main>
+
+              {/* Hypertrophy */}
+              {hypEx.length > 0 && (
+                <div className="pt-6">
+                  <ErrorBoundary>
+                    <div className="flex items-center gap-3 px-2 mb-4">
+                      <div className="p-2 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+                        <Dumbbell size={16} className="text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <span className="text-sm font-black uppercase tracking-[0.25em] text-zinc-800 dark:text-zinc-200 bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400">Ipertrofia</span>
+                    </div>
+                    <HypertrophySection
+                      exercises={hypEx}
+                      onRowsChange={handleRowsChange}
+                      onProgressionChange={handleProgressionChange}
+                      setsByExercise={setsByExercise}
+                      allProgressions={allProgressions}
+                    />
+                  </ErrorBoundary>
+                </div>
+              )}
+            </ErrorBoundary>
+          </div>
+        </main>
       </div> {/* Fine relative z-10 */}
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }

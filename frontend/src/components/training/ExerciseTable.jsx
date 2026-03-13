@@ -41,15 +41,14 @@ const ExerciseTable = ({ exercise, onRowsChange, expandedOverride = false, initi
   const currentRow = rows.find(r => r.set === currentSet);
 
   return (
-    <Card className="border-amber-100 dark:border-amber-900/30">
+    <Card className="border-zinc-200/60 dark:border-white/[0.06]">
       <div
         onClick={() => setExpanded(!expanded)}
-        className="px-4 py-3 flex flex-col items-center justify-center cursor-pointer bg-gradient-to-b from-amber-50/50 to-transparent dark:from-amber-500/10 dark:to-transparent border-b border-gray-100 dark:border-zinc-800/80"
+        className="px-3 py-2 flex flex-col items-center justify-center cursor-pointer bg-zinc-50/50 dark:bg-white/[0.02] border-b border-zinc-100 dark:border-white/[0.06]"
       >
-        <div className="flex flex-col items-center gap-1">
-          <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-widest text-center">{exercise_name}</h3>
-          {instruction && <p className="text-[10px] text-gray-500 text-center">{instruction}</p>}
-          <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-500/20 px-1.5 py-0.5 rounded">
+        <div className="flex flex-col items-center">
+          <h3 className="text-[12px] font-bold text-zinc-900 dark:text-gray-100 tracking-tight text-center">{exercise_name}</h3>
+          <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-tighter mt-0.5">
             {base_sets} Serie {base_reps ? `× ${base_reps}` : ''}
           </span>
         </div>
@@ -58,44 +57,42 @@ const ExerciseTable = ({ exercise, onRowsChange, expandedOverride = false, initi
       <AnimatePresence initial={false}>
         {!expanded && currentRow ? (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <div className="p-4 border-t border-gray-100 dark:border-zinc-800/80">
-              <div className="flex flex-wrap gap-4 items-center justify-between">
-                <div className="flex items-center gap-1 bg-gray-100/50 dark:bg-zinc-800/50 p-1 rounded-xl">
+            <div className="p-3 border-t border-zinc-100 dark:border-white/[0.06]">
+              <div className="flex flex-wrap gap-3 items-center justify-between">
+                <div className="flex items-center gap-0.5 bg-zinc-100/50 dark:bg-white/[0.04] p-0.5 rounded-lg">
                   {rows.map(r => (
-                    <button key={r.id} onClick={() => setCurrentSet(r.set)} className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${currentSet === r.set ? 'bg-white dark:bg-zinc-700 shadow-sm text-amber-600 dark:text-amber-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}>
+                    <button key={r.id} onClick={() => setCurrentSet(r.set)} className={`w-6 h-6 rounded text-[10px] font-bold transition-all ${currentSet === r.set ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>
                       {r.set}
                     </button>
                   ))}
                 </div>
 
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4">
                   {/* Anas */}
-                  <div className="flex items-center gap-2 bg-blue-50/30 dark:bg-blue-900/10 p-2 rounded-xl border border-blue-100/50 dark:border-blue-800/30 relative">
+                  <div className="flex items-center gap-2 bg-blue-50/10 dark:bg-blue-500/5 p-1.5 rounded-lg border border-blue-500/10 relative">
                     <AthleteAvatar initial="A" colorClass="bg-blue-500" />
-                    <div className="flex flex-col items-center gap-0.5">
+                    <div className="flex flex-col items-center">
                       <ColHeader label="kg" />
-                      <ModernInput type="number" step="0.5" value={currentRow.anas.weight} onChange={e => updateRow(currentRow.id, 'anas', 'weight', e.target.value)} className="w-14 py-1.5" placeholder="kg" />
+                      <ModernInput type="number" step="0.5" value={currentRow.anas.weight} onChange={e => updateRow(currentRow.id, 'anas', 'weight', e.target.value)} className="w-12 h-6 text-[11px]" placeholder="kg" />
                     </div>
-                    <div className="flex flex-col items-center gap-0.5">
+                    <div className="flex flex-col items-center">
                       <ColHeader label="r" />
-                      <ModernInput type="number" value={currentRow.anas.reps} onChange={e => updateRow(currentRow.id, 'anas', 'reps', e.target.value)} className="w-12 py-1.5" placeholder="r" />
+                      <ModernInput type="number" value={currentRow.anas.reps} onChange={e => updateRow(currentRow.id, 'anas', 'reps', e.target.value)} className="w-10 h-6 text-[11px]" placeholder="r" />
                     </div>
-                    <ModernCheckbox checked={currentRow.anas.checked} onChange={() => toggleCheck(currentRow.id, 'anas')} colorClass="accent-amber-500" />
-                    <div className="absolute -top-2.5 right-2 bg-blue-100 dark:bg-blue-900/50 text-[8px] font-bold text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded-full">{format1RM(currentRow.anas.weight, currentRow.anas.reps)}</div>
+                    <ModernCheckbox checked={currentRow.anas.checked} onChange={() => toggleCheck(currentRow.id, 'anas')} colorClass="accent-indigo-500" />
                   </div>
                   {/* Flavio */}
-                  <div className="flex items-center gap-2 bg-emerald-50/30 dark:bg-emerald-900/10 p-2 rounded-xl border border-emerald-100/50 dark:border-emerald-800/30 relative">
+                  <div className="flex items-center gap-2 bg-emerald-50/10 dark:bg-emerald-500/5 p-1.5 rounded-lg border border-emerald-500/10 relative">
                     <AthleteAvatar initial="F" colorClass="bg-emerald-500" />
-                    <div className="flex flex-col items-center gap-0.5">
+                    <div className="flex flex-col items-center">
                       <ColHeader label="kg" />
-                      <ModernInput type="number" step="0.5" value={currentRow.flavio.weight} onChange={e => updateRow(currentRow.id, 'flavio', 'weight', e.target.value)} className="w-14 py-1.5" placeholder="kg" />
+                      <ModernInput type="number" step="0.5" value={currentRow.flavio.weight} onChange={e => updateRow(currentRow.id, 'flavio', 'weight', e.target.value)} className="w-12 h-6 text-[11px]" placeholder="kg" />
                     </div>
-                    <div className="flex flex-col items-center gap-0.5">
+                    <div className="flex flex-col items-center">
                       <ColHeader label="r" />
-                      <ModernInput type="number" value={currentRow.flavio.reps} onChange={e => updateRow(currentRow.id, 'flavio', 'reps', e.target.value)} className="w-12 py-1.5" placeholder="r" />
+                      <ModernInput type="number" value={currentRow.flavio.reps} onChange={e => updateRow(currentRow.id, 'flavio', 'reps', e.target.value)} className="w-10 h-6 text-[11px]" placeholder="r" />
                     </div>
-                    <ModernCheckbox checked={currentRow.flavio.checked} onChange={() => toggleCheck(currentRow.id, 'flavio')} colorClass="accent-amber-500" />
-                    <div className="absolute -top-2.5 right-2 bg-emerald-100 dark:bg-emerald-900/50 text-[8px] font-bold text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded-full">{format1RM(currentRow.flavio.weight, currentRow.flavio.reps)}</div>
+                    <ModernCheckbox checked={currentRow.flavio.checked} onChange={() => toggleCheck(currentRow.id, 'flavio')} colorClass="accent-indigo-500" />
                   </div>
                 </div>
               </div>

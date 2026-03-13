@@ -823,32 +823,32 @@ export default function SharedProjects() {
             {/* BARRA PROGRESSO GENERALE */}
             {dashboard.projects.length > 0 && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white/50 dark:bg-white/5 backdrop-blur-md border border-gray-200/50 dark:border-gray-800/50 rounded-2xl p-6 shadow-xl"
+                className="bg-white dark:bg-[#161920]/50 border border-zinc-200 dark:border-white/[0.06] rounded-xl p-5 shadow-sm"
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-indigo-500 text-white shadow-lg shadow-indigo-500/30">
+                    <div className="p-2 rounded-lg bg-indigo-500 text-white shadow-sm">
                       <Icons.Target className="w-5 h-5" />
                     </div>
                     <div>
-                      <h2 className="text-sm font-black text-gray-800 dark:text-gray-200 uppercase tracking-wider">Avanzamento Globale</h2>
-                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{globalStats.completed} di {globalStats.total} task completate</p>
+                      <h2 className="text-[14px] font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">Avanzamento Globale</h2>
+                      <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-widest">{globalStats.completed} di {globalStats.total} task completate</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-3xl font-black text-indigo-500 tabular-nums leading-none">
+                    <span className="text-2xl font-bold text-indigo-500 tabular-nums leading-none">
                       {globalStats.percentage}%
                     </span>
                   </div>
                 </div>
-                <div className="h-3 bg-gray-100 dark:bg-gray-800/50 rounded-full overflow-hidden p-0.5 border border-gray-200/20 dark:border-white/5">
+                <div className="h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${globalStats.percentage}%` }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                    className="h-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-500 rounded-full shadow-[0_0_15px_rgba(79,70,229,0.4)]"
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="h-full bg-indigo-500 rounded-full"
                   />
                 </div>
               </motion.div>
@@ -882,40 +882,37 @@ export default function SharedProjects() {
                 <motion.div
                   layout
                   key={proj.id}
-                  className="flex flex-col bg-white dark:bg-[#1a1d24] border border-gray-200/80 dark:border-gray-800/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 h-fit group"
+                  className="flex flex-col bg-white dark:bg-[#161920]/50 border border-zinc-200 dark:border-white/[0.06] rounded-xl overflow-hidden shadow-sm hover:border-zinc-300 dark:hover:border-white/[0.1] transition-all duration-300 h-fit group"
                 >
-                  <div className="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/20">
+                  <div className="p-4 border-b border-zinc-100 dark:border-white/[0.06] bg-zinc-50/50 dark:bg-white/[0.02]">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
-                        <div className={`w-1.5 h-5 ${accentBar} rounded-full shrink-0 shadow-sm shadow-black/10`}></div>
+                        <div className={`w-1 h-4 ${accentBar} rounded-full shrink-0`}></div>
                         <input
                           defaultValue={proj.title}
                           onBlur={(e) => updateProject(proj.id, p => ({ ...p, title: e.target.value }))}
-                          className="w-full text-base font-bold bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-500 rounded px-2 py-1 transition-all"
+                          className="w-full text-[15px] font-bold bg-transparent border-none outline-none focus:ring-0 rounded px-1 py-0.5"
                           placeholder="Titolo progetto..."
                         />
                       </div>
                       <div className="flex items-center gap-1">
-                        <button onClick={() => deleteProject(proj.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100">
-                          <Icons.X className="w-4 h-4" />
+                        <button onClick={() => deleteProject(proj.id)} className="p-1.5 text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-all opacity-0 group-hover:opacity-100">
+                          <Icons.X className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
 
                     {/* BARRA PROGETTO SINGOLO */}
-                    <div className="flex items-center gap-3 bg-white/50 dark:bg-black/20 p-2 rounded-xl border border-gray-100 dark:border-white/5 shadow-sm">
-                      <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div className="flex items-center gap-3 bg-white dark:bg-black/20 p-2 rounded-lg border border-zinc-100 dark:border-white/[0.04]">
+                      <div className="flex-1 h-1 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${percentage}%` }}
-                          className={`h-full bg-gradient-to-r ${accentColors} rounded-full`}
+                          className={`h-full bg-indigo-500 rounded-full`}
                         />
                       </div>
-                      <span className="text-[11px] font-black text-gray-600 dark:text-gray-300 tabular-nums">
+                      <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300 tabular-nums">
                         {percentage}%
-                      </span>
-                      <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-tighter">
-                        {stats.completed}/{stats.total}
                       </span>
                     </div>
                   </div>

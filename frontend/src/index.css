@@ -10,7 +10,8 @@ body {
   margin: 0;
   font-family: "Outfit", system-ui, -apple-system, sans-serif;
   font-size: 1rem;
-  background: #e4e5ea;
+  background: #f8fafc;
+  /* Cleaner light mode background */
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -21,8 +22,9 @@ html.dark {
 }
 
 html.dark body {
-  background: #0c0e14;
-  color: #f0f0f2;
+  background: #0b0e14;
+  /* Deep premium dark */
+  color: #f1f5f9;
 }
 
 /* Dark mode scrollbar */
@@ -69,10 +71,21 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 
 /* Checkbox bump on complete */
 @keyframes checkbox-bump {
-  0%   { transform: scale(1); }
-  35%  { transform: scale(0.8); }
-  65%  { transform: scale(1.2); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  35% {
+    transform: scale(0.8);
+  }
+
+  65% {
+    transform: scale(1.2);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .checkbox-bump {
@@ -81,8 +94,13 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 
 /* Strikethrough animation */
 @keyframes strikethrough {
-  from { text-decoration-color: transparent; }
-  to   { text-decoration-color: currentColor; }
+  from {
+    text-decoration-color: transparent;
+  }
+
+  to {
+    text-decoration-color: currentColor;
+  }
 }
 
 .animate-strike {
@@ -96,6 +114,7 @@ html.dark ::-webkit-scrollbar-thumb:hover {
     opacity: 0;
     transform: translateY(-6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -111,9 +130,17 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 -------------------------------------------------------- */
 
 @keyframes transcript-progress {
-  0%   { transform: translateX(-100%); }
-  50%  { transform: translateX(250%); }
-  100% { transform: translateX(-100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+
+  50% {
+    transform: translateX(250%);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
 }
 
 .transcript-scroll {
@@ -121,14 +148,21 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   scrollbar-color: #cbd5e1 transparent;
 }
 
-.transcript-scroll::-webkit-scrollbar { width: 10px; }
-.transcript-scroll::-webkit-scrollbar-track { background: transparent; }
+.transcript-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.transcript-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .transcript-scroll::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
+
 .transcript-scroll::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
   background-clip: padding-box;
@@ -162,68 +196,57 @@ input[type=number] {
 
 @layer components {
 
-  /* Panel: card contenitore principale */
+  /* Panel: card contenitore principale (Premium Glass/Solid Hybrid) */
   .dashboard-panel {
-    @apply rounded-xl border border-zinc-200/80 bg-white shadow-none
-           dark:border-white/[0.07] dark:bg-[#161920] dark:shadow-black/30;
+    @apply rounded-xl border border-zinc-200/60 bg-white/90 backdrop-blur-xl shadow-sm dark:border-white/[0.06] dark:bg-[#12161f]/80 dark:shadow-2xl dark:shadow-black/60;
   }
 
   /* Panel muted: card annidata (nested) */
   .dashboard-panel-muted {
-    @apply rounded-lg border border-zinc-200/60 bg-zinc-50/60
-           dark:border-white/[0.05] dark:bg-white/[0.04];
+    @apply rounded-lg border border-zinc-900/[0.04] bg-zinc-50/50 dark:border-white/[0.03] dark:bg-white/[0.02];
   }
 
-  /* Section title — stile dashboard3 */
+  /* Section title */
   .dashboard-section-title {
-    @apply text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500;
+    @apply text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500 dark:text-zinc-500;
   }
 
   /* Chip: badge neutro */
   .dashboard-chip {
-    @apply inline-flex items-center gap-1 rounded-md border border-zinc-200/70 bg-zinc-50 px-2 py-0.5
-           text-[11px] font-semibold text-zinc-500
-           dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-zinc-300;
+    @apply inline-flex items-center gap-1.5 rounded-md border border-zinc-200/80 bg-zinc-100/50 px-2 py-0.5 text-[11px] font-medium text-zinc-600 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-zinc-300;
   }
 
   /* Action button */
   .dashboard-action-btn {
-    @apply inline-flex items-center justify-center rounded-md p-1.5 text-zinc-400 transition-colors
-           hover:bg-zinc-100 hover:text-zinc-600
-           dark:text-zinc-500 dark:hover:bg-white/[0.07] dark:hover:text-zinc-200;
+    @apply inline-flex items-center justify-center rounded-md p-1.5 text-zinc-400 transition-all duration-200 hover:bg-zinc-100 hover:text-zinc-700 active:scale-95 dark:text-zinc-500 dark:hover:bg-white/[0.08] dark:hover:text-zinc-200;
+  }
+
+  /* Primary Button (Linear-like solid) */
+  .primary-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-all shadow-sm hover:bg-zinc-800 active:scale-95 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:text-white dark:shadow-indigo-500/20;
   }
 
   /* Input */
   .dashboard-input {
-    @apply rounded-lg border border-zinc-200/80 bg-zinc-50 px-3 py-2
-           text-sm text-zinc-700 outline-none transition-all
-           placeholder:text-zinc-400
-           focus:border-zinc-400 focus:bg-white focus:ring-1 focus:ring-zinc-300/50
-           dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-zinc-100
-           dark:placeholder:text-zinc-600
-           dark:focus:border-white/[0.18] dark:focus:bg-white/[0.08] dark:focus:ring-white/[0.04];
+    @apply rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none transition-all shadow-sm placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-zinc-100 dark:shadow-none dark:placeholder:text-zinc-600 dark:focus:border-indigo-500/50 dark:focus:bg-white/[0.06] dark:focus:ring-indigo-500/20;
   }
 
   /* Seamless editing */
   .seamless-input {
-    @apply bg-transparent border-none outline-none ring-0 w-full
-           caret-indigo-400;
+    @apply bg-transparent border-none outline-none ring-0 w-full placeholder:text-zinc-400 dark:placeholder:text-zinc-600 caret-indigo-500 dark:caret-indigo-400 transition-colors focus:bg-zinc-50 dark:focus:bg-white/[0.02] rounded;
   }
 
   /* Row task standard: h-9, padding uniforme */
   .task-row {
-    @apply flex h-9 w-full items-center gap-2.5 rounded-lg px-2 font-medium transition-colors
-           hover:bg-zinc-50 dark:hover:bg-white/[0.04];
+    @apply flex min-h-[36px] items-center gap-3 rounded-lg px-2.5 py-1 font-medium text-[13px] sm:text-sm transition-all duration-200 hover:bg-zinc-100/80 dark:hover:bg-white/[0.04];
   }
 
   /* Checkbox universale: 16x16, rounded-sm */
   .task-checkbox {
-    @apply flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border border-zinc-300
-           transition-all duration-150
-           dark:border-zinc-500;
+    @apply flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px] border border-zinc-300 bg-white transition-all duration-200 cursor-pointer shadow-sm dark:border-zinc-600 dark:bg-transparent dark:shadow-none hover:border-indigo-400 dark:hover:border-zinc-400;
   }
 
   .task-checkbox.checked {
-    @apply border-emerald-500 bg-emerald-500 text-white dark:border-emerald-400 dark:bg-emerald-500;
+    @apply border-indigo-500 bg-indigo-500 text-white dark:border-indigo-500 dark:bg-indigo-500;
   }
 }

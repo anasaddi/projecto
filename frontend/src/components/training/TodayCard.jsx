@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { Zap, Target, Dumbbell } from 'lucide-react';
 import { EXERCISE_MUSCLE_MAP, MUSCLE_GROUP_MAP, GROUP_ACCENT_DOT } from './calendarConstants';
 import { getActiveMonth, getActiveWeek } from '../../utils/trainingUtils';
@@ -6,17 +7,17 @@ import { api } from '../../api/client';
 
 // ─── configs (mirrors AWIsoTable + AWSpeedTable) ────────────────────────────
 
-const ISO_LIGHT_KEYS    = ['aw_iso_light_rising','aw_iso_light_cup','aw_iso_light_pronation','aw_iso_light_side','aw_iso_light_dita','aw_iso_light_press','aw_iso_light_bicipite'];
-const ISO_HEAVY_KEYS    = ['aw_iso_heavy_rising','aw_iso_heavy_cup','aw_iso_heavy_pronation','aw_iso_heavy_side','aw_iso_heavy_dita','aw_iso_heavy_press','aw_iso_heavy_bicipite'];
-const ISO_LABELS        = ['Rising + back','Cup + drag','Pronation 45°','Side + supination','Mazurenko dita','Press','Bicipite'];
+const ISO_LIGHT_KEYS = ['aw_iso_light_rising', 'aw_iso_light_cup', 'aw_iso_light_pronation', 'aw_iso_light_side', 'aw_iso_light_dita', 'aw_iso_light_press', 'aw_iso_light_bicipite'];
+const ISO_HEAVY_KEYS = ['aw_iso_heavy_rising', 'aw_iso_heavy_cup', 'aw_iso_heavy_pronation', 'aw_iso_heavy_side', 'aw_iso_heavy_dita', 'aw_iso_heavy_press', 'aw_iso_heavy_bicipite'];
+const ISO_LABELS = ['Rising + back', 'Cup + drag', 'Pronation 45°', 'Side + supination', 'Mazurenko dita', 'Press', 'Bicipite'];
 const ISO_LIGHT_WEIGHTS = [12, 18, 15, 9, 15, 15, 18];
 const ISO_HEAVY_WEIGHTS = [17, 23, 20, 13, 20, 19, 23];
 
 const SPEED_SLOTS = [
-  { id: 'lat_cup',      label: 'LAT + CUP',       refW: 10 },
-  { id: 'pronation_45', label: 'PRONATION 45°',    refW: 10 },
-  { id: 'low_multi',    label: 'LOW MULTI SIDE',   refW: 10 },
-  { id: 'high_multi',   label: 'HIGH MULTI SIDE',  refW: 10 },
+  { id: 'lat_cup', label: 'LAT + CUP', refW: 10 },
+  { id: 'pronation_45', label: 'PRONATION 45°', refW: 10 },
+  { id: 'low_multi', label: 'LOW MULTI SIDE', refW: 10 },
+  { id: 'high_multi', label: 'HIGH MULTI SIDE', refW: 10 },
 ];
 
 const STRENGTH_WEEK_LABELS = ['5×5', '4×4', 'AMRAP', '3×5'];
@@ -39,19 +40,23 @@ function expandAwExercises(rawAwEx, allProgressions, awProgram) {
   for (const ex of rawAwEx) {
     const type = classifyAw(ex);
     if (type === 'iso_light' || type === 'iso_heavy') {
-      const keys    = type === 'iso_light' ? ISO_LIGHT_KEYS    : ISO_HEAVY_KEYS;
+      const keys = type === 'iso_light' ? ISO_LIGHT_KEYS : ISO_HEAVY_KEYS;
       const weights = type === 'iso_light' ? ISO_LIGHT_WEIGHTS : ISO_HEAVY_WEIGHTS;
-      const target  = type === 'iso_light' ? '2×15s' : '2×5s';
+      const target = type === 'iso_light' ? '2×15s' : '2×5s';
       keys.forEach((isoId, i) => {
-        const week    = getActiveWeek(allProgressions?.[isoId]) || 1;
+        const week = getActiveWeek(allProgressions?.[isoId]) || 1;
         const slotKey = `w${week}_s1`;
-        out.push({ exercise_id: isoId, exercise_name: ISO_LABELS[i], _type: type,
-                   _baseId: ex.exercise_id, _refW: weights[i], _slotKey: slotKey, _target: target });
+        out.push({
+          exercise_id: isoId, exercise_name: ISO_LABELS[i], _type: type,
+          _baseId: ex.exercise_id, _refW: weights[i], _slotKey: slotKey, _target: target
+        });
       });
     } else if (type === 'speed') {
       SPEED_SLOTS.forEach(cfg => {
-        out.push({ exercise_id: `${ex.exercise_id}::${cfg.id}`, exercise_name: cfg.label,
-                   _type: 'speed', _baseId: ex.exercise_id, _speedCfg: cfg.id, _refW: cfg.refW, _target: '6 reps' });
+        out.push({
+          exercise_id: `${ex.exercise_id}::${cfg.id}`, exercise_name: cfg.label,
+          _type: 'speed', _baseId: ex.exercise_id, _speedCfg: cfg.id, _refW: cfg.refW, _target: '6 reps'
+        });
       });
     } else if (type === 'maxday') {
       const prog = allProgressions?.[ex.exercise_id] || {};
@@ -88,13 +93,13 @@ function expandAwExercises(rawAwEx, allProgressions, awProgram) {
 }
 
 const AW_BADGE = {
-  vol1:      { label: 'Vol.1',  bg: 'bg-amber-500' },
-  vol2:      { label: 'Vol.2',  bg: 'bg-orange-500' },
-  iso_light: { label: 'Iso L',  bg: 'bg-amber-400' },
-  iso_heavy: { label: 'Iso H',  bg: 'bg-orange-600' },
-  maxday:    { label: 'Max',    bg: 'bg-rose-500'   },
-  speed:     { label: 'Speed',  bg: 'bg-violet-500' },
-  other:     { label: 'AW',     bg: 'bg-amber-500'  },
+  vol1: { label: 'Vol.1', bg: 'bg-amber-500' },
+  vol2: { label: 'Vol.2', bg: 'bg-orange-500' },
+  iso_light: { label: 'Iso L', bg: 'bg-amber-400' },
+  iso_heavy: { label: 'Iso H', bg: 'bg-orange-600' },
+  maxday: { label: 'Max', bg: 'bg-rose-500' },
+  speed: { label: 'Speed', bg: 'bg-violet-500' },
+  other: { label: 'AW', bg: 'bg-amber-500' },
 };
 
 // ─── data read helpers ───────────────────────────────────────────────────────
@@ -104,13 +109,17 @@ function getAwData(ex, allProgressions) {
   const ref = String(_refW ?? '');
   if (_type === 'iso_light' || _type === 'iso_heavy') {
     const slot = allProgressions?.[exercise_id]?.[_slotKey] || {};
-    return { anasC: !!slot?.anas?.completed, flavioC: !!slot?.flavio?.completed,
-             anasW: slot?.anas?.weight || ref, flavioW: slot?.flavio?.weight || ref };
+    return {
+      anasC: !!slot?.anas?.completed, flavioC: !!slot?.flavio?.completed,
+      anasW: slot?.anas?.weight || ref, flavioW: slot?.flavio?.weight || ref
+    };
   }
   if (_type === 'speed') {
     const cfgData = allProgressions?.[_baseId]?.[_speedCfg] || {};
-    return { anasC: !!cfgData?.anas?.completed, flavioC: !!cfgData?.flavio?.completed,
-             anasW: cfgData?.anas?.weight || ref, flavioW: cfgData?.flavio?.weight || ref };
+    return {
+      anasC: !!cfgData?.anas?.completed, flavioC: !!cfgData?.flavio?.completed,
+      anasW: cfgData?.anas?.weight || ref, flavioW: cfgData?.flavio?.weight || ref
+    };
   }
   if (_type === 'maxday' && _slotKey) {
     const slotData = allProgressions?.[_baseId]?.[_slotKey] || {};
@@ -122,8 +131,10 @@ function getAwData(ex, allProgressions) {
     };
   }
   const prog = allProgressions?.[exercise_id] || {};
-  return { anasC: !!prog?.anas?.completed, flavioC: !!prog?.flavio?.completed,
-           anasW: prog?.anas?.weight ?? '', flavioW: prog?.flavio?.weight ?? '' };
+  return {
+    anasC: !!prog?.anas?.completed, flavioC: !!prog?.flavio?.completed,
+    anasW: prog?.anas?.weight ?? '', flavioW: prog?.flavio?.weight ?? ''
+  };
 }
 
 function getStrengthActiveWeekIdx(prog) {
@@ -145,72 +156,145 @@ const getDominantGroup = (muscles) => {
 
 function Tick({ checked, onChange, accentBg }) {
   return (
-    <button type="button" onClick={onChange}
-      className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 active:scale-90 ${
-        checked ? `${accentBg} border-transparent shadow-sm`
-                : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-600 hover:border-zinc-400'}`}
+    <button
+      type="button"
+      onClick={onChange}
+      className={`relative w-6 h-6 rounded-xl flex items-center justify-center transition-all duration-500 shrink-0 transform active:scale-90
+        ${checked
+          ? `${accentBg} border-transparent shadow-[0_0_15px_-3px_rgba(79,70,229,0.5)] dark:shadow-[0_0_20px_-5px_rgba(79,70,229,0.6)]`
+          : 'bg-zinc-100/80 dark:bg-white/[0.03] border border-zinc-200/50 dark:border-white/[0.05] hover:border-indigo-400/50 dark:hover:border-indigo-500/50'}`}
     >
-      {checked && (
-        <svg viewBox="0 0 12 12" fill="none" className="w-2.5 h-2.5">
-          <polyline points="2,6 5,9 10,3" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      )}
+      <div className={`absolute inset-0 rounded-xl opacity-0 transition-opacity duration-500 ${checked ? 'opacity-20 animate-pulse bg-white' : ''}`} />
+      <svg
+        viewBox="0 0 12 12"
+        fill="none"
+        className={`w-3 h-3 transition-all duration-500 transform ${checked ? 'scale-100 opacity-100 rotate-0' : 'scale-50 opacity-0 -rotate-12'}`}
+      >
+        <motion.path
+          initial={false}
+          animate={{ pathLength: checked ? 1 : 0 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          d="M2.5 6L5 8.5L9.5 3.5"
+          stroke="white"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
     </button>
   );
 }
 
-function KgInput({ value, onChange, ring }) {
+function KgInput({ value, onChange, ring, placeholder = "00" }) {
   return (
-    <input type="number" step="0.5" value={value ?? ''} onChange={e => onChange(e.target.value)}
-      placeholder="kg"
-      className={`w-10 h-6 text-[10px] font-bold text-center text-zinc-900 dark:text-zinc-100
-        bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700
-        rounded-lg outline-none transition-all focus:ring-1 ${ring}`}
-    />
+    <div className="relative group shrink-0">
+      <input
+        type="number"
+        step="0.5"
+        value={value ?? ''}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={`w-12 h-8 text-[12px] font-black text-center text-zinc-900 dark:text-zinc-50
+          bg-zinc-100/50 dark:bg-white/[0.04] border border-zinc-200/50 dark:border-white/[0.08]
+          rounded-lg outline-none transition-all duration-300
+          focus:ring-2 ${ring} focus:bg-white dark:focus:bg-zinc-900 focus:border-transparent
+          placeholder:text-zinc-300 dark:placeholder:text-zinc-700 tabular-nums shadow-sm group-hover:border-zinc-300 dark:group-hover:border-white/20`}
+      />
+      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-indigo-500 rounded-full scale-x-0 transition-transform duration-300 group-focus-within:scale-x-100 opacity-50" />
+    </div>
   );
 }
 
 function MuscDot({ exerciseId }) {
   const group = getDominantGroup(EXERCISE_MUSCLE_MAP[exerciseId] || []);
-  return <div className={`w-2 h-2 rounded-full shrink-0 mt-1 ${group ? GROUP_ACCENT_DOT[group] : 'bg-zinc-300 dark:bg-zinc-600'}`} />;
-}
-
-// grid: dot | name | badge | tickA | kgA | tickF | kgF
-function ExRow({ exerciseId, exerciseName, badge, badgeBg, anasC, flavioC, anasW, flavioW, onToggle, onWeight }) {
-  const bothDone = anasC && flavioC;
   return (
-    <div className={`grid items-start gap-x-1.5 py-1.5 px-2 rounded-xl transition-colors
-      grid-cols-[8px_minmax(0,1fr)_auto_20px_40px_20px_40px]
-      ${bothDone ? 'opacity-40' : 'hover:bg-zinc-50 dark:hover:bg-white/[0.025]'}`}
-    >
-      <MuscDot exerciseId={exerciseId} />
-      <span className={`text-[11px] font-bold line-clamp-2 leading-tight ${bothDone ? 'line-through text-zinc-400' : 'text-zinc-800 dark:text-zinc-200'}`}>
-        {exerciseName}
-      </span>
-      <span className={`text-[8px] font-black text-white px-1.5 py-0.5 rounded-md whitespace-nowrap self-start mt-0.5 ${badgeBg}`}>
-        {badge}
-      </span>
-      <Tick checked={anasC}   onChange={() => onToggle('anas')}   accentBg="bg-blue-500"    />
-      <KgInput value={anasW}   onChange={v => onWeight('anas', v)}   ring="focus:ring-blue-500/40 focus:border-blue-500/40"    />
-      <Tick checked={flavioC} onChange={() => onToggle('flavio')} accentBg="bg-emerald-500" />
-      <KgInput value={flavioW} onChange={v => onWeight('flavio', v)} ring="focus:ring-emerald-500/40 focus:border-emerald-500/40" />
+    <div className="relative">
+      <div className={`w-1.5 h-6 rounded-full shrink-0 ${group ? GROUP_ACCENT_DOT[group] : 'bg-zinc-200 dark:bg-zinc-800'} transition-all duration-500`} style={{ opacity: 0.8 }} />
+      <div className={`absolute inset-0 w-1.5 h-6 rounded-full blur-[2px] opacity-40 ${group ? GROUP_ACCENT_DOT[group] : 'bg-zinc-200 dark:bg-zinc-800'}`} />
     </div>
   );
 }
 
-function Section({ icon: Icon, color, label, children, count }) {
-  if (!count) return null;
+function ExRow({ exerciseId, exerciseName, badge, badgeBg, anasC, flavioC, anasW, flavioW, anasR, flavioR, onToggle, onWeight, onReps }) {
+  const bothDone = anasC && flavioC;
+
   return (
-    <div className="px-2 py-3 min-w-0">
-      <div className="grid grid-cols-[8px_minmax(0,1fr)_auto_20px_40px_20px_40px] gap-x-1.5 items-center px-2 mb-1">
-        <Icon size={9} className={`${color} shrink-0`} />
-        <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400 col-span-2">{label}</span>
-        <span className="text-[7px] font-black text-blue-400 text-center">✓</span>
-        <span className="text-[7px] font-black text-blue-400 text-center">A kg</span>
-        <span className="text-[7px] font-black text-emerald-400 text-center">✓</span>
-        <span className="text-[7px] font-black text-emerald-400 text-center">F kg</span>
+    <div className={`relative flex items-center gap-3 py-3.5 px-4 transition-all duration-500 border-b border-zinc-100/50 dark:border-white/[0.04] last:border-0
+      ${bothDone ? 'bg-zinc-50/50 dark:bg-black/20' : 'hover:bg-zinc-100/30 dark:hover:bg-white/[0.02]'}`}
+    >
+      <MuscDot exerciseId={exerciseId} />
+
+      <div className="flex-1 min-w-0 pr-2">
+        <div className={`text-[12.5px] font-bold leading-tight tracking-tight capitalize truncate transition-all duration-500 ${bothDone ? 'text-zinc-400 dark:text-zinc-600' : 'text-zinc-900 dark:text-zinc-100'}`}>
+          {exerciseName}
+        </div>
+        <div className="flex items-center gap-2 mt-1.5 overflow-hidden">
+          <span className={`text-[8px] font-black tracking-[0.15em] text-white px-1.5 py-0.5 rounded-md uppercase shadow-sm ${badgeBg} opacity-90 shrink-0`}>
+            {badge}
+          </span>
+          {bothDone && (
+            <div className="flex items-center gap-1 animate-in fade-in slide-in-from-left-2 duration-700 shrink-0">
+              <div className="w-1 h-1 rounded-full bg-emerald-500" />
+              <span className="text-[8px] font-black text-emerald-500/80 uppercase tracking-widest">Perfetto</span>
+            </div>
+          )}
+        </div>
       </div>
-      <div>{children}</div>
+
+      <div className="flex items-center gap-8 shrink-0">
+        {/* Anas Column */}
+        <div className="flex items-center gap-1.5 min-w-[70px] justify-center">
+          <KgInput value={anasW} onChange={v => onWeight('anas', v)} ring="focus:ring-indigo-500/30" />
+          {onReps && <KgInput value={anasR} onChange={v => onReps('anas', v)} ring="focus:ring-indigo-500/30" placeholder="rep" />}
+          <Tick checked={anasC} onChange={() => onToggle('anas')} accentBg="bg-indigo-500" />
+        </div>
+
+        {/* Flavio Column */}
+        <div className="flex items-center gap-1.5 min-w-[70px] justify-center">
+          <KgInput value={flavioW} onChange={v => onWeight('flavio', v)} ring="focus:ring-violet-500/30" />
+          {onReps && <KgInput value={flavioR} onChange={v => onReps('flavio', v)} ring="focus:ring-violet-500/30" placeholder="rep" />}
+          <Tick checked={flavioC} onChange={() => onToggle('flavio')} accentBg="bg-violet-500" />
+        </div>
+      </div>
+
+      {bothDone && (
+        <div className="absolute inset-x-5 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
+      )}
+    </div>
+  );
+}
+
+function SectionHeader({ icon: Icon, color, label, showRepsLabels }) {
+  return (
+    <div className="flex flex-col bg-zinc-50/80 dark:bg-white/[0.03] border-b border-zinc-200/50 dark:border-white/[0.08]">
+      <div className="flex items-center justify-between px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-xl shadow-inner ${color.replace('text-', 'bg-').replace('-500', '-500/10')}`}>
+            <Icon size={14} className={`${color} drop-shadow-sm`} />
+          </div>
+          <span className="text-[11px] font-black uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500">{label}</span>
+        </div>
+        <div className="flex items-center gap-8 shrink-0">
+          <span className="text-[10px] font-black text-indigo-500/60 tracking-[0.2em] uppercase w-[70px] text-center">Anas</span>
+          <span className="text-[10px] font-black text-violet-500/60 tracking-[0.2em] uppercase w-[70px] text-center">Flavio</span>
+        </div>
+      </div>
+      {showRepsLabels && (
+        <div className="flex items-center justify-end px-5 py-1.5 bg-black/[0.02] dark:bg-white/[0.01] border-t border-zinc-100/50 dark:border-white/[0.02]">
+          <div className="flex items-center gap-8 shrink-0">
+            <div className="flex items-center gap-1.5 w-[70px] justify-center">
+              <span className="text-[7px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">KG</span>
+              <span className="text-[7px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">REP</span>
+              <div className="w-6 shrink-0" />
+            </div>
+            <div className="flex items-center gap-1.5 w-[70px] justify-center">
+              <span className="text-[7px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">KG</span>
+              <span className="text-[7px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">REP</span>
+              <div className="w-6 shrink-0" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -226,8 +310,8 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
     [selectedDay]
   );
   const strengthEx = useMemo(() => exercises.filter(e => e.category === 'STRENGTH'), [exercises]);
-  const rawAwEx    = useMemo(() => exercises.filter(e => e.category === 'AW'),        [exercises]);
-  const hypEx      = useMemo(() => exercises.filter(e => e.category === 'HYPERTROPHY'), [exercises]);
+  const rawAwEx = useMemo(() => exercises.filter(e => e.category === 'AW'), [exercises]);
+  const hypEx = useMemo(() => exercises.filter(e => e.category === 'HYPERTROPHY'), [exercises]);
 
   // Expand AW into individual sub-exercises (iso → 7 rows, speed → 4 rows, etc.)
   const awEx = useMemo(() => expandAwExercises(rawAwEx, allProgressions, awProgram), [rawAwEx, allProgressions, awProgram]);
@@ -254,7 +338,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
     commitProg(exerciseId, newProg);
     const week = newData[monthIdx - 1]?.[wi];
     if (week?.anas?.completed && week?.flavio?.completed)
-      import('canvas-confetti').then(m => m.default({ particleCount: 30, spread: 50, origin: { y: 0.7 } }));
+      import('canvas-confetti').then(m => m.default({ particleCount: 40, spread: 60, origin: { y: 0.7 }, colors: ['#4f46e5', '#8b5cf6'] }));
   }, [allProgressions, commitProg]);
 
   const weightStrength = useCallback((exerciseId, athlete, value) => {
@@ -329,12 +413,17 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
     const newProg = { ...prog, [athlete]: { ...prog[athlete], completed: !prog[athlete]?.completed } };
     commitProg(exerciseId, newProg);
     if (newProg.anas?.completed && newProg.flavio?.completed)
-      import('canvas-confetti').then(m => m.default({ particleCount: 30, spread: 50, origin: { y: 0.7 } }));
+      import('canvas-confetti').then(m => m.default({ particleCount: 30, spread: 50, origin: { y: 0.7 }, colors: ['#10b981', '#34d399'] }));
   }, [allProgressions, commitProg]);
 
   const weightHyper = useCallback((exerciseId, athlete, value) => {
     const prog = allProgressions?.[exerciseId] || {};
     commitProg(exerciseId, { ...prog, [athlete]: { ...prog[athlete], weight: value } });
+  }, [allProgressions, commitProg]);
+
+  const repsHyper = useCallback((exerciseId, athlete, value) => {
+    const prog = allProgressions?.[exerciseId] || {};
+    commitProg(exerciseId, { ...prog, [athlete]: { ...prog[athlete], reps: value } });
   }, [allProgressions, commitProg]);
 
   // ── Early return AFTER all hooks ───────────────────────────────────────────
@@ -345,85 +434,150 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
     ? new Date(safeDate + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
     : selectedDay?.day_name || '';
 
-  const activeCols = [strengthEx.length > 0, awEx.length > 0, hypEx.length > 0].filter(Boolean).length;
-  const gridClass =
-    activeCols === 3 ? 'grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-zinc-100 dark:divide-zinc-800/50' :
-    activeCols === 2 ? 'grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-zinc-100 dark:divide-zinc-800/50' :
-    'flex flex-col';
-
   return (
-    <div className="rounded-[2rem] border border-zinc-200/60 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-900/70 backdrop-blur-sm overflow-hidden shadow-sm">
-      {/* Header */}
-      <div className="px-5 py-3 flex items-center gap-3 border-b border-zinc-100 dark:border-zinc-800/60">
-        <div className="flex-1 min-w-0">
-          {isToday && <div className="text-[8px] font-black uppercase tracking-widest text-blue-500 mb-0.5">OGGI</div>}
-          <div className="text-sm font-black text-zinc-900 dark:text-zinc-100 capitalize truncate">{dateLabel}</div>
-        </div>
-        <div className="flex gap-1 items-center shrink-0">
-          {strengthEx.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
-          {awEx.length > 0       && <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
-          {hypEx.length > 0      && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
-        </div>
-        <div className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-1.5 rounded-xl border border-zinc-100 dark:border-zinc-700/40 shrink-0">
-          <div className="w-20 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 rounded-full transition-all duration-700"
-              style={{ width: `${progressPercent}%` }} />
+    <div className="flex flex-col gap-8 animate-in fade-in zoom-in-95 duration-500">
+      {/* ── Header ───────────────────────────────────────────────────────────── */}
+      <div className="flex items-end justify-between px-4">
+        <div className="flex items-center gap-6">
+          <div className="relative group">
+            <div className="h-14 w-1.5 bg-indigo-600 rounded-full dark:shadow-[0_0_20px_-5px_rgba(79,70,229,0.8)] transition-all group-hover:h-16" />
+            <div className="absolute inset-0 w-1.5 h-14 bg-indigo-400 blur-md opacity-30" />
           </div>
-          <span className="text-[10px] font-black text-zinc-500">{progressPercent}%</span>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-[10px] font-black text-indigo-500/80 dark:text-indigo-400 uppercase tracking-[0.3em] leading-none">Session Dashboard</span>
+              <div className="h-[1px] w-8 bg-indigo-500/20" />
+            </div>
+            <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-50 capitalize tracking-tight">{dateLabel}</h1>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-8 pb-1">
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Global Progress</span>
+              <span className="text-sm font-black text-zinc-900 dark:text-zinc-50 tabular-nums">{progressPercent}%</span>
+            </div>
+            <div className="relative w-36 h-2 bg-zinc-100 dark:bg-white/[0.04] rounded-full overflow-hidden border border-zinc-200/50 dark:border-white/[0.06] shadow-inner">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${progressPercent}%` }}
+                transition={{ duration: 1.5, ease: "circOut" }}
+                className="h-full bg-gradient-to-r from-indigo-500 via-indigo-400 to-violet-500 rounded-full shadow-[0_0_12px_rgba(79,70,229,0.4)]"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Body */}
-      <div className={gridClass}>
-        <Section icon={Zap} color="text-blue-500" label="Forza" count={strengthEx.length}>
-          {strengthEx.map(ex => {
-            const prog = allProgressions?.[ex.exercise_id];
-            const { monthIdx, wi } = getStrengthActiveWeekIdx(prog);
-            const week = prog?.dataByMonth?.[monthIdx - 1]?.[wi] || {};
-            return (
-              <ExRow key={ex.exercise_id}
-                exerciseId={ex.exercise_id} exerciseName={ex.exercise_name}
-                badge={STRENGTH_WEEK_LABELS[wi] || '—'} badgeBg="bg-blue-500"
-                anasC={!!week?.anas?.completed} flavioC={!!week?.flavio?.completed}
-                anasW={week?.anas?.weight ?? ''} flavioW={week?.flavio?.weight ?? ''}
-                onToggle={a => toggleStrength(ex.exercise_id, a)}
-                onWeight={(a, v) => weightStrength(ex.exercise_id, a, v)}
-              />
-            );
-          })}
-        </Section>
+      {/* ── Unique Unified Card ──────────────────────────────────────────────── */}
+      <div className="relative group/card">
+        {/* Glow behind the card */}
+        <div className="absolute -inset-0.5 bg-gradient-to-br from-indigo-500/10 via-transparent to-violet-500/10 rounded-[32px] blur-2xl opacity-50 group-hover/card:opacity-80 transition-opacity duration-1000" />
 
-        <Section icon={Target} color="text-amber-500" label="Armwrestling" count={awEx.length}>
-          {awEx.map(ex => {
-            const { anasC, flavioC, anasW, flavioW } = getAwData(ex, allProgressions);
-            const badge = AW_BADGE[ex._type] || AW_BADGE.other;
-            return (
-              <ExRow key={ex.exercise_id}
-                exerciseId={ex.exercise_id} exerciseName={ex.exercise_name}
-                badge={badge.label} badgeBg={badge.bg}
-                anasC={anasC} flavioC={flavioC} anasW={anasW} flavioW={flavioW}
-                onToggle={a => toggleAw(ex, a)}
-                onWeight={(a, v) => weightAw(ex, a, v)}
-              />
-            );
-          })}
-        </Section>
+        <div className="relative bg-white/95 dark:bg-[#090a0b]/90 backdrop-blur-2xl rounded-[30px] border border-zinc-200/60 dark:border-white/[0.08] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] overflow-hidden">
 
-        <Section icon={Dumbbell} color="text-emerald-500" label="Ipertrofia" count={hypEx.length}>
-          {hypEx.map(ex => {
-            const prog = allProgressions?.[ex.exercise_id] || {};
-            return (
-              <ExRow key={ex.exercise_id}
-                exerciseId={ex.exercise_id} exerciseName={ex.exercise_name}
-                badge={`${ex.base_sets || 2}×${ex.base_reps || '—'}`} badgeBg="bg-emerald-500"
-                anasC={!!prog?.anas?.completed} flavioC={!!prog?.flavio?.completed}
-                anasW={prog?.anas?.weight ?? ''} flavioW={prog?.flavio?.weight ?? ''}
-                onToggle={a => toggleHyper(ex.exercise_id, a)}
-                onWeight={(a, v) => weightHyper(ex.exercise_id, a, v)}
-              />
-            );
-          })}
-        </Section>
+          <div className="grid grid-cols-1 lg:grid-cols-3 lg:divide-x divide-zinc-100/80 dark:divide-white/[0.04]">
+            {/* Strength Section */}
+            <div className="flex flex-col min-h-[400px]">
+              <SectionHeader icon={Zap} color="text-indigo-500" label="Strength Focus" />
+              <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
+                {strengthEx.length > 0 ? strengthEx.map(ex => {
+                  const prog = allProgressions?.[ex.exercise_id];
+                  const { monthIdx, wi } = getStrengthActiveWeekIdx(prog);
+                  const week = prog?.dataByMonth?.[monthIdx - 1]?.[wi] || {};
+                  return (
+                    <ExRow key={ex.exercise_id}
+                      exerciseId={ex.exercise_id} exerciseName={ex.exercise_name}
+                      badge={STRENGTH_WEEK_LABELS[wi] || '—'} badgeBg="bg-indigo-600"
+                      anasC={!!week?.anas?.completed} flavioC={!!week?.flavio?.completed}
+                      anasW={week?.anas?.weight ?? ''} flavioW={week?.flavio?.weight ?? ''}
+                      onToggle={a => toggleStrength(ex.exercise_id, a)}
+                      onWeight={(a, v) => weightStrength(ex.exercise_id, a, v)}
+                    />
+                  );
+                }) : (
+                  <div className="flex-1 flex flex-col items-center justify-center p-12 opacity-30 grayscale gap-2">
+                    <Zap size={24} className="text-zinc-300" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] italic">Active Rest</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* AW Section */}
+            <div className="flex flex-col min-h-[400px]">
+              <SectionHeader icon={Target} color="text-amber-500" label="AW Specialization" />
+              <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
+                {awEx.length > 0 ? awEx.map(ex => {
+                  const { anasC, flavioC, anasW, flavioW } = getAwData(ex, allProgressions);
+                  const badge = AW_BADGE[ex._type] || AW_BADGE.other;
+                  return (
+                    <ExRow key={ex.exercise_id}
+                      exerciseId={ex.exercise_id} exerciseName={ex.exercise_name}
+                      badge={badge.label} badgeBg={badge.bg}
+                      anasC={anasC} flavioC={flavioC} anasW={anasW} flavioW={flavioW}
+                      onToggle={a => toggleAw(ex, a)}
+                      onWeight={(a, v) => weightAw(ex, a, v)}
+                    />
+                  );
+                }) : (
+                  <div className="flex-1 flex flex-col items-center justify-center p-12 opacity-30 grayscale gap-2">
+                    <Target size={24} className="text-zinc-300" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] italic">Active Rest</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Hypertrophy Section */}
+            <div className="flex flex-col min-h-[400px]">
+              <SectionHeader icon={Dumbbell} color="text-emerald-500" label="Hypertrophy Foundation" showRepsLabels />
+              <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
+                {hypEx.length > 0 ? hypEx.map(ex => {
+                  const prog = allProgressions?.[ex.exercise_id] || {};
+                  return (
+                    <ExRow key={ex.exercise_id}
+                      exerciseId={ex.exercise_id} exerciseName={ex.exercise_name}
+                      badge={`${ex.base_sets || 2}×${ex.base_reps || '—'}`} badgeBg="bg-emerald-600"
+                      anasC={!!prog?.anas?.completed} flavioC={!!prog?.flavio?.completed}
+                      anasW={prog?.anas?.weight ?? ''} flavioW={prog?.flavio?.weight ?? ''}
+                      anasR={prog?.anas?.reps ?? ''} flavioR={prog?.flavio?.reps ?? ''}
+                      onToggle={a => toggleHyper(ex.exercise_id, a)}
+                      onWeight={(a, v) => weightHyper(ex.exercise_id, a, v)}
+                      onReps={(a, v) => repsHyper(ex.exercise_id, a, v)}
+                    />
+                  );
+                }) : (
+                  <div className="flex-1 flex flex-col items-center justify-center p-12 opacity-30 grayscale gap-2">
+                    <Dumbbell size={24} className="text-zinc-300" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] italic">Active Rest</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Card Footer Info */}
+          <div className="bg-zinc-50/50 dark:bg-black/40 px-8 py-5 border-t border-zinc-100 dark:border-white/[0.06] flex items-center justify-between">
+            <div className="flex items-center gap-10">
+              {[
+                { dot: 'bg-indigo-500', label: 'Velocity' },
+                { dot: 'bg-amber-500', label: 'Technical' },
+                { dot: 'bg-emerald-500', label: 'Hypertrophic' }
+              ].map(item => (
+                <div key={item.label} className="flex items-center gap-2.5">
+                  <div className={`w-1.5 h-1.5 rounded-full ${item.dot} shadow-[0_0_8px_rgba(0,0,0,0.1)]`} />
+                  <span className="text-[9px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{item.label}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 text-[9px] font-black text-zinc-400/30 tracking-[0.4em] uppercase">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/40 animate-pulse" />
+              Engine Core V6.0
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

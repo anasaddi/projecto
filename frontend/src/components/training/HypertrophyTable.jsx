@@ -58,7 +58,7 @@ const HypertrophyTable = ({ exercise, onRowsChange, onProgressionChange, initial
 
   const upd = (athlete, field, value) => {
     const numericValue = (field === 'w' || field === 'r') && value === '5-8' ? '7' : value;
-    
+
     setData(prev => {
       const next = { ...prev, [athlete]: { ...prev[athlete], [field]: numericValue } };
       const rows = [
@@ -99,153 +99,127 @@ const HypertrophyTable = ({ exercise, onRowsChange, onProgressionChange, initial
   };
 
   return (
-    <Card className="border-0 bg-white dark:bg-[#151718] rounded-[24px] overflow-hidden shadow-sm dark:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+    <Card className="border-zinc-200/60 dark:border-white/10 group">
       <div
         onClick={() => setExpanded(!expanded)}
-        className="px-4 py-3.5 flex flex-col items-center justify-center cursor-pointer border-b border-transparent dark:border-white/5 transition-colors hover:bg-black/5 dark:hover:bg-white/[0.02]"
+        className="px-4 py-3 flex items-center justify-between cursor-pointer border-b border-zinc-100 dark:border-white/5 transition-all hover:bg-zinc-50 dark:hover:bg-white/[0.01]"
       >
-        <div className="flex flex-col items-center gap-1">
-          <h3 className="text-[13px] font-black tracking-widest text-gray-900 dark:text-zinc-100 uppercase text-center">{exercise_name}</h3>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-1.5 h-6 bg-emerald-500/20 rounded-full group-hover:bg-emerald-500/40 transition-colors" />
+          <span className="text-[13px] font-black tracking-tight text-zinc-900 dark:text-zinc-100 uppercase truncate">{exercise_name}</span>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-100 dark:border-emerald-500/10">
+            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">2 Sets</span>
+            <span className="text-[9px] font-bold text-emerald-600/60 dark:text-emerald-400/60 uppercase tracking-tighter">{base_reps || 'VAR'} Reps</span>
+          </div>
+          <ChevronUp size={14} className={`transform transition-transform duration-300 ${expanded ? '' : 'rotate-180'} text-zinc-400`} />
         </div>
       </div>
 
-      <div className="p-3 pt-0">
+      <div className="p-2 space-y-1">
         {!expanded ? (
-          <div className="mt-3 flex gap-3">
-            <div className="w-[30px] flex flex-col pt-[26px]">
-              <div className="flex-1 flex items-center justify-center">
-                <div className="w-full h-8 bg-amber-500/10 dark:bg-[#422e1b] rounded-lg border border-amber-500/20 dark:border-[#eea75e]/10 flex items-center justify-center shadow-sm">
-                  <span className="text-[11px] font-black text-amber-600 dark:text-[#eea75e]">2x</span>
-                </div>
+          <div className="grid grid-cols-2 gap-2">
+            {/* Anas */}
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all 
+                ${data.anas.completed ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-transparent border-transparent'}`}>
+              <span className="text-[10px] font-black text-zinc-400 w-4 text-center">A</span>
+              <div className="flex gap-1 flex-1">
+                <ModernInput type="number" step="0.5" value={data.anas.w} onChange={v => upd('anas', 'w', v)} placeholder="kg" className="bg-transparent border-0 h-6" />
+                <ModernInput type="number" value={data.anas.r} onChange={v => upd('anas', 'r', v)} placeholder="r" className="bg-transparent border-0 h-6" />
               </div>
+              <ModernCheckbox checked={data.anas.completed} onChange={() => tog('anas')} />
             </div>
 
-            <div className="flex-1 space-y-1 relative">
-              <div className="sticky top-0 z-10 grid grid-cols-[2.2rem_1fr_1fr_2.2rem] gap-2 px-1 pb-1 bg-white/95 dark:bg-[#151718]/95 backdrop-blur-sm pt-1">
-                <div className="text-center"><ColHeader label="S" /></div>
-                <div className="text-center"><ColHeader label="KG" /></div>
-                <div className="text-center"><ColHeader label="R" /></div>
-                <div className="text-center"><ColHeader label="✓" /></div>
+            {/* Flavio */}
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all 
+                ${data.flavio.completed ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-transparent border-transparent'}`}>
+              <span className="text-[10px] font-black text-zinc-400 w-4 text-center">F</span>
+              <div className="flex gap-1 flex-1">
+                <ModernInput type="number" step="0.5" value={data.flavio.w} onChange={v => upd('flavio', 'w', v)} placeholder="kg" className="bg-transparent border-0 h-6" />
+                <ModernInput type="number" value={data.flavio.r} onChange={v => upd('flavio', 'r', v)} placeholder="r" className="bg-transparent border-0 h-6" />
               </div>
-
-              <div className="space-y-1.5">
-                <div className={`grid grid-cols-[2.2rem_1fr_1fr_2.2rem] gap-2 items-center p-1 rounded-2xl border transition-all h-11 
-                    ${data.anas.completed ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-500/30' : 'bg-gray-50/80 dark:bg-[#1a1b1e] border-gray-200/50 dark:border-white/5'}`}>
-                  <div className="flex justify-center">
-                    <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
-                      <span className="text-[10px] font-bold text-white">A</span>
-                    </div>
-                  </div>
-                  <ModernInput
-                    type="number" step="0.5" value={data.anas.w} onChange={e => upd('anas', 'w', e.target.value)}
-                    className="h-8 border-transparent bg-white/60 dark:bg-[#25262b] shadow-inner text-[13px]" placeholder="kg"
-                  />
-                  <div className="relative">
-                    <ModernInput
-                      type="number" value={data.anas.r} onChange={e => upd('anas', 'r', e.target.value)}
-                      className="h-8 border-transparent bg-white/60 dark:bg-[#25262b] shadow-inner text-[13px]" placeholder="r"
-                    />
-                    {base_reps && !data.anas.r && (
-                      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-medium text-gray-400/50 pointer-events-none">{base_reps}</span>
-                    )}
-                  </div>
-                  <div className="flex justify-center">
-                    <ModernCheckbox checked={data.anas.completed} onChange={(e) => {
-                      tog('anas');
-                      if (e.target.checked) import('canvas-confetti').then(m => m.default({ particleCount: 30, spread: 50, origin: { y: 0.8 } }));
-                    }} colorClass="accent-emerald-500" />
-                  </div>
-                </div>
-
-                <div className={`grid grid-cols-[2.2rem_1fr_1fr_2.2rem] gap-2 items-center p-1 rounded-2xl border transition-all h-11 
-                    ${data.flavio.completed ? 'bg-emerald-50/50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-500/30' : 'bg-gray-50/80 dark:bg-[#1a1b1e] border-gray-200/50 dark:border-white/5'}`}>
-                  <div className="flex justify-center">
-                    <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                      <span className="text-[10px] font-bold text-white">F</span>
-                    </div>
-                  </div>
-                  <ModernInput
-                    type="number" step="0.5" value={data.flavio.w} onChange={e => upd('flavio', 'w', e.target.value)}
-                    className="h-8 border-transparent bg-white/60 dark:bg-[#25262b] shadow-inner text-[13px]" placeholder="kg"
-                  />
-                  <div className="relative">
-                    <ModernInput
-                      type="number" value={data.flavio.r} onChange={e => upd('flavio', 'r', e.target.value)}
-                      className="h-8 border-transparent bg-white/60 dark:bg-[#25262b] shadow-inner text-[13px]" placeholder="r"
-                    />
-                    {base_reps && !data.flavio.r && (
-                      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-medium text-gray-400/50 pointer-events-none">{base_reps}</span>
-                    )}
-                  </div>
-                  <div className="flex justify-center">
-                    <ModernCheckbox checked={data.flavio.completed} onChange={(e) => {
-                      tog('flavio');
-                      if (e.target.checked) import('canvas-confetti').then(m => m.default({ particleCount: 30, spread: 50, origin: { y: 0.8 }, colors: ['#10b981', '#34d399'] }));
-                    }} colorClass="accent-emerald-500" />
-                  </div>
-                </div>
-              </div>
+              <ModernCheckbox checked={data.flavio.completed} onChange={() => tog('flavio')} />
             </div>
           </div>
         ) : (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-3">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="overflow-hidden">
+            {/* Extended Inputs */}
+            <div className="grid grid-cols-2 gap-4 px-2 py-4 border-b border-zinc-100 dark:border-white/5 mb-4">
+              <div className="space-y-3">
+                <div className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest px-1">Anas Performance</div>
+                <div className="flex items-center gap-2">
+                  <ModernInput type="number" step="0.5" value={data.anas.w} onChange={v => upd('anas', 'w', v)} placeholder="Weight" />
+                  <ModernInput type="number" value={data.anas.r} onChange={v => upd('anas', 'r', v)} placeholder="Reps" />
+                  <ModernCheckbox checked={data.anas.completed} onChange={() => tog('anas')} />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest px-1">Flavio Performance</div>
+                <div className="flex items-center gap-2">
+                  <ModernInput type="number" step="0.5" value={data.flavio.w} onChange={v => upd('flavio', 'w', v)} placeholder="Weight" />
+                  <ModernInput type="number" value={data.flavio.r} onChange={v => upd('flavio', 'r', v)} placeholder="Reps" />
+                  <ModernCheckbox checked={data.flavio.completed} onChange={() => tog('flavio')} />
+                </div>
+              </div>
+            </div>
+
             {historyLoading ? (
-              <div className="py-4 text-center">
-                <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <div className="py-8 text-center">
+                <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
               </div>
             ) : history.length === 0 ? (
-              <div className="py-4 text-center text-[10px] text-gray-400">Nessuno storico</div>
+              <div className="py-8 text-center text-[10px] text-zinc-400 uppercase tracking-widest">No training history available</div>
             ) : (
-              <div className="space-y-3 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
-                {history.length > 1 && (
-                  <div className="w-full h-12 relative px-2 mb-2 select-none pointer-events-none">
-                    <svg className="w-full h-full overflow-visible" preserveAspectRatio="none">
-                      {(() => {
-                        const valid = [...history].reverse().slice(-10);
-                        if (valid.length < 2) return null;
-                        const maxW = Math.max(...valid.map(v => v.weight_kg || 1));
-                        const minW = Math.min(...valid.map(v => v.weight_kg || 0));
-                        const range = Math.max(maxW - minW, 1);
-
-                        const ptsAnas = valid.map((v, i) => {
-                          const x = (i / (valid.length - 1)) * 100;
-                          const y = 100 - (((v.weight_kg || 0) - minW) / range) * 80;
-                          return `${x}%,${y}%`;
-                        }).join(' ');
-
-                        return (
-                          <>
-                            <polyline fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={ptsAnas} className="text-blue-500/50 dark:text-blue-400/50 drop-shadow-md" />
-                            {valid.map((v, i) => {
-                              const x = (i / (valid.length - 1)) * 100;
-                              const y = 100 - (((v.weight_kg || 0) - minW) / range) * 80;
-                              return <circle key={i} cx={`${x}%`} cy={`${y}%`} r="2.5" className="fill-blue-500 dark:fill-blue-400" />
-                            })}
-                          </>
-                        )
-                      })()}
-                    </svg>
-                    <div className="absolute inset-x-2 bottom-0 h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-zinc-700 to-transparent" />
-                  </div>
-                )}
-
-                <div className="grid grid-cols-[4rem_1fr] gap-2 px-2 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-zinc-800">
-                  <div>Data</div>
-                  <div className="flex justify-around text-center text-gray-500">
-                    <span>Performance (KG x R)</span>
+              <div className="space-y-3 px-2 pb-2">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[10px] font-black text-zinc-900 dark:text-white uppercase tracking-[0.15em]">Analytics History</span>
+                  <div className="flex gap-4">
+                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">W/R Ratio</span>
                   </div>
                 </div>
-                {history.map((e, i) => (
-                  <div key={i} className="grid grid-cols-[4rem_1fr] gap-2 items-center px-2 py-2 text-[10px] bg-gray-50/50 dark:bg-zinc-800/30 rounded-xl hover:bg-gray-100/50 dark:hover:bg-zinc-800/50 transition-colors">
-                    <div className="font-medium text-gray-500">{formatDate(e.date)}</div>
-                    <div className="flex gap-2 justify-around">
-                      <div className="flex gap-1.5">
-                        <span className="w-12 py-1 bg-blue-50/50 dark:bg-blue-900/20 rounded font-semibold text-gray-700 dark:text-gray-300 text-center">{e.weight_kg ?? '-'} kg</span>
-                        <span className="w-10 py-1 bg-blue-50/50 dark:bg-blue-900/20 rounded font-semibold text-gray-700 dark:text-gray-300 text-center">{e.reps ?? '-'} r</span>
+
+                <div className="h-20 w-full relative mb-6">
+                  <svg className="w-full h-full overflow-visible" preserveAspectRatio="none">
+                    {(() => {
+                      const valid = [...history].reverse().slice(-10);
+                      if (valid.length < 2) return null;
+                      const maxW = Math.max(...valid.map(v => v.weight_kg || 1));
+                      const minW = Math.min(...valid.map(v => v.weight_kg || 0));
+                      const range = Math.max(maxW - minW, 1);
+
+                      const ptsAnas = valid.map((v, i) => {
+                        const x = (i / (valid.length - 1)) * 100;
+                        const y = 100 - (((v.weight_kg || 0) - minW) / range) * 85;
+                        return `${x}%,${y}%`;
+                      }).join(' ');
+
+                      return (
+                        <>
+                          <polyline fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={ptsAnas} className="text-indigo-500 drop-shadow-[0_0_8px_rgba(79,70,229,0.3)]" />
+                          {valid.map((v, i) => {
+                            const x = (i / (valid.length - 1)) * 100;
+                            const y = 100 - (((v.weight_kg || 0) - minW) / range) * 85;
+                            return <circle key={i} cx={`${x}%`} cy={`${y}%`} r="3" className="fill-indigo-500" />
+                          })}
+                        </>
+                      )
+                    })()}
+                  </svg>
+                </div>
+
+                <div className="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                  {history.map((e, i) => (
+                    <div key={i} className="flex items-center justify-between px-3 py-2 bg-zinc-50 dark:bg-white/[0.02] rounded-xl border border-zinc-100 dark:border-white/5">
+                      <span className="text-[10px] font-black text-zinc-400 uppercase tracking-tighter">{formatDate(e.date)}</span>
+                      <div className="flex gap-3">
+                        <span className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100">{e.weight_kg ?? '-'} <span className="text-zinc-400">kg</span></span>
+                        <span className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100">{e.reps ?? '-'} <span className="text-zinc-400">r</span></span>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </motion.div>
