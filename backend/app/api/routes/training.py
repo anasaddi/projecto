@@ -344,9 +344,10 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
             if dashboard:
                 await set_cached_shared_dashboard(share_id, dashboard)
         
+        from fastapi.encoders import jsonable_encoder
         if dashboard:
             dashboard["type"] = "sync"
-            await websocket.send_json(dashboard)
+            await websocket.send_json(jsonable_encoder(dashboard))
         else:
             await websocket.send_json({
                 "type": "sync",
@@ -362,12 +363,20 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
                 await websocket.send_json({"type": "pong"})
                 continue
             
-            # Rate limit check
-            if not manager.check_rate_limit(websocket):
-                await websocket.send_json({"type": "error", "message": "Rate limited. Slow down."})
+            if payload.get("type") == "chat":
+                # Optimizzazione: solo un messaggio invece di tutta la history
+                msg_data = payload.get("data")
+                if msg_data:
+                    from app.crud.dashboard import add_chat_message
+                    new_msg = await add_chat_message(db, share_id, msg_data)
+                    await manager.broadcast({
+                        "type": "chat",
+                        "share_id": share_id,
+                        "data": jsonable_encoder(new_msg)
+                    }, share_id, exclude=websocket)
                 continue
-            
-            await manager.broadcast(payload, share_id, exclude=websocket)
+
+            await manager.broadcast(jsonable_encoder(payload), share_id, exclude=websocket)
             await crud_dashboard.update_shared_dashboard_from_json(
                 db, share_id, payload.get("data"), payload.get("title")
             )
@@ -377,4 +386,9 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
         manager.disconnect(websocket, share_id)
     except Exception as e:
         logger.error(f"WebSocket error: {e}", extra={"share_id": share_id, "action": "error"})
+        try:
+            await websocket.close()
+        except:
+            pass
+        manager.disconnect(websocket, share_id)
         manager.disconnect(websocket, share_id)

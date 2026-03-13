@@ -1190,7 +1190,13 @@ export default function DashboardV2() {
           const msg = e?.data;
           if (!msg || applyingFromSharedBC.current) return;
           applyingFromSharedBC.current = true;
-          if (msg.type === 'sync' && msg.data) {
+          if (msg.type === 'chat' && msg.data) {
+            setSharedDashboards(prev => prev.map(item =>
+              item.share_id === shareId
+                ? { ...item, data: { ...item.data, chat: [...(item.data?.chat || []).slice(-99), msg.data] } }
+                : item
+            ));
+          } else if (msg.type === 'sync' && msg.data) {
             setSharedDashboards(prev => prev.map(item =>
               item.share_id === shareId ? { ...item, data: msg.data, title: msg.title || item.title } : item
             ));
@@ -1227,10 +1233,16 @@ export default function DashboardV2() {
           if (message.type === 'pong') return;
           if (message.type === 'server_restart') return;
           if (message.type === 'error') return;
-          if (message.type === 'sync') {
+          if (message.type === 'chat' && message.data) {
+            setSharedDashboards(prev => prev.map(item =>
+              item.share_id === shareId
+                ? { ...item, data: { ...item.data, chat: [...(item.data?.chat || []).slice(-99), message.data] } }
+                : item
+            ));
+          } else if (message.type === 'sync') {
             const data = message.data || message;
             setSharedDashboards(prev => prev.map(item =>
-              item.share_id === shareId ? { ...item, data: data } : item
+              item.share_id === shareId ? { ...item, data: data, title: message.title || item.title } : item
             ));
           }
         } catch (err) {

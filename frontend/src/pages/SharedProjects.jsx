@@ -392,6 +392,14 @@ export default function SharedProjects() {
   };
 
   const applyDashboardFromPayload = (msg) => {
+    if (msg.type === 'chat') {
+      const newMsg = msg.data;
+      setDashboard(prev => ({
+        ...prev,
+        chat: Array.isArray(prev.chat) ? [...prev.chat.slice(-99), newMsg] : [newMsg]
+      }));
+      return;
+    }
     const dataPayload = msg.data || msg;
     const serverProjects = Array.isArray(dataPayload.projects) ? dataPayload.projects : [];
     const serverQuickTasks = Array.isArray(dataPayload.quickTasks) ? dataPayload.quickTasks : [];
@@ -659,7 +667,6 @@ export default function SharedProjects() {
   const sendChatMessage = () => {
     if (!chatDraft.trim()) return;
 
-    // Generiamo un ID mittente persistente (semplificato)
     let senderId = localStorage.getItem('km-chat-sender-id');
     if (!senderId) {
       senderId = uid('user');
@@ -673,10 +680,30 @@ export default function SharedProjects() {
       timestamp: Date.now()
     };
 
-    updateLocal(prev => ({
+    // Incremental update
+    setDashboard(prev => ({
+      ...prev,
       chat: [...(prev.chat || []), msg]
     }));
     setChatDraft("");
+
+    // Send partial payload
+    const payload = { type: 'chat', data: msg };
+    if (ws.current?.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify(payload));
+    } else if (id) {
+      // Fallback: send full state (compatible)
+      const nextState = { ...dashboard, chat: [...(dashboard.chat || []), msg] };
+      api.training.updateSharedDashboard(id, { chat: nextState.chat }).catch(() => { });
+    }
+
+    if (!applyingFromBCRef.current && id) {
+      try {
+        const bc = new BroadcastChannel(`km-shared-${id}`);
+        bc.postMessage(payload);
+        bc.close();
+      } catch (_) { }
+    }
 
     setTimeout(() => {
       if (chatScrollRef.current) {
