@@ -507,7 +507,7 @@ export default function SharedProjects() {
   // Polling fallback quando WebSocket non connesso (aggiornamenti ogni 4s)
   useEffect(() => {
     if (!id || dashboard.isConnected) return;
-    pollInterval.current = setInterval(refetchFromApi, 30);
+    pollInterval.current = setInterval(refetchFromApi, 4000);
     return () => {
       if (pollInterval.current) {
         clearInterval(pollInterval.current);
@@ -1058,8 +1058,8 @@ export default function SharedProjects() {
                   >
                     <div
                       className={`max-w-[85%] p-3 rounded-2xl text-sm shadow-lg backdrop-blur-sm ${isMe
-                          ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-tr-none shadow-indigo-500/25'
-                          : 'bg-white/90 dark:bg-gray-800/90 text-gray-800 dark:text-gray-200 rounded-tl-none border border-gray-200/50 dark:border-gray-700/50 shadow-gray-500/10'
+                        ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-tr-none shadow-indigo-500/25'
+                        : 'bg-white/90 dark:bg-gray-800/90 text-gray-800 dark:text-gray-200 rounded-tl-none border border-gray-200/50 dark:border-gray-700/50 shadow-gray-500/10'
                         }`}
                     >
                       {!isMe && (

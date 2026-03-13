@@ -74,40 +74,118 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
     else:
         ds.data = data
     
-    # Sync habits
+    # Sync habits - UPSERT
     if "dailyTaskTemplates" in data:
-        await db.execute(delete(HabitLog))
-        await db.execute(delete(Habit))
+        incoming_habit_ids = [str(h["id"]) for h in data["dailyTaskTemplates"]]
+        
+        # Eliminate removed habits
+        if incoming_habit_ids:
+            await db.execute(delete(HabitLog).filter(HabitLog.habit_id.not_in(incoming_habit_ids)))
+            await db.execute(delete(Habit).filter(Habit.id.not_in(incoming_habit_ids)))
+        else:
+            await db.execute(delete(HabitLog))
+            await db.execute(delete(Habit))
+            
+        # Get existing
+        existing_res = await db.execute(select(Habit))
+        existing_habits = {str(h.id): h for h in existing_res.scalars().all()}
+        
         for h in data["dailyTaskTemplates"]:
-            db.add(Habit(id=h["id"], title=h["title"], locked=1 if h.get("locked") else 0, ordinal=h.get("ordinal", 0)))
+            hid = str(h["id"])
+            if hid in existing_habits:
+                existing_habits[hid].title = h["title"]
+                existing_habits[hid].locked = 1 if h.get("locked") else 0
+                existing_habits[hid].ordinal = h.get("ordinal", 0)
+            else:
+                db.add(Habit(id=hid, title=h["title"], locked=1 if h.get("locked") else 0, ordinal=h.get("ordinal", 0)))
     
     # Sync habit logs
-    elif "dailyTaskLogs" in data: # Only delete logs if we didn't delete habits (which already deleted logs)
-        await db.execute(delete(HabitLog))
+    elif "dailyTaskLogs" in data:
+        # For logs, brute force per-day is generally acceptable or we can just upsert.
+        # Since habit logs are simple date+id combinations, clearing the db completely on a full state update is standard,
+        # but the optimized way is to only touch the provided dates.
         for d_str, logs in data["dailyTaskLogs"].items():
+            await db.execute(delete(HabitLog).filter(HabitLog.date == d_str))
             for l in logs: db.add(HabitLog(habit_id=l["id"], date=d_str, status=1 if l.get("done") else 0))
     
-    # Sync quick tasks
+    # Sync quick tasks - UPSERT
     if "quickTasks" in data:
-        await db.execute(delete(QuickTask))
+        incoming_qids = [str(q["id"]) for q in data["quickTasks"]]
+        if incoming_qids:
+            await db.execute(delete(QuickTask).filter(QuickTask.id.not_in(incoming_qids)))
+        else:
+            await db.execute(delete(QuickTask))
+            
+        existing_q_res = await db.execute(select(QuickTask))
+        existing_qs = {str(q.id): q for q in existing_q_res.scalars().all()}
+        
         for q in data["quickTasks"]:
-            db.add(QuickTask(id=q["id"], title=q["title"], done=1 if q.get("done") else 0, deadline=q.get("deadline")))
+            qid = str(q["id"])
+            if qid in existing_qs:
+                existing_qs[qid].title = q["title"]
+                existing_qs[qid].done = 1 if q.get("done") else 0
+                existing_qs[qid].deadline = q.get("deadline")
+            else:
+                db.add(QuickTask(id=qid, title=q["title"], done=1 if q.get("done") else 0, deadline=q.get("deadline")))
     
-    # Sync personal projects
+    # Sync personal projects - UPSERT
     if "projects" in data:
-        # Delete tasks first to avoid FK violation
-        p_ids_res = await db.execute(select(Project.id).filter(Project.share_id == None))
-        p_ids = p_ids_res.scalars().all()
-        if p_ids:
-            await db.execute(delete(Task).filter(Task.project_id.in_(p_ids)))
-        await db.execute(delete(Project).filter(Project.share_id == None))
+        inc_proj_ids = [str(p["id"]) for p in data["projects"]]
+        
+        # Delete absent projects and their tasks
+        if inc_proj_ids:
+            deleted_p_res = await db.execute(select(Project.id).filter(Project.share_id == None, Project.id.not_in(inc_proj_ids)))
+            deleted_p_ids = deleted_p_res.scalars().all()
+            if deleted_p_ids:
+                await db.execute(delete(Task).filter(Task.project_id.in_(deleted_p_ids)))
+                await db.execute(delete(Project).filter(Project.id.in_(deleted_p_ids)))
+        else:
+            p_ids_res = await db.execute(select(Project.id).filter(Project.share_id == None))
+            p_ids = p_ids_res.scalars().all()
+            if p_ids:
+                await db.execute(delete(Task).filter(Task.project_id.in_(p_ids)))
+                await db.execute(delete(Project).filter(Project.share_id == None))
+
+        # Existing projects map
+        ex_p_res = await db.execute(select(Project).filter(Project.share_id == None))
+        ex_projs = {str(p.id): p for p in ex_p_res.scalars().all()}
+        
         for p in data["projects"]:
-            db.add(Project(id=p["id"], title=p["title"], share_id=None))
-            async def add_t(tasks, pid, parent=None):
+            pid = str(p["id"])
+            if pid in ex_projs:
+                ex_projs[pid].title = p["title"]
+            else:
+                db.add(Project(id=pid, title=p["title"], share_id=None))
+            
+            # Tasks for this project
+            inc_task_ids = []
+            def collect_tasks(tasks_list):
+                for t in tasks_list:
+                    inc_task_ids.append(str(t["id"]))
+                    if t.get("children"): collect_tasks(t["children"])
+            collect_tasks(p.get("tasks", []))
+            
+            if inc_task_ids:
+                await db.execute(delete(Task).filter(Task.project_id == pid, Task.id.not_in(inc_task_ids)))
+            else:
+                await db.execute(delete(Task).filter(Task.project_id == pid))
+                
+            ex_t_res = await db.execute(select(Task).filter(Task.project_id == pid))
+            ex_tasks = {str(t.id): t for t in ex_t_res.scalars().all()}
+            
+            async def upsert_t(tasks, proj_id, parent=None):
                 for t in tasks:
-                    db.add(Task(id=t["id"], project_id=pid, parent_id=parent, title=t["title"], done=1 if t.get("done") else 0, deadline=t.get("deadline")))
-                    if t.get("children"): await add_t(t["children"], pid, t["id"])
-            await add_t(p.get("tasks", []), p["id"])
+                    tid = str(t["id"])
+                    if tid in ex_tasks:
+                        ex_tasks[tid].title = t["title"]
+                        ex_tasks[tid].parent_id = parent
+                        ex_tasks[tid].done = 1 if t.get("done") else 0
+                        ex_tasks[tid].deadline = t.get("deadline")
+                    else:
+                        db.add(Task(id=tid, project_id=proj_id, parent_id=parent, title=t["title"], done=1 if t.get("done") else 0, deadline=t.get("deadline")))
+                    if t.get("children"): await upsert_t(t["children"], proj_id, tid)
+            
+            await upsert_t(p.get("tasks", []), pid)
     
     await db.commit()
     return await get_dashboard_state_aggregated(db, key)
@@ -156,26 +234,82 @@ async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, dat
         if title: shared.title = title
         shared.data = data # Keep the blob for non-relational fields if needed
     
-    # Sync relational tables
-    p_ids_res = await db.execute(select(Project.id).filter(Project.share_id == share_id))
-    p_ids = p_ids_res.scalars().all()
-    if p_ids:
-        await db.execute(delete(Task).filter(Task.project_id.in_(p_ids)))
-    await db.execute(delete(Project).filter(Project.share_id == share_id))
+    # Sync relational tables - UPSERT style
     p_data = data.get("projects", [])
-    for p in p_data:
-        db.add(Project(id=p["id"], title=p["title"], share_id=share_id))
-        async def add_t(tasks, pid, parent=None):
-            for t in tasks:
-                db.add(Task(id=t["id"], project_id=pid, parent_id=parent, title=t["title"], done=1 if t.get("done") else 0, deadline=t.get("deadline")))
-                if t.get("children"): await add_t(t["children"], pid, t["id"])
-        await add_t(p.get("tasks", []), p["id"])
+    inc_proj_ids = [str(p["id"]) for p in p_data]
     
+    # 1. Delete removed projects and their tasks
+    if inc_proj_ids:
+        deleted_p_res = await db.execute(select(Project.id).filter(Project.share_id == share_id, Project.id.not_in(inc_proj_ids)))
+        deleted_p_ids = deleted_p_res.scalars().all()
+        if deleted_p_ids:
+            await db.execute(delete(Task).filter(Task.project_id.in_(deleted_p_ids)))
+            await db.execute(delete(Project).filter(Project.id.in_(deleted_p_ids)))
+    else:
+        p_ids_res = await db.execute(select(Project.id).filter(Project.share_id == share_id))
+        p_ids = p_ids_res.scalars().all()
+        if p_ids:
+            await db.execute(delete(Task).filter(Task.project_id.in_(p_ids)))
+            await db.execute(delete(Project).filter(Project.share_id == share_id))
+
+    # 2. Update existing / Insert new projects
+    ex_p_res = await db.execute(select(Project).filter(Project.share_id == share_id))
+    ex_projs = {str(p.id): p for p in ex_p_res.scalars().all()}
+    
+    for p in p_data:
+        pid = str(p["id"])
+        if pid in ex_projs:
+            ex_projs[pid].title = p["title"]
+        else:
+            db.add(Project(id=pid, title=p["title"], share_id=share_id))
+            
+        # Handle Tasks
+        inc_task_ids = []
+        def collect_tasks(tasks_list):
+            for t in tasks_list:
+                inc_task_ids.append(str(t["id"]))
+                if t.get("children"): collect_tasks(t["children"])
+        collect_tasks(p.get("tasks", []))
+        
+        if inc_task_ids:
+            await db.execute(delete(Task).filter(Task.project_id == pid, Task.id.not_in(inc_task_ids)))
+        else:
+            await db.execute(delete(Task).filter(Task.project_id == pid))
+            
+        ex_t_res = await db.execute(select(Task).filter(Task.project_id == pid))
+        ex_tasks = {str(t.id): t for t in ex_t_res.scalars().all()}
+        
+        async def upsert_t(tasks, proj_id, parent=None):
+            for t in tasks:
+                tid = str(t["id"])
+                if tid in ex_tasks:
+                    ex_tasks[tid].title = t["title"]
+                    ex_tasks[tid].parent_id = parent
+                    ex_tasks[tid].done = 1 if t.get("done") else 0
+                    ex_tasks[tid].deadline = t.get("deadline")
+                else:
+                    db.add(Task(id=tid, project_id=proj_id, parent_id=parent, title=t["title"], done=1 if t.get("done") else 0, deadline=t.get("deadline")))
+                if t.get("children"): await upsert_t(t["children"], proj_id, tid)
+        
+        await upsert_t(p.get("tasks", []), pid)
+    
+    # 3. Chat Messages - UPSERT
     if "chat" in data:
-        await db.execute(delete(ChatMessage).filter(ChatMessage.share_id == share_id))
-        for msg in data["chat"]:
-            db.add(ChatMessage(id=msg["id"], share_id=share_id, sender_id=msg["senderId"], text=msg["text"], 
-                               timestamp=datetime.fromtimestamp(msg["timestamp"]/1000, tz=timezone.utc) if msg.get("timestamp") else datetime.now(timezone.utc)))
+        chat_data = data["chat"]
+        inc_chat_ids = [str(m["id"]) for m in chat_data]
+        if inc_chat_ids:
+            await db.execute(delete(ChatMessage).filter(ChatMessage.share_id == share_id, ChatMessage.id.not_in(inc_chat_ids)))
+        else:
+            await db.execute(delete(ChatMessage).filter(ChatMessage.share_id == share_id))
+            
+        ex_c_res = await db.execute(select(ChatMessage).filter(ChatMessage.share_id == share_id))
+        ex_chats = {str(c.id): c for c in ex_c_res.scalars().all()}
+        
+        for msg in chat_data:
+            mid = str(msg["id"])
+            if mid not in ex_chats:
+                db.add(ChatMessage(id=mid, share_id=share_id, sender_id=msg["senderId"], text=msg["text"], 
+                                   timestamp=datetime.fromtimestamp(msg["timestamp"]/1000, tz=timezone.utc) if msg.get("timestamp") else datetime.now(timezone.utc)))
     
     await db.commit()
     return await get_shared_dashboard_aggregated(db, share_id)
