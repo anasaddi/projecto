@@ -170,8 +170,11 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
                     if t.get("children"): collect_tasks(t["children"])
             collect_tasks(p.get("tasks", []))
             
-            # Sync tasks for this project
-            await db.execute(delete(Task).filter(Task.project_id == pid, Task.id.not_in(inc_task_ids)))
+            if inc_task_ids:
+                await db.execute(delete(Task).filter(Task.project_id == pid, Task.id.not_in(inc_task_ids)))
+            else:
+                await db.execute(delete(Task).filter(Task.project_id == pid))
+                
             ex_t_res = await db.execute(select(Task).filter(Task.project_id == pid))
             ex_tasks = {str(t.id): t for t in ex_t_res.scalars().all()}
             
@@ -308,7 +311,10 @@ async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, dat
                     if t.get("children"): collect_tasks(t["children"])
             collect_tasks(p.get("tasks", []))
             
-            await db.execute(delete(Task).filter(Task.project_id == pid, Task.id.not_in(inc_task_ids)))
+            if inc_task_ids:
+                await db.execute(delete(Task).filter(Task.project_id == pid, Task.id.not_in(inc_task_ids)))
+            else:
+                await db.execute(delete(Task).filter(Task.project_id == pid))
             ex_t_res = await db.execute(select(Task).filter(Task.project_id == pid))
             ex_tasks = {str(t.id): t for t in ex_t_res.scalars().all()}
             async def upsert_t(tasks, proj_id, parent=None):
@@ -328,7 +334,10 @@ async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, dat
         chat_data = data["chat"]
         # If chat is provided, we sync the list (usually we just append via a different method, but this is the bulk sync)
         inc_chat_ids = [str(m["id"]) for m in chat_data]
-        await db.execute(delete(ChatMessage).filter(ChatMessage.share_id == share_id, ChatMessage.id.not_in(inc_chat_ids)))
+        if inc_chat_ids:
+            await db.execute(delete(ChatMessage).filter(ChatMessage.share_id == share_id, ChatMessage.id.not_in(inc_chat_ids)))
+        else:
+            await db.execute(delete(ChatMessage).filter(ChatMessage.share_id == share_id))
         ex_c_res = await db.execute(select(ChatMessage).filter(ChatMessage.share_id == share_id))
         ex_chats = {str(c.id): c for c in ex_c_res.scalars().all()}
         for msg in chat_data:
