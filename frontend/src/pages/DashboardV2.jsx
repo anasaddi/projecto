@@ -1180,6 +1180,15 @@ export default function DashboardV2() {
       socket.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
+          if (message.type === 'pong') return;
+          if (message.type === 'server_restart') {
+            console.log(`Server restart notification for ${shareId}`);
+            return;
+          }
+          if (message.type === 'error') {
+            console.warn(`WS rate limited for ${shareId}:`, message.message);
+            return;
+          }
           if (message.type === 'sync') {
             const data = message.data || message;
             setSharedDashboards(prev => prev.map(item =>

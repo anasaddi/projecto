@@ -5,11 +5,21 @@ from app.config import get_settings
 
 settings = get_settings()
 
-# --- Async Setup (FastAPI) ---
+# --- Async Setup (FastAPI) with Connection Pooling ---
+_is_sqlite = settings.async_database_url.startswith("sqlite")
+
 engine = create_async_engine(
     settings.async_database_url,
     echo=False,
-    future=True
+    future=True,
+    # Connection pooling config (ignored for SQLite)
+    **({} if _is_sqlite else {
+        "pool_size": 10,           # Persistent connections
+        "max_overflow": 20,        # Burst capacity
+        "pool_pre_ping": True,     # Verify connections before use
+        "pool_recycle": 1800,      # Recycle connections every 30 minutes
+        "pool_timeout": 30,        # Wait max 30s for a connection
+    })
 )
 
 AsyncSessionLocal = async_sessionmaker(
@@ -19,15 +29,21 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 # --- Sync Setup (Celery Tasks & Scripts) ---
-# We use the standard database_url (without aiosqlite/asyncpg prefix if possible, 
-# or handled in config)
 sync_url = settings.database_url
 if sync_url.startswith("sqlite+aiosqlite:///"):
     sync_url = sync_url.replace("sqlite+aiosqlite:///", "sqlite:///")
 elif sync_url.startswith("postgresql+asyncpg://"):
     sync_url = sync_url.replace("postgresql+asyncpg://", "postgresql://")
 
-engine_sync = create_engine(sync_url)
+engine_sync = create_engine(
+    sync_url,
+    **({} if _is_sqlite else {
+        "pool_size": 5,
+        "max_overflow": 10,
+        "pool_pre_ping": True,
+        "pool_recycle": 1800,
+    })
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine_sync)
 
 class Base(DeclarativeBase):

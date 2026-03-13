@@ -1,4 +1,7 @@
 import traceback
+import logging
+import signal
+import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +12,12 @@ from app.api.routes import sources, content, insights, search, youtube, training
 from app.config import get_settings
 from app.db.session import Base, engine
 from app.db import models
+from app.db import audit as audit_models  # Register AuditEvent table
+from app.middleware.logging import setup_logging, add_request_logging
+from app.middleware.compression import add_compression
+from app.middleware.rate_limiter import add_rate_limiter
+
+logger = logging.getLogger("km")
 
 
 def _cors_origins_list(settings) -> list:
@@ -18,7 +27,10 @@ def _cors_origins_list(settings) -> list:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Ensure all tables exist (important for SQLite and first Postgres run)
+    settings = get_settings()
+    setup_logging(settings.log_level)
+
+    # Ensure all tables exist (including audit_events)
     import asyncio
     max_retries = 5
     retry_delay = 5
@@ -39,17 +51,17 @@ async def lifespan(app: FastAPI):
                         if "is_active" not in col_names:
                             await conn.execute(text("ALTER TABLE exercises ADD COLUMN is_active INTEGER DEFAULT 1"))
                 except Exception as migrate_err:
-                    print(f"Migration error (is_active): {migrate_err}")
+                    logger.warning(f"Migration error (is_active): {migrate_err}")
             db_ready = True
-            print(f"Database connection successful on attempt {i+1}")
+            logger.info(f"Database connection successful on attempt {i+1}")
             break
         except Exception as e:
-            print(f"Database connection attempt {i+1} failed: {e}")
+            logger.error(f"Database connection attempt {i+1} failed: {e}")
             if i < max_retries - 1:
-                print(f"Retrying in {retry_delay} seconds...")
+                logger.info(f"Retrying in {retry_delay} seconds...")
                 await asyncio.sleep(retry_delay)
             else:
-                print("Max retries reached. Database initialization failed.")
+                logger.critical("Max retries reached. Database initialization failed.")
 
     # Seeding
     if db_ready:
@@ -58,14 +70,38 @@ async def lifespan(app: FastAPI):
         async with AsyncSessionLocal() as db:
             try:
                 n = await seed_training_if_empty(db)
-                if n: print(f"Seeded {n} exercises.")
+                if n: logger.info(f"Seeded {n} exercises.")
                 m = await seed_fake_history(db)
-                if m: print(f"Seeded {m} history logs.")
+                if m: logger.info(f"Seeded {m} history logs.")
             except Exception as e:
-                print(f"Seed error: {e}")
-    
+                logger.error(f"Seed error: {e}")
+
+    # Pre-warm Redis connection
+    try:
+        from app.cache import get_redis
+        r = await get_redis()
+        if r:
+            logger.info("Redis cache warmed up")
+    except Exception:
+        logger.info("Redis not available, running without cache")
+
+    logger.info("App started successfully")
     yield
-    # shutdown cleanup if needed
+
+    # Graceful shutdown: close WebSocket connections, notify clients
+    logger.info("Shutting down gracefully...")
+    from app.websockets import manager
+    await manager.graceful_shutdown()
+    
+    # Close Redis pool
+    try:
+        from app.cache import _redis, _pool
+        if _redis:
+            await _redis.close()
+    except Exception:
+        pass
+    
+    logger.info("Shutdown complete")
 
 
 def create_app() -> FastAPI:
@@ -73,25 +109,36 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="KM Personal",
         description="Personal Knowledge Management - Text + Media ingestion",
-        version="0.1.0",
+        version="0.2.0",
         lifespan=lifespan,
     )
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request, exc):
+        logger.error(f"Unhandled exception: {exc}", exc_info=True)
         tb = traceback.format_exc()
         return JSONResponse(
             status_code=500,
             content={"detail": str(exc), "traceback": tb},
         )
 
+    # Middleware stack (order matters: last added = first executed)
+    # 1. CORS
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Temporaneamente permettiamo tutto per debugging CORS/Proxy
+        allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    # 2. Compression (GZip)
+    add_compression(app)
+    # 3. Rate Limiting
+    add_rate_limiter(app)
+    # 4. Structured Request Logging
+    add_request_logging(app)
+
+    # Routers
     app.include_router(training.router, prefix="/api/training", tags=["training"])
     app.include_router(sources.router, prefix="/api/sources", tags=["sources"])
     app.include_router(content.router, prefix="/api/content", tags=["content"])
@@ -104,6 +151,47 @@ def create_app() -> FastAPI:
 app = create_app()
 
 
+# --- Health & Readiness ---
+
 @app.get("/health")
-def health():
+async def health():
+    """Lightweight liveness probe."""
     return {"status": "ok"}
+
+
+@app.get("/ready")
+async def readiness():
+    """Deep readiness check: DB + Redis connectivity."""
+    checks = {}
+    
+    # DB check
+    try:
+        from app.db.session import AsyncSessionLocal
+        async with AsyncSessionLocal() as db:
+            await db.execute(text("SELECT 1"))
+        checks["database"] = "ok"
+    except Exception as e:
+        checks["database"] = f"error: {e}"
+
+    # Redis check
+    try:
+        from app.cache import get_redis
+        r = await get_redis()
+        if r:
+            await r.ping()
+            checks["redis"] = "ok"
+        else:
+            checks["redis"] = "unavailable"
+    except Exception as e:
+        checks["redis"] = f"error: {e}"
+
+    # WebSocket count
+    from app.websockets import manager
+    ws_count = sum(len(v) for v in manager.active_connections.values())
+    checks["websocket_connections"] = ws_count
+
+    all_ok = checks.get("database") == "ok"
+    return {
+        "status": "ready" if all_ok else "degraded",
+        "checks": checks,
+    }

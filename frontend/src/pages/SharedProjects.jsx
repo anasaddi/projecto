@@ -435,6 +435,15 @@ export default function SharedProjects() {
       try {
         const msg = JSON.parse(event.data);
         if (msg?.type === 'pong') return;
+        if (msg?.type === 'server_restart') {
+          // Server is restarting — will auto-reconnect via onclose handler
+          console.log('Server restart notification received');
+          return;
+        }
+        if (msg?.type === 'error') {
+          console.warn('WS rate limited:', msg.message);
+          return;
+        }
         applyDashboardFromPayload(msg);
         setTimeout(() => {
           if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;

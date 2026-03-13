@@ -218,22 +218,87 @@ async def skip_today(db: AsyncSession = Depends(get_db)):
 
 @router.get("/dashboard-state", response_model=schemas.DashboardStateOut | None, dependencies=[Depends(check_admin_access)])
 async def get_dashboard_state(db: AsyncSession = Depends(get_db)):
-    """Fetch the dashboard state (habits, projects, etc.) from DB."""
+    """Fetch the dashboard state — Redis-first, DB fallback."""
+    from app.cache import get_cached_dashboard, set_cached_dashboard
+    cached = await get_cached_dashboard()
+    if cached:
+        return {"key": "default", "data": cached, "updated_at": datetime.now(timezone.utc)}
     data = await crud_dashboard.get_dashboard_state_aggregated(db)
+    await set_cached_dashboard(data)
     return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
 
 @router.put("/dashboard-state", response_model=schemas.DashboardStateOut, dependencies=[Depends(check_admin_access)])
 async def update_dashboard_state(body: schemas.DashboardStateUpdate, db: AsyncSession = Depends(get_db)):
-    """Save the dashboard state to DB."""
+    """Save the dashboard state to DB and invalidate cache."""
+    from app.cache import invalidate_dashboard, set_cached_dashboard
     data = await crud_dashboard.update_dashboard_from_json(db, body.data)
+    await invalidate_dashboard()
+    await set_cached_dashboard(data)
     return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
+
+# --- Batch Operations ---
+
+@router.patch("/dashboard-state/batch", dependencies=[Depends(check_admin_access)])
+async def batch_update_dashboard(body: dict, db: AsyncSession = Depends(get_db)):
+    """Process multiple dashboard mutations in a single transaction.
+    
+    Body format: { "operations": [ { "type": "toggle_task", "projectId": "...", "taskId": "...", "done": true }, ... ] }
+    """
+    from app.crud.audit import record_event
+    operations = body.get("operations", [])
+    if not operations:
+        return {"status": "ok", "processed": 0}
+    
+    results = []
+    for op in operations:
+        op_type = op.get("type")
+        try:
+            if op_type == "toggle_task":
+                # Record audit event
+                await record_event(db, "task", op.get("taskId", ""), "toggled",
+                                   new_data={"done": op.get("done")})
+            elif op_type == "toggle_quick_task":
+                await record_event(db, "quick_task", op.get("taskId", ""), "toggled",
+                                   new_data={"done": op.get("done")})
+            results.append({"type": op_type, "status": "ok"})
+        except Exception as e:
+            results.append({"type": op_type, "status": "error", "message": str(e)})
+    
+    # Apply the full state update after batch
+    if body.get("state"):
+        await crud_dashboard.update_dashboard_from_json(db, body["state"])
+        from app.cache import invalidate_dashboard
+        await invalidate_dashboard()
+
+    return {"status": "ok", "processed": len(results), "results": results}
+
+# --- Audit Events ---
+
+@router.get("/audit-events", dependencies=[Depends(check_admin_access)])
+async def get_audit_events(
+    entity_type: str | None = None,
+    entity_id: str | None = None,
+    share_id: str | None = None,
+    limit: int = 50,
+    db: AsyncSession = Depends(get_db),
+):
+    """Query audit trail for dashboard changes."""
+    from app.crud.audit import get_events
+    return await get_events(db, entity_type=entity_type, entity_id=entity_id, share_id=share_id, limit=limit)
 
 # --- Shared Dashboard ---
 
 @router.get("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut | None)
 async def get_shared_dashboard(share_id: str, db: AsyncSession = Depends(get_db)):
-    """Fetch a shared dashboard by its share_id. PUBLIC ROUTE."""
-    return await crud_dashboard.get_shared_dashboard_aggregated(db, share_id)
+    """Fetch a shared dashboard — Redis-first, DB fallback. PUBLIC ROUTE."""
+    from app.cache import get_cached_shared_dashboard, set_cached_shared_dashboard
+    cached = await get_cached_shared_dashboard(share_id)
+    if cached:
+        return cached
+    data = await crud_dashboard.get_shared_dashboard_aggregated(db, share_id)
+    if data:
+        await set_cached_shared_dashboard(share_id, data)
+    return data
 
 @router.get("/shared-dashboards", response_model=list[schemas.SharedDashboardOut])
 async def list_shared_dashboards(db: AsyncSession = Depends(get_db)):
@@ -242,8 +307,16 @@ async def list_shared_dashboards(db: AsyncSession = Depends(get_db)):
 
 @router.put("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut)
 async def update_shared_dashboard(share_id: str, body: schemas.SharedDashboardUpdate, db: AsyncSession = Depends(get_db)):
-    """Update or create a shared dashboard by its share_id. PUBLIC ROUTE."""
+    """Update or create a shared dashboard. Invalidates cache + broadcasts. PUBLIC ROUTE."""
+    from app.cache import invalidate_shared_dashboard, set_cached_shared_dashboard
+    from app.crud.audit import record_event
+    
     dashboard = await crud_dashboard.update_shared_dashboard_from_json(db, share_id, body.data, body.title)
+    await invalidate_shared_dashboard(share_id)
+    await set_cached_shared_dashboard(share_id, dashboard)
+    
+    await record_event(db, "shared_dashboard", share_id, "updated",
+                       share_id=share_id, new_data={"title": body.title})
     
     payload = {
         "type": "sync",
@@ -256,9 +329,19 @@ async def update_shared_dashboard(share_id: str, body: schemas.SharedDashboardUp
 
 @router.websocket("/ws/shared-dashboard/{share_id}")
 async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: AsyncSession = Depends(get_db)):
+    import logging
+    logger = logging.getLogger("km.ws")
+    
     await manager.connect(websocket, share_id)
     try:
-        dashboard = await crud_dashboard.get_shared_dashboard_aggregated(db, share_id)
+        # Send initial state (try cache first)
+        from app.cache import get_cached_shared_dashboard, set_cached_shared_dashboard, invalidate_shared_dashboard
+        dashboard = await get_cached_shared_dashboard(share_id)
+        if not dashboard:
+            dashboard = await crud_dashboard.get_shared_dashboard_aggregated(db, share_id)
+            if dashboard:
+                await set_cached_shared_dashboard(share_id, dashboard)
+        
         if dashboard:
             dashboard["type"] = "sync"
             await websocket.send_json(dashboard)
@@ -276,13 +359,20 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
             if payload.get("type") == "ping":
                 await websocket.send_json({"type": "pong"})
                 continue
+            
+            # Rate limit check
+            if not manager.check_rate_limit(websocket):
+                await websocket.send_json({"type": "error", "message": "Rate limited. Slow down."})
+                continue
+            
             await manager.broadcast(payload, share_id, exclude=websocket)
             await crud_dashboard.update_shared_dashboard_from_json(
                 db, share_id, payload.get("data"), payload.get("title")
             )
+            await invalidate_shared_dashboard(share_id)
             
     except WebSocketDisconnect:
         manager.disconnect(websocket, share_id)
     except Exception as e:
-        print(f"WebSocket error: {e}")
+        logger.error(f"WebSocket error: {e}", extra={"share_id": share_id, "action": "error"})
         manager.disconnect(websocket, share_id)
