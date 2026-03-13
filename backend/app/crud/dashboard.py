@@ -58,7 +58,8 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default")
         "quickTasks": quickTasks,
         "prayerLogs": ds_data.get("prayerLogs", {}),
         "top3Manual": ds_data.get("top3Manual", [None, None, None]),
-        "dailyCompletionLog": ds_data.get("dailyCompletionLog", {})
+        "dailyCompletionLog": ds_data.get("dailyCompletionLog", {}),
+        "lifeGoals": ds_data.get("lifeGoals"),
     }
 
 async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "default"):
