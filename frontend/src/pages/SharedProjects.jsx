@@ -382,11 +382,11 @@ export default function SharedProjects() {
   const restDebounceRef = useRef(null);
   const mountedRef = useRef(true);
 
-  // WebSocket: in locale va a backend diretto; in prod usa stessa origine (Vercel proxy → Railway)
+  // WebSocket: Vercel non supporta WS proxy → connessione diretta a Railway in prod
   const getWsUrl = (sid) => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const isLocal = window.location.hostname === 'localhost';
-    const host = isLocal ? 'localhost:8000' : window.location.host;
+    const host = isLocal ? 'localhost:8000' : (import.meta.env.VITE_WS_HOST || 'projecto-production-feda.up.railway.app');
     return `${protocol}//${host}/api/training/ws/shared-dashboard/${encodeURIComponent(sid)}`;
   };
 

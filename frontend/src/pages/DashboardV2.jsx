@@ -1160,7 +1160,8 @@ export default function DashboardV2() {
       if (wsConnections.current[shareId]) return;
 
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.hostname === 'localhost' ? 'localhost:8000' : window.location.host;
+      const isLocal = window.location.hostname === 'localhost';
+      const host = isLocal ? 'localhost:8000' : (import.meta.env.VITE_WS_HOST || 'projecto-production-feda.up.railway.app');
       const wsUrl = `${protocol}//${host}/api/training/ws/shared-dashboard/${encodeURIComponent(shareId)}`;
       
       const socket = new WebSocket(wsUrl);
