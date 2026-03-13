@@ -280,9 +280,18 @@ async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, dat
     if "projects" in data:
         p_data = data["projects"]
         inc_proj_ids = [str(p["id"]) for p in p_data]
-        await db.execute(delete(Task).join(Project).filter(Project.share_id == share_id, Project.id.not_in(inc_proj_ids)))
-        await db.execute(delete(Project).filter(Project.share_id == share_id, Project.id.not_in(inc_proj_ids)))
-
+        if inc_proj_ids:
+            deleted_p_res = await db.execute(select(Project.id).filter(Project.share_id == share_id, Project.id.not_in(inc_proj_ids)))
+            deleted_p_ids = deleted_p_res.scalars().all()
+            if deleted_p_ids:
+                await db.execute(delete(Task).filter(Task.project_id.in_(deleted_p_ids)))
+                await db.execute(delete(Project).filter(Project.id.in_(deleted_p_ids)))
+        else:
+            p_ids_res = await db.execute(select(Project.id).filter(Project.share_id == share_id))
+            p_ids = p_ids_res.scalars().all()
+            if p_ids:
+                await db.execute(delete(Task).filter(Task.project_id.in_(p_ids)))
+                await db.execute(delete(Project).filter(Project.share_id == share_id))
         ex_p_res = await db.execute(select(Project).filter(Project.share_id == share_id))
         ex_projs = {str(p.id): p for p in ex_p_res.scalars().all()}
         for p in p_data:
