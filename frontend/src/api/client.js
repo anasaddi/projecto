@@ -15,6 +15,14 @@ async function request(path, options = {}) {
       ...options,
       headers,
     })
+    if (res.status === 401) {
+      localStorage.removeItem('km-admin-token');
+      localStorage.removeItem('km-user-role');
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    
     if (!res.ok) {
       const err = new Error(`Request failed with status ${res.status}: ${res.statusText}`)
       err.status = res.status
