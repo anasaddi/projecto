@@ -19,9 +19,11 @@ export function StandardProjectCard({
   setProjectDeadlineEditing,
   getDeadlineColorClass,
   formatDeadline,
-  renderTasks
+  renderTasks,
+  defaultExpanded = false,
+  onToggleExpand
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const accentBar = { indigo: 'bg-indigo-500', sky: 'bg-sky-500', violet: 'bg-violet-500', emerald: 'bg-emerald-500', amber: 'bg-amber-500', rose: 'bg-rose-500' }[accent] || 'bg-zinc-400';
 
   const menuItems = [
@@ -39,7 +41,11 @@ export function StandardProjectCard({
       {/* Header */}
       <div
         className="flex cursor-pointer items-center gap-3 p-4 hover:bg-zinc-50/60 dark:hover:bg-white/[0.02] transition-colors duration-150"
-        onClick={() => setExpanded(e => !e)}
+        onClick={() => {
+          const next = !expanded;
+          setExpanded(next);
+          onToggleExpand?.(next);
+        }}
       >
         <div className={`h-5 w-1 shrink-0 rounded-full ${accentBar} shadow-[0_0_8px_rgba(0,0,0,0.08)] dark:shadow-[0_0_8px_rgba(255,255,255,0.06)]`} />
 

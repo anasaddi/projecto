@@ -106,7 +106,7 @@ export function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle,
               className="flex-1 bg-transparent border-b border-indigo-400 outline-none text-xs py-0.5 text-zinc-900 dark:text-zinc-100"
             />
           ) : (
-            <span className={`flex-1 truncate text-xs ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-300 font-medium'}`}>
+            <span className={`flex-1 break-words text-xs leading-relaxed ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-300 font-medium'}`}>
               {node.title}
             </span>
           )}

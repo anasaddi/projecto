@@ -240,6 +240,19 @@ export default function SharedProjects() {
   const [projectDeadlineEditing, setProjectDeadlineEditing] = useState(null);
   const [projectDeadlineInput, setProjectDeadlineInput] = useState('');
 
+  const [expandedProjects, setExpandedProjects] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`km-shared-expanded-${id}`);
+      return saved ? JSON.parse(saved) : {};
+    } catch (_) { return {}; }
+  });
+
+  useEffect(() => {
+    if (id) {
+      localStorage.setItem(`km-shared-expanded-${id}`, JSON.stringify(expandedProjects));
+    }
+  }, [expandedProjects, id]);
+
   const [chatDraft, setChatDraft] = useState("");
   const chatScrollRef = useRef(null);
 
@@ -765,6 +778,8 @@ export default function SharedProjects() {
                     setProjectDeadlineEditing={setProjectDeadlineEditing}
                     getDeadlineColorClass={getDeadlineColorClass}
                     formatDeadline={formatDeadline}
+                    defaultExpanded={!!expandedProjects[proj.id]}
+                    onToggleExpand={(val) => setExpandedProjects(prev => ({ ...prev, [proj.id]: val }))}
                     renderTasks={() => (
                       <>
                         {proj.tasks?.map((node, tIdx) => (
