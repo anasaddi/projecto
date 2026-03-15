@@ -184,7 +184,6 @@ function WeeklyCalendar4({ onSelectDay, progressions, schedule, loading, onEditA
                     ${isToday ? 'is-today-marker bg-white dark:bg-zinc-900 border-indigo-500/50 shadow-xl shadow-indigo-500/5' : 'bg-white/10 dark:bg-zinc-900/10 border-zinc-200 dark:border-white/[0.06]'}
                     ${isSelected && !isToday ? 'border-indigo-500/50 shadow-lg bg-indigo-50/10 dark:bg-indigo-900/5' : ''}
                     ${day.is_completed ? 'border-emerald-500/30' : ''}
-                    ${isSunday ? 'opacity-50 grayscale' : ''}
                     ${isToday ? 'scale-[1.01]' : ''}`}
                   style={{ gridColumn: col, gridRow: '1 / 5' }}
                 />
@@ -196,7 +195,7 @@ function WeeklyCalendar4({ onSelectDay, progressions, schedule, loading, onEditA
                 >
                   <div className="relative">
                     <button
-                      onClick={() => template && !isSunday && onSelectDay(template, dayStr)}
+                      onClick={() => template && onSelectDay(template, dayStr)}
                       className={`flex flex-col items-center gap-0.5 py-3 rounded-2xl transition-all duration-300 w-full border shadow-sm
                         ${isSelected
                           ? 'bg-zinc-900 border-zinc-900 shadow-xl shadow-zinc-900/10 dark:bg-white dark:border-white'
@@ -219,14 +218,12 @@ function WeeklyCalendar4({ onSelectDay, progressions, schedule, loading, onEditA
                       </div>
                     </button>
 
-                    {!isSunday && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleComplete(day.date || day.date_, day.is_completed); }}
-                        className={`absolute top-1.5 right-1.5 p-1 rounded-lg transition-all z-20 ${day.is_completed ? 'text-white bg-emerald-500 shadow-sm' : 'text-zinc-300 dark:text-zinc-600 hover:text-indigo-500'}`}
-                      >
-                        <CheckCircle2 size={10} />
-                      </button>
-                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleComplete(day.date || day.date_, day.is_completed); }}
+                      className={`absolute top-1.5 right-1.5 p-1 rounded-lg transition-all z-20 ${day.is_completed ? 'text-white bg-emerald-500 shadow-sm' : 'text-zinc-300 dark:text-zinc-600 hover:text-indigo-500'}`}
+                    >
+                      <CheckCircle2 size={10} />
+                    </button>
                   </div>
                 </div>
 

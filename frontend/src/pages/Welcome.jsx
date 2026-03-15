@@ -1,31 +1,101 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Welcome() {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-stone-50 dark:bg-stone-950 p-6">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full text-center space-y-8"
-      >
-        <div className="space-y-4">
-          <h1 className="text-4xl font-black tracking-tight text-stone-900 dark:text-stone-100">
-            PROJECTO
-          </h1>
-          <p className="text-stone-500 dark:text-stone-400 text-sm font-medium leading-relaxed">
-            Personal Performance & Knowledge Management System.
-            <br />
-            Private access only.
-          </p>
-        </div>
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('km-theme') === 'dark');
 
-        <div className="pt-8 border-t border-stone-200 dark:border-stone-800">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-[10px] font-bold uppercase tracking-widest text-stone-400">
-            <div className="w-1.5 h-1.5 rounded-full bg-stone-400 animate-pulse" />
-            Waiting for Authentication
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark);
+    localStorage.setItem('km-theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
+
+  return (
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-zinc-50 dark:bg-[#0b0e14] transition-colors duration-500 overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-indigo-500/5 blur-[120px] rounded-full" />
+        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-violet-500/5 blur-[120px] rounded-full" />
+      </div>
+
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 max-w-md w-full text-center px-6"
+      >
+        <div className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex justify-center"
+          >
+             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-2xl shadow-indigo-500/20">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>
+            </div>
+          </motion.div>
+
+          <div className="space-y-3">
+            <motion.h1 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-5xl font-black tracking-tighter text-zinc-900 dark:text-zinc-100"
+            >
+              PROJECTO
+            </motion.h1>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="space-y-1"
+            >
+              <p className="text-zinc-500 dark:text-zinc-400 text-base font-medium">
+                Personal Performance & Knowledge Management System.
+              </p>
+              <p className="text-zinc-400 dark:text-zinc-500 text-sm italic">
+                Private access only.
+              </p>
+            </motion.div>
           </div>
         </div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.6 }}
+          className="mt-12 pt-8 border-t border-zinc-200/50 dark:border-white/[0.06]"
+        >
+          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white dark:bg-white/[0.03] border border-zinc-200/50 dark:border-white/[0.06] shadow-sm text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+            </span>
+            Waiting for Authentication
+          </div>
+        </motion.div>
+      </motion.div>
+
+      {/* Theme Toggle */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+        type="button"
+        onClick={() => setIsDark(!isDark)}
+        className="fixed bottom-8 right-8 flex h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-white/[0.05] border border-zinc-200 dark:border-white/[0.1] shadow-xl text-lg hover:scale-110 active:scale-95 transition-all z-50"
+      >
+        {isDark ? '☀️' : '🌙'}
+      </motion.button>
+
+      {/* Footer Info */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.2 }}
+        className="fixed bottom-8 left-1/2 -translate-x-1/2 text-[10px] text-zinc-400 dark:text-zinc-600 font-medium tracking-tight uppercase"
+      >
+        v0.1.0 • Built with Focus OS
       </motion.div>
     </div>
   );

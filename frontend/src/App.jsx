@@ -15,7 +15,7 @@ const Welcome = lazy(() => import('./pages/Welcome'))
 
 function RouteLoader() {
   return (
-    <div className="min-h-[40vh] flex items-center justify-center">
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-zinc-50 dark:bg-[#0b0e14] transition-colors duration-500 overflow-hidden">
       <div className="w-8 h-8 border-2 border-zinc-300 border-t-zinc-700 rounded-full animate-spin" />
     </div>
   )
@@ -81,7 +81,7 @@ export default function App() {
                 <Route path="/shared/:shareId" element={<SharedProjects />} />
                 <Route path="/youtube" element={<AdminRoute><YouTubeViewer /></AdminRoute>} />
                 <Route path="/training" element={<AdminRoute><Training /></AdminRoute>} />
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<Welcome />} />
               </Routes>
             </Suspense>
           </Layout>

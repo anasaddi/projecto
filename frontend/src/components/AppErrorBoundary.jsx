@@ -12,6 +12,21 @@ export default class AppErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('[AppErrorBoundary]', error, errorInfo);
+
+    // Auto-reload on chunk load failure (common after a new deployment)
+    const isChunkError = error?.message?.includes('Failed to fetch dynamically imported module') ||
+      error?.message?.includes('Importing a module script failed');
+
+    if (isChunkError) {
+      const lastReload = sessionStorage.getItem('last-chunk-error-reload');
+      const now = Date.now();
+
+      // Only auto-reload if we haven't reloaded in the last 10 seconds to avoid loops
+      if (!lastReload || now - parseInt(lastReload) > 10000) {
+        sessionStorage.setItem('last-chunk-error-reload', now.toString());
+        window.location.reload();
+      }
+    }
   }
 
   handleReset = () => {

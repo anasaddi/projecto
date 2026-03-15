@@ -17,11 +17,11 @@ export default function Layout({ children }) {
     localStorage.setItem('km-theme', isDark ? 'dark' : 'light')
   }, [isDark])
 
-  // Layout minimale solo per guest (visualizza condivisi) o home per non-admin
+  // Layout minimale solo per guest (visualizza condivisi) o non-admin
   const isGuest = localStorage.getItem('km-user-role') === 'guest'
   const isAdmin = localStorage.getItem('km-user-role') === 'admin' && localStorage.getItem('km-admin-token') === 'master-key'
 
-  if (isGuest || (!isAdmin && pathname === '/')) {
+  if (isGuest || !isAdmin) {
     return (
       <div className="min-h-screen text-zinc-900 dark:text-zinc-100 transition-colors flex flex-col">
         <main className="flex-1 overflow-auto">
