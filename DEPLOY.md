@@ -100,8 +100,8 @@ Railway farà girare il backend Python (FastAPI).
 
 | Nome               | Valore (incolla il tuo) |
 |--------------------|--------------------------|
-| `ASSEMBLYAI_API_KEY` | `228c3a02b348418b832ba2b350de3a2a` |
-| `OPENROUTER_API_KEY` | `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` |
+| `ASSEMBLYAI_API_KEY` | `YOUR_ASSEMBLYAI_KEY` |
+| `OPENROUTER_API_KEY` | `YOUR_OPENROUTER_KEY` |
 
 3. **CORS_ORIGINS** per ora lascialo vuoto; lo aggiungeremo dopo aver l’URL del frontend.
 

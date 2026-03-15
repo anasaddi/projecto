@@ -20,6 +20,8 @@ import assemblyai as aai
 from openai import AsyncOpenAI
 import aiofiles
 
+logger = logging.getLogger(__name__)
+
 # API keys: env vars in prod, fallback for dev
 ASSEMBLYAI_API_KEY = os.environ.get("ASSEMBLYAI_API_KEY", "").strip()
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "").strip()
@@ -28,8 +30,6 @@ if not ASSEMBLYAI_API_KEY or not OPENROUTER_API_KEY:
 
 if ASSEMBLYAI_API_KEY:
     aai.settings.api_key = ASSEMBLYAI_API_KEY
-
-logger = logging.getLogger(__name__)
 
 # Opzioni yt-dlp per ridurre 403 su YouTube (client alternativi + UA browser-like)
 YT_DLP_BASE_OPTS = {

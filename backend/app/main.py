@@ -40,18 +40,7 @@ async def lifespan(app: FastAPI):
         try:
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
-                # Manual schema migration for is_active column if it doesn't exist
-                try:
-                    dialect = conn.dialect.name
-                    if dialect == "postgresql":
-                        await conn.execute(text("ALTER TABLE exercises ADD COLUMN IF NOT EXISTS is_active INTEGER DEFAULT 1"))
-                    elif dialect == "sqlite":
-                        cols = await conn.execute(text("PRAGMA table_info(exercises)"))
-                        col_names = {r[1] for r in cols.fetchall()}
-                        if "is_active" not in col_names:
-                            await conn.execute(text("ALTER TABLE exercises ADD COLUMN is_active INTEGER DEFAULT 1"))
-                except Exception as migrate_err:
-                    logger.warning(f"Migration error (is_active): {migrate_err}")
+        except Exception as e:
             db_ready = True
             logger.info(f"Database connection successful on attempt {i+1}")
             break
@@ -125,7 +114,7 @@ def create_app() -> FastAPI:
     # 1. CORS
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=_cors_origins_list(settings),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

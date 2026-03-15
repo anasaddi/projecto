@@ -17,10 +17,17 @@ node_modules/
 frontend/dist/
 
 # Databases
+*.sqlite
 *.db
 db.sqlite
 backend/km.db
 backend/test.db
+
+# Logs & Temporary files
+*.log
+*.txt
+temp*.json
+.coverage
 
 # Cache
 backend/.cache/
