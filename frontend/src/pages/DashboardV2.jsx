@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import api from '../api/client';
+import { api } from '../api/client';
 import { useDashboardStats } from '../context/DashboardStatsContext';
 
 // Modular Components
