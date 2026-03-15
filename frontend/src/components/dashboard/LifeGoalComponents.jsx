@@ -21,7 +21,7 @@ export function LifeGoalCard({
         e.dataTransfer.setData('application/json', JSON.stringify({ type: 'lifeGoal', goalId: goal.id }));
         e.dataTransfer.effectAllowed = 'move';
       }}
-      className="group/goal relative flex flex-col rounded-2xl border border-zinc-200/60 bg-white shadow-sm transition-all hover:shadow-md hover:border-zinc-300 dark:border-white/[0.06] dark:bg-[#161920]/50"
+      className={`group/goal relative flex flex-col rounded-2xl border border-zinc-200/60 bg-white shadow-sm transition-all hover:shadow-md hover:border-zinc-300 dark:border-white/[0.06] dark:bg-[#161920]/50 ${deadlineEditing === goal.id ? 'z-30' : 'z-auto'}`}
     >
       <div className="p-3.5">
         <div className="flex items-start gap-2.5">

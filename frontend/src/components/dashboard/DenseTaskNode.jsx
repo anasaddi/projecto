@@ -63,7 +63,7 @@ export function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle,
 
   return (
     <div
-      className="group/task flex flex-col w-full"
+      className={`group/task flex flex-col w-full relative ${showDeadline ? 'z-30' : 'z-auto'}`}
       onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.add('bg-zinc-50'); }}
       onDragLeave={(e) => { e.currentTarget.classList.remove('bg-zinc-50'); }}
       onDrop={(e) => {

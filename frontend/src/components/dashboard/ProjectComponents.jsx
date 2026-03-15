@@ -24,6 +24,7 @@ export function StandardProjectCard({
   onToggleExpand
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const accentBar = { indigo: 'bg-indigo-500', sky: 'bg-sky-500', violet: 'bg-violet-500', emerald: 'bg-emerald-500', amber: 'bg-amber-500', rose: 'bg-rose-500' }[accent] || 'bg-zinc-400';
 
   const menuItems = [
@@ -37,7 +38,7 @@ export function StandardProjectCard({
   ];
 
   return (
-    <div className="dashboard-panel group flex flex-col transition-all text-left">
+    <div className={`dashboard-panel group flex flex-col transition-all text-left relative ${isMenuOpen ? 'z-50' : 'z-auto'}`}>
       {/* Header */}
       <div
         className="flex cursor-pointer items-center gap-3 p-4 hover:bg-zinc-50/60 dark:hover:bg-white/[0.02] transition-colors duration-150"
@@ -106,7 +107,7 @@ export function StandardProjectCard({
           )}
 
           <div onClick={(e) => e.stopPropagation()}>
-            <KebabMenu items={menuItems} />
+            <KebabMenu items={menuItems} onOpenChange={setIsMenuOpen} />
           </div>
 
           <Icons.ChevronDown className={`h-4 w-4 text-zinc-400 dark:text-zinc-500 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />

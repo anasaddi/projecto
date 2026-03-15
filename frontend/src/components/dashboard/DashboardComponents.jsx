@@ -26,9 +26,14 @@ export function TaskCheckbox({ done, onClick, className = '' }) {
 /**
  * KebabMenu — dropdown minimale con azioni contestuali
  */
-export function KebabMenu({ items }) {
+export function KebabMenu({ items, onOpenChange }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+
+  useEffect(() => {
+    onOpenChange?.(open);
+  }, [open, onOpenChange]);
+
   useEffect(() => {
     if (!open) return;
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
