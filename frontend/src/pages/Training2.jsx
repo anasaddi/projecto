@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../api/client';
-import WeeklyCalendar4 from '../components/WeeklyCalendar4';
+import WeeklyCalendar from '../components/WeeklyCalendar';
 import StrengthTable2 from '../components/StrengthTable2';
 import { Dumbbell, Swords, Target, Undo2, Redo2, History as HistoryIcon, User, Activity, X, Calendar as CalendarIcon, SkipForward, ChevronDown, ChevronUp } from 'lucide-react';
 import TodayCard from '../components/training/TodayCard';
@@ -424,7 +424,7 @@ export default function Training2() {
               <section className="space-y-4">
                 {/* Full calendar — collapsible */}
                 {calendarOpen && (
-                  <WeeklyCalendar4
+                  <WeeklyCalendar
                     schedule={weekData}
                     progressions={allProgressions}
                     onSelectDay={handleDaySelect}

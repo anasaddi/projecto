@@ -6,7 +6,7 @@ async function request(path, options = {}) {
   const token = localStorage.getItem('km-admin-token')
   const headers = {
     'Content-Type': 'application/json',
-    ...(token ? { 'x-km-access': token } : {}),
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
     ...options.headers,
   }
   const url = BASE + path

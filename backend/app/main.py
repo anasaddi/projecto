@@ -39,11 +39,15 @@ async def lifespan(app: FastAPI):
     for i in range(max_retries):
         try:
             async with engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
-        except Exception as e:
-            db_ready = True
-            logger.info(f"Database connection successful on attempt {i+1}")
-            break
+                try:
+                    await conn.run_sync(Base.metadata.create_all)
+                except Exception as e:
+                    logger.error(f"Failed to create tables: {e}")
+                    db_ready = False
+                else:
+                    db_ready = True
+                    logger.info(f"Database connection and table creation successful on attempt {i+1}")
+                    break # Exit loop on success
         except Exception as e:
             logger.error(f"Database connection attempt {i+1} failed: {e}")
             if i < max_retries - 1:
@@ -51,6 +55,7 @@ async def lifespan(app: FastAPI):
                 await asyncio.sleep(retry_delay)
             else:
                 logger.critical("Max retries reached. Database initialization failed.")
+                db_ready = False # Ensure db_ready is False if all retries fail
 
     # Seeding
     if db_ready:

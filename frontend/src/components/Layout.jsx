@@ -19,7 +19,8 @@ export default function Layout({ children }) {
 
   // Layout minimale solo per guest (visualizza condivisi) o non-admin
   const isGuest = localStorage.getItem('km-user-role') === 'guest'
-  const isAdmin = localStorage.getItem('km-user-role') === 'admin' && localStorage.getItem('km-admin-token') === 'master-key'
+  const isAdmin = localStorage.getItem('km-user-role') === 'admin'
+                 && !!localStorage.getItem('km-admin-token')
 
   if (isGuest || !isAdmin) {
     return (
