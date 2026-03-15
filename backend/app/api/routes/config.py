@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from app.config import get_settings
 from app.api.deps import get_current_admin
 
-router = APIRouter(dependencies=[Depends(get_current_admin)])
+router = APIRouter()
 
 @router.get("/constants")
 async def get_constants():

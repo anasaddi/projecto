@@ -3,6 +3,8 @@ import { Icons } from './Icons';
 
 import { useGlobalConfig } from '../../context/GlobalConfigContext';
 
+const DEFAULT_PRAYERS = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+
 function toDateKey(date = new Date()) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -22,7 +24,7 @@ function startOfDay(date = new Date()) {
   return d;
 }
 
-function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, now }) {
+function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, now, PRAYERS = DEFAULT_PRAYERS }) {
   const totalItems = activeHabits.length + PRAYERS.length + 3;
   const { weekAvg, monthAvg, bestDay, worstDay } = useMemo(() => {
     const days = [];
@@ -130,7 +132,7 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
         </div>
         <span>Più</span>
       </div>
-      <LightAnalyticsInner dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} now={now} />
+      <LightAnalyticsInner dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} now={now} PRAYERS={PRAYERS} />
     </div>
   );
 }
