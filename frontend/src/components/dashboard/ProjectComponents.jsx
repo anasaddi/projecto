@@ -35,7 +35,7 @@ export function StandardProjectCard({
   ];
 
   return (
-    <div className="dashboard-panel group/proj flex flex-col overflow-hidden transition-all text-left">
+    <div className="dashboard-panel group flex flex-col transition-all text-left">
       {/* Header */}
       <div
         className="flex cursor-pointer items-center gap-3 p-4 hover:bg-zinc-50/60 dark:hover:bg-white/[0.02] transition-colors duration-150"
@@ -47,7 +47,8 @@ export function StandardProjectCard({
           value={project.title}
           onChange={(e) => { e.stopPropagation(); onTitleChange(e.target.value); }}
           onClick={(e) => e.stopPropagation()}
-          className="seamless-input flex-1 text-sm font-semibold text-zinc-800 dark:text-zinc-100"
+          className="seamless-input flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-zinc-800 dark:text-zinc-100"
+          title={project.title}
         />
 
         <div className="flex shrink-0 items-center gap-3">

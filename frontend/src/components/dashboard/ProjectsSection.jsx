@@ -107,10 +107,16 @@ export function ProjectsSection({
                         onRename={(tid, val) => updateProject(project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, title: val })) }))}
                         onDeadline={(tid, val) => updateProject(project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, deadline: val || undefined })) }))}
                         onAddChild={(tid, val) => updateProject(project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, children: [...(n.children || []), createTaskNode(val)] })) }))}
-                        onAddToTop3={(pid, tid) => {
-                          const free = top3Manual.findIndex(s => !s);
-                          if (free !== -1) setTop3SlotAtIndex(free, { projectId: pid, taskId: tid });
+                        onToggleTop3={(pid, tid) => {
+                          const existingIdx = top3Manual.findIndex(s => s && s.projectId === pid && s.taskId === tid && !s.shareId);
+                          if (existingIdx !== -1) {
+                            setTop3SlotAtIndex(existingIdx, null);
+                          } else {
+                            const free = top3Manual.findIndex(s => !s);
+                            if (free !== -1) setTop3SlotAtIndex(free, { projectId: pid, taskId: tid, shareId: null });
+                          }
                         }}
+                        checkIsTop3={(tid) => top3Manual.some(s => s && s.projectId === project.id && s.taskId === tid && !s.shareId)}
                         onMove={(tid, targetIdx, pid) => pid ? moveSubtask(project.id, pid, tid, targetIdx) : moveProjectTask(project.id, tid, tIdx)}
                         hasFreeTop3Slot={top3Manual.some(s => !s)}
                       />
@@ -201,10 +207,16 @@ export function ProjectsSection({
                               onRename={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, title: val })) }))}
                               onDeadline={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, deadline: val || undefined })) }))}
                               onAddChild={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, children: [...(n.children || []), createTaskNode(val)] })) }))}
-                              onAddToTop3={(pid, tid) => {
-                                const free = top3Manual.findIndex(s => !s);
-                                if (free !== -1) setTop3SlotAtIndex(free, { projectId: pid, taskId: tid });
+                              onToggleTop3={(pid, tid) => {
+                                const existingIdx = top3Manual.findIndex(s => s && s.projectId === pid && s.taskId === tid && s.shareId === shared.share_id);
+                                if (existingIdx !== -1) {
+                                  setTop3SlotAtIndex(existingIdx, null);
+                                } else {
+                                  const free = top3Manual.findIndex(s => !s);
+                                  if (free !== -1) setTop3SlotAtIndex(free, { projectId: pid, taskId: tid, shareId: shared.share_id });
+                                }
                               }}
+                              checkIsTop3={(tid) => top3Manual.some(s => s && s.projectId === project.id && s.taskId === tid && s.shareId === shared.share_id)}
                               onMove={(tid, targetIdx, pid) => {
                                 if (pid) {
                                   updateSharedDashboardProject(shared.share_id, project.id, p => ({

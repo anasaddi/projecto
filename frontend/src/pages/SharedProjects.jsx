@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../api/client';
+import { StandardProjectCard } from '../components/dashboard/ProjectComponents';
+import { DenseTaskNode } from '../components/dashboard/DenseTaskNode';
 
 /**
  * ----------------------------------------------------------------------
@@ -97,143 +99,6 @@ function countTreeStats(nodes) {
  * COMPONENTS
  * ----------------------------------------------------------------------
  */
-
-function SharedTaskNode({ node, depth, projectId, projectAccent, onToggle, onDelete, onRename, onDeadline, onAddChild, onMove, parentId = null }) {
-  const [draft, setDraft] = useState('');
-  const [openAdd, setOpenAdd] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [showDeadline, setShowDeadline] = useState(false);
-  const [deadlineInput, setDeadlineInput] = useState(node.deadline || '');
-  const [expanded, setExpanded] = useState(true);
-  const hasChildren = Array.isArray(node.children) && node.children.length > 0;
-  const canAddChild = depth < 2;
-
-  const handleDeadlineSave = () => {
-    onDeadline?.(node.id, deadlineInput.trim() || null);
-    setShowDeadline(false);
-  };
-
-  const handleDragStart = (e) => {
-    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'shared-task', projectId, taskId: node.id, parentId }));
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  return (
-    <div
-      className="flex flex-col w-full"
-      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.add('bg-indigo-50/50', 'dark:bg-indigo-500/5'); }}
-      onDragLeave={(e) => { e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-500/5'); }}
-      onDrop={(e) => {
-        e.preventDefault(); e.stopPropagation();
-        e.currentTarget.classList.remove('bg-indigo-50/50', 'dark:bg-indigo-500/5');
-        try {
-          const payload = JSON.parse(e.dataTransfer.getData('application/json'));
-          if (payload.type === 'shared-task' && payload.projectId === projectId && payload.parentId === parentId) {
-            onMove(payload.taskId);
-          }
-        } catch (_) { }
-      }}
-    >
-      <div
-        draggable
-        onDragStart={handleDragStart}
-        className="flex items-start gap-1.5 py-1 px-1 rounded-md hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group/row cursor-grab active:cursor-grabbing"
-      >
-        <div className="w-3.5 flex justify-center shrink-0 mt-0.5">
-          {hasChildren ? (
-            <button onClick={() => setExpanded(!expanded)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-              {expanded ? <Icons.ChevronDown className="w-3 h-3" /> : <Icons.ChevronRight className="w-3 h-3" />}
-            </button>
-          ) : <span className="w-3 h-3" />}
-        </div>
-
-        <button onClick={() => onToggle(node.id, !node.done)} className={`shrink-0 mt-0.5 ${node.done ? 'text-emerald-500' : 'text-gray-300 dark:text-gray-600 hover:text-indigo-400'}`}>
-          {node.done ? <Icons.CheckCircle className="w-3.5 h-3.5" /> : <Icons.Circle className="w-3.5 h-3.5" />}
-        </button>
-
-        <div className="flex-1 min-w-0 grid grid-cols-[1fr_5.5rem_auto] items-center gap-2">
-          <div className="min-w-0" onDoubleClick={() => setEditing(true)}>
-            {editing ? (
-              <input
-                autoFocus
-                defaultValue={node.title}
-                onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
-                onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
-                className="w-full bg-white dark:bg-gray-800 border border-indigo-400 rounded px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            ) : (
-              <span onClick={() => onToggle(node.id, !node.done)} className={`text-xs cursor-pointer block leading-relaxed ${node.done ? 'text-gray-400 line-through' : 'text-gray-800 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400'}`}>
-                {node.title}
-              </span>
-            )}
-          </div>
-
-          {(node.deadline || showDeadline) && (
-            <div className="flex justify-end">
-              {showDeadline ? (
-                <input
-                  type="date"
-                  value={deadlineInput || ''}
-                  onChange={(e) => setDeadlineInput(e.target.value)}
-                  onBlur={handleDeadlineSave}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleDeadlineSave(); if (e.key === 'Escape') setShowDeadline(false); }}
-                  autoFocus
-                  className="w-full max-w-[7rem] text-[10px] py-0.5 px-1.5 rounded-md border border-amber-400 bg-white dark:bg-gray-800 outline-none"
-                />
-              ) : (
-                <button onClick={() => setShowDeadline(true)} className={`flex items-center gap-0.5 px-2 py-1 rounded text-[11px] shrink-0 ${getDeadlineColorClass(node.deadline, node.done)}`}>
-                  <Icons.Calendar className="w-3 h-3 shrink-0" />
-                  <span className="tabular-nums">{formatDeadline(node.deadline)}</span>
-                </button>
-              )}
-            </div>
-          )}
-
-          <div className="flex items-center gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity justify-end">
-            {!node.deadline && !showDeadline && (
-              <button onClick={() => setShowDeadline(true)} className="p-0.5 text-gray-500 hover:text-amber-500" title="Scadenza">
-                <Icons.Calendar className="w-3 h-3" />
-              </button>
-            )}
-            {canAddChild && (
-              <button onClick={() => setOpenAdd(!openAdd)} className="p-0.5 text-gray-500 hover:text-indigo-500" title="Subtask">
-                <Icons.Plus className="w-3 h-3" />
-              </button>
-            )}
-            <button onClick={() => onDelete(node.id)} className="p-0.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded" title="Elimina">
-              <Icons.X className="w-3 h-3" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {openAdd && canAddChild && (
-        <div className="flex pl-6 pr-1 py-1">
-          <input
-            autoFocus
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { const t = draft.trim(); if (t) { onAddChild(node.id, t); setDraft(''); setOpenAdd(false); } } if (e.key === 'Escape') setOpenAdd(false); }}
-            placeholder="Aggiungi subtask..."
-            className="flex-1 bg-white dark:bg-[#1a1d24] border border-gray-200 dark:border-gray-700 rounded px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-      )}
-
-      {expanded && hasChildren && (
-        <div className="ml-5 pl-2 border-l-2 border-indigo-300 dark:border-indigo-600 flex flex-col">
-          {node.children.map((child, cIdx) => (
-            <SharedTaskNode
-              key={child.id} node={child} depth={depth + 1} projectId={projectId}
-              onToggle={onToggle} onDelete={onDelete} onRename={onRename} onDeadline={onDeadline} onAddChild={onAddChild}
-              onMove={(tid) => onMove(tid, cIdx, node.id)} parentId={node.id}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 /**
  * Lista di tutti i shared dashboards dell'utente (visibile su /shared senza id)
@@ -368,10 +233,12 @@ export default function SharedProjects() {
     quickTasks: [],
     chat: [],
     title: "Progetti Condivisi",
-    loading: true,
     error: null,
     isConnected: false
   });
+
+  const [projectDeadlineEditing, setProjectDeadlineEditing] = useState(null);
+  const [projectDeadlineInput, setProjectDeadlineInput] = useState('');
 
   const [chatDraft, setChatDraft] = useState("");
   const chatScrollRef = useRef(null);
@@ -879,94 +746,81 @@ export default function SharedProjects() {
               }[accent];
 
               return (
-                <motion.div
-                  layout
-                  key={proj.id}
-                  className="flex flex-col bg-white dark:bg-[#161920]/50 border border-zinc-200 dark:border-white/[0.06] rounded-xl overflow-hidden shadow-sm hover:border-zinc-300 dark:hover:border-white/[0.1] transition-all duration-300 h-fit group"
-                >
-                  <div className="p-4 border-b border-zinc-100 dark:border-white/[0.06] bg-zinc-50/50 dark:bg-white/[0.02]">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
-                        <div className={`w-1 h-4 ${accentBar} rounded-full shrink-0`}></div>
-                        <input
-                          defaultValue={proj.title}
-                          onBlur={(e) => updateProject(proj.id, p => ({ ...p, title: e.target.value }))}
-                          className="w-full text-[15px] font-bold bg-transparent border-none outline-none focus:ring-0 rounded px-1 py-0.5"
-                          placeholder="Titolo progetto..."
-                        />
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => deleteProject(proj.id)} className="p-1.5 text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-all opacity-0 group-hover:opacity-100">
-                          <Icons.X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* BARRA PROGETTO SINGOLO */}
-                    <div className="flex items-center gap-3 bg-white dark:bg-black/20 p-2 rounded-lg border border-zinc-100 dark:border-white/[0.04]">
-                      <div className="flex-1 h-1 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${percentage}%` }}
-                          className={`h-full bg-indigo-500 rounded-full`}
-                        />
-                      </div>
-                      <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-300 tabular-nums">
-                        {percentage}%
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex-1 p-4 space-y-3 overflow-y-auto max-h-[450px] custom-scrollbar">
-                    {proj.tasks.map((task, idx) => (
-                      <SharedTaskNode
-                        key={task.id} node={task} depth={0} projectId={proj.id}
-                        onToggle={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, done: val })) }))}
-                        onDelete={(tid) => updateProject(proj.id, p => ({ ...p, tasks: removeNodeFromTree(p.tasks, tid) }))}
-                        onRename={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, title: val })) }))}
-                        onDeadline={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, deadline: val })) }))}
-                        onAddChild={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, children: [...(n.children || []), { id: uid('task'), title: val, done: false, children: [] }] })) }))}
-                        onMove={(tid, targetIdx, parentId) => updateProject(proj.id, p => {
-                          if (parentId) {
-                            return {
-                              ...p, tasks: updateNodeInTree(p.tasks, parentId, parent => {
-                                const next = [...(parent.children || [])];
-                                const fromIdx = next.findIndex(t => t.id === tid);
-                                if (fromIdx === -1) return parent;
-                                const [removed] = next.splice(fromIdx, 1);
-                                next.splice(targetIdx, 0, removed);
-                                return { ...parent, children: next };
-                              })
-                            };
-                          }
-                          const next = [...p.tasks];
-                          const fromIdx = next.findIndex(t => t.id === tid);
-                          if (fromIdx === -1) return p;
-                          const [removed] = next.splice(fromIdx, 1);
-                          next.splice(targetIdx, 0, removed);
-                          return { ...p, tasks: next };
-                        })}
-                      />
-                    ))}
-                  </div>
-
-                  <div className="p-4 pt-0">
-                    <input
-                      value={projectTaskDrafts[proj.id] || ''}
-                      onChange={(e) => setProjectTaskDrafts(prev => ({ ...prev, [proj.id]: e.target.value }))}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          const val = projectTaskDrafts[proj.id]?.trim();
-                          if (val) {
-                            updateProject(proj.id, p => ({ ...p, tasks: [...p.tasks, { id: uid('task'), title: val, done: false, children: [] }] }));
-                            setProjectTaskDrafts(prev => ({ ...prev, [proj.id]: '' }));
-                          }
-                        }
-                      }}
-                      placeholder="+ Aggiungi task..."
-                      className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-2 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors"
-                    />
-                  </div>
+                <motion.div layout key={proj.id} className="h-fit">
+                  <StandardProjectCard
+                    project={proj}
+                    stats={stats}
+                    percentage={percentage}
+                    accent={accent}
+                    isShared={false} // shared links are shown differently anyway
+                    onTitleChange={(val) => updateProject(proj.id, p => ({ ...p, title: val }))}
+                    onDelete={() => deleteProject(proj.id)}
+                    onDeadlineClick={(val) => {
+                      updateProject(proj.id, p => ({ ...p, deadline: val.trim() || undefined }));
+                      setProjectDeadlineEditing(null);
+                    }}
+                    projectDeadlineEditing={projectDeadlineEditing}
+                    projectDeadlineInput={projectDeadlineInput}
+                    setProjectDeadlineInput={setProjectDeadlineInput}
+                    setProjectDeadlineEditing={setProjectDeadlineEditing}
+                    getDeadlineColorClass={getDeadlineColorClass}
+                    formatDeadline={formatDeadline}
+                    renderTasks={() => (
+                      <>
+                        {proj.tasks?.map((node, tIdx) => (
+                          <DenseTaskNode
+                            key={node.id} node={node} depth={0} projectId={proj.id} projectAccent={accent}
+                            onToggle={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, done: val })) }))}
+                            onDelete={(tid) => updateProject(proj.id, p => ({ ...p, tasks: removeNodeFromTree(p.tasks, tid) }))}
+                            onRename={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, title: val })) }))}
+                            onDeadline={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, deadline: val || undefined })) }))}
+                            onAddChild={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, children: [...(n.children || []), { id: uid('task'), title: val, done: false } ] })) }))}
+                            onToggleTop3={() => {}}
+                            hasFreeTop3Slot={false}
+                            checkIsTop3={() => false}
+                            onMove={(tid, targetIdx, parentId) => updateProject(proj.id, p => {
+                              if (parentId) {
+                                return {
+                                  ...p, tasks: updateNodeInTree(p.tasks, parentId, parent => {
+                                    const next = [...(parent.children || [])];
+                                    const fromIdx = next.findIndex(t => t.id === tid);
+                                    if (fromIdx === -1) return parent;
+                                    const [removed] = next.splice(fromIdx, 1);
+                                    next.splice(targetIdx, 0, removed);
+                                    return { ...parent, children: next };
+                                  })
+                                };
+                              }
+                              const next = [...p.tasks];
+                              const fromIdx = next.findIndex(t => t.id === tid);
+                              if (fromIdx === -1) return p;
+                              const [removed] = next.splice(fromIdx, 1);
+                              next.splice(targetIdx, 0, removed);
+                              return { ...p, tasks: next };
+                            })}
+                          />
+                        ))}
+                        <div className="pt-1 pl-1">
+                          <input
+                            value={projectTaskDrafts[proj.id] ?? ''}
+                            onChange={(e) => setProjectTaskDrafts(prev => ({ ...prev, [proj.id]: e.target.value }))}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const title = (projectTaskDrafts[proj.id] ?? '').trim();
+                                if (title) {
+                                  updateProject(proj.id, p => ({ ...p, tasks: [...(p.tasks || []), { id: uid('task'), title, done: false }] }));
+                                  setProjectTaskDrafts(prev => ({ ...prev, [proj.id]: '' }));
+                                }
+                              }
+                            }}
+                            placeholder="Add task... (Enter)"
+                            className="w-full bg-transparent text-sm text-zinc-500 dark:text-zinc-400 outline-none placeholder:text-zinc-400"
+                          />
+                        </div>
+                      </>
+                    )}
+                  />
                 </motion.div>
               );
             })}

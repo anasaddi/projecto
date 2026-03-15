@@ -164,7 +164,7 @@ export function QuickTasksSection({
               </div>
 
               {/* Actions al hover */}
-              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+              <div className={`flex items-center gap-0.5 transition-opacity ${top3Manual.some(s => s && s.quickTaskId === task.id && (isShared ? s.shareId === task.shareId : !s.shareId)) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} onClick={(e) => e.stopPropagation()}>
                 {!task.deadline && quickTaskDeadlineEditing !== (isShared ? `shared-${task.shareId}-${task.id}` : task.id) && (
                   <button type="button" onClick={() => {
                     setQuickTaskDeadlineInput('');
@@ -176,12 +176,16 @@ export function QuickTasksSection({
                 <button
                   type="button"
                   onClick={() => {
-                    const free = top3Manual.findIndex(s => !s);
-                    if (free !== -1) setTop3SlotAtIndex(free, { quickTaskId: task.id });
+                    const existingIdx = top3Manual.findIndex(s => s && s.quickTaskId === task.id && (isShared ? s.shareId === task.shareId : !s.shareId));
+                    if (existingIdx !== -1) {
+                      setTop3SlotAtIndex(existingIdx, null);
+                    } else {
+                      const free = top3Manual.findIndex(s => !s);
+                      if (free !== -1) setTop3SlotAtIndex(free, { quickTaskId: task.id, shareId: isShared ? task.shareId : null });
+                    }
                   }}
-                  disabled={!top3Manual.some(s => !s)}
-                  className={`dashboard-action-btn p-1 ${top3Manual.some(s => !s) ? 'hover:text-amber-500' : 'opacity-30 cursor-not-allowed'}`}
-                  title="Top 3"
+                  className={`dashboard-action-btn p-1 ${top3Manual.some(s => s && s.quickTaskId === task.id && (isShared ? s.shareId === task.shareId : !s.shareId)) ? 'text-amber-600 bg-amber-100 dark:bg-amber-900/40 rounded' : 'hover:text-amber-500'}`}
+                  title={top3Manual.some(s => s && s.quickTaskId === task.id && (isShared ? s.shareId === task.shareId : !s.shareId)) ? "Rimuovi dai Top 3" : "Pin to Focus"}
                 >
                   <Icons.Target className="h-3 w-3" />
                 </button>

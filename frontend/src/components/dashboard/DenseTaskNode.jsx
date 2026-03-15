@@ -35,13 +35,11 @@ function getDeadlineColorClass(deadlineKey, isDone) {
   if (!dead) return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20';
   const daysUntil = Math.round((dead - today) / 86400000);
   if (daysUntil < 0) return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
-  if (daysUntil <= 2) return 'text-red-600 dark:text-red-400 bg-red-50/80 dark:bg-red-900/30';
-  if (daysUntil <= 7) return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20';
-  if (daysUntil <= 14) return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20';
   return 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-900/20';
 }
 
-export function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDelete, onRename, onDeadline, onAddChild, onAddToTop3, onMove, hasFreeTop3Slot = true, parentId = null }) {
+export function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDelete, onRename, onDeadline, onAddChild, onToggleTop3, onMove, hasFreeTop3Slot = true, checkIsTop3 = () => false, parentId = null }) {
+  const isTop3 = checkIsTop3(node.id);
   const [draft, setDraft] = useState('');
   const [openAdd, setOpenAdd] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -125,9 +123,13 @@ export function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle,
         </div>
 
         {/* Hover Actions */}
-        <div className="flex items-center gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity ml-1 pr-1">
-          {!node.done && hasFreeTop3Slot && (
-            <button onClick={(e) => { e.stopPropagation(); onAddToTop3(node.id); }} className="dashboard-action-btn text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20" title="Pin to Focus">
+        <div className={`flex items-center gap-0.5 transition-opacity ml-1 pr-1 ${isTop3 ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'}`}>
+          {!node.done && (isTop3 || hasFreeTop3Slot) && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onToggleTop3(projectId, node.id); }} 
+              className={`dashboard-action-btn ${isTop3 ? 'text-amber-600 bg-amber-100 dark:bg-amber-900/40' : 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`} 
+              title={isTop3 ? "Remove from Focus" : "Pin to Focus"}
+            >
               <Icons.Target className="h-3 w-3" />
             </button>
           )}
@@ -183,10 +185,11 @@ export function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle,
               onRename={onRename}
               onDeadline={onDeadline}
               onAddChild={onAddChild}
-              onAddToTop3={onAddToTop3}
+              onToggleTop3={onToggleTop3}
               onMove={onMove}
               parentId={node.id}
               hasFreeTop3Slot={hasFreeTop3Slot}
+              checkIsTop3={checkIsTop3}
             />
           ))}
         </div>
