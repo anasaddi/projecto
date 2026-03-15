@@ -372,11 +372,12 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
             await invalidate_shared_dashboard(share_id)
             
     except WebSocketDisconnect:
-        manager.disconnect(websocket, share_id)
+        pass
     except Exception as e:
         logger.error(f"WebSocket error: {e}", extra={"share_id": share_id, "action": "error"})
         try:
             await websocket.close()
-        except:
+        except Exception:
             pass
+    finally:
         manager.disconnect(websocket, share_id)

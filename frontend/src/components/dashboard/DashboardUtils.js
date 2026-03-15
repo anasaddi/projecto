@@ -1,7 +1,6 @@
 export const STORAGE_KEY = 'km-dashboard-v2';
 export const BC_CHANNEL = 'km-dashboard-v2-sync';
 export const MAX_TASK_DEPTH = 2;
-export const PRAYERS = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 export const POMODORO_STORAGE = 'km-pomodoro-v2';
 export const POMODORO_DURATION = 25 * 60;
 

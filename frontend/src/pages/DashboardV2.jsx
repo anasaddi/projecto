@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { api } from '../api/client';
 import { useDashboardStats } from '../context/DashboardStatsContext';
+import { useGlobalConfig } from '../context/GlobalConfigContext';
 
 // Modular Components
 import { Icons } from '../components/dashboard/Icons';
@@ -19,7 +20,6 @@ import { LifeGoalsSection } from '../components/dashboard/LifeGoalsSection';
 import {
   STORAGE_KEY,
   BC_CHANNEL,
-  PRAYERS,
   uid,
   toDateKey,
   formatDeadline,
@@ -57,6 +57,8 @@ const PROJECT_ACCENTS = ['indigo', 'sky', 'violet', 'emerald', 'amber', 'rose'];
 export default function DashboardV2() {
   const initial = useMemo(() => loadState(), []);
   const { updateStats } = useDashboardStats() || { updateStats: () => { } };
+  const { config } = useGlobalConfig();
+  const PRAYERS = config?.PRAYERS || ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
   const [dailyTaskTemplates, setDailyTaskTemplates] = useState(initial.dailyTaskTemplates);
   const [dailyTaskLogs, setDailyTaskLogs] = useState(initial.dailyTaskLogs);

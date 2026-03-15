@@ -82,5 +82,38 @@ async def get_constants():
             "aw_v2_supination": ["supinators"],
             "vol1": ["brachiale_brachioradiale", "finger_flexors", "side_pressure", "ulnar_deviation", "wrist_flexors"],
             "vol2": ["wrist_flexors", "pronators", "radial_deviation", "supinators"]
+        },
+        "PRAYERS": ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"],
+        "MUSCLE_BADGE_STYLE": {
+            "petto": 'bg-red-100 text-red-700 border-red-200 dark:bg-red-500/20 dark:text-red-300 dark:border-red-500/30',
+            "schiena": 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30',
+            "spalle": 'bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-500/20 dark:text-violet-300 dark:border-violet-500/30',
+            "bicipiti": 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-500/30',
+            "tricipiti": 'bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-500/20 dark:text-cyan-300 dark:border-cyan-500/30',
+            "avambracci": 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30',
+            "gambe": 'bg-pink-100 text-pink-700 border-pink-200 dark:bg-pink-500/20 dark:text-pink-300 dark:border-pink-500/30',
+            "core": 'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-500/20 dark:text-teal-300 dark:border-teal-500/30',
+            "unknown": 'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
+        },
+        "GROUP_ACCENT_DOT": {
+            "petto": 'bg-gradient-to-br from-red-400 to-red-600',
+            "schiena": 'bg-gradient-to-br from-emerald-400 to-emerald-600',
+            "spalle": 'bg-gradient-to-br from-violet-400 to-violet-600',
+            "bicipiti": 'bg-gradient-to-br from-blue-400 to-blue-600',
+            "tricipiti": 'bg-gradient-to-br from-cyan-400 to-cyan-600',
+            "avambracci": 'bg-gradient-to-br from-amber-400 to-orange-500',
+            "gambe": 'bg-gradient-to-br from-pink-400 to-rose-600',
+            "core": 'bg-gradient-to-br from-teal-400 to-teal-600'
+        },
+        "MUSCLE_DOT_COLORS": {
+            "chest": 'bg-red-500', "upper_chest": 'bg-red-400', 
+            "lats": 'bg-emerald-500', "rhomboids": 'bg-emerald-400', "traps": 'bg-emerald-600', "lower_back": 'bg-emerald-700',
+            "anterior_delts": 'bg-violet-500', "lateral_delts": 'bg-violet-400', "rear_delts": 'bg-violet-600',
+            "biceps": 'bg-blue-500', "brachialis": 'bg-blue-400', "brachioradialis": 'bg-blue-600', "brachiale_brachioradiale": 'bg-blue-500',
+            "triceps": 'bg-cyan-500', 
+            "forearms": 'bg-amber-500', "pronators": 'bg-amber-400', "supinators": 'bg-amber-600',
+            "wrist_extensors": 'bg-orange-500', "wrist_flexors": 'bg-orange-600', "finger_flexors": 'bg-orange-400',
+            "ulnar_deviation": 'bg-pink-500', "radial_deviation": 'bg-pink-400', "side_pressure": 'bg-pink-600',
+            "quads": 'bg-pink-500', "glutes": 'bg-rose-600', "core": 'bg-teal-500'
         }
     }

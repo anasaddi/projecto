@@ -1,15 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Target, Eye, EyeOff, ArrowUp, ArrowDown, Edit2, Trash2, CheckCircle2, History as HistoryIcon, Zap, Dumbbell } from 'lucide-react';
-import {
-  WEEK_CONFIGS,
-  MUSCLE_GROUP_MAP,
-  MUSCLE_BADGE_STYLE,
-  GROUP_ACCENT_DOT,
-  MUSCLE_DOT_COLORS,
-  EXERCISE_MUSCLE_MAP,
-  MUSCLE_DISPLAY_NAME
-} from './calendarConstants';
+import { useGlobalConfig } from '../../context/GlobalConfigContext';
+
+// Empty fallbacks for initial render
+const FALLBACK_MUSCLE_GROUP_MAP = {};
+const FALLBACK_GROUP_ACCENT_DOT = {};
+const FALLBACK_EXERCISE_MUSCLE_MAP = {};
 
 // --- Helper Functions ---
 const shortenName = (name) => {
@@ -23,9 +20,9 @@ const shortenName = (name) => {
     .replace(/AW Vol. 2/gi, 'AW Vol. 2');
 };
 
-const getDominantGroup = (muscles) => {
+const getDominantGroup = (muscles, map) => {
   if (!muscles || muscles.length === 0) return null;
-  const groups = muscles.map(m => MUSCLE_GROUP_MAP[m]).filter(Boolean);
+  const groups = muscles.map(m => (map || FALLBACK_MUSCLE_GROUP_MAP)[m]).filter(Boolean);
   if (groups.length === 0) return null;
   const counts = groups.reduce((acc, g) => { acc[g] = (acc[g] || 0) + 1; return acc; }, {});
   return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
@@ -61,6 +58,14 @@ const getActiveWeekIdx = (monthData) => {
 };
 
 export function CompactExerciseCard({ exercise, showMuscleNames, progressions, date, isEditMode, onEditAction }) {
+  const { config } = useGlobalConfig();
+  const EXERCISE_MUSCLE_MAP = config?.EXERCISE_MUSCLE_MAP || FALLBACK_EXERCISE_MUSCLE_MAP;
+  const WEEK_CONFIGS = config?.WEEK_CONFIGS || [];
+  const MUSCLE_GROUP_MAP = config?.MUSCLE_GROUP_MAP || FALLBACK_MUSCLE_GROUP_MAP;
+  const GROUP_ACCENT_DOT = config?.GROUP_ACCENT_DOT || FALLBACK_GROUP_ACCENT_DOT;
+  const MUSCLE_BADGE_STYLE = config?.MUSCLE_BADGE_STYLE || {};
+  const MUSCLE_DISPLAY_NAME = config?.MUSCLE_DISPLAY_NAME || {};
+
   // Use backend muscles if available, fallback to hardcoded map (deprecated)
   const muscles = exercise.primary_muscles || EXERCISE_MUSCLE_MAP[exercise.exercise_id] || [];
   const category = exercise.category;
@@ -173,14 +178,14 @@ export function CompactExerciseCard({ exercise, showMuscleNames, progressions, d
       title={exercise.exercise_name || exercise.name}
     >
       <div className="flex flex-col items-center justify-center w-full gap-1.5 text-center">
-        <div className={`w-5 h-5 rounded-md ${isActive && getDominantGroup(muscles) ? GROUP_ACCENT_DOT[getDominantGroup(muscles)] : cardStyle.badge} shadow-sm flex items-center justify-center shrink-0`}>
+        <div className={`w-5 h-5 rounded-md ${isActive && getDominantGroup(muscles, MUSCLE_GROUP_MAP) ? GROUP_ACCENT_DOT[getDominantGroup(muscles, MUSCLE_GROUP_MAP)] : cardStyle.badge} shadow-sm flex items-center justify-center shrink-0`}>
           <Icon size={10} className="text-white" />
         </div>
         <span className={`text-[10px] font-black uppercase tracking-tight leading-tight text-center px-1 line-clamp-2 ${cardStyle.label}`}>
           {shortenName(exercise.exercise_name || exercise.name)}
         </span>
         {details && category !== 'HYPERTROPHY' && (
-          <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md ${isActive && getDominantGroup(muscles) ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' : cardStyle.badge + ' text-white'} shadow-sm shrink-0 whitespace-nowrap`}>
+          <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md ${isActive && getDominantGroup(muscles, MUSCLE_GROUP_MAP) ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' : cardStyle.badge + ' text-white'} shadow-sm shrink-0 whitespace-nowrap`}>
             {details.label}
           </span>
         )}

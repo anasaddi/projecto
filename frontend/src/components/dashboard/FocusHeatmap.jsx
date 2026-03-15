@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Icons } from './Icons';
 
-const PRAYERS = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+import { useGlobalConfig } from '../../context/GlobalConfigContext';
 
 function toDateKey(date = new Date()) {
   const y = date.getFullYear();
@@ -59,7 +59,11 @@ function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
 }
 
 export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, now }) {
+  const { config } = useGlobalConfig();
+  const PRAYERS = config?.PRAYERS || ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+
   const totalItems = activeHabits.length + PRAYERS.length + 3;
+  const historyLength = 28; // last 4 weeks
   const heatmapDays = useMemo(() => {
     const days = [];
     for (let i = 29; i >= 0; i--) {
