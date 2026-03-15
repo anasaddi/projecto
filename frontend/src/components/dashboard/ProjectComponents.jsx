@@ -43,12 +43,21 @@ export function StandardProjectCard({
       >
         <div className={`h-5 w-1 shrink-0 rounded-full ${accentBar} shadow-[0_0_8px_rgba(0,0,0,0.08)] dark:shadow-[0_0_8px_rgba(255,255,255,0.06)]`} />
 
-        <input
+        <textarea
+          ref={(el) => {
+            if (el) {
+              el.style.height = 'auto';
+              el.style.height = `${el.scrollHeight}px`;
+            }
+          }}
           value={project.title}
-          onChange={(e) => { e.stopPropagation(); onTitleChange(e.target.value); }}
+          onChange={(e) => {
+            e.stopPropagation();
+            onTitleChange(e.target.value);
+          }}
           onClick={(e) => e.stopPropagation()}
-          className="seamless-input flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-zinc-800 dark:text-zinc-100"
-          title={project.title}
+          rows={1}
+          className="seamless-input flex-1 text-sm font-semibold text-zinc-800 dark:text-zinc-100 resize-none outline-none bg-transparent overflow-hidden break-words py-0.5 leading-snug"
         />
 
         <div className="flex shrink-0 items-center gap-3">
