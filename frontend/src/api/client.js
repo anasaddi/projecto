@@ -151,4 +151,11 @@ export const api = {
         body: JSON.stringify({ data, title }),
       }),
   },
+  config: {
+    getConstants: () => request('/config/constants'),
+  },
+  auth: {
+    login: (key) => request('/auth/login', { method: 'POST', body: JSON.stringify({ key }) }),
+    verify: () => request('/auth/verify'),
+  }
 }

@@ -8,17 +8,21 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.db.session import Base
-from app.db.models import (
-    Source, Content, ContentChunk, Session, Insight,
-    Exercise, WorkoutDayTemplate, WorkoutDayExercise, WorkoutLog, SetLog, DailyReadiness,
-)
+# Import all models here for Alembic
+import app.db.models
+import app.db.audit
 from app.config import get_settings
 
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 settings = get_settings()
-config.set_main_option("sqlalchemy.url", settings.database_url)
+db_url = settings.database_url
+if db_url.startswith("sqlite+aiosqlite:///"):
+    db_url = db_url.replace("sqlite+aiosqlite:///", "sqlite:///")
+elif db_url.startswith("postgresql+asyncpg://"):
+    db_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
+config.set_main_option("sqlalchemy.url", db_url)
 target_metadata = Base.metadata
 
 

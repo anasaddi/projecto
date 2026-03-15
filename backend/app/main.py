@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
-from app.api.routes import sources, content, insights, search, youtube, training
+from app.api.routes import sources, content, insights, search, youtube, training, config, auth
 from app.config import get_settings
 from app.db.session import Base, engine
 from app.db import models
@@ -128,6 +128,8 @@ def create_app() -> FastAPI:
 
     # Routers
     app.include_router(training.router, prefix="/api/training", tags=["training"])
+    app.include_router(config.router, prefix="/api/config", tags=["config"])
+    app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
     app.include_router(sources.router, prefix="/api/sources", tags=["sources"])
     app.include_router(content.router, prefix="/api/content", tags=["content"])
     app.include_router(insights.router, prefix="/api/insights", tags=["insights"])

@@ -5,6 +5,7 @@ from typing import Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, Header, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
+from app.api.deps import get_current_admin
 
 from app.db.session import get_db
 from app import schemas
@@ -15,14 +16,6 @@ from app.websockets import manager
 
 router = APIRouter()
 
-# --- Security Dependency ---
-def check_admin_access(x_km_access: Optional[str] = Header(None)):
-    """Check admin access using env-configured key."""
-    from app.config import get_settings
-    settings = get_settings()
-    if x_km_access != settings.admin_access_key:
-        raise HTTPException(status_code=403, detail="Accesso negato: sezione privata.")
-    return True
 
 @router.get("/ping")
 async def ping(db: AsyncSession = Depends(get_db)):
@@ -39,21 +32,14 @@ async def ping(db: AsyncSession = Depends(get_db)):
         }
     }
 
-@router.post("/reseed", dependencies=[Depends(check_admin_access)])
+@router.post("/reseed", dependencies=[Depends(get_current_admin)])
 async def reseed_db(db: AsyncSession = Depends(get_db)):
     """Force re-seeding of training data, history, and progressions."""
     from app.db.seed_training import seed_training_if_empty, seed_fake_history, seed_fake_progressions
     from app.db.models import Exercise, WorkoutDayTemplate, WorkoutDayExercise, DailySchedule, TrainingProgression, WorkoutLog, SetLog
     from sqlalchemy import text
 
-    # Manual schema fix for existing exercises table
-    try:
-        await db.execute(text("ALTER TABLE exercises ADD COLUMN IF NOT EXISTS is_active INTEGER DEFAULT 1"))
-        await db.commit()
-    except Exception as e:
-        await db.rollback()
-        print(f"Schema fix error: {e}")
-
+    # Reseeding logic
     try:
         # Delete dependent data first
         await db.execute(delete(DailySchedule))
@@ -85,7 +71,7 @@ async def reseed_db(db: AsyncSession = Depends(get_db)):
         }
     }
 
-@router.post("/migrate", dependencies=[Depends(check_admin_access)])
+@router.post("/migrate", dependencies=[Depends(get_current_admin)])
 async def migrate_data(db: AsyncSession = Depends(get_db)):
     """Migrate data from old JSON blobs to relational tables."""
     return await crud_migration.migrate_json_to_relational(db)
@@ -107,7 +93,7 @@ async def get_aw_program():
     except Exception:
         return {}
 
-@router.get("/today", response_model=schemas.TodayResponse, dependencies=[Depends(check_admin_access)])
+@router.get("/today", response_model=schemas.TodayResponse, dependencies=[Depends(get_current_admin)])
 async def get_today(db: AsyncSession = Depends(get_db), for_date: Optional[date] = None):
     """Fetch the template for today (or for_date)."""
     target = for_date or date.today()
@@ -134,19 +120,19 @@ async def get_week(db: AsyncSession = Depends(get_db)):
     """Fetch the full week's templates."""
     return await crud_training.get_week_templates(db)
 
-@router.put("/week", response_model=dict, dependencies=[Depends(check_admin_access)])
+@router.put("/week", response_model=dict, dependencies=[Depends(get_current_admin)])
 async def update_week(body: schemas.WeekUpdateRequest, db: AsyncSession = Depends(get_db)):
     """Update the full week's exercises."""
     await crud_training.update_week_templates(db, body.days)
     return {"status": "ok"}
 
-@router.patch("/exercise/active", response_model=dict, dependencies=[Depends(check_admin_access)])
+@router.patch("/exercise/active", response_model=dict, dependencies=[Depends(get_current_admin)])
 async def update_exercise_active(body: schemas.ExerciseActiveUpdate, db: AsyncSession = Depends(get_db)):
     """Enable or disable an exercise globally."""
     ok = await crud_training.update_exercise_active(db, body.exercise_id, body.is_active)
     return {"status": "ok" if ok else "not_found"}
 
-@router.patch("/day-exercise", response_model=dict, dependencies=[Depends(check_admin_access)])
+@router.patch("/day-exercise", response_model=dict, dependencies=[Depends(get_current_admin)])
 async def update_day_exercise(body: schemas.DayExerciseUpdate, db: AsyncSession = Depends(get_db)):
     """Update instruction/base_sets/base_reps for an exercise in a day template."""
     ok = await crud_training.update_day_exercise(
@@ -160,12 +146,12 @@ async def update_day_exercise(body: schemas.DayExerciseUpdate, db: AsyncSession 
     )
     return {"status": "ok" if ok else "not_found"}
 
-@router.get("/history", response_model=schemas.ExerciseHistoryResponse, dependencies=[Depends(check_admin_access)])
+@router.get("/history", response_model=schemas.ExerciseHistoryResponse, dependencies=[Depends(get_current_admin)])
 async def get_exercise_history_route(exercise_id: str, limit: int = 15, db: AsyncSession = Depends(get_db)):
     """Get workout history for an exercise."""
     return await crud_training.get_exercise_history(db, exercise_id, limit=limit)
 
-@router.post("/log", response_model=schemas.WorkoutLogOut, dependencies=[Depends(check_admin_access)])
+@router.post("/log", response_model=schemas.WorkoutLogOut, dependencies=[Depends(get_current_admin)])
 async def log_workout(body: schemas.WorkoutLogCreate, db: AsyncSession = Depends(get_db)):
     """Log a workout session."""
     return await crud_training.create_workout_log(db, body.template_id, body.sets)
@@ -202,7 +188,7 @@ async def update_schedule_completion(schedule_date: date, body: schemas.DailySch
         raise HTTPException(status_code=404, detail="Schedule non trovato per questa data")
     return sched
 
-@router.post("/schedule/skip-today", response_model=dict, dependencies=[Depends(check_admin_access)])
+@router.post("/schedule/skip-today", response_model=dict, dependencies=[Depends(get_current_admin)])
 async def skip_today(db: AsyncSession = Depends(get_db)):
     """Skip today's workout in the schedule."""
     from app.db.models import DailySchedule
@@ -221,7 +207,7 @@ async def skip_today(db: AsyncSession = Depends(get_db)):
 
 # --- Dashboard ---
 
-@router.get("/dashboard-state", response_model=schemas.DashboardStateOut | None, dependencies=[Depends(check_admin_access)])
+@router.get("/dashboard-state", response_model=schemas.DashboardStateOut | None, dependencies=[Depends(get_current_admin)])
 async def get_dashboard_state(db: AsyncSession = Depends(get_db)):
     """Fetch the dashboard state — Redis-first, DB fallback."""
     from app.cache import get_cached_dashboard, set_cached_dashboard
@@ -232,7 +218,7 @@ async def get_dashboard_state(db: AsyncSession = Depends(get_db)):
     await set_cached_dashboard(data)
     return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
 
-@router.put("/dashboard-state", response_model=schemas.DashboardStateOut, dependencies=[Depends(check_admin_access)])
+@router.put("/dashboard-state", response_model=schemas.DashboardStateOut, dependencies=[Depends(get_current_admin)])
 async def update_dashboard_state(body: schemas.DashboardStateUpdate, db: AsyncSession = Depends(get_db)):
     """Save the dashboard state to DB and invalidate cache."""
     from app.cache import invalidate_dashboard, set_cached_dashboard
@@ -243,7 +229,7 @@ async def update_dashboard_state(body: schemas.DashboardStateUpdate, db: AsyncSe
 
 # --- Batch Operations ---
 
-@router.patch("/dashboard-state/batch", dependencies=[Depends(check_admin_access)])
+@router.patch("/dashboard-state/batch", dependencies=[Depends(get_current_admin)])
 async def batch_update_dashboard(body: dict, db: AsyncSession = Depends(get_db)):
     """Process multiple dashboard mutations in a single transaction.
     
@@ -279,7 +265,7 @@ async def batch_update_dashboard(body: dict, db: AsyncSession = Depends(get_db))
 
 # --- Audit Events ---
 
-@router.get("/audit-events", dependencies=[Depends(check_admin_access)])
+@router.get("/audit-events", dependencies=[Depends(get_current_admin)])
 async def get_audit_events(
     entity_type: str | None = None,
     entity_id: str | None = None,
@@ -393,5 +379,4 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
             await websocket.close()
         except:
             pass
-        manager.disconnect(websocket, share_id)
         manager.disconnect(websocket, share_id)

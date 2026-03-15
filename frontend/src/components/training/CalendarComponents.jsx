@@ -61,7 +61,8 @@ const getActiveWeekIdx = (monthData) => {
 };
 
 export function CompactExerciseCard({ exercise, showMuscleNames, progressions, date, isEditMode, onEditAction }) {
-  const muscles = EXERCISE_MUSCLE_MAP[exercise.exercise_id] || [];
+  // Use backend muscles if available, fallback to hardcoded map (deprecated)
+  const muscles = exercise.primary_muscles || EXERCISE_MUSCLE_MAP[exercise.exercise_id] || [];
   const category = exercise.category;
   const isActive = exercise.is_active !== 0;
 

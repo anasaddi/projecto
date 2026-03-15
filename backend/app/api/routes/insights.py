@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app import schemas, crud
+from app.api.deps import get_current_admin
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_admin)])
 
 @router.post("/", response_model=schemas.InsightOut)
 async def create_insight(data: schemas.InsightCreate, db: AsyncSession = Depends(get_db)):

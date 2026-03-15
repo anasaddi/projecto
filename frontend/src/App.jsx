@@ -2,16 +2,18 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import React, { Suspense, lazy } from 'react'
 
 import { DashboardStatsProvider } from './context/DashboardStatsContext'
+import { GlobalConfigProvider } from './context/GlobalConfigContext'
 import Layout from './components/Layout'
 import AppErrorBoundary from './components/AppErrorBoundary'
 
 const SourceList = lazy(() => import('./pages/SourceList'))
-const Reader = lazy(() => import('./pages/vecchi/Reader'))
 const YouTubeViewer = lazy(() => import('./pages/YouTubeViewer'))
 const DashboardV2 = lazy(() => import('./pages/DashboardV2'))
 const SharedProjects = lazy(() => import('./pages/SharedProjects'))
 const Training = lazy(() => import('./pages/Training2'))
 const Welcome = lazy(() => import('./pages/Welcome'))
+
+const Login = lazy(() => import('./pages/Login'))
 
 function RouteLoader() {
   return (
@@ -26,8 +28,8 @@ function AdminRoute({ children }) {
   const role = localStorage.getItem('km-user-role');
   const token = localStorage.getItem('km-admin-token');
   
-  if (role !== 'admin' || token !== 'master-key') {
-    return <Navigate to="/" replace />;
+  if (role !== 'admin' || !token) {
+    return <Navigate to="/login" replace />;
   }
   return children;
 }
@@ -37,22 +39,24 @@ function HomePage() {
   const role = localStorage.getItem('km-user-role');
   const token = localStorage.getItem('km-admin-token');
   
-  if (role === 'admin' && token === 'master-key') {
+  if (role === 'admin' && token) {
     return <SourceList />;
   }
   return <Welcome />;
 }
 
-// --- Auth Initialization (Synchronous) ---
+// --- Auth Initialization ---
 const initAuth = () => {
   const params = new URLSearchParams(window.location.search);
   const path = window.location.pathname;
   const isShared = path.startsWith('/shared/');
   const keyParam = params.get('key');
   
-  if (keyParam === 'master-key') {
+  // URL auto-login is now deprecated but kept for backwards compatibility if a token is provided
+  // Note: specific string 'master-key' has been removed.
+  if (keyParam) {
     localStorage.setItem('km-user-role', 'admin');
-    localStorage.setItem('km-admin-token', 'master-key');
+    localStorage.setItem('km-admin-token', keyParam);
     window.history.replaceState({}, '', path);
   } else if (isShared) {
     const currentRole = localStorage.getItem('km-user-role');
@@ -63,19 +67,19 @@ const initAuth = () => {
   }
 };
 
-// Eseguiamo l'inizializzazione immediatamente prima del render dei componenti
 initAuth();
 
 export default function App() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <DashboardStatsProvider>
-        <AppErrorBoundary>
+        <GlobalConfigProvider>
+          <AppErrorBoundary>
           <Layout>
             <Suspense fallback={<RouteLoader />}>
               <Routes>
                 <Route path="/" element={<HomePage />} />
-                <Route path="/source/:sourceId" element={<AdminRoute><Reader /></AdminRoute>} />
+                <Route path="/login" element={<Login />} />
                 <Route path="/dashboard" element={<AdminRoute><DashboardV2 /></AdminRoute>} />
                 <Route path="/shared" element={<SharedProjects />} />
                 <Route path="/shared/:shareId" element={<SharedProjects />} />
@@ -85,7 +89,8 @@ export default function App() {
               </Routes>
             </Suspense>
           </Layout>
-        </AppErrorBoundary>
+          </AppErrorBoundary>
+        </GlobalConfigProvider>
       </DashboardStatsProvider>
     </BrowserRouter>
   )

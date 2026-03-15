@@ -1,7 +1,8 @@
 import React, { useMemo, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Target, Dumbbell } from 'lucide-react';
-import { EXERCISE_MUSCLE_MAP, MUSCLE_GROUP_MAP, GROUP_ACCENT_DOT } from './calendarConstants';
+import { MUSCLE_GROUP_MAP, GROUP_ACCENT_DOT } from './calendarConstants';
+import { useGlobalConfig } from '../../context/GlobalConfigContext';
 import { getActiveMonth, getActiveWeek } from '../../utils/trainingUtils';
 import { api } from '../../api/client';
 
@@ -205,8 +206,9 @@ function KgInput({ value, onChange, ring, placeholder = "00" }) {
   );
 }
 
-function MuscDot({ exerciseId }) {
-  const group = getDominantGroup(EXERCISE_MUSCLE_MAP[exerciseId] || []);
+function MuscDot({ exerciseId, remoteMap }) {
+  const mapToUse = remoteMap || {};
+  const group = getDominantGroup(mapToUse[exerciseId] || []);
   return (
     <div className="relative">
       <div className={`w-1.5 h-6 rounded-full shrink-0 ${group ? GROUP_ACCENT_DOT[group] : 'bg-zinc-200 dark:bg-zinc-800'} transition-all duration-500`} style={{ opacity: 0.8 }} />
@@ -215,14 +217,14 @@ function MuscDot({ exerciseId }) {
   );
 }
 
-function ExRow({ exerciseId, exerciseName, badge, badgeBg, anasC, flavioC, anasW, flavioW, anasR, flavioR, onToggle, onWeight, onReps }) {
+function ExRow({ exerciseId, exerciseName, badge, badgeBg, anasC, flavioC, anasW, flavioW, anasR, flavioR, remoteMap, onToggle, onWeight, onReps }) {
   const bothDone = anasC && flavioC;
 
   return (
     <div className={`relative flex items-center gap-3 py-3.5 px-4 transition-all duration-500 border-b border-zinc-100/50 dark:border-white/[0.04] last:border-0
       ${bothDone ? 'bg-zinc-50/50 dark:bg-black/20' : 'hover:bg-zinc-100/30 dark:hover:bg-white/[0.02]'}`}
     >
-      <MuscDot exerciseId={exerciseId} />
+      <MuscDot exerciseId={exerciseId} remoteMap={remoteMap} />
 
       <div className="flex-1 min-w-0 pr-2">
         <div className={`text-[12.5px] font-bold leading-tight tracking-tight capitalize truncate transition-all duration-500 ${bothDone ? 'text-zinc-400 dark:text-zinc-600' : 'text-zinc-900 dark:text-zinc-100'}`}>
@@ -303,6 +305,8 @@ function SectionHeader({ icon: Icon, color, label, showRepsLabels }) {
 
 export default function TodayCard({ selectedDay, allProgressions, selectedDate, progressPercent, isToday, onProgressionChange, awProgram }) {
   const saveTimers = useRef({});
+  const { config } = useGlobalConfig();
+  const remoteExerciseMap = config?.EXERCISE_MUSCLE_MAP || {};
 
   // ALL hooks unconditionally first
   const exercises = useMemo(
@@ -492,6 +496,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
                       badge={STRENGTH_WEEK_LABELS[wi] || '—'} badgeBg="bg-indigo-600"
                       anasC={!!week?.anas?.completed} flavioC={!!week?.flavio?.completed}
                       anasW={week?.anas?.weight ?? ''} flavioW={week?.flavio?.weight ?? ''}
+                      remoteMap={remoteExerciseMap}
                       onToggle={a => toggleStrength(ex.exercise_id, a)}
                       onWeight={(a, v) => weightStrength(ex.exercise_id, a, v)}
                     />
@@ -517,6 +522,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
                       exerciseId={ex.exercise_id} exerciseName={ex.exercise_name}
                       badge={badge.label} badgeBg={badge.bg}
                       anasC={anasC} flavioC={flavioC} anasW={anasW} flavioW={flavioW}
+                      remoteMap={remoteExerciseMap}
                       onToggle={a => toggleAw(ex, a)}
                       onWeight={(a, v) => weightAw(ex, a, v)}
                     />
@@ -543,6 +549,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
                       anasC={!!prog?.anas?.completed} flavioC={!!prog?.flavio?.completed}
                       anasW={prog?.anas?.weight ?? ''} flavioW={prog?.flavio?.weight ?? ''}
                       anasR={prog?.anas?.reps ?? ''} flavioR={prog?.flavio?.reps ?? ''}
+                      remoteMap={remoteExerciseMap}
                       onToggle={a => toggleHyper(ex.exercise_id, a)}
                       onWeight={(a, v) => weightHyper(ex.exercise_id, a, v)}
                       onReps={(a, v) => repsHyper(ex.exercise_id, a, v)}

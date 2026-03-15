@@ -11,9 +11,11 @@ import shutil
 import logging
 from pathlib import Path
 from typing import Any
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Body
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Body, Depends
+from app import schemas, crud
+from app.api.deps import get_current_admin
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_admin)])
 logger = logging.getLogger(__name__)
 
 _job_store: dict = {}
