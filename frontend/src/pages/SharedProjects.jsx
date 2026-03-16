@@ -245,6 +245,13 @@ export default function SharedProjects() {
 
   const [chatDraft, setChatDraft] = useState("");
   const chatScrollRef = useRef(null);
+  const chatInputRef = useRef(null);
+
+  useEffect(() => {
+    if (chatScrollRef.current && dashboard.chat.length > 0) {
+      chatScrollRef.current.scrollTo({ top: chatScrollRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  }, [dashboard.chat.length]);
 
   const ws = useRef(null);
   const reconnectTimeout = useRef(null);
@@ -320,9 +327,7 @@ export default function SharedProjects() {
           return;
         }
         applyDashboardFromPayload(msg);
-        setTimeout(() => {
-          if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
-        }, 100);
+        // Scroll a fondo gestito da useEffect su dashboard.chat.length
       } catch (e) {
         console.error("WS Parse error", e);
       }
@@ -458,20 +463,20 @@ export default function SharedProjects() {
     };
   }, [id]);
 
-  // Invio aggiornamenti: WebSocket se connesso, altrimenti REST (debounced). BroadcastChannel per sync tra tab.
+  // Invio aggiornamenti: WebSocket + REST sempre (stessa comunicazione di project tasks). BroadcastChannel per sync tra tab.
   const sendUpdate = (newState) => {
-    const payload = {
-      type: 'sync',
-      title: newState.title,
-      data: { projects: newState.projects, quickTasks: newState.quickTasks, chat: newState.chat }
+    const data = {
+      projects: Array.isArray(newState.projects) ? newState.projects : [],
+      quickTasks: Array.isArray(newState.quickTasks) ? newState.quickTasks : [],
+      chat: Array.isArray(newState.chat) ? newState.chat : [],
     };
+    const payload = { type: 'sync', title: newState.title ?? '', data };
+
     if (ws.current?.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify(payload));
-    } else if (id) {
-      if (restDebounceRef.current) clearTimeout(restDebounceRef.current);
-      restDebounceRef.current = setTimeout(() => {
-        api.training.updateSharedDashboard(id, payload.data, payload.title).catch(() => { });
-      }, 600);
+    }
+    if (id) {
+      api.training.updateSharedDashboard(id, data, payload.title).catch(() => {});
     }
     if (!applyingFromBCRef.current && id) {
       try {
@@ -562,6 +567,7 @@ export default function SharedProjects() {
       chat: [...(prev.chat || []), msg]
     }));
     setChatDraft("");
+    chatInputRef.current?.focus();
 
     // Send partial payload
     const payload = { type: 'chat', data: msg };
@@ -581,11 +587,7 @@ export default function SharedProjects() {
       } catch (_) { }
     }
 
-    setTimeout(() => {
-      if (chatScrollRef.current) {
-        chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
-      }
-    }, 50);
+    // Scroll gestito da useEffect su dashboard.chat.length
   };
 
   const [projectTaskDrafts, setProjectTaskDrafts] = useState({});
@@ -965,7 +967,7 @@ export default function SharedProjects() {
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-3 pr-2 max-h-[380px] custom-scrollbar">
+            <div ref={chatScrollRef} className="flex-1 overflow-y-auto space-y-3 pr-2 max-h-[380px] custom-scrollbar">
               {dashboard.chat.map((msg) => {
                 const isMe = msg.senderId === localStorage.getItem('km-chat-sender-id');
                 // Colore univoco basato sull'ID del mittente per chi non sono io
@@ -987,7 +989,7 @@ export default function SharedProjects() {
                     >
                       {!isMe && (
                         <span className="block text-[9px] font-bold mb-0.5 opacity-80" style={{ color: senderColor }}>
-                          User {msg.senderId.slice(0, 4)}
+                          Utente ·{msg.senderId.slice(-4)}
                         </span>
                       )}
                       <p className="leading-relaxed">{msg.text}</p>
@@ -1014,6 +1016,7 @@ export default function SharedProjects() {
 
             <form onSubmit={(e) => { e.preventDefault(); sendChatMessage(); }} className="relative">
               <input
+                ref={chatInputRef}
                 value={chatDraft}
                 onChange={(e) => setChatDraft(e.target.value)}
                 placeholder="Scrivi un messaggio..."
