@@ -34,7 +34,7 @@ export default function Login() {
           <div className="mx-auto w-16 h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-6">
             <Lock className="text-indigo-500 w-8 h-8" />
           </div>
-          <h2 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tight">Focus OS</h2>
+          <h2 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tight">PROJECTO</h2>
           <p className="text-zinc-500 dark:text-zinc-400 font-medium tracking-tight">Area Riservata</p>
         </div>
 

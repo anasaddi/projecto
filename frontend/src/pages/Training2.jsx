@@ -355,7 +355,7 @@ export default function Training2() {
               <div>
                 <h1 className="text-[15px] font-bold text-zinc-900 dark:text-white leading-tight tracking-tight">Training Protocol</h1>
                 <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.1em]">
-                  {new Date().toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })} · Focus OS
+                  {new Date().toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })} · PROJECTO
                 </p>
               </div>
             </div>

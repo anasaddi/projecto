@@ -174,7 +174,7 @@ export function buildDefaultLifeGoals() {
         id: 'tier-1', name: 'Tier 1', emoji: '🎯', color: 'emerald', collapsed: false,
         goals: [
           mkG('Eliminare ogni addiction', 'Disciplina', 'project'),
-          mkG('Completare KM Personal', 'Conoscenza', 'project'),
+          mkG('Completare PROJECTO', 'Conoscenza', 'project'),
           mkG('Pagare tutti i debiti', 'Finanza', 'project'),
           mkG('Raggiungere 66kg', 'Corpo', 'quick'),
           mkG('Test DNA privato (origini)', 'Identità', 'quick'),
@@ -299,7 +299,7 @@ export function buildDefaultState() {
 export function normalizeLifeGoals(lg, fallback) {
   if (!lg || !Array.isArray(lg.tiers) || lg.tiers.length === 0) return fallback;
   const projectTitles = [
-    'Eliminare ogni addiction', 'Completare KM Personal', 'Pagare tutti i debiti',
+    'Eliminare ogni addiction', 'Completare PROJECTO', 'Pagare tutti i debiti',
     'Correre una maratona', 'Ottenere il brevetto da pilota', 'Iniziare memorizzazione del Corano (Hafiz)',
     'Imparare 5 nuove lingue', 'Completare Quran Hafiz', 'Costruire la dream house',
     'Padroneggiare i viaggi astrali', 'Costruire una moschea', 'Creare una nuova lingua ottimizzata'

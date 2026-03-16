@@ -1,4 +1,4 @@
-# KM Personal - Knowledge Management
+# PROJECTO - Knowledge Management
 
 Local-first personal knowledge platform: Dashboard produttività, Learning (Transcript YouTube), sources, search.
 

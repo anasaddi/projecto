@@ -55,7 +55,7 @@ export default function Layout({ children }) {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>
           </div>
           <span className="font-bold tracking-tight text-zinc-800 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors hidden sm:inline">
-            Focus OS
+            PROJECTO
           </span>
         </Link>
         <nav className="flex items-center gap-1.5 hidden md:flex">

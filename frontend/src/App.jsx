@@ -5,6 +5,7 @@ import { DashboardStatsProvider } from './context/DashboardStatsContext'
 import { GlobalConfigProvider } from './context/GlobalConfigContext'
 import Layout from './components/Layout'
 import AppErrorBoundary from './components/AppErrorBoundary'
+import { isTokenExpired } from './api/client'
 
 const SourceList = lazy(() => import('./pages/SourceList'))
 const YouTubeViewer = lazy(() => import('./pages/YouTubeViewer'))
@@ -27,8 +28,12 @@ function RouteLoader() {
 function AdminRoute({ children }) {
   const role = localStorage.getItem('km-user-role');
   const token = localStorage.getItem('km-admin-token');
-  
   if (role !== 'admin' || !token) {
+    return <Navigate to="/login" replace />;
+  }
+  if (isTokenExpired(token)) {
+    localStorage.removeItem('km-admin-token');
+    localStorage.removeItem('km-user-role');
     return <Navigate to="/login" replace />;
   }
   return children;
@@ -38,8 +43,7 @@ function AdminRoute({ children }) {
 function HomePage() {
   const role = localStorage.getItem('km-user-role');
   const token = localStorage.getItem('km-admin-token');
-  
-  if (role === 'admin' && token) {
+  if (role === 'admin' && token && !isTokenExpired(token)) {
     return <SourceList />;
   }
   return <Welcome />;

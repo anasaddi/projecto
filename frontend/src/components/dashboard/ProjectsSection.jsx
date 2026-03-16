@@ -2,12 +2,14 @@ import React from 'react';
 import { Icons } from './Icons';
 import { StandardProjectCard } from './ProjectComponents';
 import { DenseTaskNode } from './DenseTaskNode';
-import { createTaskNode, collectNodeAndDescendantIds, removeNodeFromTree, updateNodeInTree } from './DashboardUtils';
+import { createTaskNode, collectNodeAndDescendantIds, removeNodeFromTree, updateNodeInTree, countTreeStats } from './DashboardUtils';
 
 export function ProjectsSection({
   projects,
   createProject,
   deleteProject,
+  reorderProjects,
+  reorderSharedDashboardProjects,
   updateProject,
   toggleProjectTask,
   projectTaskDrafts,
@@ -47,26 +49,31 @@ export function ProjectsSection({
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
           {projects.map((project, idx) => {
-            const stats = { ratio: (project.tasks || []).filter(t => t.done).length / (project.tasks || []).length || 0 }; // Simplified for now or pass actual helper
-            // We should use the same helper as before
-            const countTreeStats = (nodes) => {
-              let total = 0, completed = 0;
-              const walk = (arr) => {
-                arr.forEach((n) => {
-                  total++;
-                  if (n.done) completed++;
-                  if (Array.isArray(n.children) && n.children.length) walk(n.children);
-                });
-              };
-              walk(nodes || []);
-              return { total, completed, ratio: total ? completed / total : 0 };
-            };
+            const dragPayload = { type: 'project', fromIndex: idx };
             const actualStats = countTreeStats(project.tasks);
             const percentage = Math.round(actualStats.ratio * 100);
             const accent = PROJECT_ACCENTS[idx % PROJECT_ACCENTS.length];
             return (
-              <StandardProjectCard
+              <div
                 key={project.id}
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('application/json', JSON.stringify(dragPayload));
+                  e.dataTransfer.effectAllowed = 'move';
+                }}
+                onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('ring-2', 'ring-indigo-400'); }}
+                onDragLeave={(e) => e.currentTarget.classList.remove('ring-2', 'ring-indigo-400')}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.remove('ring-2', 'ring-indigo-400');
+                  try {
+                    const p = JSON.parse(e.dataTransfer.getData('application/json'));
+                    if (p.type === 'project') reorderProjects(p.fromIndex, idx);
+                  } catch (_) {}
+                }}
+                className="cursor-grab active:cursor-grabbing rounded-xl"
+              >
+              <StandardProjectCard
                 project={project}
                 stats={actualStats}
                 percentage={percentage}
@@ -141,7 +148,8 @@ export function ProjectsSection({
                     </div>
                   </>
                 )}
-              />
+                    />
+              </div>
             );
           })}
         </div>
@@ -160,25 +168,32 @@ export function ProjectsSection({
                 const sharedProjects = Array.isArray(sharedData.projects) ? sharedData.projects : (Array.isArray(sharedData) ? sharedData : []);
 
                 return sharedProjects.map((project, pIdx) => {
-                  const countTreeStats = (nodes) => {
-                    let total = 0, completed = 0;
-                    const walk = (arr) => {
-                      arr.forEach((n) => {
-                        total++;
-                        if (n.done) completed++;
-                        if (Array.isArray(n.children) && n.children.length) walk(n.children);
-                      });
-                    };
-                    walk(nodes || []);
-                    return { total, completed, ratio: total ? completed / total : 0 };
-                  };
+                  const sharedDragPayload = { type: 'sharedProject', shareId: shared.share_id, fromIndex: pIdx };
                   const actualStats = countTreeStats(project.tasks);
                   const percentage = Math.round(actualStats.ratio * 100);
                   const accent = PROJECT_ACCENTS[(sIdx + pIdx + projects.length) % PROJECT_ACCENTS.length];
 
                   return (
-                    <StandardProjectCard
+                    <div
                       key={`${shared.share_id}-${project.id}`}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('application/json', JSON.stringify(sharedDragPayload));
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('ring-2', 'ring-indigo-400'); }}
+                      onDragLeave={(e) => e.currentTarget.classList.remove('ring-2', 'ring-indigo-400')}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove('ring-2', 'ring-indigo-400');
+                        try {
+                          const p = JSON.parse(e.dataTransfer.getData('application/json'));
+                          if (p.type === 'sharedProject' && p.shareId === shared.share_id) reorderSharedDashboardProjects(p.shareId, p.fromIndex, pIdx);
+                        } catch (_) {}
+                      }}
+                      className="cursor-grab active:cursor-grabbing rounded-xl"
+                    >
+                    <StandardProjectCard
                       project={project}
                       stats={actualStats}
                       percentage={percentage}
@@ -265,6 +280,7 @@ export function ProjectsSection({
                         </>
                       )}
                     />
+                    </div>
                   );
                 });
               })}

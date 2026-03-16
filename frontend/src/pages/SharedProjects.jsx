@@ -2,8 +2,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../api/client';
+import { getSharedDashboardWsUrl } from '../config';
 import { StandardProjectCard } from '../components/dashboard/ProjectComponents';
 import { DenseTaskNode } from '../components/dashboard/DenseTaskNode';
+import { countTreeStats as countTreeStatsUtil } from '../components/dashboard/DashboardUtils';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 /**
  * ----------------------------------------------------------------------
@@ -81,19 +84,6 @@ function removeNodeFromTree(nodes, nodeId) {
     .map((node) => ({ ...node, children: removeNodeFromTree(Array.isArray(node.children) ? node.children : [], nodeId) }));
 }
 
-function countTreeStats(nodes) {
-  let total = 0, completed = 0;
-  const walk = (arr) => {
-    arr.forEach((n) => {
-      total++;
-      if (n.done) completed++;
-      if (Array.isArray(n.children) && n.children.length) walk(n.children);
-    });
-  };
-  walk(nodes || []);
-  return { total, completed, ratio: total ? completed / total : 0 };
-}
-
 /**
  * ----------------------------------------------------------------------
  * COMPONENTS
@@ -142,7 +132,7 @@ function SharedListDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] text-gray-900 dark:text-gray-100 p-6 sm:p-10">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] text-gray-900 dark:text-gray-100 p-6 sm:p-10 select-none [&_input]:select-text [&_textarea]:select-text">
       <div className="max-w-4xl mx-auto">
         <header className="mb-10">
           <h1 className="text-3xl font-black tracking-tight text-gray-900 dark:text-white mb-2">I miei Condivisi</h1>
@@ -166,8 +156,8 @@ function SharedListDashboard() {
               const title = sd.title || 'Senza titolo';
               const projects = Array.isArray(sd.data?.projects) ? sd.data.projects : (Array.isArray(sd.projects) ? sd.projects : []);
               const quickTasks = Array.isArray(sd.data?.quickTasks) ? sd.data.quickTasks : (Array.isArray(sd.quickTasks) ? sd.quickTasks : []);
-              const totalTasks = projects.reduce((acc, p) => acc + countTreeStats(p.tasks || []).total, 0);
-              const completedTasks = projects.reduce((acc, p) => acc + countTreeStats(p.tasks || []).completed, 0);
+              const totalTasks = projects.reduce((acc, p) => acc + countTreeStatsUtil(p.tasks || []).total, 0);
+              const completedTasks = projects.reduce((acc, p) => acc + countTreeStatsUtil(p.tasks || []).completed, 0);
               const pct = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
               return (
@@ -262,14 +252,7 @@ export default function SharedProjects() {
   const restDebounceRef = useRef(null);
   const pollInterval = useRef(null);
   const mountedRef = useRef(true);
-
-  // WebSocket: Vercel non supporta WS proxy → connessione diretta a Railway in prod
-  const getWsUrl = (sid) => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const host = isLocal ? 'localhost:8000' : (import.meta.env.VITE_WS_HOST || 'projecto-production-feda.up.railway.app');
-    return `${protocol}//${host}/api/training/ws/shared-dashboard/${encodeURIComponent(sid)}`;
-  };
+  const applyingFromBCRef = useRef(false);
 
   const applyDashboardFromPayload = (msg) => {
     if (msg.type === 'chat') {
@@ -303,7 +286,7 @@ export default function SharedProjects() {
   const connect = () => {
     if (!id || ws.current?.readyState === WebSocket.OPEN) return;
 
-    const url = getWsUrl(id);
+    const url = getSharedDashboardWsUrl(id);
     try {
       ws.current = new WebSocket(url);
     } catch (e) {
@@ -476,7 +459,6 @@ export default function SharedProjects() {
   }, [id]);
 
   // Invio aggiornamenti: WebSocket se connesso, altrimenti REST (debounced). BroadcastChannel per sync tra tab.
-  const applyingFromBCRef = useRef(false);
   const sendUpdate = (newState) => {
     const payload = {
       type: 'sync',
@@ -548,6 +530,16 @@ export default function SharedProjects() {
     }));
   };
 
+  const reorderProjects = (fromIdx, toIdx) => {
+    if (fromIdx === toIdx) return;
+    updateLocal(prev => {
+      const next = [...prev.projects];
+      const [removed] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, removed);
+      return { ...prev, projects: next };
+    });
+  };
+
   const sendChatMessage = () => {
     if (!chatDraft.trim()) return;
 
@@ -596,15 +588,12 @@ export default function SharedProjects() {
     }, 50);
   };
 
-  const resetChat = () => {
-    if (window.confirm("Vuoi davvero cancellare tutta la cronologia della chat?")) {
-      updateLocal({ chat: [] });
-    }
-  };
-
   const [projectTaskDrafts, setProjectTaskDrafts] = useState({});
   const [quickTaskDraft, setQuickTaskDraft] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
+  const [confirmResetChat, setConfirmResetChat] = useState(false);
+  const resetChat = () => setConfirmResetChat(true);
+
   const copyShareLink = () => {
     const url = `${window.location.origin}/shared/${id}`;
     navigator.clipboard.writeText(url).then(() => {
@@ -618,7 +607,7 @@ export default function SharedProjects() {
     let total = 0;
     let completed = 0;
     dashboard.projects.forEach(proj => {
-      const s = countTreeStats(proj.tasks);
+      const s = countTreeStatsUtil(proj.tasks);
       total += s.total;
       completed += s.completed;
     });
@@ -641,7 +630,17 @@ export default function SharedProjects() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] text-gray-900 dark:text-gray-100 p-4 sm:p-8 md:p-10 font-sans selection:bg-indigo-500/30 antialiased overflow-x-hidden relative">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] text-gray-900 dark:text-gray-100 p-4 sm:p-8 md:p-10 font-sans select-none [&_input]:select-text [&_textarea]:select-text antialiased overflow-x-hidden relative">
+      <ConfirmModal
+        open={confirmResetChat}
+        title="Cancella cronologia chat"
+        message="Vuoi davvero cancellare tutta la cronologia della chat?"
+        confirmLabel="Elimina"
+        cancelLabel="Annulla"
+        variant="danger"
+        onConfirm={() => updateLocal({ chat: [] })}
+        onCancel={() => setConfirmResetChat(false)}
+      />
       <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-8">
 
         {/* MAIN CONTENT: PROJECTS */}
@@ -737,7 +736,8 @@ export default function SharedProjects() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
             {dashboard.projects.map((proj, pIdx) => {
-              const stats = countTreeStats(proj.tasks);
+              const dragPayload = { type: 'project', fromIndex: pIdx };
+              const stats = countTreeStatsUtil(proj.tasks);
               const percentage = Math.round(stats.ratio * 100);
               const PROJECT_ACCENTS = ['indigo', 'sky', 'violet', 'emerald', 'amber', 'rose'];
               const accent = PROJECT_ACCENTS[pIdx % PROJECT_ACCENTS.length];
@@ -760,6 +760,24 @@ export default function SharedProjects() {
 
               return (
                 <motion.div layout key={proj.id} className="h-fit">
+                  <div
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('application/json', JSON.stringify(dragPayload));
+                      e.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('ring-2', 'ring-indigo-400'); }}
+                    onDragLeave={(e) => e.currentTarget.classList.remove('ring-2', 'ring-indigo-400')}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove('ring-2', 'ring-indigo-400');
+                      try {
+                        const p = JSON.parse(e.dataTransfer.getData('application/json'));
+                        if (p.type === 'project') reorderProjects(p.fromIndex, pIdx);
+                      } catch (_) {}
+                    }}
+                    className="cursor-grab active:cursor-grabbing rounded-xl"
+                  >
                   <StandardProjectCard
                     project={proj}
                     stats={stats}
@@ -836,6 +854,7 @@ export default function SharedProjects() {
                       </>
                     )}
                   />
+                  </div>
                 </motion.div>
               );
             })}

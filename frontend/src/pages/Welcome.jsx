@@ -95,7 +95,7 @@ export default function Welcome() {
         transition={{ delay: 1.2 }}
         className="fixed bottom-8 left-1/2 -translate-x-1/2 text-[10px] text-zinc-400 dark:text-zinc-600 font-medium tracking-tight uppercase"
       >
-        v0.1.0 • Built with Focus OS
+        v0.1.0 • PROJECTO
       </motion.div>
     </div>
   );

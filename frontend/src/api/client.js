@@ -1,42 +1,88 @@
 // Su Vercel (produzione), usiamo il proxy configurato in vercel.json (/api)
 // In locale, usiamo '/api' che viene gestito dal proxy di Vite (vite.config.js)
 const BASE = '/api'
+const DEFAULT_TIMEOUT_MS = 30_000
+const MAX_RETRIES = 2
+const RETRY_DELAY_MS = 500
+
+function clearAuthAndRedirect() {
+  localStorage.removeItem('km-admin-token')
+  localStorage.removeItem('km-user-role')
+  if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+    window.location.href = '/login'
+  }
+}
+
+function isTokenExpired(token) {
+  if (!token || typeof token !== 'string') return true
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1] || '{}'))
+    const exp = payload.exp
+    if (!exp) return false
+    return Date.now() >= exp * 1000
+  } catch {
+    return false
+  }
+}
+
+async function fetchWithTimeout(url, options, timeoutMs = DEFAULT_TIMEOUT_MS) {
+  const ctrl = new AbortController()
+  const id = setTimeout(() => ctrl.abort(), timeoutMs)
+  const res = await fetch(url, { ...options, signal: ctrl.signal })
+  clearTimeout(id)
+  return res
+}
 
 async function request(path, options = {}) {
   const token = localStorage.getItem('km-admin-token')
+  if (token && isTokenExpired(token)) {
+    clearAuthAndRedirect()
+    throw new Error('Token expired')
+  }
   const headers = {
     'Content-Type': 'application/json',
     ...(token ? { 'Authorization': `Bearer ${token}`, 'x-km-access': token } : {}),
     ...options.headers,
   }
   const url = BASE + path
-  try {
-    const res = await fetch(url, {
-      ...options,
-      headers,
-    })
-    if (res.status === 401) {
-      localStorage.removeItem('km-admin-token');
-      localStorage.removeItem('km-user-role');
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+  const timeoutMs = options.timeout ?? DEFAULT_TIMEOUT_MS
+  let lastErr
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const res = await fetchWithTimeout(url, { ...options, headers }, timeoutMs)
+      if (res.status === 401) {
+        clearAuthAndRedirect()
+        throw new Error('Unauthorized')
+      }
+      if (!res.ok) {
+        const err = new Error(`Request failed with status ${res.status}: ${res.statusText}`)
+        err.status = res.status
+        err.body = await res.text()
+        console.error(`[API] Error fetching ${url}:`, err)
+        throw err
+      }
+      if (res.status === 204) return
+      return res.json()
+    } catch (err) {
+      lastErr = err
+      if (err.name === 'AbortError') {
+        const timeoutErr = new Error(`Request timeout after ${timeoutMs}ms`)
+        timeoutErr.name = 'TimeoutError'
+        throw timeoutErr
+      }
+      if (err.message === 'Token expired' || err.message === 'Unauthorized') throw err
+      if (attempt < MAX_RETRIES) {
+        await new Promise(r => setTimeout(r, RETRY_DELAY_MS))
+      } else {
+        console.error(`[API] Failed to fetch ${url} after ${MAX_RETRIES + 1} attempts:`, err)
+        throw err
       }
     }
-    
-    if (!res.ok) {
-      const err = new Error(`Request failed with status ${res.status}: ${res.statusText}`)
-      err.status = res.status
-      err.body = await res.text()
-      console.error(`[API] Error fetching ${url}:`, err)
-      throw err
-    }
-    if (res.status === 204) return
-    return res.json()
-  } catch (err) {
-    console.error(`[API] Failed to fetch ${url}:`, err)
-    throw err
   }
+  throw lastErr
 }
+
+export { isTokenExpired, clearAuthAndRedirect }
 
 export const api = {
   sources: {

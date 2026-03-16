@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { api } from '../api/client';
+import { getSharedDashboardWsUrl } from '../config';
 import { useDashboardStats } from '../context/DashboardStatsContext';
 import { useGlobalConfig } from '../context/GlobalConfigContext';
 
@@ -15,11 +16,11 @@ import { Top3Section } from '../components/dashboard/Top3Section';
 import { HabitsSection } from '../components/dashboard/HabitsSection';
 import { ProjectsSection } from '../components/dashboard/ProjectsSection';
 import { LifeGoalsSection } from '../components/dashboard/LifeGoalsSection';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 // Utils & Constants
 import {
   STORAGE_KEY,
-  BC_CHANNEL,
   uid,
   toDateKey,
   formatDeadline,
@@ -36,6 +37,7 @@ import {
   buildDefaultLifeGoals,
   POMODORO_STORAGE
 } from '../components/dashboard/DashboardUtils';
+import { useDashboardSync } from '../hooks/useDashboardSync';
 
 // Local components removed (now imported from modular files)
 
@@ -88,6 +90,15 @@ export default function DashboardV2() {
   const applyingFromSharedBC = useRef(false);
 
   const [isLoaded, setIsLoaded] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState(null);
+  const [confirmState, setConfirmState] = useState(null);
+
+  // Hide "Salvato" after 2.5s
+  useEffect(() => {
+    if (!lastSavedAt) return;
+    const t = setTimeout(() => setLastSavedAt(null), 2500);
+    return () => clearTimeout(t);
+  }, [lastSavedAt]);
 
   // Helper: send shared dashboard update via WS + BroadcastChannel + REST fallback
   const sendSharedUpdate = (shareId, title, newData) => {
@@ -146,10 +157,7 @@ export default function DashboardV2() {
       // --- WebSocket connection ---
       if (wsConnections.current[shareId]) return;
 
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const host = isLocal ? 'localhost:8000' : (import.meta.env.VITE_WS_HOST || 'projecto-production-feda.up.railway.app');
-      const wsUrl = `${protocol}//${host}/api/training/ws/shared-dashboard/${encodeURIComponent(shareId)}`;
+      const wsUrl = getSharedDashboardWsUrl(shareId);
 
       const socket = new WebSocket(wsUrl);
       wsConnections.current[shareId] = socket;
@@ -275,57 +283,28 @@ export default function DashboardV2() {
     return () => clearInterval(timer);
   }, []);
 
-  // 2. Sync to LocalStorage, DB, BroadcastChannel (sync istantaneo tra tab)
-  const syncTimeoutRef = useRef(null);
-  const applyingFromBCRef = useRef(false);
-  useEffect(() => {
-    if (!isLoaded) return;
-
-    const state = { dailyTaskTemplates, dailyTaskLogs, projects, prayerLogs, top3Manual, quickTasks, dailyCompletionLog, lifeGoals };
-    const skipBroadcast = applyingFromBCRef.current;
-    if (applyingFromBCRef.current) applyingFromBCRef.current = false;
-
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch (_) { }
-
-    if (!skipBroadcast) {
-      try {
-        const bc = new BroadcastChannel(BC_CHANNEL);
-        bc.postMessage(state);
-        bc.close();
-      } catch (_) { }
-    }
-
-    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-    syncTimeoutRef.current = setTimeout(async () => {
-      try {
-        await api.training.updateDashboardState(state);
-      } catch (err) {
-        console.error("Failed to sync dashboard to DB:", err);
-      }
-    }, 500);
-  }, [isLoaded, dailyTaskTemplates, dailyTaskLogs, projects, prayerLogs, top3Manual, quickTasks, dailyCompletionLog, lifeGoals]);
-
-  // BroadcastChannel listener: ricevi aggiornamenti da altre tab
-  useEffect(() => {
-    if (!isLoaded) return;
-    const bc = new BroadcastChannel(BC_CHANNEL);
-    bc.onmessage = (e) => {
-      const s = e?.data;
-      if (!s || applyingFromBCRef.current) return;
-      applyingFromBCRef.current = true;
-      if (Array.isArray(s.dailyTaskTemplates)) setDailyTaskTemplates(s.dailyTaskTemplates);
-      if (s.dailyTaskLogs && typeof s.dailyTaskLogs === 'object') setDailyTaskLogs(s.dailyTaskLogs);
-      if (Array.isArray(s.projects)) setProjects(s.projects);
-      if (s.prayerLogs && typeof s.prayerLogs === 'object') setPrayerLogs(s.prayerLogs);
-      if (Array.isArray(s.top3Manual)) setTop3Manual(s.top3Manual);
-      if (Array.isArray(s.quickTasks)) setQuickTasks(s.quickTasks);
-      if (s.dailyCompletionLog && typeof s.dailyCompletionLog === 'object') setDailyCompletionLog(s.dailyCompletionLog);
-      if (s.lifeGoals) setLifeGoals(s.lifeGoals);
-    };
-    return () => bc.close();
-  }, [isLoaded]);
+  useDashboardSync(
+    isLoaded,
+    setLastSavedAt,
+    {
+      setDailyTaskTemplates,
+      setDailyTaskLogs,
+      setProjects,
+      setPrayerLogs,
+      setTop3Manual,
+      setQuickTasks,
+      setDailyCompletionLog,
+      setLifeGoals,
+    },
+    dailyTaskTemplates,
+    dailyTaskLogs,
+    projects,
+    prayerLogs,
+    top3Manual,
+    quickTasks,
+    dailyCompletionLog,
+    lifeGoals
+  );
 
   const todayKey = toDateKey(now);
   const todayTaskLog = dailyTaskLogs[todayKey] || {};
@@ -462,6 +441,15 @@ export default function DashboardV2() {
     setTop3Manual(prev => prev.map(s => (s && s.projectId === projectId) ? null : s));
     setProjectTaskDrafts(prev => { const n = { ...prev }; delete n[projectId]; return n; });
   };
+  const reorderProjects = (fromIdx, toIdx) => {
+    if (fromIdx === toIdx) return;
+    setProjects(p => {
+      const next = [...p];
+      const [removed] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, removed);
+      return next;
+    });
+  };
   const updateProject = (id, updater) => setProjects(p => p.map(x => x.id === id ? updater(x) : x));
 
   const updateSharedDashboardProject = (shareId, projectId, updater) => {
@@ -513,20 +501,31 @@ export default function DashboardV2() {
   };
 
   const deleteSharedDashboardProject = (shareId, projectId) => {
-    if (!window.confirm("Sei sicuro di voler eliminare questo progetto condiviso?")) return;
-
+    setConfirmState({ id: 'deleteShared', payload: { shareId, projectId } });
+  };
+  const doDeleteSharedDashboardProject = (shareId, projectId) => {
     const currentShared = sharedDashboards.find(sd => sd.share_id === shareId);
     if (!currentShared) return;
-
     const newData = { ...(currentShared.data || {}) };
     newData.projects = (newData.projects || []).filter(p => p.id !== projectId);
-    const title = currentShared.title;
-
     setSharedDashboards(prev => prev.map(sd =>
       sd.share_id === shareId ? { ...sd, data: newData } : sd
     ));
+    sendSharedUpdate(shareId, currentShared.title, newData);
+  };
 
-    sendSharedUpdate(shareId, title, newData);
+  const reorderSharedDashboardProjects = (shareId, fromIdx, toIdx) => {
+    if (fromIdx === toIdx) return;
+    const currentShared = sharedDashboards.find(sd => sd.share_id === shareId);
+    if (!currentShared) return;
+    const projs = [...(currentShared.data?.projects || [])];
+    const [removed] = projs.splice(fromIdx, 1);
+    projs.splice(toIdx, 0, removed);
+    const newData = { ...(currentShared.data || {}), projects: projs };
+    setSharedDashboards(prev => prev.map(sd =>
+      sd.share_id === shareId ? { ...sd, data: newData } : sd
+    ));
+    sendSharedUpdate(shareId, currentShared.title, newData);
   };
   const reorderProjectTasks = (projectId, fromIndex, toIndex) => {
     if (fromIndex === toIndex) return;
@@ -581,7 +580,9 @@ export default function DashboardV2() {
   };
 
   const deleteGoal = (goalId) => {
-    if (!window.confirm("Sei sicuro di voler eliminare questo obiettivo?")) return;
+    setConfirmState({ id: 'deleteGoal', payload: { goalId } });
+  };
+  const doDeleteGoal = (goalId) => {
     updateLifeGoals(prev => ({
       ...prev,
       tiers: prev.tiers.map(tier => ({
@@ -785,23 +786,19 @@ export default function DashboardV2() {
             </div>
           </div>
 
-          {/* Right: Date + Reset */}
+          {/* Right: Date + Salvato + Reset */}
           <div className="flex items-center gap-2 shrink-0">
+            {lastSavedAt && (
+              <span className="text-[10px] font-semibold text-emerald-500 dark:text-emerald-400">
+                Salvato
+              </span>
+            )}
             <time className="hidden sm:block text-[11px] font-medium text-zinc-500 dark:text-zinc-400 tabular-nums">
               {now.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })}
             </time>
             <button
               type="button"
-              onClick={() => {
-                if (window.confirm('Azzerare tutto? Verranno eliminati progetti, task, abitudini e dati della dashboard. Ricarica la pagina.')) {
-                  try {
-                    localStorage.removeItem(STORAGE_KEY);
-                    localStorage.removeItem('km-dashboard-v1');
-                    localStorage.removeItem(POMODORO_STORAGE);
-                    window.location.reload();
-                  } catch (_) { }
-                }
-              }}
+              onClick={() => setConfirmState({ id: 'reset' })}
               className="rounded-lg p-2 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors"
               title="Reset dashboard"
             >
@@ -892,6 +889,8 @@ export default function DashboardV2() {
             projects={projects}
             createProject={createProject}
             deleteProject={deleteProject}
+            reorderProjects={reorderProjects}
+            reorderSharedDashboardProjects={reorderSharedDashboardProjects}
             updateProject={updateProject}
             toggleProjectTask={toggleProjectTask}
             projectTaskDrafts={projectTaskDrafts}
@@ -915,6 +914,30 @@ export default function DashboardV2() {
           />
 
       </div>
+
+      <ConfirmModal
+        open={!!confirmState}
+        title={confirmState?.id === 'deleteShared' ? 'Elimina progetto condiviso' : confirmState?.id === 'deleteGoal' ? 'Elimina obiettivo' : 'Reset dashboard'}
+        message={confirmState?.id === 'deleteShared' ? 'Sei sicuro di voler eliminare questo progetto condiviso?' : confirmState?.id === 'deleteGoal' ? 'Sei sicuro di voler eliminare questo obiettivo?' : 'Azzerare tutto? Verranno eliminati progetti, task, abitudini e dati della dashboard. Ricarica la pagina.'}
+        confirmLabel="Conferma"
+        cancelLabel="Annulla"
+        variant={confirmState?.id === 'reset' ? 'danger' : 'default'}
+        onConfirm={() => {
+          if (confirmState?.id === 'deleteShared' && confirmState?.payload) {
+            doDeleteSharedDashboardProject(confirmState.payload.shareId, confirmState.payload.projectId);
+          } else if (confirmState?.id === 'deleteGoal' && confirmState?.payload) {
+            doDeleteGoal(confirmState.payload.goalId);
+          } else if (confirmState?.id === 'reset') {
+            try {
+              localStorage.removeItem(STORAGE_KEY);
+              localStorage.removeItem('km-dashboard-v1');
+              localStorage.removeItem(POMODORO_STORAGE);
+              window.location.reload();
+            } catch (_) {}
+          }
+        }}
+        onCancel={() => setConfirmState(null)}
+      />
 
       <LifeGoalsSection
         lifeGoals={lifeGoals}

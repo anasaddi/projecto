@@ -101,7 +101,7 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(
-        title="KM Personal",
+        title="PROJECTO",
         description="Personal Knowledge Management - Text + Media ingestion",
         version="0.2.0",
         lifespan=lifespan,
