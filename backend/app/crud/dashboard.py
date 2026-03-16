@@ -68,6 +68,14 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default")
     ds = res_ds.scalar_one_or_none()
     ds_data = _parse_json(ds.data, {}) if ds else {}
 
+    # Apply saved project order (frontend reorder)
+    project_order = ds_data.get("projectOrder") or []
+    if project_order:
+        by_id = {p["id"]: p for p in projects}
+        ordered = [by_id[pid] for pid in project_order if pid in by_id]
+        tail = [p for p in projects if p["id"] not in project_order]
+        projects = ordered + tail
+
     quickTasks = ds_data.get("quickTasks")
     if quickTasks is None:
         qt_result = await db.execute(select(QuickTask).order_by(QuickTask.created_at.desc()))
@@ -96,6 +104,8 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
         # Merge new data into blob
         merged = _parse_json(ds.data, {})
         merged.update(data)
+        if "projects" in data:
+            merged["projectOrder"] = [p["id"] for p in data["projects"]]
         ds.data = merged
     
     # RELATIONAL SYNC (Only if keys are present)
@@ -226,6 +236,15 @@ async def get_shared_dashboard_aggregated(db: AsyncSession, share_id: str):
         for p in projs
     ]
 
+    # Apply saved project order (frontend reorder)
+    shared_data = _parse_json(shared.data, {})
+    project_order = shared_data.get("projectOrder") or [] if isinstance(shared_data, dict) else []
+    if project_order:
+        by_id = {p["id"]: p for p in projects}
+        ordered = [by_id[pid] for pid in project_order if pid in by_id]
+        tail = [p for p in projects if p["id"] not in project_order]
+        projects = ordered + tail
+
     # Chat (Limited to last 100 entries)
     chat_res = await db.execute(
         select(ChatMessage)
@@ -242,8 +261,9 @@ async def get_shared_dashboard_aggregated(db: AsyncSession, share_id: str):
         for m in reversed(chat_rows)
     ]
     
-    shared_data = _parse_json(shared.data, {})
-    quickTasks = shared_data.get("quickTasks", []) if isinstance(shared_data, dict) else []
+    if not isinstance(shared_data, dict):
+        shared_data = _parse_json(shared.data, {}) or {}
+    quickTasks = shared_data.get("quickTasks", [])
 
     return {
         "share_id": shared.share_id,
@@ -274,6 +294,8 @@ async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, dat
         curr_data = _parse_json(shared.data, {})
         if isinstance(curr_data, dict):
             curr_data.update(data)
+            if "projects" in data:
+                curr_data["projectOrder"] = [p["id"] for p in data["projects"]]
             shared.data = curr_data
         else:
             shared.data = data

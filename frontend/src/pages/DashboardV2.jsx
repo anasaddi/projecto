@@ -441,14 +441,28 @@ export default function DashboardV2() {
     setTop3Manual(prev => prev.map(s => (s && s.projectId === projectId) ? null : s));
     setProjectTaskDrafts(prev => { const n = { ...prev }; delete n[projectId]; return n; });
   };
+  const dashboardStateRef = useRef(null);
+  dashboardStateRef.current = isLoaded ? {
+    dailyTaskTemplates,
+    dailyTaskLogs,
+    projects,
+    prayerLogs,
+    top3Manual,
+    quickTasks,
+    dailyCompletionLog,
+    lifeGoals,
+  } : null;
+
   const reorderProjects = (fromIdx, toIdx) => {
     if (fromIdx === toIdx) return;
-    setProjects(p => {
-      const next = [...p];
-      const [removed] = next.splice(fromIdx, 1);
-      next.splice(toIdx, 0, removed);
-      return next;
-    });
+    const next = [...projects];
+    const [removed] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, removed);
+    setProjects(next);
+    if (isLoaded && dashboardStateRef.current) {
+      const state = { ...dashboardStateRef.current, projects: next };
+      api.training.updateDashboardState(state).then(() => setLastSavedAt(Date.now())).catch(() => {});
+    }
   };
   const updateProject = (id, updater) => setProjects(p => p.map(x => x.id === id ? updater(x) : x));
 
@@ -471,14 +485,19 @@ export default function DashboardV2() {
     const currentShared = sharedDashboards.find(sd => sd.share_id === shareId);
     if (!currentShared) return;
 
-    const newData = updater({ ...(currentShared.data || {}) });
-    const title = currentShared.title;
+    const prevData = currentShared.data || {};
+    const base = {
+      projects: prevData.projects ?? [],
+      quickTasks: prevData.quickTasks ?? [],
+      chat: prevData.chat ?? [],
+    };
+    const newData = updater({ ...base });
 
     setSharedDashboards(prev => prev.map(sd =>
       sd.share_id === shareId ? { ...sd, data: newData } : sd
     ));
 
-    sendSharedUpdate(shareId, title, newData);
+    sendSharedUpdate(shareId, currentShared.title, newData);
   };
   const toggleSharedQuickTask = (shareId, taskId, val) => {
     updateSharedDashboardData(shareId, data => ({
