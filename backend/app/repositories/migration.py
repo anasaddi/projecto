@@ -6,10 +6,10 @@ from sqlalchemy import select, delete
 from app.db.models import (
     DashboardState, SharedDashboard, WorkoutLog, SetLog, Exercise, WorkoutDayTemplate, TrainingProgression
 )
-from app.crud.base import _parse_json
-from app.crud.dashboard import update_dashboard_from_json, update_shared_dashboard_from_json
+from app.repositories.base import _parse_json
+from app.repositories.dashboard import update_dashboard_from_json, update_shared_dashboard_from_json
 # Circular dependency avoidance: use training functions locally
-from app.crud.training import update_training_progression
+from app.repositories.training import update_training_progression
 
 logger = logging.getLogger(__name__)
 

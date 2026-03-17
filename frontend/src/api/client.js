@@ -191,14 +191,15 @@ export const api = {
         method: 'POST'
       }),
     // --- Dashboard ---
-    getDashboardState: () => request('/training/dashboard-state'),
-    updateDashboardState: (data) =>
+    getDashboardState: (opts) => request('/training/dashboard-state', opts ?? {}),
+    updateDashboardState: (data, opts) =>
       request('/training/dashboard-state', {
         method: 'PUT',
         body: JSON.stringify({ data }),
+        ...opts,
       }),
     getSharedDashboard: (shareId) => request(`/training/shared-dashboard/${encodeURIComponent(shareId)}`),
-    listSharedDashboards: () => request('/training/shared-dashboards'),
+    listSharedDashboards: (opts) => request('/training/shared-dashboards', opts ?? {}),
     updateSharedDashboard: (shareId, data, title) =>
       request(`/training/shared-dashboard/${encodeURIComponent(shareId)}`, {
         method: 'PUT',

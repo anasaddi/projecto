@@ -100,7 +100,7 @@ function SharedListDashboard() {
   const [copiedId, setCopiedId] = useState(null);
 
   useEffect(() => {
-    api.training.listSharedDashboards()
+    api.training.listSharedDashboards({ timeout: 10_000 })
       .then((data) => {
         const arr = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
         setList(arr);
@@ -223,6 +223,7 @@ export default function SharedProjects() {
     quickTasks: [],
     chat: [],
     title: "Progetti Condivisi",
+    loading: true,
     error: null,
     isConnected: false
   });
@@ -467,6 +468,7 @@ export default function SharedProjects() {
   const sendUpdate = (newState) => {
     const data = {
       projects: Array.isArray(newState.projects) ? newState.projects : [],
+      projectOrder: Array.isArray(newState.projects) ? newState.projects.map(p => p.id) : [],
       quickTasks: Array.isArray(newState.quickTasks) ? newState.quickTasks : [],
       chat: Array.isArray(newState.chat) ? newState.chat : [],
     };
@@ -501,44 +503,44 @@ export default function SharedProjects() {
   const addQuickTask = (title) => {
     if (!title?.trim()) return;
     updateLocal(prev => ({
-      quickTasks: [{ id: uid('qtask'), title: title.trim(), done: false, created_at: Date.now() }, ...prev.quickTasks]
+      quickTasks: [{ id: uid('qtask'), title: title.trim(), done: false, created_at: Date.now() }, ...(prev.quickTasks || [])]
     }));
   };
 
   const toggleQuickTask = (id) => {
     updateLocal(prev => ({
-      quickTasks: prev.quickTasks.map(t => t.id === id ? { ...t, done: !t.done } : t)
+      quickTasks: (prev.quickTasks || []).map(t => t.id === id ? { ...t, done: !t.done } : t)
     }));
   };
 
   const deleteQuickTask = (id) => {
     updateLocal(prev => ({
-      quickTasks: prev.quickTasks.filter(t => t.id !== id)
+      quickTasks: (prev.quickTasks || []).filter(t => t.id !== id)
     }));
   };
 
   const updateProject = (id, updater) => {
     updateLocal(prev => ({
-      projects: prev.projects.map(x => x.id === id ? updater(x) : x)
+      projects: (prev.projects || []).map(x => x.id === id ? updater(x) : x)
     }));
   };
 
   const createProject = () => {
     updateLocal(prev => ({
-      projects: [{ id: uid('project'), title: 'Nuovo Progetto', tasks: [] }, ...prev.projects]
+      projects: [{ id: uid('project'), title: 'Nuovo Progetto', tasks: [] }, ...(prev.projects || [])]
     }));
   };
 
   const deleteProject = (id) => {
     updateLocal(prev => ({
-      projects: prev.projects.filter(x => x.id !== id)
+      projects: (prev.projects || []).filter(x => x.id !== id)
     }));
   };
 
   const reorderProjects = (fromIdx, toIdx) => {
     if (fromIdx === toIdx) return;
     updateLocal(prev => {
-      const next = [...prev.projects];
+      const next = [...(prev.projects || [])];
       const [removed] = next.splice(fromIdx, 1);
       next.splice(toIdx, 0, removed);
       return { ...prev, projects: next };
@@ -910,19 +912,18 @@ export default function SharedProjects() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
                       whileHover={{ scale: 1.02 }}
+                      onClick={() => toggleQuickTask(task.id)}
                       className="group flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-gray-100 dark:hover:border-gray-800 cursor-pointer"
                     >
-                      <button
-                        onClick={() => toggleQuickTask(task.id)}
-                        className={`shrink-0 ${task.done ? 'text-emerald-500' : 'text-gray-300 dark:text-gray-600 hover:text-amber-400'} transition-colors duration-200`}
-                      >
+                      <span className={`shrink-0 ${task.done ? 'text-emerald-500' : 'text-gray-300 dark:text-gray-600'} transition-colors duration-200`}>
                         {task.done ? <Icons.CheckCircle className="w-4 h-4" /> : <Icons.Circle className="w-4 h-4" />}
-                      </button>
-                      <span className={`flex-1 text-xs min-w-0 ${task.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
+                      </span>
+                      <span title={task.title} className={`flex-1 text-xs min-w-0 break-words line-clamp-2 leading-snug ${task.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
                         {task.title}
                       </span>
                       <button
-                        onClick={() => deleteQuickTask(task.id)}
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); deleteQuickTask(task.id); }}
                         className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
                       >
                         <Icons.Trash className="w-3 h-3" />

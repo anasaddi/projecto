@@ -44,14 +44,14 @@ export function ConfirmModal({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="focus-ring px-4 py-2 rounded-xl text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors min-h-[44px]"
           >
             {cancelLabel}
           </button>
           <button
             type="button"
             onClick={() => { onConfirm?.(); onCancel?.(); }}
-            className={`px-4 py-2 rounded-xl text-sm font-medium text-white transition-colors ${
+            className={`focus-ring px-4 py-2 rounded-xl text-sm font-medium text-white transition-colors min-h-[44px] ${
               isDanger
                 ? 'bg-red-500 hover:bg-red-600'
                 : 'bg-zinc-900 dark:bg-indigo-500 hover:bg-zinc-800 dark:hover:bg-indigo-600'

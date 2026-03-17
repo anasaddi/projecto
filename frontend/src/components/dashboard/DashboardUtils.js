@@ -82,13 +82,20 @@ export function findTaskInProjects(projects, projectId, taskId, lifeGoals = null
   return null;
 }
 
-export function resolveTop3Slots(projects, top3Manual, quickTasks = [], lifeGoals = null) {
+export function resolveTop3Slots(projects, top3Manual, quickTasks = [], lifeGoals = null, sharedDashboards = []) {
   return top3Manual.map((slot) => {
     if (!slot) return null;
     if (slot.quickTaskId) {
-      const qt = quickTasks.find((t) => t.id === slot.quickTaskId);
+      const qt = quickTasks.find((t) => t.id === slot.quickTaskId && (slot.shareId != null ? t.shareId === slot.shareId : !t.shareId));
       if (!qt) return { ...slot, missing: true };
       return { ...slot, title: qt.title, projectTitle: 'Quick Task', done: qt.done, isQuick: true };
+    }
+    if (slot.shareId) {
+      const sd = sharedDashboards.find((s) => s.share_id === slot.shareId);
+      const sharedProjects = sd?.data?.projects ?? [];
+      const res = findTaskInProjects(sharedProjects, slot.projectId, slot.taskId, null);
+      if (!res) return { ...slot, missing: true };
+      return { ...slot, title: res.node.title, projectTitle: res.projectTitle ?? sd?.title, done: res.node.done };
     }
     const res = findTaskInProjects(projects, slot.projectId, slot.taskId, lifeGoals);
     if (!res) return { ...slot, missing: true };
@@ -161,6 +168,15 @@ export function getDeadlineColorClass(deadlineKey, isDone) {
   if (daysUntil <= 7) return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20';
   if (daysUntil <= 14) return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20';
   return 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-900/20';
+}
+
+/** Returns 'Scaduta' if deadline is in the past, otherwise null (for label/badge). */
+export function getDeadlinePastLabel(deadlineKey) {
+  if (!deadlineKey) return null;
+  const dead = fromDateKey(deadlineKey);
+  if (!dead) return null;
+  const today = startOfDay(new Date());
+  return dead < today ? 'Scaduta' : null;
 }
 
 export function buildDefaultLifeGoals() {
@@ -293,6 +309,7 @@ export function buildDefaultState() {
     quickTasks: [],
     dailyCompletionLog: {},
     lifeGoals: buildDefaultLifeGoals(),
+    timelineRoutines: {},
   };
 }
 
@@ -355,6 +372,7 @@ export function loadState() {
       quickTasks: Array.isArray(parsed.quickTasks) ? parsed.quickTasks : fallback.quickTasks,
       dailyCompletionLog: parsed.dailyCompletionLog && typeof parsed.dailyCompletionLog === 'object' ? parsed.dailyCompletionLog : fallback.dailyCompletionLog,
       lifeGoals: normalizeLifeGoals(parsed.lifeGoals, fallback.lifeGoals),
+      timelineRoutines: parsed.timelineRoutines && typeof parsed.timelineRoutines === 'object' ? parsed.timelineRoutines : fallback.timelineRoutines,
     };
   } catch (_) {
     return fallback;

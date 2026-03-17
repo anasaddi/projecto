@@ -27,6 +27,7 @@ dependencies = [
     "youtube-transcript-api>=0.6.0",
     "httpx>=0.26.0",
     "python-multipart>=0.0.6",
+    "PyJWT>=2.8.0",
 ]
 
 [project.optional-dependencies]

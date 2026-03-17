@@ -1,2 +1,2 @@
 # Routes
-from . import sources, content, insights, search, youtube, training
+from . import sources, content, insights, search, youtube, training, config, auth

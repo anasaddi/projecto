@@ -3,11 +3,13 @@ from typing import Any, List, Dict
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from datetime import datetime, timezone, timedelta
+from sqlalchemy.orm import selectinload
 from app.db.models import (
     DashboardState, SharedDashboard, Project, Task, QuickTask, 
-    Habit, HabitLog, ChatMessage
+    Habit, HabitLog, ChatMessage, PrayerLog, Top3Item, 
+    DailyCompletionLog, LifeGoalTier, LifeGoal
 )
-from app.crud.base import _parse_json
+from app.repositories.base import _parse_json
 
 logger = logging.getLogger(__name__)
 
@@ -35,11 +37,11 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default")
         dailyTaskLogs[l.date].append({"id": l.habit_id, "done": bool(l.status)})
 
     # 3. Personal Projects & Tasks (Single-pass build)
-    projs_result = await db.execute(select(Project).filter(Project.share_id == None).order_by(Project.created_at.desc()))
+    projs_result = await db.execute(select(Project).filter(Project.share_id == None).order_by(Project.ordinal, Project.created_at.desc()))
     projs = projs_result.scalars().all()
     proj_ids = [p.id for p in projs]
 
-    tasks_result = await db.execute(select(Task).filter(Task.project_id.in_(proj_ids)).order_by(Task.created_at))
+    tasks_result = await db.execute(select(Task).filter(Task.project_id.in_(proj_ids)).order_by(Task.ordinal, Task.created_at))
     all_tasks = tasks_result.scalars().all()
 
     tasks_by_project = {pid: [] for pid in proj_ids}
@@ -54,42 +56,97 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default")
                 "title": t.title,
                 "done": bool(t.done),
                 "deadline": t.deadline,
+                "ordinal": t.ordinal,
                 "children": build_tree(task_list, t.id)
             })
         return nodes
 
     projects = [
-        {"id": p.id, "title": p.title, "tasks": build_tree(tasks_by_project.get(p.id, []))}
+        {"id": p.id, "title": p.title, "ordinal": p.ordinal, "tasks": build_tree(tasks_by_project.get(p.id, []))}
         for p in projs
     ]
 
-    # 4. Misc fields from DashboardState
+    # 4. QuickTasks
+    qt_result = await db.execute(select(QuickTask).order_by(QuickTask.ordinal, QuickTask.created_at.desc()))
+    quickTasks = [{"id": q.id, "title": q.title, "done": bool(q.done), "deadline": q.deadline, "ordinal": q.ordinal} for q in qt_result.scalars().all()]
+
+    # 5. Prayer Logs
+    pr_result = await db.execute(select(PrayerLog).filter(PrayerLog.date >= sixty_days_ago))
+    pr_logs = pr_result.scalars().all()
+    prayerLogs = {}
+    for pr in pr_logs:
+        if pr.date not in prayerLogs: prayerLogs[pr.date] = {}
+        prayerLogs[pr.date][pr.prayer_name] = bool(pr.completed)
+
+    # 6. Top3 Items
+    top3_result = await db.execute(select(Top3Item).order_by(Top3Item.slot))
+    top3_rows = top3_result.scalars().all()
+    top3Manual = [None, None, None]
+    for tr in top3_rows:
+        if 0 <= tr.slot < 3:
+            top3Manual[tr.slot] = {
+                "projectId": tr.project_id,
+                "taskId": tr.task_id,
+                "quickTaskId": tr.quick_task_id,
+                "title": tr.title,
+                "done": bool(tr.done)
+            }
+
+    # 7. Daily Completion Log
+    dc_result = await db.execute(select(DailyCompletionLog).filter(DailyCompletionLog.date >= sixty_days_ago))
+    dc_logs = dc_result.scalars().all()
+    dailyCompletionLog = {dc.date: {"score": dc.score, **(dc.data or {})} for dc in dc_logs}
+
+    # 8. Life Goals (Tiered)
+    tiers_result = await db.execute(
+        select(LifeGoalTier)
+        .options(selectinload(LifeGoalTier.goals))
+        .order_by(LifeGoalTier.ordinal)
+    )
+    tiers = tiers_result.scalars().all()
+    
+    # We also need the top-level 'collapsed' from DashboardState for now
     res_ds = await db.execute(select(DashboardState).filter(DashboardState.key == key))
     ds = res_ds.scalar_one_or_none()
     ds_data = _parse_json(ds.data, {}) if ds else {}
+    lg_collapsed = ds_data.get("lifeGoals", {}).get("collapsed", False)
 
-    # Apply saved project order (frontend reorder)
-    project_order = ds_data.get("projectOrder") or []
-    if project_order:
-        by_id = {p["id"]: p for p in projects}
-        ordered = [by_id[pid] for pid in project_order if pid in by_id]
-        tail = [p for p in projects if p["id"] not in project_order]
-        projects = ordered + tail
-
-    quickTasks = ds_data.get("quickTasks")
-    if quickTasks is None:
-        qt_result = await db.execute(select(QuickTask).order_by(QuickTask.created_at.desc()))
-        quickTasks = [{"id": q.id, "title": q.title, "done": bool(q.done), "deadline": q.deadline} for q in qt_result.scalars().all()]
+    lifeGoals = {
+        "collapsed": lg_collapsed,
+        "tiers": [
+            {
+                "id": t.id,
+                "name": t.name,
+                "emoji": t.emoji,
+                "color": t.color,
+                "collapsed": bool(t.collapsed),
+                "ordinal": t.ordinal,
+                "goals": [
+                    {
+                        "id": g.id,
+                        "title": g.title,
+                        "category": g.category,
+                        "type": g.type,
+                        "done": bool(g.done),
+                        "deadline": g.deadline,
+                        "ordinal": g.ordinal
+                    }
+                    for g in t.goals
+                ]
+            }
+            for t in tiers
+        ]
+    }
 
     return {
         "dailyTaskTemplates": dailyTaskTemplates,
         "dailyTaskLogs": dailyTaskLogs,
         "projects": projects,
         "quickTasks": quickTasks,
-        "prayerLogs": ds_data.get("prayerLogs", {}),
-        "top3Manual": ds_data.get("top3Manual", [None, None, None]),
-        "dailyCompletionLog": ds_data.get("dailyCompletionLog", {}),
-        "lifeGoals": ds_data.get("lifeGoals"),
+        "prayerLogs": prayerLogs,
+        "top3Manual": top3Manual,
+        "dailyCompletionLog": dailyCompletionLog,
+        "lifeGoals": lifeGoals,
     }
 
 async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "default"):
@@ -98,15 +155,8 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
     ds = res_ds.scalar_one_or_none()
     
     if not ds:
-        ds = DashboardState(key=key, data=data)
+        ds = DashboardState(key=key, data={})
         db.add(ds)
-    else:
-        # Merge new data into blob
-        merged = _parse_json(ds.data, {})
-        merged.update(data)
-        if "projects" in data:
-            merged["projectOrder"] = [p["id"] for p in data["projects"]]
-        ds.data = merged
     
     # RELATIONAL SYNC (Only if keys are present)
     
@@ -121,14 +171,14 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
             
         existing_res = await db.execute(select(Habit))
         existing_habits = {str(h.id): h for h in existing_res.scalars().all()}
-        for h in data["dailyTaskTemplates"]:
+        for i, h in enumerate(data["dailyTaskTemplates"]):
             hid = str(h["id"])
             if hid in existing_habits:
                 existing_habits[hid].title = h["title"]
                 existing_habits[hid].locked = 1 if h.get("locked") else 0
-                existing_habits[hid].ordinal = h.get("ordinal", 0)
+                existing_habits[hid].ordinal = h.get("ordinal", i)
             else:
-                db.add(Habit(id=hid, title=h["title"], locked=1 if h.get("locked") else 0, ordinal=h.get("ordinal", 0)))
+                db.add(Habit(id=hid, title=h["title"], locked=1 if h.get("locked") else 0, ordinal=h.get("ordinal", i)))
     
     if "dailyTaskLogs" in data:
         # Partial update: only touch dates provided in the payload
@@ -144,20 +194,21 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
             await db.execute(delete(QuickTask))
         existing_q_res = await db.execute(select(QuickTask))
         existing_qs = {str(q.id): q for q in existing_q_res.scalars().all()}
-        for q in data["quickTasks"]:
+        for i, q in enumerate(data["quickTasks"]):
             qid = str(q["id"])
             if qid in existing_qs:
                 existing_qs[qid].title = q["title"]
                 existing_qs[qid].done = 1 if q.get("done") else 0
                 existing_qs[qid].deadline = q.get("deadline")
+                existing_qs[qid].ordinal = i
             else:
-                db.add(QuickTask(id=qid, title=q["title"], done=1 if q.get("done") else 0, deadline=q.get("deadline")))
+                db.add(QuickTask(id=qid, title=q["title"], done=1 if q.get("done") else 0, deadline=q.get("deadline"), ordinal=i))
     
     if "projects" in data:
         p_data = data["projects"]
         inc_proj_ids = [str(p["id"]) for p in p_data]
         
-        # Only delete projects if "projects" key exists in payload (means we are syncing the whole list)
+        # Only delete projects if "projects" key exists in payload
         deleted_p_res = await db.execute(select(Project.id).filter(Project.share_id == None, Project.id.not_in(inc_proj_ids)))
         deleted_p_ids = deleted_p_res.scalars().all()
         if deleted_p_ids:
@@ -166,12 +217,18 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
 
         ex_p_res = await db.execute(select(Project).filter(Project.share_id == None))
         ex_projs = {str(p.id): p for p in ex_p_res.scalars().all()}
-        for p in p_data:
+        
+        # Prefetch tasks to avoid many small queries
+        ex_t_res = await db.execute(select(Task).filter(Task.project_id.in_(list(ex_projs.keys()) if ex_projs else [None])))
+        ex_tasks = {str(t.id): t for t in ex_t_res.scalars().all()}
+
+        for i, p in enumerate(p_data):
             pid = str(p["id"])
             if pid in ex_projs:
                 ex_projs[pid].title = p["title"]
+                ex_projs[pid].ordinal = i
             else:
-                db.add(Project(id=pid, title=p["title"], share_id=None))
+                db.add(Project(id=pid, title=p["title"], share_id=None, ordinal=i))
             
             inc_task_ids = []
             def collect_tasks(tasks_list):
@@ -185,21 +242,103 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
             else:
                 await db.execute(delete(Task).filter(Task.project_id == pid))
                 
-            ex_t_res = await db.execute(select(Task).filter(Task.project_id == pid))
-            ex_tasks = {str(t.id): t for t in ex_t_res.scalars().all()}
-            
             async def upsert_t(tasks, proj_id, parent=None):
-                for t in tasks:
+                for j, t in enumerate(tasks):
                     tid = str(t["id"])
                     if tid in ex_tasks:
                         ex_tasks[tid].title = t["title"]
                         ex_tasks[tid].parent_id = parent
                         ex_tasks[tid].done = 1 if t.get("done") else 0
                         ex_tasks[tid].deadline = t.get("deadline")
+                        ex_tasks[tid].ordinal = j
                     else:
-                        db.add(Task(id=tid, project_id=proj_id, parent_id=parent, title=t["title"], done=1 if t.get("done") else 0, deadline=t.get("deadline")))
+                        db.add(Task(id=tid, project_id=proj_id, parent_id=parent, title=t["title"], 
+                                    done=1 if t.get("done") else 0, deadline=t.get("deadline"), ordinal=j))
                     if t.get("children"): await upsert_t(t["children"], proj_id, tid)
             await upsert_t(p.get("tasks", []), pid)
+
+    if "prayerLogs" in data:
+        for d_str, prayers in data["prayerLogs"].items():
+            await db.execute(delete(PrayerLog).filter(PrayerLog.date == d_str))
+            for p_name, completed in prayers.items():
+                db.add(PrayerLog(date=d_str, prayer_name=p_name, completed=1 if completed else 0))
+
+    if "top3Manual" in data:
+        await db.execute(delete(Top3Item))
+        for i, item in enumerate(data["top3Manual"]):
+            if item:
+                db.add(Top3Item(
+                    slot=i,
+                    project_id=item.get("projectId"),
+                    task_id=item.get("taskId"),
+                    quick_task_id=item.get("quickTaskId"),
+                    title=item.get("title"),
+                    done=1 if item.get("done") else 0
+                ))
+
+    if "dailyCompletionLog" in data:
+        for d_str, log in data["dailyCompletionLog"].items():
+            existing = await db.execute(select(DailyCompletionLog).filter(DailyCompletionLog.date == d_str))
+            dc = existing.scalar_one_or_none()
+            score = log.get("score", 0)
+            meta = {k: v for k, v in log.items() if k != "score"}
+            if dc:
+                dc.score = score
+                dc.data = meta
+            else:
+                db.add(DailyCompletionLog(date=d_str, score=score, data=meta))
+
+    if "lifeGoals" in data:
+        lg = data["lifeGoals"]
+        # Top-level state in blob for now
+        merged = _parse_json(ds.data, {})
+        if "lifeGoals" not in merged: merged["lifeGoals"] = {}
+        merged["lifeGoals"]["collapsed"] = lg.get("collapsed", False)
+        ds.data = merged
+
+        if "tiers" in lg:
+            incoming_tier_ids = [str(t["id"]) for t in lg["tiers"]]
+            # Careful: deleting goals first due to FK
+            await db.execute(delete(LifeGoal).filter(LifeGoal.tier_id.not_in(incoming_tier_ids)))
+            await db.execute(delete(LifeGoalTier).filter(LifeGoalTier.id.not_in(incoming_tier_ids)))
+            
+            ex_tiers_res = await db.execute(select(LifeGoalTier))
+            ex_tiers = {str(t.id): t for t in ex_tiers_res.scalars().all()}
+            
+            for i, t in enumerate(lg["tiers"]):
+                tid = str(t["id"])
+                if tid in ex_tiers:
+                    ex_tiers[tid].name = t["name"]
+                    ex_tiers[tid].emoji = t.get("emoji")
+                    ex_tiers[tid].color = t.get("color")
+                    ex_tiers[tid].collapsed = 1 if t.get("collapsed") else 0
+                    ex_tiers[tid].ordinal = i
+                else:
+                    db.add(LifeGoalTier(id=tid, name=t["name"], emoji=t.get("emoji"), 
+                                       color=t.get("color"), collapsed=1 if t.get("collapsed") else 0, ordinal=i))
+                
+                inc_goal_ids = [str(g["id"]) for g in t.get("goals", [])]
+                await db.execute(delete(LifeGoal).filter(LifeGoal.tier_id == tid, LifeGoal.id.not_in(inc_goal_ids)))
+                
+                ex_goals_res = await db.execute(select(LifeGoal).filter(LifeGoal.tier_id == tid))
+                ex_goals = {str(g.id): g for g in ex_goals_res.scalars().all()}
+                
+                for j, g in enumerate(t.get("goals", [])):
+                    gid = str(g["id"])
+                    if gid in ex_goals:
+                        ex_goals[gid].title = g["title"]
+                        ex_goals[gid].category = g.get("category")
+                        ex_goals[gid].type = g.get("type")
+                        ex_goals[gid].done = 1 if g.get("done") else 0
+                        ex_goals[gid].deadline = g.get("deadline")
+                        ex_goals[gid].ordinal = j
+                    else:
+                        db.add(LifeGoal(id=gid, tier_id=tid, title=g["title"], category=g.get("category"),
+                                        type=g.get("type"), done=1 if g.get("done") else 0, 
+                                        deadline=g.get("deadline"), ordinal=j))
+
+    await db.commit()
+    return await get_dashboard_state_aggregated(db, key)
     
     await db.commit()
     return await get_dashboard_state_aggregated(db, key)
@@ -294,7 +433,9 @@ async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, dat
         curr_data = _parse_json(shared.data, {})
         if isinstance(curr_data, dict):
             curr_data.update(data)
-            if "projects" in data:
+            if "projectOrder" in data:
+                curr_data["projectOrder"] = data["projectOrder"]
+            elif "projects" in data:
                 curr_data["projectOrder"] = [p["id"] for p in data["projects"]]
             shared.data = curr_data
         else:

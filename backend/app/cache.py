@@ -45,7 +45,7 @@ async def get_redis() -> Optional[Redis]:
         logger.info("Redis connected")
         return _redis
     except Exception as e:
-        logger.warning(f"Redis unavailable, operating without cache: {e}")
+        logger.info("Redis not available — running without cache (optional for local dev): %s", e)
         _redis = None
         _pool = None
         return None
@@ -126,3 +126,45 @@ async def set_cached_shared_dashboard(share_id: str, data: dict):
 
 async def invalidate_shared_dashboard(share_id: str):
     await cache_delete(shared_dashboard_key(share_id))
+
+
+# Embedding/Search helpers
+EMBEDDING_TTL = 86400 * 30  # 30 days
+SEARCH_RESULTS_TTL = 300  # 5 minutes
+
+
+def embedding_key(text_hash: str) -> str:
+    return f"embedding:{text_hash}"
+
+
+def search_results_key(query_hash: str) -> str:
+    return f"search:{query_hash}"
+
+
+async def get_cached_embedding(text_hash: str) -> Optional[list[float]]:
+    r = await get_redis()
+    if not r:
+        return None
+    try:
+        val = await r.get(embedding_key(text_hash))
+        return json.loads(val) if val else None
+    except Exception:
+        return None
+
+
+async def set_cached_embedding(text_hash: str, vector: list[float]):
+    r = await get_redis()
+    if not r:
+        return
+    try:
+        await r.setex(embedding_key(text_hash), EMBEDDING_TTL, json.dumps(vector))
+    except Exception:
+        pass
+
+
+async def get_cached_search_results(query_hash: str) -> Optional[dict]:
+    return await cache_get(search_results_key(query_hash))
+
+
+async def set_cached_search_results(query_hash: str, results: dict):
+    await cache_set(search_results_key(query_hash), results, SEARCH_RESULTS_TTL)

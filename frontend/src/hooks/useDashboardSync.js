@@ -24,7 +24,17 @@ export function useDashboardSync(
 
   useEffect(() => {
     if (!isLoaded) return;
-    const fullState = { dailyTaskTemplates, dailyTaskLogs, projects, prayerLogs, top3Manual, quickTasks, dailyCompletionLog, lifeGoals };
+    const fullState = {
+      dailyTaskTemplates,
+      dailyTaskLogs,
+      projects,
+      projectOrder: Array.isArray(projects) ? projects.map((p) => p.id) : [],
+      prayerLogs,
+      top3Manual,
+      quickTasks,
+      dailyCompletionLog,
+      lifeGoals,
+    };
     const skipBroadcast = applyingFromBCRef.current;
     if (applyingFromBCRef.current) applyingFromBCRef.current = false;
 

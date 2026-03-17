@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icons } from './Icons';
 import { KebabMenu } from './DashboardComponents';
+import { getDeadlinePastLabel } from './DashboardUtils';
 
 export function StandardProjectCard({
   project,
@@ -69,13 +70,18 @@ export function StandardProjectCard({
 
         <div className="flex shrink-0 items-center gap-3">
           {project.deadline && projectDeadlineEditing !== project.id && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setProjectDeadlineInput(project.deadline || ''); setProjectDeadlineEditing(project.id); }}
-              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border border-zinc-200 dark:border-white/[0.04] transition-colors ${getDeadlineColorClass(project.deadline, false)}`}
-            >
-              {formatDeadline(project.deadline)}
-            </button>
+            <span className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setProjectDeadlineInput(project.deadline || ''); setProjectDeadlineEditing(project.id); }}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border border-zinc-200 dark:border-white/[0.04] transition-colors ${getDeadlineColorClass(project.deadline, false)}`}
+              >
+                {formatDeadline(project.deadline)}
+              </button>
+              {getDeadlinePastLabel(project.deadline) && (
+                <span className="text-[9px] font-bold text-red-500 dark:text-red-400">Scaduta</span>
+              )}
+            </span>
           )}
           {projectDeadlineEditing === project.id && (
             <input

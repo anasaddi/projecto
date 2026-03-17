@@ -236,8 +236,9 @@ class Project(Base):
     # Se share_id è presente, il progetto è condiviso
     share_id = Column(String(64), ForeignKey("shared_dashboards.share_id"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    ordinal = Column(Integer, default=0)
     
-    tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
+    tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan", order_by="Task.ordinal")
 
 class Task(Base):
     __tablename__ = "tasks"
@@ -248,12 +249,14 @@ class Task(Base):
     done = Column(Integer, default=0)
     deadline = Column(String(10), nullable=True) # YYYY-MM-DD
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    ordinal = Column(Integer, default=0)
 
     project = relationship("Project", back_populates="tasks")
-    children = relationship("Task", backref=backref("parent", remote_side=[id]), cascade="all, delete-orphan", single_parent=True)
+    children = relationship("Task", backref=backref("parent", remote_side=[id]), cascade="all, delete-orphan", single_parent=True, order_by="Task.ordinal")
 
     __table_args__ = (
         Index("idx_tasks_project_parent", "project_id", "parent_id"),
+        Index("idx_tasks_project_ordinal", "project_id", "ordinal"),
     )
 
 class QuickTask(Base):
@@ -263,6 +266,7 @@ class QuickTask(Base):
     done = Column(Integer, default=0)
     deadline = Column(String(10), nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    ordinal = Column(Integer, default=0)
 
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
@@ -289,6 +293,61 @@ class SharedDashboard(Base):
     
     projects = relationship("Project", backref="shared_dashboard")
 
+class PrayerLog(Base):
+    __tablename__ = "prayer_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(String(10), nullable=False, index=True) # YYYY-MM-DD
+    prayer_name = Column(String(64), nullable=False)
+    completed = Column(Integer, default=0) # 0 = no, 1 = yes
+
+    __table_args__ = (
+        Index("idx_prayer_logs_date_name", "date", "prayer_name"),
+    )
+
+class Top3Item(Base):
+    __tablename__ = "top3_items"
+    id = Column(Integer, primary_key=True, index=True)
+    slot = Column(Integer, nullable=False) # 0, 1, 2
+    project_id = Column(String(64), nullable=True)
+    task_id = Column(String(64), nullable=True)
+    quick_task_id = Column(String(64), nullable=True)
+    title = Column(String(512), nullable=True) # manual title
+    done = Column(Integer, default=0) # for manual items
+
+    __table_args__ = (
+        Index("idx_top3_items_slot", "slot", unique=True),
+    )
+
+class DailyCompletionLog(Base):
+    __tablename__ = "daily_completion_log"
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(String(10), nullable=False, index=True, unique=True) # YYYY-MM-DD
+    score = Column(Integer, default=0)
+    data = Column(JSON, nullable=True, default=dict)
+
+class LifeGoalTier(Base):
+    __tablename__ = "life_goal_tiers"
+    id = Column(String(64), primary_key=True)
+    name = Column(String(64), nullable=False)
+    emoji = Column(String(16), nullable=True)
+    color = Column(String(32), nullable=True)
+    collapsed = Column(Integer, default=0)
+    ordinal = Column(Integer, default=0)
+
+    goals = relationship("LifeGoal", back_populates="tier", cascade="all, delete-orphan", order_by="LifeGoal.ordinal")
+
+class LifeGoal(Base):
+    __tablename__ = "life_goals"
+    id = Column(String(64), primary_key=True)
+    tier_id = Column(String(64), ForeignKey("life_goal_tiers.id"), nullable=False, index=True)
+    title = Column(String(512), nullable=False)
+    category = Column(String(64), nullable=True)
+    type = Column(String(32), nullable=True) # 'quick', 'project'
+    done = Column(Integer, default=0)
+    deadline = Column(String(10), nullable=True)
+    ordinal = Column(Integer, default=0)
+
+    tier = relationship("LifeGoalTier", back_populates="goals")
 
 class DailyReadiness(Base):
     __tablename__ = "daily_readiness"
@@ -300,3 +359,13 @@ class DailyReadiness(Base):
     joint_pain = Column(JSON, nullable=True, default=dict)  # { "elbow": 7, "wrist": 3 }
 
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+class DailyStat(Base):
+    __tablename__ = "daily_stats"
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(String(10), nullable=False, index=True, unique=True) # YYYY-MM-DD
+    focus_score = Column(Float, default=0.0)
+    habit_streak = Column(Integer, default=0)
+    top3_done_count = Column(Integer, default=0)
+    data = Column(JSON, nullable=True, default=dict)
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))

@@ -1,4 +1,4 @@
-from app.crud.progression_schema import sanitize_strength_progression, sanitize_generic_progression
+from app.repositories.progression_schema import sanitize_strength_progression, sanitize_generic_progression
 
 
 def test_sanitize_strength_progression_builds_required_shape():

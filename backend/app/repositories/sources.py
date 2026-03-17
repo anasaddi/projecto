@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, insert, update, delete
 from app.db.models import Source
-from app.crud.base import _maybe_await
+from app.repositories.base import _maybe_await
 import os
 import uuid
 import aiofiles

@@ -1,28 +1,41 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
+import { toDateKey } from './DashboardUtils';
+import { useDashboardStore } from '../../store/dashboardStore';
 import { ThisWeekWidget } from './ThisWeekWidget';
-import { uid } from './DashboardUtils';
 
-export function HabitsSection({
-  dailyTaskTemplates,
-  setDailyTaskTemplates,
-  todayDone,
-  activeHabits,
-  habitDraft,
-  setHabitDraft,
-  todayTaskLog,
-  toggleDailyTask,
-  habitEditingId,
-  setHabitEditingId,
-  habitEditingTitle,
-  setHabitEditingTitle,
-  toggleHabitLock,
-  removeDailyTask,
-  reorderHabits,
-  dailyTaskLogs,
-  now
-}) {
+export function HabitsSection() {
+  const store = useDashboardStore();
+  const {
+    dailyTaskTemplates = [],
+    setDailyTaskTemplates,
+    dailyTaskLogs = {},
+    habitDraft = '',
+    setHabitDraft,
+    toggleDailyTask,
+    habitEditingId,
+    setHabitEditingId,
+    habitEditingTitle,
+    setHabitEditingTitle,
+    toggleHabitLock,
+    removeDailyTask,
+    reorderHabits
+  } = store ?? {};
+
+  const now = useMemo(() => new Date(), []);
+  const todayKey = useMemo(() => toDateKey(now), [now]);
+  
+  const todayTaskLog = useMemo(() => {
+    const logs = dailyTaskLogs[todayKey] || [];
+    const map = {};
+    logs.forEach(l => map[l.id] = l.done);
+    return map;
+  }, [dailyTaskLogs, todayKey]);
+
+  const activeHabits = useMemo(() => dailyTaskTemplates.filter((t) => !t.locked), [dailyTaskTemplates]);
+  const todayDone = useMemo(() => activeHabits.reduce((acc, t) => acc + (todayTaskLog[t.id] ? 1 : 0), 0), [activeHabits, todayTaskLog]);
+
   return (
     <div className="dashboard-panel flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-4">
       <div className="mb-3 flex shrink-0 items-center justify-between">
@@ -41,7 +54,7 @@ export function HabitsSection({
               e.preventDefault();
               const t = habitDraft.trim();
               if (t) {
-                setDailyTaskTemplates(p => [...p, { id: uid('daily'), title: t, locked: false }]);
+                setDailyTaskTemplates(p => [...p, { id: `daily-${Date.now()}`, title: t, locked: false, ordinal: p.length }]);
                 setHabitDraft('');
               }
             }
@@ -53,7 +66,7 @@ export function HabitsSection({
           onClick={() => {
             const t = habitDraft.trim();
             if (t) {
-              setDailyTaskTemplates(p => [...p, { id: uid('daily'), title: t, locked: false }]);
+              setDailyTaskTemplates(p => [...p, { id: `daily-${Date.now()}`, title: t, locked: false, ordinal: p.length }]);
               setHabitDraft('');
             }
           }}
@@ -64,6 +77,13 @@ export function HabitsSection({
       </div>
 
       <div className="flex-1 min-h-[150px] overflow-y-auto custom-scrollbar">
+        {dailyTaskTemplates.length === 0 && (
+          <div className="flex flex-col items-center justify-center gap-1.5 py-6 px-4 rounded-xl border-2 border-dashed border-zinc-200 dark:border-white/[0.08] bg-zinc-50/50 dark:bg-white/[0.02]">
+            <span className="text-2xl text-zinc-300 dark:text-zinc-600">◇</span>
+            <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 text-center">Nessuna abitudine ancora</span>
+            <span className="text-[10px] text-zinc-400 dark:text-zinc-500 text-center">Scrivi sopra e premi Invio per aggiungerne una</span>
+          </div>
+        )}
         {dailyTaskTemplates.map((task, idx) => {
           const isLocked = task.locked;
           const isDone = todayTaskLog[task.id];
@@ -94,7 +114,8 @@ export function HabitsSection({
                 ) : (
                   <span
                     onDoubleClick={(e) => { e.stopPropagation(); setHabitEditingId(task.id); setHabitEditingTitle(task.title); }}
-                    className={`cursor-pointer select-text text-sm leading-none ${isDone ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}
+                    title={task.title}
+                    className={`cursor-pointer select-text text-sm leading-snug break-words line-clamp-2 ${isDone ? 'text-zinc-500 line-through dark:text-zinc-400' : 'text-zinc-700 dark:text-zinc-200'}`}
                   >
                     {task.title}
                   </span>

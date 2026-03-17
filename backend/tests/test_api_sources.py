@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 
 
-@patch("app.crud.sources.run_pipeline")
+@patch("app.repositories.sources.run_pipeline")
 def test_create_source_url(mock_pipeline, client):
     mock_pipeline.delay.return_value = None
     r = client.post(
@@ -17,7 +17,7 @@ def test_create_source_url(mock_pipeline, client):
     mock_pipeline.delay.assert_called_once()
 
 
-@patch("app.crud.sources.run_pipeline")
+@patch("app.repositories.sources.run_pipeline")
 def test_list_sources(mock_pipeline, client):
     mock_pipeline.delay.return_value = None
     client.post("/api/sources/", data={"url": "https://a.com", "tipo": "article", "trust_score": "7"})
@@ -26,7 +26,7 @@ def test_list_sources(mock_pipeline, client):
     assert isinstance(r.json(), list)
 
 
-@patch("app.crud.sources.run_pipeline")
+@patch("app.repositories.sources.run_pipeline")
 def test_get_source(mock_pipeline, client):
     mock_pipeline.delay.return_value = None
     create = client.post("/api/sources/", data={"url": "https://b.com", "tipo": "article", "trust_score": "7"})

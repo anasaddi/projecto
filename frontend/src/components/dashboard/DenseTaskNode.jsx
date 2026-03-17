@@ -38,7 +38,7 @@ function getDeadlineColorClass(deadlineKey, isDone) {
   return 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-900/20';
 }
 
-export function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDelete, onRename, onDeadline, onAddChild, onToggleTop3, onMove, hasFreeTop3Slot = true, checkIsTop3 = () => false, parentId = null }) {
+export function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDelete, onRename, onDeadline, onAddChild, onToggleTop3, onMove, hasFreeTop3Slot = true, checkIsTop3 = () => false, parentId = null, shareId = null, hideTop3Button = false }) {
   const isTop3 = checkIsTop3(node.id);
   const [draft, setDraft] = useState('');
   const [openAdd, setOpenAdd] = useState(false);
@@ -57,7 +57,7 @@ export function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle,
   useEffect(() => { if (showDeadline) setDeadlineInput(node.deadline || ''); }, [showDeadline, node.deadline]);
 
   const handleDragStart = (e) => {
-    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'project-task', projectId, taskId: node.id, parentId }));
+    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'project-task', projectId, taskId: node.id, parentId, shareId: shareId ?? undefined }));
     e.dataTransfer.effectAllowed = 'move';
   };
 
@@ -124,7 +124,7 @@ export function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle,
 
         {/* Hover Actions */}
         <div className={`flex items-center gap-0.5 transition-opacity ml-1 pr-1 ${isTop3 ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'}`}>
-          {!node.done && (isTop3 || hasFreeTop3Slot) && (
+          {!hideTop3Button && !node.done && (isTop3 || hasFreeTop3Slot) && (
             <button 
               onClick={(e) => { e.stopPropagation(); onToggleTop3(projectId, node.id); }} 
               className={`dashboard-action-btn ${isTop3 ? 'text-amber-600 bg-amber-100 dark:bg-amber-900/40' : 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`} 
@@ -180,6 +180,7 @@ export function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle,
               depth={depth + 1}
               projectId={projectId}
               projectAccent={projectAccent}
+              shareId={shareId}
               onToggle={onToggle}
               onDelete={onDelete}
               onRename={onRename}
@@ -190,6 +191,7 @@ export function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle,
               parentId={node.id}
               hasFreeTop3Slot={hasFreeTop3Slot}
               checkIsTop3={checkIsTop3}
+              hideTop3Button={hideTop3Button}
             />
           ))}
         </div>

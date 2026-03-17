@@ -9,8 +9,8 @@ from app.db.models import (
     Exercise, WorkoutDayTemplate, WorkoutDayExercise, DailySchedule
 )
 from app.schemas.training import SetLogItem, WeekDayUpdateData
-from app.crud.base import _parse_json
-from app.crud.progression_schema import sanitize_strength_progression, sanitize_generic_progression
+from app.repositories.base import _parse_json
+from app.repositories.progression_schema import sanitize_strength_progression, sanitize_generic_progression
 
 logger = logging.getLogger(__name__)
 

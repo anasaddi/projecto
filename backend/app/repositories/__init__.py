@@ -1,6 +1,6 @@
-from app.crud import sources as crud_sources
-from app.crud import content as crud_content
-from app.crud import insights as crud_insights
+from app.repositories import sources as crud_sources
+from app.repositories import content as crud_content
+from app.repositories import insights as crud_insights
 
 # Re-export for route usage
 async def create_source(db, file=None, url=None, tipo=None, title=None, trust_score=7):

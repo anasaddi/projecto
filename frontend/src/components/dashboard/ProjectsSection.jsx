@@ -2,35 +2,37 @@ import React from 'react';
 import { Icons } from './Icons';
 import { StandardProjectCard } from './ProjectComponents';
 import { DenseTaskNode } from './DenseTaskNode';
-import { createTaskNode, collectNodeAndDescendantIds, removeNodeFromTree, updateNodeInTree, countTreeStats } from './DashboardUtils';
+import { createTaskNode, collectNodeAndDescendantIds, removeNodeFromTree, updateNodeInTree, countTreeStats, getDeadlineColorClass, formatDeadline } from './DashboardUtils';
+import { useDashboardStore } from '../../store/dashboardStore';
 
-export function ProjectsSection({
-  projects,
-  createProject,
-  deleteProject,
-  reorderProjects,
-  reorderSharedDashboardProjects,
-  updateProject,
-  toggleProjectTask,
-  projectTaskDrafts,
-  setProjectTaskDrafts,
-  setTop3Manual,
-  setTop3SlotAtIndex,
-  top3Manual,
-  setDailyCompletionLog,
-  moveProjectTask,
-  moveSubtask,
-  projectDeadlineEditing,
-  projectDeadlineInput,
-  setProjectDeadlineInput,
-  setProjectDeadlineEditing,
-  getDeadlineColorClass,
-  formatDeadline,
-  sharedDashboards,
-  updateSharedDashboardProject,
-  deleteSharedDashboardProject,
-  PROJECT_ACCENTS
-}) {
+export function ProjectsSection({ PROJECT_ACCENTS }) {
+  const store = useDashboardStore();
+  const {
+    projects = [],
+    createProject,
+    deleteProject,
+    setConfirmState,
+    reorderProjects,
+    reorderSharedDashboardProjects,
+    updateProject,
+    toggleProjectTask,
+    projectTaskDrafts = {},
+    setProjectTaskDrafts,
+    setTop3Manual,
+    setTop3SlotAtIndex,
+    top3Manual = [null, null, null],
+    setDailyCompletionLog,
+    moveProjectTask,
+    moveSubtask,
+    projectDeadlineEditing,
+    projectDeadlineInput,
+    setProjectDeadlineInput,
+    setProjectDeadlineEditing,
+    sharedDashboards = [],
+    updateSharedDashboardProject,
+    deleteSharedDashboardProject,
+  } = store ?? {};
+
   return (
     <div className="dashboard-panel overflow-hidden flex min-h-0 flex-col p-4 sm:p-5 md:col-span-2 lg:col-span-6">
       <div className="mb-4 flex shrink-0 items-center justify-between">
@@ -41,12 +43,20 @@ export function ProjectsSection({
           onClick={createProject}
           className="flex h-7 items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 text-xs font-semibold text-indigo-600 transition-all hover:bg-indigo-100 active:scale-95 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-500/20"
         >
-          <Icons.Plus className="h-3 w-3" />
+          <Icons.Plus className="h-3.5 w-3.5" />
           <span>Nuovo</span>
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
+        {projects.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-1.5 py-8 px-4 rounded-xl border-2 border-dashed border-zinc-200 dark:border-white/[0.08] bg-zinc-50/50 dark:bg-white/[0.02]">
+            <span className="text-2xl text-indigo-300 dark:text-indigo-600">□</span>
+            <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 text-center">Nessun progetto</span>
+            <span className="text-[10px] text-zinc-400 dark:text-zinc-500 text-center">Clicca &quot;Nuovo&quot; per crearne uno</span>
+          </div>
+        ) : (
+        <>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
           {projects.map((project, idx) => {
             const dragPayload = { type: 'project', fromIndex: idx };
@@ -80,7 +90,7 @@ export function ProjectsSection({
                 accent={accent}
                 isShared={false}
                 onTitleChange={(val) => updateProject(project.id, p => ({ ...p, title: val }))}
-                onDelete={deleteProject}
+                onDelete={() => setConfirmState?.({ id: 'deleteProject', payload: { projectId: project.id } })}
                 onDeadlineClick={(val) => {
                   updateProject(project.id, p => ({ ...p, deadline: val.trim() || undefined }));
                   setProjectDeadlineEditing(null);
@@ -116,16 +126,12 @@ export function ProjectsSection({
                         onAddChild={(tid, val) => updateProject(project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, children: [...(n.children || []), createTaskNode(val)] })) }))}
                         onToggleTop3={(pid, tid) => {
                           const existingIdx = top3Manual.findIndex(s => s && s.projectId === pid && s.taskId === tid && !s.shareId);
-                          if (existingIdx !== -1) {
-                            setTop3SlotAtIndex(existingIdx, null);
-                          } else {
-                            const free = top3Manual.findIndex(s => !s);
-                            if (free !== -1) setTop3SlotAtIndex(free, { projectId: pid, taskId: tid, shareId: null });
-                          }
+                          if (existingIdx !== -1) setTop3SlotAtIndex(existingIdx, null);
                         }}
                         checkIsTop3={(tid) => top3Manual.some(s => s && s.projectId === project.id && s.taskId === tid && !s.shareId)}
                         onMove={(tid, targetIdx, pid) => pid ? moveSubtask(project.id, pid, tid, targetIdx) : moveProjectTask(project.id, tid, tIdx)}
-                        hasFreeTop3Slot={top3Manual.some(s => !s)}
+                        hasFreeTop3Slot={false}
+                        hideTop3Button={true}
                       />
                     ))}
                     <div className="pt-1 pl-1">
@@ -142,7 +148,7 @@ export function ProjectsSection({
                             }
                           }
                         }}
-                        placeholder="Add task... (Enter)"
+                        placeholder="Aggiungi task... (Invio)"
                         className="seamless-input text-sm text-zinc-500 dark:text-zinc-400 placeholder:text-zinc-300 dark:placeholder:text-zinc-600"
                       />
                     </div>
@@ -214,9 +220,9 @@ export function ProjectsSection({
                       formatDeadline={formatDeadline}
                       renderTasks={() => (
                         <>
-                          {project.tasks?.map((node, tIdx) => (
+                            {project.tasks?.map((node, tIdx) => (
                             <DenseTaskNode
-                              key={node.id} node={node} depth={0} projectId={project.id} projectAccent={accent}
+                              key={node.id} node={node} depth={0} projectId={project.id} projectAccent={accent} shareId={shared.share_id}
                               onToggle={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, done: val })) }))}
                               onDelete={(tid) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: removeNodeFromTree(p.tasks, tid) }))}
                               onRename={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, title: val })) }))}
@@ -224,14 +230,11 @@ export function ProjectsSection({
                               onAddChild={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, children: [...(n.children || []), createTaskNode(val)] })) }))}
                               onToggleTop3={(pid, tid) => {
                                 const existingIdx = top3Manual.findIndex(s => s && s.projectId === pid && s.taskId === tid && s.shareId === shared.share_id);
-                                if (existingIdx !== -1) {
-                                  setTop3SlotAtIndex(existingIdx, null);
-                                } else {
-                                  const free = top3Manual.findIndex(s => !s);
-                                  if (free !== -1) setTop3SlotAtIndex(free, { projectId: pid, taskId: tid, shareId: shared.share_id });
-                                }
+                                if (existingIdx !== -1) setTop3SlotAtIndex(existingIdx, null);
                               }}
                               checkIsTop3={(tid) => top3Manual.some(s => s && s.projectId === project.id && s.taskId === tid && s.shareId === shared.share_id)}
+                              hasFreeTop3Slot={false}
+                              hideTop3Button={true}
                               onMove={(tid, targetIdx, pid) => {
                                 if (pid) {
                                   updateSharedDashboardProject(shared.share_id, project.id, p => ({
@@ -256,7 +259,6 @@ export function ProjectsSection({
                                   });
                                 }
                               }}
-                              hasFreeTop3Slot={top3Manual.some(s => !s)}
                             />
                           ))}
                           <div className="pt-1 pl-1">
@@ -273,7 +275,7 @@ export function ProjectsSection({
                                   }
                                 }
                               }}
-                              placeholder="Add task... (Enter)"
+                              placeholder="Aggiungi task... (Invio)"
                               className="seamless-input text-sm text-zinc-500 dark:text-zinc-400 placeholder:text-zinc-300 dark:placeholder:text-zinc-600"
                             />
                           </div>
@@ -287,6 +289,8 @@ export function ProjectsSection({
             </div>
           </div>
         )}
+        </>
+      ) }
       </div>
     </div>
   );

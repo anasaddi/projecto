@@ -1,59 +1,74 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Icons } from './Icons';
 import { LifeGoalCard } from './LifeGoalComponents';
 import { DenseTaskNode } from './DenseTaskNode';
-import { createTaskNode, updateNodeInTree, removeNodeFromTree, countTreeStats } from './DashboardUtils';
+import { createTaskNode, updateNodeInTree, removeNodeFromTree, countTreeStats, getDeadlineColorClass, formatDeadline } from './DashboardUtils';
+import { useDashboardStore } from '../../store/dashboardStore';
+import { useToast } from '../../context/ToastContext';
 
-export function LifeGoalsSection({
-  lifeGoals,
-  updateLifeGoals,
-  toggleTierCollapse,
-  moveGoalToTier,
-  updateGoal,
-  deleteGoal,
-  goalDeadlineEditing,
-  setGoalDeadlineEditing,
-  goalDeadlineInput,
-  setGoalDeadlineInput,
-  getDeadlineColorClass,
-  formatDeadline,
-  top3Manual,
-  setTop3SlotAtIndex,
-  promoteGoalToProjects,
-  promoteGoalToQuickTasks,
-  projects,
-  quickTasks,
-  goalTaskDrafts,
-  setGoalTaskDrafts,
-  setProjects,
-  setQuickTasks,
-  addGoalToTier
-}) {
+export function LifeGoalsSection() {
+  const store = useDashboardStore();
+  const {
+    lifeGoals = { tiers: [] },
+    updateLifeGoals,
+    toggleTierCollapse,
+    moveGoalToTier,
+    updateGoal,
+    deleteGoal,
+    setConfirmState,
+    goalDeadlineEditing,
+    setGoalDeadlineEditing,
+    goalDeadlineInput,
+    setGoalDeadlineInput,
+    top3Manual = [null, null, null],
+    setTop3SlotAtIndex,
+    promoteGoalToProjects,
+    promoteGoalToQuickTasks,
+    projects = [],
+    quickTasks = [],
+    goalTaskDrafts = {},
+    setGoalTaskDrafts,
+    setProjects,
+    setQuickTasks,
+    addGoalToTier
+  } = store ?? {};
+
+  const showToast = useToast();
+  const handlePromoteProject = useCallback((goalId) => {
+    const wasLinked = projects.some((p) => p.lifeGoalId === goalId);
+    promoteGoalToProjects(goalId);
+    showToast(wasLinked ? 'Rimosso da Progetti' : 'Collegato a Progetti');
+  }, [projects, promoteGoalToProjects, showToast]);
+  const handlePromoteQuick = useCallback((goalId) => {
+    const wasLinked = quickTasks.some((t) => t.lifeGoalId === goalId && !t.parentId);
+    promoteGoalToQuickTasks(goalId);
+    showToast(wasLinked ? 'Rimosso da Quick Tasks' : 'Collegato a Quick Tasks');
+  }, [quickTasks, promoteGoalToQuickTasks, showToast]);
+
   return (
-    <div className="shrink-0 px-6 pb-6 lg:pb-10">
-      <div className="dashboard-panel flex flex-col gap-4 p-6 border-none shadow-xl bg-white/70 backdrop-blur-md dark:bg-[#161920]/70">
+    <div className="shrink-0 px-4 pb-4 lg:pb-6">
+      <div className="dashboard-panel flex flex-col gap-3 p-4 border-none shadow-xl bg-white/70 backdrop-blur-md dark:bg-[#161920]/70">
         <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <h2 className="flex items-center gap-2.5 text-lg font-black tracking-tight text-zinc-900 dark:text-white">
-              <div className="p-2 rounded-xl bg-violet-500 text-white shadow-lg shadow-violet-500/30">
-                <Icons.Target className="w-5 h-5" />
-              </div>
-              Life Goals
-            </h2>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 pl-11">Building the Future</p>
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-violet-500 text-white shadow-md shadow-violet-500/25">
+              <Icons.Target className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-base font-black tracking-tight text-zinc-900 dark:text-white">Life Goals</h2>
+              <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Building the Future</p>
+            </div>
           </div>
-          
           <button
             onClick={() => updateLifeGoals(p => ({ ...p, collapsed: !p.collapsed }))}
-            className="p-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-white/5 dark:hover:bg-white/10 transition-all text-zinc-500"
+            className="p-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-white/5 dark:hover:bg-white/10 transition-all text-zinc-500"
           >
-            {lifeGoals.collapsed ? <Icons.ChevronDown className="h-5 w-5" /> : <Icons.ChevronUp className="h-5 w-5" />}
+            {lifeGoals.collapsed ? <Icons.ChevronDown className="h-4 w-4" /> : <Icons.ChevronUp className="h-4 w-4" />}
           </button>
         </div>
 
         {!lifeGoals.collapsed && (
-          <div className="flex flex-col gap-5">
-            {lifeGoals.tiers.map((tier) => {
+          <div className="flex flex-col gap-3">
+            {(lifeGoals.tiers ?? []).map((tier) => {
               const completedCount = tier.goals.filter(g => g.done).length;
               const totalCount = tier.goals.length;
               const pct = totalCount ? Math.round((completedCount / totalCount) * 100) : 0;
@@ -61,7 +76,7 @@ export function LifeGoalsSection({
               return (
                 <div
                   key={tier.id}
-                  className="group/tier flex flex-col rounded-2xl border border-zinc-100 dark:border-white/[0.04] transition-all"
+                  className="group/tier flex flex-col rounded-xl border border-zinc-100 dark:border-white/[0.04] transition-all"
                   onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-zinc-50/50', 'dark:bg-white/[0.02]'); }}
                   onDragLeave={(e) => e.currentTarget.classList.remove('bg-zinc-50/50', 'dark:bg-white/[0.02]')}
                   onDrop={(e) => {
@@ -70,51 +85,48 @@ export function LifeGoalsSection({
                     try { const d = JSON.parse(e.dataTransfer.getData('application/json')); if (d.type === 'lifeGoal') moveGoalToTier(d.goalId, tier.id); } catch (_) { }
                   }}
                 >
-                  {/* Tier header — more refined */}
                   <div
-                    className="flex cursor-pointer items-center justify-between px-4 py-4 transition-all hover:bg-zinc-50/50 dark:hover:bg-white/[0.02] rounded-2xl"
+                    className="flex cursor-pointer items-center justify-between px-3 py-2.5 transition-all hover:bg-zinc-50/50 dark:hover:bg-white/[0.02] rounded-xl"
                     onClick={() => toggleTierCollapse(tier.id)}
                   >
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="w-10 h-10 flex items-center justify-center rounded-2xl bg-zinc-100 dark:bg-white/5 text-xl shadow-inner group-hover/tier:scale-110 transition-transform">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-8 h-8 flex items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 text-base shadow-inner group-hover/tier:scale-105 transition-transform shrink-0">
                         {tier.emoji}
                       </div>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-[15px] font-black text-zinc-800 dark:text-zinc-100 tracking-tight">{tier.name}</span>
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <span className="text-[13px] font-black text-zinc-800 dark:text-zinc-100 tracking-tight break-words line-clamp-2 leading-snug">{tier.name}</span>
                         <div className="flex items-center gap-2">
-                           <div className="w-24 h-1 rounded-full bg-zinc-100 dark:bg-white/5 overflow-hidden">
-                              <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} />
-                           </div>
-                           <span className="text-[10px] font-bold text-zinc-400 tabular-nums">{completedCount}/{totalCount} goals</span>
+                          <div className="w-16 h-0.5 rounded-full bg-zinc-100 dark:bg-white/5 overflow-hidden">
+                            <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-[9px] font-bold text-zinc-400 tabular-nums">{completedCount}/{totalCount}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="p-1.5 rounded-lg bg-zinc-100 dark:bg-white/5 text-zinc-400 group-hover/tier:text-zinc-600 dark:group-hover/tier:text-zinc-200 transition-colors">
-                      <Icons.ChevronDown className={`h-4 w-4 transition-transform duration-300 ${tier.collapsed ? '' : 'rotate-180'}`} />
-                    </div>
+                    <Icons.ChevronDown className={`h-3.5 w-3.5 text-zinc-400 shrink-0 transition-transform duration-200 ${tier.collapsed ? '' : 'rotate-180'}`} />
                   </div>
 
                   {!tier.collapsed && (
-                    <div className="animate-slide-down flex flex-col gap-6 px-4 pb-5 pt-2">
+                    <div className="animate-slide-down flex flex-col gap-4 px-3 pb-4 pt-1">
                       {tier.goals.length === 0 && (
-                        <div className="relative overflow-hidden min-h-[4rem] rounded-2xl border-2 border-dashed border-zinc-100 dark:border-white/[0.04] flex items-center justify-center group/empty transition-all hover:border-indigo-500/30">
-                          <span className="text-xs font-black text-zinc-300 dark:text-zinc-600 uppercase tracking-widest group-hover/empty:text-indigo-400 transition-colors">Drop or add goals</span>
+                        <div className="relative overflow-hidden min-h-[3rem] rounded-xl border-2 border-dashed border-zinc-100 dark:border-white/[0.04] flex items-center justify-center group/empty transition-all hover:border-indigo-500/30">
+                          <span className="text-[10px] font-black text-zinc-300 dark:text-zinc-600 uppercase tracking-widest group-hover/empty:text-indigo-400 transition-colors">Drop or add goals</span>
                         </div>
                       )}
 
-                      {/* QUICK GOALS - Grid based */}
                       {tier.goals.some(g => g.type === 'quick') && (
-                        <div className="space-y-3">
-                          <h4 className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400/80">Micro Movements</h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                        <div className="space-y-2">
+                          <h4 className="px-0.5 text-[9px] font-black uppercase tracking-widest text-zinc-400/80">Micro Movements</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5">
                             {tier.goals.filter(g => g.type === 'quick').map((goal) => (
                               <LifeGoalCard
-                                key={goal.id} goal={goal} accent={tier.id === 'tier-1' ? 'emerald' : tier.id === 'tier-2' ? 'sky' : 'violet'} stats={{}} percentage={0}
+                                key={goal.id} goal={goal} compact
+                                accent={tier.id === 'tier-1' ? 'emerald' : tier.id === 'tier-2' ? 'sky' : 'violet'} stats={{}} percentage={0}
                                 onToggle={(gid, val) => {
                                   updateGoal(gid, g => ({ ...g, done: val }));
                                   setQuickTasks(prev => prev.map(t => t.lifeGoalId === gid ? { ...t, done: val } : t));
                                 }}
-                                onDelete={deleteGoal}
+                                onDelete={(gid) => setConfirmState?.({ id: 'deleteGoal', payload: { goalId: gid } })}
                                 onRename={(gid, val, type) => updateGoal(gid, g => ({ ...g, title: val, type: type || g.type }))}
                                 onDeadline={(gid, val) => updateGoal(gid, g => ({ ...g, deadline: val || null }))}
                                 onDeadlineClick={(gid, val) => { updateGoal(gid, g => ({ ...g, deadline: val.trim() || null })); setGoalDeadlineEditing(null); }}
@@ -123,8 +135,8 @@ export function LifeGoalsSection({
                                 getDeadlineColorClass={getDeadlineColorClass} formatDeadline={formatDeadline}
                                 onAddToTop3={(gid) => { const free = top3Manual.findIndex(s => !s); if (free !== -1) setTop3SlotAtIndex(free, { projectId: `lg-${gid}`, taskId: gid }); }}
                                 hasFreeTop3Slot={top3Manual.some(s => !s)}
-                                onPromoteProject={promoteGoalToProjects}
-                                onPromoteQuick={promoteGoalToQuickTasks}
+                                onPromoteProject={handlePromoteProject}
+                                onPromoteQuick={handlePromoteQuick}
                                 isLinkedToProject={projects.some((project) => project.lifeGoalId === goal.id)}
                                 isLinkedToQuick={quickTasks.some((task) => task.lifeGoalId === goal.id && !task.parentId)}
                                 renderTasks={() => null}
@@ -134,11 +146,10 @@ export function LifeGoalsSection({
                         </div>
                       )}
 
-                      {/* PROJECT GOALS - Larger prominence */}
                       {tier.goals.some(g => g.type === 'project') && (
-                        <div className="space-y-3">
-                          <h4 className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400/80">Macro Projects</h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <h4 className="px-0.5 text-[9px] font-black uppercase tracking-widest text-zinc-400/80">Macro Projects</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
                             {tier.goals.filter(g => g.type === 'project').map((goal) => {
                               const stats = countTreeStats(goal.tasks);
                               const percentage = Math.round(stats.ratio * 100);
@@ -149,17 +160,17 @@ export function LifeGoalsSection({
                                     updateGoal(gid, g => ({ ...g, done: val }));
                                     setQuickTasks(prev => prev.map(t => t.lifeGoalId === gid ? { ...t, done: val } : t));
                                   }}
-                                  onDelete={deleteGoal}
+                                  onDelete={(gid) => setConfirmState?.({ id: 'deleteGoal', payload: { goalId: gid } })}
                                   onRename={(gid, val, type) => updateGoal(gid, g => ({ ...g, title: val, type: type || g.type }))}
                                   onDeadline={(gid, val) => updateGoal(gid, g => ({ ...g, deadline: val || null }))}
                                   onDeadlineClick={(gid, val) => { updateGoal(gid, g => ({ ...g, deadline: val.trim() || null })); setGoalDeadlineEditing(null); }}
                                   deadlineEditing={goalDeadlineEditing} deadlineInput={goalDeadlineInput}
                                   setDeadlineInput={setGoalDeadlineInput} setDeadlineEditing={setGoalDeadlineEditing}
                                   getDeadlineColorClass={getDeadlineColorClass} formatDeadline={formatDeadline}
-                                  onAddToTop3={() => { }}
-                                  hasFreeTop3Slot={false}
-                                  onPromoteProject={promoteGoalToProjects}
-                                  onPromoteQuick={promoteGoalToQuickTasks}
+                                  onAddToTop3={(gid) => { const free = top3Manual.findIndex(s => !s); if (free !== -1) setTop3SlotAtIndex(free, { projectId: `lg-${gid}`, taskId: gid }); }}
+                                  hasFreeTop3Slot={top3Manual.some(s => !s)}
+                                  onPromoteProject={handlePromoteProject}
+                                  onPromoteQuick={handlePromoteQuick}
                                   isLinkedToProject={projects.some((project) => project.lifeGoalId === goal.id)}
                                   isLinkedToQuick={quickTasks.some((task) => task.lifeGoalId === goal.id && !task.parentId)}
                                   renderTasks={() => (
@@ -206,18 +217,18 @@ export function LifeGoalsSection({
                         </div>
                       )}
 
-                      <div className="flex items-center gap-3 pt-2">
+                      <div className="flex items-center gap-2 pt-1">
                         <button
                           onClick={() => { const title = window.prompt("Quick goal:"); if (title) addGoalToTier(tier.id, title, 'General', 'quick'); }}
-                          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-white/5 dark:hover:bg-white/10 text-[11px] font-black uppercase tracking-wider text-zinc-500 transition-all"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-white/5 dark:hover:bg-white/10 text-[10px] font-black uppercase tracking-wider text-zinc-500 transition-all"
                         >
-                          <Icons.Plus className="h-3.5 w-3.5" /> Quick
+                          <Icons.Plus className="h-3 w-3" /> Quick
                         </button>
                         <button
                           onClick={() => { const title = window.prompt("Progetto:"); if (title) addGoalToTier(tier.id, title, 'General', 'project'); }}
-                          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-600 dark:bg-indigo-500/20 dark:hover:bg-indigo-500/30 text-[11px] font-black uppercase tracking-wider text-white dark:text-indigo-400 transition-all shadow-lg shadow-indigo-500/20"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-600 dark:bg-indigo-500/20 dark:hover:bg-indigo-500/30 text-[10px] font-black uppercase tracking-wider text-white dark:text-indigo-400 transition-all shadow-md shadow-indigo-500/20"
                         >
-                          <Icons.Plus className="h-3.5 w-3.5" /> Project
+                          <Icons.Plus className="h-3 w-3" /> Project
                         </button>
                       </div>
                     </div>

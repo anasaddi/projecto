@@ -3,6 +3,7 @@ import React, { Suspense, lazy } from 'react'
 
 import { DashboardStatsProvider } from './context/DashboardStatsContext'
 import { GlobalConfigProvider } from './context/GlobalConfigContext'
+import { ToastProvider } from './context/ToastContext'
 import Layout from './components/Layout'
 import AppErrorBoundary from './components/AppErrorBoundary'
 import { isTokenExpired } from './api/client'
@@ -78,6 +79,7 @@ export default function App() {
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <DashboardStatsProvider>
         <GlobalConfigProvider>
+          <ToastProvider>
           <AppErrorBoundary>
           <Layout>
             <Suspense fallback={<RouteLoader />}>
@@ -94,6 +96,7 @@ export default function App() {
             </Suspense>
           </Layout>
           </AppErrorBoundary>
+          </ToastProvider>
         </GlobalConfigProvider>
       </DashboardStatsProvider>
     </BrowserRouter>

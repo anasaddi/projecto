@@ -9,9 +9,9 @@ from app.api.deps import get_current_admin
 
 from app.db.session import get_db
 from app import schemas
-from app.crud import training as crud_training
-from app.crud import dashboard as crud_dashboard
-from app.crud import migration as crud_migration
+from app.repositories import training as crud_training
+from app.services import dashboard_service
+from app.repositories import migration as crud_migration
 from app.websockets import manager
 
 router = APIRouter()
@@ -214,7 +214,7 @@ async def get_dashboard_state(db: AsyncSession = Depends(get_db)):
     cached = await get_cached_dashboard()
     if cached:
         return {"key": "default", "data": cached, "updated_at": datetime.now(timezone.utc)}
-    data = await crud_dashboard.get_dashboard_state_aggregated(db)
+    data = await dashboard_service.get_dashboard(db)
     await set_cached_dashboard(data)
     return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
 
@@ -222,7 +222,7 @@ async def get_dashboard_state(db: AsyncSession = Depends(get_db)):
 async def update_dashboard_state(body: schemas.DashboardStateUpdate, db: AsyncSession = Depends(get_db)):
     """Save the dashboard state to DB and invalidate cache."""
     from app.cache import invalidate_dashboard, set_cached_dashboard
-    data = await crud_dashboard.update_dashboard_from_json(db, body.data)
+    data = await dashboard_service.update_dashboard(db, body.data)
     await invalidate_dashboard()
     await set_cached_dashboard(data)
     return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
@@ -235,7 +235,7 @@ async def batch_update_dashboard(body: dict, db: AsyncSession = Depends(get_db))
     
     Body format: { "operations": [ { "type": "toggle_task", "projectId": "...", "taskId": "...", "done": true }, ... ] }
     """
-    from app.crud.audit import record_event
+    from app.repositories.audit import record_event
     operations = body.get("operations", [])
     if not operations:
         return {"status": "ok", "processed": 0}
@@ -257,7 +257,7 @@ async def batch_update_dashboard(body: dict, db: AsyncSession = Depends(get_db))
     
     # Apply the full state update after batch
     if body.get("state"):
-        await crud_dashboard.update_dashboard_from_json(db, body["state"])
+        await dashboard_service.update_dashboard(db, body["state"])
         from app.cache import invalidate_dashboard
         await invalidate_dashboard()
 
@@ -274,7 +274,7 @@ async def get_audit_events(
     db: AsyncSession = Depends(get_db),
 ):
     """Query audit trail for dashboard changes."""
-    from app.crud.audit import get_events
+    from app.repositories.audit import get_events
     return await get_events(db, entity_type=entity_type, entity_id=entity_id, share_id=share_id, limit=limit)
 
 # --- Shared Dashboard ---
@@ -286,7 +286,7 @@ async def get_shared_dashboard(share_id: str, db: AsyncSession = Depends(get_db)
     cached = await get_cached_shared_dashboard(share_id)
     if cached:
         return cached
-    data = await crud_dashboard.get_shared_dashboard_aggregated(db, share_id)
+    data = await dashboard_service.get_shared_dashboard(db, share_id)
     if data:
         await set_cached_shared_dashboard(share_id, data)
     return data
@@ -294,15 +294,15 @@ async def get_shared_dashboard(share_id: str, db: AsyncSession = Depends(get_db)
 @router.get("/shared-dashboards", response_model=list[schemas.SharedDashboardOut])
 async def list_shared_dashboards(db: AsyncSession = Depends(get_db)):
     """Fetch all shared dashboards. PUBLIC ROUTE."""
-    return await crud_dashboard.get_all_shared_dashboards_aggregated(db)
+    return await dashboard_service.get_all_shared_dashboards(db)
 
 @router.put("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut)
 async def update_shared_dashboard(share_id: str, body: schemas.SharedDashboardUpdate, db: AsyncSession = Depends(get_db)):
     """Update or create a shared dashboard. Invalidates cache + broadcasts. PUBLIC ROUTE."""
     from app.cache import invalidate_shared_dashboard, set_cached_shared_dashboard
-    from app.crud.audit import record_event
+    from app.repositories.audit import record_event
     
-    dashboard = await crud_dashboard.update_shared_dashboard_from_json(db, share_id, body.data, body.title)
+    dashboard = await dashboard_service.update_shared_dashboard(db, share_id, body.data, body.title)
     await invalidate_shared_dashboard(share_id)
     await set_cached_shared_dashboard(share_id, dashboard)
     
@@ -329,7 +329,7 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
         from app.cache import get_cached_shared_dashboard, set_cached_shared_dashboard, invalidate_shared_dashboard
         dashboard = await get_cached_shared_dashboard(share_id)
         if not dashboard:
-            dashboard = await crud_dashboard.get_shared_dashboard_aggregated(db, share_id)
+            dashboard = await dashboard_service.get_shared_dashboard(db, share_id)
             if dashboard:
                 await set_cached_shared_dashboard(share_id, dashboard)
         
@@ -356,8 +356,8 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
                 # Optimizzazione: solo un messaggio invece di tutta la history
                 msg_data = payload.get("data")
                 if msg_data:
-                    from app.crud.dashboard import add_chat_message
-                    new_msg = await add_chat_message(db, share_id, msg_data)
+                    from app.services.dashboard_service import add_chat_msg
+                    new_msg = await add_chat_msg(db, share_id, msg_data)
                     await manager.broadcast({
                         "type": "chat",
                         "share_id": share_id,
@@ -366,7 +366,7 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
                 continue
 
             await manager.broadcast(jsonable_encoder(payload), share_id, exclude=websocket)
-            await crud_dashboard.update_shared_dashboard_from_json(
+            await dashboard_service.update_shared_dashboard(
                 db, share_id, payload.get("data"), payload.get("title")
             )
             await invalidate_shared_dashboard(share_id)

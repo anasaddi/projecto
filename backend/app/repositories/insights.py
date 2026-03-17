@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from app.db.models import Insight
 from app.schemas.insights import InsightCreate, InsightUpdate
-from app.crud.base import _maybe_await
+from app.repositories.base import _maybe_await
 
 async def create_insight(db: AsyncSession, data: InsightCreate):
     insight = Insight(
