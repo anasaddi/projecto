@@ -5,7 +5,7 @@ from typing import Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, Header, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
-from app.api.deps import get_current_admin
+from app.api.deps import get_current_admin, get_current_user, get_training_access
 
 from app.db.session import get_db
 from app import schemas
@@ -76,14 +76,14 @@ async def migrate_data(db: AsyncSession = Depends(get_db)):
     """Migrate data from old JSON blobs to relational tables."""
     return await crud_migration.migrate_json_to_relational(db)
 
-@router.get("/exercises", response_model=list[schemas.ExerciseOut])
+@router.get("/exercises", response_model=list[schemas.ExerciseOut], dependencies=[Depends(get_training_access)])
 async def get_exercises(db: AsyncSession = Depends(get_db)):
     """Public route for the muscle-exercise matrix."""
     return await crud_training.get_all_exercises(db)
 
 _AW_PROGRAM_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "aw_training_program.json"
 
-@router.get("/aw-program")
+@router.get("/aw-program", dependencies=[Depends(get_training_access)])
 async def get_aw_program():
     """Return AW training program data from aw_training_program.json."""
     try:
@@ -93,7 +93,7 @@ async def get_aw_program():
     except Exception:
         return {}
 
-@router.get("/today", response_model=schemas.TodayResponse, dependencies=[Depends(get_current_admin)])
+@router.get("/today", response_model=schemas.TodayResponse, dependencies=[Depends(get_training_access)])
 async def get_today(db: AsyncSession = Depends(get_db), for_date: Optional[date] = None):
     """Fetch the template for today (or for_date)."""
     target = for_date or date.today()
@@ -115,24 +115,24 @@ async def get_today(db: AsyncSession = Depends(get_db), for_date: Optional[date]
         is_fallback=is_fallback,
     )
 
-@router.get("/week", response_model=list[schemas.WeekDayData])
+@router.get("/week", response_model=list[schemas.WeekDayData], dependencies=[Depends(get_training_access)])
 async def get_week(db: AsyncSession = Depends(get_db)):
     """Fetch the full week's templates."""
     return await crud_training.get_week_templates(db)
 
-@router.put("/week", response_model=dict, dependencies=[Depends(get_current_admin)])
+@router.put("/week", response_model=dict, dependencies=[Depends(get_training_access)])
 async def update_week(body: schemas.WeekUpdateRequest, db: AsyncSession = Depends(get_db)):
     """Update the full week's exercises."""
     await crud_training.update_week_templates(db, body.days)
     return {"status": "ok"}
 
-@router.patch("/exercise/active", response_model=dict, dependencies=[Depends(get_current_admin)])
+@router.patch("/exercise/active", response_model=dict, dependencies=[Depends(get_training_access)])
 async def update_exercise_active(body: schemas.ExerciseActiveUpdate, db: AsyncSession = Depends(get_db)):
     """Enable or disable an exercise globally."""
     ok = await crud_training.update_exercise_active(db, body.exercise_id, body.is_active)
     return {"status": "ok" if ok else "not_found"}
 
-@router.patch("/day-exercise", response_model=dict, dependencies=[Depends(get_current_admin)])
+@router.patch("/day-exercise", response_model=dict, dependencies=[Depends(get_training_access)])
 async def update_day_exercise(body: schemas.DayExerciseUpdate, db: AsyncSession = Depends(get_db)):
     """Update instruction/base_sets/base_reps for an exercise in a day template."""
     ok = await crud_training.update_day_exercise(
@@ -146,27 +146,27 @@ async def update_day_exercise(body: schemas.DayExerciseUpdate, db: AsyncSession 
     )
     return {"status": "ok" if ok else "not_found"}
 
-@router.get("/history", response_model=schemas.ExerciseHistoryResponse, dependencies=[Depends(get_current_admin)])
+@router.get("/history", response_model=schemas.ExerciseHistoryResponse, dependencies=[Depends(get_training_access)])
 async def get_exercise_history_route(exercise_id: str, limit: int = 15, db: AsyncSession = Depends(get_db)):
     """Get workout history for an exercise."""
     return await crud_training.get_exercise_history(db, exercise_id, limit=limit)
 
-@router.post("/log", response_model=schemas.WorkoutLogOut, dependencies=[Depends(get_current_admin)])
+@router.post("/log", response_model=schemas.WorkoutLogOut, dependencies=[Depends(get_training_access)])
 async def log_workout(body: schemas.WorkoutLogCreate, db: AsyncSession = Depends(get_db)):
     """Log a workout session."""
     return await crud_training.create_workout_log(db, body.template_id, body.sets)
 
-@router.get("/progression", response_model=list[schemas.TrainingProgressionOut])
+@router.get("/progression", response_model=list[schemas.TrainingProgressionOut], dependencies=[Depends(get_training_access)])
 async def get_all_progressions(db: AsyncSession = Depends(get_db)):
     """Get all training progressions (TMs, monthly data)."""
     return await crud_training.get_all_progressions(db)
 
-@router.get("/progression/{exercise_id}", response_model=Optional[schemas.TrainingProgressionOut])
+@router.get("/progression/{exercise_id}", response_model=Optional[schemas.TrainingProgressionOut], dependencies=[Depends(get_training_access)])
 async def get_progression(exercise_id: str, db: AsyncSession = Depends(get_db)):
     """Get progression for a specific exercise."""
     return await crud_training.get_training_progression(db, exercise_id)
 
-@router.post("/progression/{exercise_id}", response_model=schemas.TrainingProgressionOut)
+@router.post("/progression/{exercise_id}", response_model=schemas.TrainingProgressionOut, dependencies=[Depends(get_training_access)])
 async def update_progression(exercise_id: str, body: schemas.TrainingProgressionUpdate, db: AsyncSession = Depends(get_db)):
     """Update progression for a specific exercise."""
     try:
@@ -174,13 +174,13 @@ async def update_progression(exercise_id: str, body: schemas.TrainingProgression
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-@router.get("/schedule", response_model=list[schemas.DailyScheduleOut])
+@router.get("/schedule", response_model=list[schemas.DailyScheduleOut], dependencies=[Depends(get_training_access)])
 async def get_schedule(start_date: Optional[date] = None, days_count: int = 14, db: AsyncSession = Depends(get_db)):
     """Get the daily schedule."""
     target_date = start_date or date.today()
     return await crud_training.get_daily_schedule(db, target_date, days_count)
 
-@router.patch("/schedule/{schedule_date}", response_model=schemas.DailyScheduleOut)
+@router.patch("/schedule/{schedule_date}", response_model=schemas.DailyScheduleOut, dependencies=[Depends(get_training_access)])
 async def update_schedule_completion(schedule_date: date, body: schemas.DailyScheduleUpdate, db: AsyncSession = Depends(get_db)):
     """Update completion status for a schedule date."""
     sched = await crud_training.update_daily_schedule_completion(db, schedule_date, body.is_completed)
@@ -188,7 +188,7 @@ async def update_schedule_completion(schedule_date: date, body: schemas.DailySch
         raise HTTPException(status_code=404, detail="Schedule non trovato per questa data")
     return sched
 
-@router.post("/schedule/skip-today", response_model=dict, dependencies=[Depends(get_current_admin)])
+@router.post("/schedule/skip-today", response_model=dict, dependencies=[Depends(get_training_access)])
 async def skip_today(db: AsyncSession = Depends(get_db)):
     """Skip today's workout in the schedule."""
     from app.db.models import DailySchedule
@@ -208,21 +208,48 @@ async def skip_today(db: AsyncSession = Depends(get_db)):
 # --- Dashboard ---
 
 @router.get("/dashboard-state", response_model=schemas.DashboardStateOut | None, dependencies=[Depends(get_current_admin)])
-async def get_dashboard_state(db: AsyncSession = Depends(get_db)):
-    """Fetch the dashboard state — Redis-first, DB fallback."""
+async def get_dashboard_state(
+    db: AsyncSession = Depends(get_db),
+    user_id: str | None = Depends(get_current_user),
+):
+    """Fetch the dashboard state — Redis-first, DB fallback. Filtered by user_id when present."""
     from app.cache import get_cached_dashboard, set_cached_dashboard
     cached = await get_cached_dashboard()
     if cached:
         return {"key": "default", "data": cached, "updated_at": datetime.now(timezone.utc)}
-    data = await dashboard_service.get_dashboard(db)
+    data = await dashboard_service.get_dashboard(db, user_id=user_id)
     await set_cached_dashboard(data)
     return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
 
+@router.get("/dashboard-state/at", response_model=schemas.DashboardStateOut | None, dependencies=[Depends(get_current_admin)])
+async def get_dashboard_state_at(
+    at: str,
+    db: AsyncSession = Depends(get_db),
+    user_id: str | None = Depends(get_current_user),
+):
+    """Time Travel: return dashboard state as it was at the given ISO timestamp."""
+    from app.services.event_sourcing import get_dashboard_state_at as get_state_at
+    try:
+        at_dt = datetime.fromisoformat(at.replace("Z", "+00:00"))
+        if at_dt.tzinfo is None:
+            at_dt = at_dt.replace(tzinfo=timezone.utc)
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=400, detail="Invalid 'at' timestamp (use ISO 8601)")
+    agg_id = user_id or "default"
+    data = await get_state_at(db, agg_id, at=at_dt)
+    if not data:
+        return None
+    return {"key": "default", "data": data, "updated_at": at_dt}
+
 @router.put("/dashboard-state", response_model=schemas.DashboardStateOut, dependencies=[Depends(get_current_admin)])
-async def update_dashboard_state(body: schemas.DashboardStateUpdate, db: AsyncSession = Depends(get_db)):
-    """Save the dashboard state to DB and invalidate cache."""
+async def update_dashboard_state(
+    body: schemas.DashboardStateUpdate,
+    db: AsyncSession = Depends(get_db),
+    user_id: str | None = Depends(get_current_user),
+):
+    """Save the dashboard state to DB and invalidate cache. Scoped by user_id when present."""
     from app.cache import invalidate_dashboard, set_cached_dashboard
-    data = await dashboard_service.update_dashboard(db, body.data)
+    data = await dashboard_service.update_dashboard(db, body.data, user_id=user_id)
     await invalidate_dashboard()
     await set_cached_dashboard(data)
     return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}

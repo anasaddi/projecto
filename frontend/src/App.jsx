@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import React, { Suspense, lazy } from 'react'
+import React, { Suspense, lazy, useEffect } from 'react'
+import { Toaster, toast } from 'sonner'
+import { setToastError } from './utils/errorLog'
 
 import { DashboardStatsProvider } from './context/DashboardStatsContext'
 import { GlobalConfigProvider } from './context/GlobalConfigContext'
@@ -35,9 +37,17 @@ function AdminRoute({ children }) {
   if (isTokenExpired(token)) {
     localStorage.removeItem('km-admin-token');
     localStorage.removeItem('km-user-role');
+    localStorage.removeItem('km-training-allowed');
     return <Navigate to="/login" replace />;
   }
   return children;
+}
+
+// --- Training: solo per chi ha fatto login con la chiave Training (es. Flavio) ---
+function TrainingRoute({ children }) {
+  const allowed = localStorage.getItem('km-training-allowed') === '1';
+  if (!allowed) return <Navigate to="/dashboard" replace />;
+  return <AdminRoute>{children}</AdminRoute>;
 }
 
 // --- Home Component (Handles Redirect) ---
@@ -75,8 +85,12 @@ const initAuth = () => {
 initAuth();
 
 export default function App() {
+  useEffect(() => {
+    setToastError((msg) => toast.error(msg));
+  }, []);
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <Toaster richColors position="top-center" closeButton />
       <DashboardStatsProvider>
         <GlobalConfigProvider>
           <ToastProvider>
@@ -90,7 +104,7 @@ export default function App() {
                 <Route path="/shared" element={<SharedProjects />} />
                 <Route path="/shared/:shareId" element={<SharedProjects />} />
                 <Route path="/youtube" element={<AdminRoute><YouTubeViewer /></AdminRoute>} />
-                <Route path="/training" element={<AdminRoute><Training /></AdminRoute>} />
+                <Route path="/training" element={<TrainingRoute><Training /></TrainingRoute>} />
                 <Route path="*" element={<Welcome />} />
               </Routes>
             </Suspense>

@@ -11,7 +11,8 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     admin_access_key: str = "change-me-in-env"
-    secret_key: str = "your-secret-key-for-jwt" # Change in .env
+    training_access_key: str = ""  # Se impostata, solo chi fa login con questa chiave vede Training (es. Flavio)
+    secret_key: str = "your-secret-key-for-jwt"  # Change in .env
     assemblyai_api_key: str = ""
     openrouter_api_key: str = ""
 

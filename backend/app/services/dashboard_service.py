@@ -2,12 +2,11 @@ from app.repositories import dashboard as dashboard_repo
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, Any, List
 
-async def get_dashboard(db: AsyncSession, key: str = "default") -> Dict[str, Any]:
-    return await dashboard_repo.get_dashboard_state_aggregated(db, key)
+async def get_dashboard(db: AsyncSession, key: str = "default", user_id: str | None = None) -> Dict[str, Any]:
+    return await dashboard_repo.get_dashboard_state_aggregated(db, key, user_id)
 
-async def update_dashboard(db: AsyncSession, data: dict, key: str = "default") -> Dict[str, Any]:
-    # Orchestration: we can add validation or side-effects here
-    return await dashboard_repo.update_dashboard_from_json(db, data, key)
+async def update_dashboard(db: AsyncSession, data: dict, key: str = "default", user_id: str | None = None) -> Dict[str, Any]:
+    return await dashboard_repo.update_dashboard_from_json(db, data, key, user_id)
 
 async def get_shared_dashboard(db: AsyncSession, share_id: str) -> Dict[str, Any] | None:
     return await dashboard_repo.get_shared_dashboard_aggregated(db, share_id)

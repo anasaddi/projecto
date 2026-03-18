@@ -2,6 +2,15 @@ from app.schemas.sources import SourceOut, SourceCreate
 from app.schemas.content import ContentOut
 from app.schemas.insights import InsightOut, InsightCreate, InsightUpdate
 from app.schemas.search import SemanticSearchQuery, SemanticSearchResult, SearchHit
+from app.schemas.dashboard import (
+    DashboardStatePayload,
+    DailyTaskTemplate,
+    Project,
+    TaskNode,
+    QuickTask,
+    LifeGoalsPayload,
+    validate_dashboard_data,
+)
 from app.schemas.training import (
     ExerciseOut,
     TodayResponse,
@@ -29,6 +38,13 @@ from app.schemas.training import (
 )
 
 __all__ = [
+    "DashboardStatePayload",
+    "DailyTaskTemplate",
+    "Project",
+    "TaskNode",
+    "QuickTask",
+    "LifeGoalsPayload",
+    "validate_dashboard_data",
     "SourceOut",
     "SourceCreate",
     "ContentOut",

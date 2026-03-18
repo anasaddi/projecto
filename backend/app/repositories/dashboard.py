@@ -21,7 +21,7 @@ def _serialize_dt(dt: Any) -> Any:
 
 # --- Dashboard (Aggregated View for Frontend) ---
 
-async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default"):
+async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default", user_id: str | None = None):
     # 1. Habits (Templates)
     habits_result = await db.execute(select(Habit).order_by(Habit.ordinal))
     habits = habits_result.scalars().all()
@@ -106,7 +106,12 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default")
     tiers = tiers_result.scalars().all()
     
     # We also need the top-level 'collapsed' from DashboardState for now
-    res_ds = await db.execute(select(DashboardState).filter(DashboardState.key == key))
+    q = select(DashboardState).filter(DashboardState.key == key)
+    if user_id is not None:
+        q = q.filter(DashboardState.user_id == user_id)
+    else:
+        q = q.filter(DashboardState.user_id.is_(None))
+    res_ds = await db.execute(q)
     ds = res_ds.scalar_one_or_none()
     ds_data = _parse_json(ds.data, {}) if ds else {}
     lg_collapsed = ds_data.get("lifeGoals", {}).get("collapsed", False)
@@ -149,13 +154,18 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default")
         "lifeGoals": lifeGoals,
     }
 
-async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "default"):
+async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "default", user_id: str | None = None):
     """Update dashboard state. Supports partial updates by checking key presence."""
-    res_ds = await db.execute(select(DashboardState).filter(DashboardState.key == key))
+    q = select(DashboardState).filter(DashboardState.key == key)
+    if user_id is not None:
+        q = q.filter(DashboardState.user_id == user_id)
+    else:
+        q = q.filter(DashboardState.user_id.is_(None))
+    res_ds = await db.execute(q)
     ds = res_ds.scalar_one_or_none()
-    
+
     if not ds:
-        ds = DashboardState(key=key, data={})
+        ds = DashboardState(key=key, user_id=user_id, data={})
         db.add(ds)
     
     # RELATIONAL SYNC (Only if keys are present)
@@ -337,11 +347,15 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
                                         type=g.get("type"), done=1 if g.get("done") else 0, 
                                         deadline=g.get("deadline"), ordinal=j))
 
+    # Event Sourcing: append event for Time Travel (same transaction)
+    try:
+        from app.services.event_sourcing import append_dashboard_event
+        agg_id = user_id or "default"
+        await append_dashboard_event(db, agg_id, data, user_id)
+    except Exception:
+        pass
     await db.commit()
-    return await get_dashboard_state_aggregated(db, key)
-    
-    await db.commit()
-    return await get_dashboard_state_aggregated(db, key)
+    return await get_dashboard_state_aggregated(db, key, user_id)
 
 # --- Shared Dashboards (Optimized) ---
 

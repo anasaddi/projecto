@@ -276,10 +276,31 @@ class ChatMessage(Base):
     text = Column(Text, nullable=False)
     timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
+class User(Base):
+    __tablename__ = "users"
+    id = Column(String(128), primary_key=True, index=True)  # e.g. auth0|xxx or uuid
+    email = Column(String(256), nullable=True, index=True)
+    auth_provider = Column(String(64), nullable=True)  # auth0, supabase, clerk
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    profile = relationship("UserProfile", back_populates="user", uselist=False)
+
+
+class UserProfile(Base):
+    __tablename__ = "user_profiles"
+    user_id = Column(String(128), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    weight_kg = Column(Float, nullable=True)
+    timezone = Column(String(64), nullable=True)
+    preferences = Column(JSON, nullable=True, default=dict)
+
+    user = relationship("User", back_populates="profile")
+
+
 class DashboardState(Base):
     __tablename__ = "dashboard_states"
     id = Column(Integer, primary_key=True, index=True)
-    key = Column(String(64), unique=True, index=True, nullable=False)
+    key = Column(String(64), index=True, nullable=False)  # no longer unique globally; (user_id, key) unique
+    user_id = Column(String(128), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
     data = Column(JSON, nullable=False, default=dict)
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 

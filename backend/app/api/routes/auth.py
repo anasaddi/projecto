@@ -20,18 +20,24 @@ def create_access_token(data: dict, secret_key: str, expires_delta: datetime.tim
 
 @router.post("/login")
 async def login(req: LoginRequest, settings: Settings = Depends(get_settings)):
-    if req.key != settings.admin_access_key:
+    payload = {"role": "admin"}
+    training_key = (settings.training_access_key or "").strip()
+    if training_key and req.key == training_key:
+        payload["training"] = True  # Flavio (o chi ha questa chiave) vede Training
+    elif req.key == settings.admin_access_key:
+        payload["training"] = True  # Anche tu (admin) vedi sempre Training
+    else:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid access key"
         )
-    
+
     access_token = create_access_token(
-        data={"role": "admin"},
+        data=payload,
         secret_key=settings.secret_key,
-        expires_delta=datetime.timedelta(days=7) # Token lasts 7 days
+        expires_delta=datetime.timedelta(days=7)
     )
-    return {"token": access_token, "role": "admin"}
+    return {"token": access_token, "role": "admin", "training": True}
 
 @router.get("/verify")
 async def verify_token(current_admin: dict = Depends(get_current_admin)):

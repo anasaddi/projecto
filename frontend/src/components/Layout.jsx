@@ -40,10 +40,11 @@ export default function Layout({ children }) {
     )
   }
 
+  const trainingAllowed = localStorage.getItem('km-training-allowed') === '1';
   const navLinks = [
     { to: '/dashboard', label: 'Dashboard', active: isDashboard },
     { to: '/shared', label: 'Condivisi', active: isShared },
-    { to: '/training', label: 'Training', active: isTraining },
+    ...(trainingAllowed ? [{ to: '/training', label: 'Training', active: isTraining }] : []),
     { to: '/youtube', label: 'Transcript', active: isYouTube },
   ];
 

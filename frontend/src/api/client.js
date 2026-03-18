@@ -1,3 +1,5 @@
+import { logAndToast } from '../utils/errorLog'
+
 // Su Vercel (produzione), usiamo il proxy configurato in vercel.json (/api)
 // In locale, usiamo '/api' che viene gestito dal proxy di Vite (vite.config.js)
 const BASE = '/api'
@@ -55,10 +57,11 @@ async function request(path, options = {}) {
         throw new Error('Unauthorized')
       }
       if (!res.ok) {
+        const body = await res.text()
         const err = new Error(`Request failed with status ${res.status}: ${res.statusText}`)
         err.status = res.status
-        err.body = await res.text()
-        console.error(`[API] Error fetching ${url}:`, err)
+        err.body = body
+        logAndToast({ api: path, action: 'request' }, err, `Errore di rete (${res.status}). Riprova.`, { status: res.status })
         throw err
       }
       if (res.status === 204) return
@@ -74,7 +77,7 @@ async function request(path, options = {}) {
       if (attempt < MAX_RETRIES) {
         await new Promise(r => setTimeout(r, RETRY_DELAY_MS))
       } else {
-        console.error(`[API] Failed to fetch ${url} after ${MAX_RETRIES + 1} attempts:`, err)
+        logAndToast({ api: path, action: 'request' }, err, 'Connessione fallita. Controlla la rete e riprova.')
         throw err
       }
     }

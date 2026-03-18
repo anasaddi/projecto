@@ -18,6 +18,8 @@ export default function Login() {
       if (res.token) {
         localStorage.setItem('km-user-role', 'admin');
         localStorage.setItem('km-admin-token', res.token);
+        if (res.training) localStorage.setItem('km-training-allowed', '1');
+        else localStorage.removeItem('km-training-allowed');
         window.location.href = '/dashboard';
       }
     } catch (err) {

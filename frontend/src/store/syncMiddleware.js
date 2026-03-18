@@ -89,9 +89,9 @@ export const syncMiddleware = (config) => (set, get, api_store) => {
             set((s) => ({ ...s, lastSavedAt: Date.now() }));
             setTimeout(() => { isApplyingFromBC = false; }, 0);
           } catch (err) {
-            if (process.env.NODE_ENV !== 'production') {
-              console.warn('Sync to server failed (using local queue):', err?.message || err);
-            }
+            const { logError, showErrorToast } = await import('../utils/errorLog');
+            logError({ action: 'sync', api: 'dashboard-state' }, err, { offline: !navigator.onLine });
+            if (navigator.onLine) showErrorToast('Sync non riuscito. Modifiche salvate in coda.');
             await addToSyncQueue('dashboard_update', fullState);
           }
         } else {
