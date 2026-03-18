@@ -285,4 +285,38 @@ input[type=number] {
     min-height: 44px;
     min-width: 44px;
   }
+
+  /* Daily Timeline Widget — metro/shipment aesthetic */
+  .timeline-track {
+    @apply h-[3px] rounded-full;
+    background: linear-gradient(90deg, #e4e4e7 0%, #d4d4d8 100%);
+  }
+  .dark .timeline-track {
+    background: linear-gradient(90deg, #27272a 0%, #3f3f46 100%);
+  }
+  .timeline-track-fill {
+    @apply h-full rounded-full transition-all duration-700 ease-out;
+    background: linear-gradient(90deg, #10b981 0%, #34d399 50%, #6366f1 100%);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+  }
+  .dark .timeline-track-fill {
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.25), 0 0 24px rgba(99, 102, 241, 0.15);
+  }
+  .timeline-node-done {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    animation: timeline-node-glow 2s ease-in-out infinite;
+  }
+  .timeline-card-current {
+    background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.7) 100%);
+    box-shadow: 0 4px 24px -4px rgba(99, 102, 241, 0.12), 0 0 0 1px rgba(99, 102, 241, 0.08);
+  }
+  .dark .timeline-card-current {
+    background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+    box-shadow: 0 4px 24px -4px rgba(0,0,0,0.4), 0 0 0 1px rgba(99, 102, 241, 0.2), 0 0 32px -8px rgba(99, 102, 241, 0.15);
+  }
+}
+
+@keyframes timeline-node-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
 }

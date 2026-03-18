@@ -122,7 +122,7 @@ export function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle,
           )}
         </div>
 
-        {/* Hover Actions */}
+        {/* Hover Actions — Pin to Focus solo sui task/sottotask in Progetti; nascosto in Life Goals (hideTop3Button) */}
         <div className={`flex items-center gap-0.5 transition-opacity ml-1 pr-1 ${isTop3 ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'}`}>
           {!hideTop3Button && !node.done && (isTop3 || hasFreeTop3Slot) && (
             <button 

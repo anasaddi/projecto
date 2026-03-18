@@ -63,6 +63,7 @@ export const syncMiddleware = (config) => (set, get, api_store) => {
         dailyCompletionLog: state.dailyCompletionLog,
         lifeGoals: state.lifeGoals,
         timelineRoutines: state.timelineRoutines ?? {},
+        timelinePanelExpanded: state.timelinePanelExpanded !== false,
       };
 
       // 1. localStorage — usato da loadState() al reload, deve essere aggiornato sempre

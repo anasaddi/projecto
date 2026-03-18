@@ -127,11 +127,11 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                         onToggleTop3={(pid, tid) => {
                           const existingIdx = top3Manual.findIndex(s => s && s.projectId === pid && s.taskId === tid && !s.shareId);
                           if (existingIdx !== -1) setTop3SlotAtIndex(existingIdx, null);
+                          else { const free = top3Manual.findIndex(s => !s); if (free !== -1) setTop3SlotAtIndex(free, { projectId: pid, taskId: tid }); }
                         }}
                         checkIsTop3={(tid) => top3Manual.some(s => s && s.projectId === project.id && s.taskId === tid && !s.shareId)}
                         onMove={(tid, targetIdx, pid) => pid ? moveSubtask(project.id, pid, tid, targetIdx) : moveProjectTask(project.id, tid, tIdx)}
-                        hasFreeTop3Slot={false}
-                        hideTop3Button={true}
+                        hasFreeTop3Slot={top3Manual.some(s => !s)}
                       />
                     ))}
                     <div className="pt-1 pl-1">
@@ -231,10 +231,10 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                               onToggleTop3={(pid, tid) => {
                                 const existingIdx = top3Manual.findIndex(s => s && s.projectId === pid && s.taskId === tid && s.shareId === shared.share_id);
                                 if (existingIdx !== -1) setTop3SlotAtIndex(existingIdx, null);
+                                else { const free = top3Manual.findIndex(s => !s); if (free !== -1) setTop3SlotAtIndex(free, { projectId: pid, taskId: tid, shareId: shared.share_id }); }
                               }}
                               checkIsTop3={(tid) => top3Manual.some(s => s && s.projectId === project.id && s.taskId === tid && s.shareId === shared.share_id)}
-                              hasFreeTop3Slot={false}
-                              hideTop3Button={true}
+                              hasFreeTop3Slot={top3Manual.some(s => !s)}
                               onMove={(tid, targetIdx, pid) => {
                                 if (pid) {
                                   updateSharedDashboardProject(shared.share_id, project.id, p => ({

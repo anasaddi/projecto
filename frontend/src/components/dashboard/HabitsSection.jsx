@@ -19,6 +19,7 @@ export function HabitsSection() {
     habitEditingTitle,
     setHabitEditingTitle,
     toggleHabitLock,
+    toggleHabitInTimeline,
     removeDailyTask,
     reorderHabits
   } = store ?? {};
@@ -122,7 +123,10 @@ export function HabitsSection() {
                 )}
               </div>
 
-              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+              <div className={`flex items-center gap-0.5 transition-opacity ${task.inTimeline !== false ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} onClick={(e) => e.stopPropagation()}>
+                <button type="button" onClick={() => toggleHabitInTimeline(task.id)} className={`dashboard-action-btn p-1 rounded-md ${task.inTimeline !== false ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-500/25' : 'hover:text-indigo-500'}`} title={task.inTimeline !== false ? 'Rimuovi da Daily Timeline' : 'Assegna a Daily Timeline (tutte le card)'}>
+                  <Icons.LayoutList className="h-3 w-3 shrink-0" />
+                </button>
                 <button type="button" onClick={() => toggleHabitLock(task.id)} className={`dashboard-action-btn p-1 ${isLocked ? 'text-amber-500' : 'hover:text-amber-500'}`} title={isLocked ? 'Sblocca' : 'Blocca'}>
                   <Icons.Lock className="h-3 w-3" />
                 </button>

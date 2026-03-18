@@ -2,19 +2,50 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { syncMiddleware } from './syncMiddleware';
-import { loadState, buildDefaultLifeGoals, normalizeLifeGoals, toDateKey, updateNodeInTree, removeNodeFromTree, collectNodeAndDescendantIds, createTaskNode, uid } from '../components/dashboard/DashboardUtils';
+import { loadState, buildDefaultLifeGoals, normalizeLifeGoals, toDateKey, updateNodeInTree, removeNodeFromTree, collectNodeAndDescendantIds, createTaskNode, uid, PRAYER_SLOTS, getCurrentSlotKey } from '../components/dashboard/DashboardUtils';
 import { haptic } from '../utils/haptics';
 
 const initialState = loadState() || {
-  dailyTaskTemplates: [],
+  dailyTaskTemplates:[],
   dailyTaskLogs: {},
   projects: [],
   prayerLogs: {},
-  top3Manual: [null, null, null],
-  quickTasks: [],
+  top3Manual:[null, null, null],
+  quickTasks:[],
   dailyCompletionLog: {},
   lifeGoals: buildDefaultLifeGoals(),
   timelineRoutines: {},
+  timelinePanelExpanded: true,
+};
+
+// Helper per trovare il titolo di una task (anche se annidata)
+const findTaskTitle = (nodes, id) => {
+  for (const n of (nodes ||[])) {
+    if (n.id === id) return n.title;
+    if (n.children) {
+      const found = findTaskTitle(n.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
+// Helper che registra automaticamente qualsiasi cosa tu completi nella Timeline
+const logTimelineEvent = (s, type, id, title, val, projectName = null) => {
+  if (!title) return;
+  const todayKey = toDateKey(new Date());
+  const slotKey = getCurrentSlotKey();
+  if (!s.dailyCompletionLog[todayKey]) s.dailyCompletionLog[todayKey] = { quick: [], project: [], events: [] };
+  const day = s.dailyCompletionLog[todayKey];
+  if (!day.events) day.events =[];
+  
+  if (val) {
+      if (!day.events.find(e => e.id === id)) {
+          day.events.push({ id, title, type, timestamp: Date.now(), slotKey, projectName });
+      }
+  } else {
+      day.events = day.events.filter(e => e.id !== id);
+  }
 };
 
 export const useDashboardStore = create(
@@ -50,13 +81,17 @@ export const useDashboardStore = create(
         goalTaskDrafts: {},
         goalDeadlineEditing: null,
         goalDeadlineInput: '',
-        sharedDashboards: [],
+        sharedDashboards:[],
+        timelinePanelExpanded: initialState.timelinePanelExpanded !== false,
 
         // --- Basic Setters ---
         setIsLoaded: (val) => set((s) => { s.isLoaded = val; }),
         setLastSavedAt: (val) => set((s) => { s.lastSavedAt = val; }),
         setConfirmState: (val) => set((s) => { s.confirmState = val; }),
-        
+        setTimelinePanelExpanded: (val) => set((s) => { s.timelinePanelExpanded = val; }),
+        /** Registra un completamento in "completati in questo slot" (es. goal/task da Top 3 che non passano da toggleQuickTask) */
+        logTimelineCompletionEvent: (type, id, title, val) => set((s) => { logTimelineEvent(s, type, id, title, val); }),
+
         // --- Domain Setters (These trigger syncMiddleware via 'set') ---
         setDailyTaskTemplates: (val) => set((s) => { 
           s.dailyTaskTemplates = typeof val === 'function' ? val(s.dailyTaskTemplates) : val; 
@@ -110,13 +145,36 @@ export const useDashboardStore = create(
         syncWithServer: (data) => set((s) => {
           if (data.dailyTaskTemplates) s.dailyTaskTemplates = data.dailyTaskTemplates;
           if (data.dailyTaskLogs) s.dailyTaskLogs = data.dailyTaskLogs;
-          if (data.projects) s.projects = data.projects;
           if (data.prayerLogs) s.prayerLogs = data.prayerLogs;
-          if (data.top3Manual) s.top3Manual = data.top3Manual;
-          if (data.quickTasks) s.quickTasks = data.quickTasks;
           if (data.dailyCompletionLog) s.dailyCompletionLog = data.dailyCompletionLog;
           if (data.lifeGoals) s.lifeGoals = normalizeLifeGoals(data.lifeGoals, buildDefaultLifeGoals());
           if (data.timelineRoutines != null && typeof data.timelineRoutines === 'object') s.timelineRoutines = data.timelineRoutines;
+          if (data.timelinePanelExpanded !== undefined) s.timelinePanelExpanded = data.timelinePanelExpanded;
+          // Progetti: preserva lifeGoalId dallo stato corrente così "Sincronizza con Progetti" resta ricordato
+          if (data.projects && Array.isArray(data.projects)) {
+            const prev = s.projects || [];
+            s.projects = data.projects.map((p) => {
+              const cur = prev.find((x) => x.id === p.id);
+              return cur?.lifeGoalId != null ? { ...p, lifeGoalId: cur.lifeGoalId } : p;
+            });
+          }
+          // Quick tasks: preserva lifeGoalId così "Sincronizza con Quick Tasks" resta ricordato
+          if (data.quickTasks && Array.isArray(data.quickTasks)) {
+            const prev = s.quickTasks || [];
+            s.quickTasks = data.quickTasks.map((t) => {
+              const cur = prev.find((x) => x.id === t.id);
+              return cur?.lifeGoalId != null ? { ...t, lifeGoalId: cur.lifeGoalId } : t;
+            });
+          }
+          // Top 3: preserva slot con lg- o quickTaskId così i focus restano ricordati
+          if (data.top3Manual && Array.isArray(data.top3Manual)) {
+            const prev = s.top3Manual || [];
+            s.top3Manual = data.top3Manual.map((slot, i) => {
+              const curSlot = prev[i];
+              if (curSlot && (curSlot.projectId?.startsWith?.('lg-') || curSlot.quickTaskId)) return curSlot;
+              return slot;
+            });
+          }
         }),
 
         // --- QuickTasks Actions ---
@@ -127,14 +185,15 @@ export const useDashboardStore = create(
             t.done = val;
             if (t.lifeGoalId) {
               for (const tier of (s.lifeGoals?.tiers ?? [])) {
-                const goal = (tier.goals || []).find(g => g.id === t.lifeGoalId);
+                const goal = (tier.goals ||[]).find(g => g.id === t.lifeGoalId);
                 if (goal) { goal.done = val; break; }
               }
             }
+            logTimelineEvent(s, 'quick', id, t.title, val);
           }
           const todayKey = toDateKey(new Date());
-          const day = s.dailyCompletionLog[todayKey] || { quick: [], project: [] };
-          const nextQuick = val ? (day.quick?.includes(id) ? day.quick : [...(day.quick || []), id]) : (day.quick || []).filter(x => x !== id);
+          const day = s.dailyCompletionLog[todayKey] || { quick: [], project:[] };
+          const nextQuick = val ? (day.quick?.includes(id) ? day.quick : [...(day.quick || []), id]) : (day.quick ||[]).filter(x => x !== id);
           s.dailyCompletionLog[todayKey] = { ...day, quick: nextQuick };
         }),
         removeQuickTask: (id) => set((s) => {
@@ -145,7 +204,7 @@ export const useDashboardStore = create(
           if (fromIndex === toIndex) return;
           const root = s.quickTasks.filter(t => !t.parentId);
           const rest = s.quickTasks.filter(t => t.parentId);
-          const [removed] = root.splice(fromIndex, 1);
+          const[removed] = root.splice(fromIndex, 1);
           root.splice(toIndex, 0, removed);
           s.quickTasks = [...root, ...rest];
         }),
@@ -171,28 +230,33 @@ export const useDashboardStore = create(
             const prevData = sd.data || {};
             const base = {
               projects: prevData.projects ?? [],
-              quickTasks: prevData.quickTasks ?? [],
-              chat: prevData.chat ?? [],
+              quickTasks: prevData.quickTasks ??[],
+              chat: prevData.chat ??[],
             };
             sd.data = updater(base);
           }
         }),
         toggleSharedQuickTask: (shareId, taskId, val) => {
+          const state = get();
+          const sd = state.sharedDashboards.find(x => x.share_id === shareId);
+          const title = sd?.data?.quickTasks?.find(t => t.id === taskId)?.title;
+          set((s) => { logTimelineEvent(s, 'shared_quick', taskId, title, val); });
+
           get().updateSharedDashboardData(shareId, data => ({
             ...data,
-            quickTasks: (data.quickTasks || []).map(t => t.id === taskId ? { ...t, done: val } : t)
+            quickTasks: (data.quickTasks ||[]).map(t => t.id === taskId ? { ...t, done: val } : t)
           }));
         },
         updateSharedQuickTask: (shareId, taskId, updater) => {
           get().updateSharedDashboardData(shareId, data => ({
             ...data,
-            quickTasks: (data.quickTasks || []).map(t => t.id === taskId ? { ...t, ...updater(t) } : t)
+            quickTasks: (data.quickTasks ||[]).map(t => t.id === taskId ? { ...t, ...updater(t) } : t)
           }));
         },
         removeSharedQuickTask: (shareId, taskId) => {
           get().updateSharedDashboardData(shareId, data => ({
             ...data,
-            quickTasks: (data.quickTasks || []).filter(t => t.id !== taskId && t.parentId !== taskId)
+            quickTasks: (data.quickTasks ||[]).filter(t => t.id !== taskId && t.parentId !== taskId)
           }));
           set((s) => {
             s.top3Manual = s.top3Manual.map(slot => (slot && slot.shareId === shareId && slot.quickTaskId === taskId) ? null : slot);
@@ -216,7 +280,10 @@ export const useDashboardStore = create(
         toggleDailyTask: (id, done) => set((s) => {
           if (done) haptic([50]);
           const date = toDateKey(new Date());
-          if (!s.dailyTaskLogs[date]) s.dailyTaskLogs[date] = [];
+          const t = s.dailyTaskTemplates.find(x => x.id === id);
+          if (t) logTimelineEvent(s, 'habit', id, t.title, done);
+
+          if (!s.dailyTaskLogs[date]) s.dailyTaskLogs[date] =[];
           if (done) {
             const existing = s.dailyTaskLogs[date].find(x => x.id === id);
             if (!existing) {
@@ -230,9 +297,12 @@ export const useDashboardStore = create(
           const h = s.dailyTaskTemplates.find(x => x.id === id);
           if (h) h.locked = !h.locked;
         }),
+        toggleHabitInTimeline: (id) => set((s) => {
+          const h = s.dailyTaskTemplates.find(x => x.id === id);
+          if (h) h.inTimeline = (h.inTimeline === false) ? true : false;
+        }),
         removeDailyTask: (id) => set((s) => {
           s.dailyTaskTemplates = s.dailyTaskTemplates.filter(x => x.id !== id);
-          // Also clean up logs to prevent memory leak
           Object.keys(s.dailyTaskLogs).forEach(date => {
             if (Array.isArray(s.dailyTaskLogs[date])) {
               s.dailyTaskLogs[date] = s.dailyTaskLogs[date].filter(x => x.id !== id);
@@ -261,7 +331,7 @@ export const useDashboardStore = create(
 
         // --- Projects Actions ---
         createProject: () => set((s) => {
-          s.projects.unshift({ id: `project-${Date.now()}`, title: 'New Project', active: true, tasks: [], deadline: undefined, ordinal: 0 });
+          s.projects.unshift({ id: `project-${Date.now()}`, title: 'New Project', active: true, tasks:[], deadline: undefined, ordinal: 0 });
           s.projects.forEach((p, i) => p.ordinal = i);
         }),
         deleteProject: (projectId) => set((s) => {
@@ -286,10 +356,13 @@ export const useDashboardStore = create(
           if (val) haptic([50]);
           const p = s.projects.find(x => x.id === projectId);
           if (p) {
+            const title = findTaskTitle(p.tasks, taskId);
+            logTimelineEvent(s, 'project', taskId, title, val, p.title);
+
             p.tasks = updateNodeInTree(p.tasks, taskId, n => ({ ...n, done: val }));
             if (p.lifeGoalId) {
               for (const tier of (s.lifeGoals?.tiers ?? [])) {
-                const goal = (tier.goals || []).find(g => g.id === p.lifeGoalId);
+                const goal = (tier.goals ||[]).find(g => g.id === p.lifeGoalId);
                 if (goal) {
                   goal.tasks = updateNodeInTree(goal.tasks, taskId, n => ({ ...n, done: val }));
                   break;
@@ -298,9 +371,9 @@ export const useDashboardStore = create(
             }
           }
           const todayKey = toDateKey(new Date());
-          const day = s.dailyCompletionLog[todayKey] || { quick: [], project: [] };
+          const day = s.dailyCompletionLog[todayKey] || { quick: [], project:[] };
           const key = `${projectId}:${taskId}`;
-          const nextProject = val ? (day.project?.includes(key) ? day.project : [...(day.project || []), key]) : (day.project || []).filter(x => x !== key);
+          const nextProject = val ? (day.project?.includes(key) ? day.project :[...(day.project || []), key]) : (day.project ||[]).filter(x => x !== key);
           s.dailyCompletionLog[todayKey] = { ...day, project: nextProject };
         }),
         moveProjectTask: (projectId, taskId, targetIndex) => set((s) => {
@@ -319,7 +392,7 @@ export const useDashboardStore = create(
           const p = s.projects.find(x => x.id === projectId);
           if (p) {
             p.tasks = updateNodeInTree(p.tasks, parentId, parent => {
-              const next = [...(parent.children || [])];
+              const next =[...(parent.children || [])];
               const fromIndex = next.findIndex(t => t.id === taskId);
               if (fromIndex !== -1) {
                 const [removed] = next.splice(fromIndex, 1);
@@ -333,20 +406,20 @@ export const useDashboardStore = create(
         updateSharedDashboardProject: (shareId, projectId, updater) => set((s) => {
           const sd = s.sharedDashboards.find(x => x.share_id === shareId);
           if (sd) {
-            if (!sd.data) sd.data = { projects: [], quickTasks: [], chat: [] };
-            sd.data.projects = (sd.data.projects || []).map(p => p.id === projectId ? updater(p) : p);
+            if (!sd.data) sd.data = { projects: [], quickTasks: [], chat:[] };
+            sd.data.projects = (sd.data.projects ||[]).map(p => p.id === projectId ? updater(p) : p);
           }
         }),
         deleteSharedDashboardProject: (shareId, projectId) => set((s) => {
           const sd = s.sharedDashboards.find(x => x.share_id === shareId);
           if (sd && sd.data) {
-            sd.data.projects = (sd.data.projects || []).filter(p => p.id !== projectId);
+            sd.data.projects = (sd.data.projects ||[]).filter(p => p.id !== projectId);
           }
         }),
         reorderSharedDashboardProjects: (shareId, fromIdx, toIdx) => set((s) => {
           const sd = s.sharedDashboards.find(x => x.share_id === shareId);
           if (sd && sd.data) {
-            const projs = [...(sd.data.projects || [])];
+            const projs =[...(sd.data.projects || [])];
             const [removed] = projs.splice(fromIdx, 1);
             projs.splice(toIdx, 0, removed);
             sd.data.projects = projs;
@@ -354,16 +427,21 @@ export const useDashboardStore = create(
         }),
 
         // --- Timeline Routines (Daily small wins between prayers) ---
-        addTimelineRoutine: (dateKey, slotKey, title) => set((s) => {
+        addTimelineRoutine: (dateKey, slotKey, habitId) => set((s) => {
           if (!s.timelineRoutines[dateKey]) s.timelineRoutines[dateKey] = {};
           if (!s.timelineRoutines[dateKey][slotKey]) s.timelineRoutines[dateKey][slotKey] = [];
-          s.timelineRoutines[dateKey][slotKey].push({ id: uid('tl'), title: (title || '').trim() || 'Nuova routine', done: false });
+          if (!s.timelineRoutines[dateKey][slotKey].some(r => r.habitId === habitId)) {
+            s.timelineRoutines[dateKey][slotKey].push({ id: uid('tl'), habitId, done: false });
+          }
         }),
         toggleTimelineRoutine: (dateKey, slotKey, routineId, done) => set((s) => {
           const list = s.timelineRoutines[dateKey]?.[slotKey];
           if (!Array.isArray(list)) return;
           const r = list.find(x => x.id === routineId);
-          if (r) r.done = done;
+          if (r) {
+              r.done = done;
+              if (done) haptic([50]);
+          }
         }),
         removeTimelineRoutine: (dateKey, slotKey, routineId) => set((s) => {
           if (!s.timelineRoutines[dateKey]?.[slotKey]) return;
@@ -376,13 +454,13 @@ export const useDashboardStore = create(
           s.lifeGoals = next;
         }),
         toggleTierCollapse: (tierId) => set((s) => {
-          const tier = (s.lifeGoals?.tiers ?? []).find(t => t.id === tierId);
+          const tier = (s.lifeGoals?.tiers ??[]).find(t => t.id === tierId);
           if (tier) tier.collapsed = !tier.collapsed;
         }),
         moveGoalToTier: (goalId, targetTierId) => set((s) => {
           let goal = null;
           let sourceTier = null;
-          for (const t of (s.lifeGoals?.tiers ?? [])) {
+          for (const t of (s.lifeGoals?.tiers ??[])) {
             const idx = t.goals.findIndex(g => g.id === goalId);
             if (idx !== -1) {
               [goal] = t.goals.splice(idx, 1);
@@ -391,7 +469,7 @@ export const useDashboardStore = create(
             }
           }
           if (goal) {
-            const targetTier = (s.lifeGoals?.tiers ?? []).find(t => t.id === targetTierId);
+            const targetTier = (s.lifeGoals?.tiers ??[]).find(t => t.id === targetTierId);
             if (targetTier) {
               targetTier.goals.push(goal);
             } else if (sourceTier) {
@@ -400,7 +478,7 @@ export const useDashboardStore = create(
           }
         }),
         updateGoal: (goalId, updater) => set((s) => {
-          for (const t of (s.lifeGoals?.tiers ?? [])) {
+          for (const t of (s.lifeGoals?.tiers ??[])) {
             const goal = t.goals.find(g => g.id === goalId);
             if (goal) {
               const next = updater(goal);
@@ -410,12 +488,12 @@ export const useDashboardStore = create(
           }
         }),
         deleteGoal: (goalId) => set((s) => {
-          for (const t of (s.lifeGoals?.tiers ?? [])) {
-            t.goals = (t.goals || []).filter(g => g.id !== goalId);
+          for (const t of (s.lifeGoals?.tiers ??[])) {
+            t.goals = (t.goals ||[]).filter(g => g.id !== goalId);
           }
         }),
         addGoalToTier: (tierId, title, category, type) => set((s) => {
-          const tier = (s.lifeGoals?.tiers ?? []).find(t => t.id === tierId);
+          const tier = (s.lifeGoals?.tiers ??[]).find(t => t.id === tierId);
           if (tier) {
             tier.goals.push({
               id: `goal-${Date.now()}`,
@@ -424,7 +502,7 @@ export const useDashboardStore = create(
               type,
               done: false,
               deadline: null,
-              tasks: [],
+              tasks:[],
               ordinal: tier.goals.length
             });
           }
@@ -432,12 +510,14 @@ export const useDashboardStore = create(
         promoteGoalToProjects: (goalId) => set((s) => {
           const linked = s.projects.find((p) => p.lifeGoalId === goalId);
           if (linked) {
-            linked.lifeGoalId = undefined;
-            s.top3Manual = s.top3Manual.map(slot => (slot && slot.projectId === linked.id) ? null : slot);
+            const linkedId = linked.id;
+            s.top3Manual = s.top3Manual.map(slot => (slot && slot.projectId === linkedId) ? null : slot);
+            s.projects = s.projects.filter((p) => p.id !== linkedId);
+            s.projects.forEach((p, i) => p.ordinal = i);
             return;
           }
           let goalToLink = null;
-          for (const tier of (s.lifeGoals?.tiers ?? [])) {
+          for (const tier of (s.lifeGoals?.tiers ??[])) {
             const found = tier.goals.find(g => g.id === goalId);
             if (found) { goalToLink = { ...found }; break; }
           }
@@ -447,7 +527,7 @@ export const useDashboardStore = create(
             lifeGoalId: goalId,
             title: goalToLink.title,
             active: true,
-            tasks: goalToLink.tasks || [],
+            tasks: goalToLink.tasks ||[],
             deadline: goalToLink.deadline || undefined,
             ordinal: 0
           });
@@ -462,7 +542,7 @@ export const useDashboardStore = create(
           }
           let goalToLink = null;
           for (const tier of (s.lifeGoals?.tiers ?? [])) {
-            const found = (tier.goals || []).find(g => g.id === goalId);
+            const found = (tier.goals ||[]).find(g => g.id === goalId);
             if (found) { goalToLink = { ...found }; break; }
           }
           if (!goalToLink) return;
@@ -476,6 +556,7 @@ export const useDashboardStore = create(
           });
           s.quickTasks.forEach((q, i) => q.ordinal = i);
         }),
+
       }))
     )
   )

@@ -30,6 +30,7 @@ export function LifeGoalsSection() {
     setGoalTaskDrafts,
     setProjects,
     setQuickTasks,
+    toggleQuickTask,
     addGoalToTier
   } = store ?? {};
 
@@ -124,7 +125,9 @@ export function LifeGoalsSection() {
                                 accent={tier.id === 'tier-1' ? 'emerald' : tier.id === 'tier-2' ? 'sky' : 'violet'} stats={{}} percentage={0}
                                 onToggle={(gid, val) => {
                                   updateGoal(gid, g => ({ ...g, done: val }));
-                                  setQuickTasks(prev => prev.map(t => t.lifeGoalId === gid ? { ...t, done: val } : t));
+                                  const qt = quickTasks.find(t => t.lifeGoalId === gid && !t.parentId);
+                                  if (qt) toggleQuickTask(qt.id, val);
+                                  else setQuickTasks(prev => prev.map(t => t.lifeGoalId === gid ? { ...t, done: val } : t));
                                 }}
                                 onDelete={(gid) => setConfirmState?.({ id: 'deleteGoal', payload: { goalId: gid } })}
                                 onRename={(gid, val, type) => updateGoal(gid, g => ({ ...g, title: val, type: type || g.type }))}
@@ -158,7 +161,9 @@ export function LifeGoalsSection() {
                                   key={goal.id} goal={goal} accent={tier.id === 'tier-1' ? 'emerald' : tier.id === 'tier-2' ? 'sky' : 'violet'} stats={stats} percentage={percentage}
                                   onToggle={(gid, val) => {
                                     updateGoal(gid, g => ({ ...g, done: val }));
-                                    setQuickTasks(prev => prev.map(t => t.lifeGoalId === gid ? { ...t, done: val } : t));
+                                    const qt = quickTasks.find(t => t.lifeGoalId === gid && !t.parentId);
+                                    if (qt) toggleQuickTask(qt.id, val);
+                                    else setQuickTasks(prev => prev.map(t => t.lifeGoalId === gid ? { ...t, done: val } : t));
                                   }}
                                   onDelete={(gid) => setConfirmState?.({ id: 'deleteGoal', payload: { goalId: gid } })}
                                   onRename={(gid, val, type) => updateGoal(gid, g => ({ ...g, title: val, type: type || g.type }))}
@@ -188,6 +193,7 @@ export function LifeGoalsSection() {
                                           onAddChild={(tid, val) => updateGoal(goal.id, g => ({ ...g, tasks: updateNodeInTree(g.tasks, tid, n => ({ ...n, children: [...(n.children || []), createTaskNode(val)] })) }))}
                                           onToggleTop3={(pid, tid) => { const free = top3Manual.findIndex(s => !s); if (free !== -1) setTop3SlotAtIndex(free, { projectId: pid, taskId: tid }); }}
                                           hasFreeTop3Slot={top3Manual.some(s => !s)}
+                                          hideTop3Button={true}
                                         />
                                       ))}
                                       <div className="pt-2">

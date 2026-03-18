@@ -310,6 +310,7 @@ export function buildDefaultState() {
     dailyCompletionLog: {},
     lifeGoals: buildDefaultLifeGoals(),
     timelineRoutines: {},
+    timelinePanelExpanded: true,
   };
 }
 
@@ -373,8 +374,24 @@ export function loadState() {
       dailyCompletionLog: parsed.dailyCompletionLog && typeof parsed.dailyCompletionLog === 'object' ? parsed.dailyCompletionLog : fallback.dailyCompletionLog,
       lifeGoals: normalizeLifeGoals(parsed.lifeGoals, fallback.lifeGoals),
       timelineRoutines: parsed.timelineRoutines && typeof parsed.timelineRoutines === 'object' ? parsed.timelineRoutines : fallback.timelineRoutines,
+      timelinePanelExpanded: parsed.timelinePanelExpanded !== undefined ? parsed.timelinePanelExpanded : true,
     };
   } catch (_) {
     return fallback;
   }
+}
+
+export const PRAYER_SLOTS =['Fajr-Dhuhr', 'Dhuhr-Asr', 'Asr-Maghrib', 'Maghrib-Isha', 'Isha-Fajr'];
+
+export function getCurrentSlotKey(date = new Date()) {
+  const h = date.getHours();
+  const m = date.getMinutes();
+  const time = h + m / 60;
+  
+  // Mappatura oraria approssimata per assegnare i task in auto
+  if (time >= 5 && time < 12.5) return 'Fajr-Dhuhr'; 
+  if (time >= 12.5 && time < 15.5) return 'Dhuhr-Asr';  
+  if (time >= 15.5 && time < 18.0) return 'Asr-Maghrib';
+  if (time >= 18.0 && time < 19.5) return 'Maghrib-Isha';
+  return 'Isha-Fajr'; 
 }

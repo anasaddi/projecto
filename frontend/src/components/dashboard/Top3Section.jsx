@@ -20,7 +20,8 @@ export function Top3Section() {
     toggleProjectTask,
     updateSharedDashboardProject,
     toggleSharedQuickTask,
-    updateGoal
+    updateGoal,
+    logTimelineCompletionEvent
   } = store ?? {};
 
   const allQuickTasks = useMemo(() => {
@@ -42,11 +43,13 @@ export function Top3Section() {
       else toggleQuickTask(slot.quickTaskId, !slot.done);
     } else if (slot.projectId?.startsWith('lg-') && updateGoal) {
       const goalId = slot.projectId.replace(/^lg-/, '');
+      const newVal = !slot.done;
       if (slot.taskId === goalId) {
-        updateGoal(goalId, g => ({ ...g, done: !slot.done }));
+        updateGoal(goalId, g => ({ ...g, done: newVal }));
       } else {
-        updateGoal(goalId, g => ({ ...g, tasks: updateNodeInTree(g.tasks || [], slot.taskId, n => ({ ...n, done: !slot.done })) }));
+        updateGoal(goalId, g => ({ ...g, tasks: updateNodeInTree(g.tasks || [], slot.taskId, n => ({ ...n, done: newVal })) }));
       }
+      if (logTimelineCompletionEvent && slot.title) logTimelineCompletionEvent('quick', slot.taskId, slot.title, newVal);
     } else {
       if (slot.shareId && updateSharedDashboardProject) {
         updateSharedDashboardProject(slot.shareId, slot.projectId, (p) => ({

@@ -41,7 +41,7 @@ export function LifeGoalCard({
           )}
           <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover/goal:opacity-100 transition-opacity">
             <button type="button" onClick={() => onPromoteQuick(goal.id)} className={`p-0.5 rounded ${isLinkedToQuick ? 'text-rose-500 bg-rose-50 dark:bg-rose-500/10' : 'text-zinc-400 hover:text-rose-500'}`} title={isLinkedToQuick ? 'Rimuovi da Quick Tasks' : 'Sincronizza con Quick Tasks'}><Icons.Zap className="h-2.5 w-2.5" /></button>
-            {hasFreeTop3Slot && !goal.done && (
+            {!isProject && hasFreeTop3Slot && !goal.done && (
               <button type="button" onClick={() => onAddToTop3(goal.id)} className="p-0.5 rounded text-zinc-400 hover:text-amber-500" title="Top 3"><Icons.Target className="h-2.5 w-2.5" /></button>
             )}
             <button type="button" onClick={() => { setDeadlineInput(goal.deadline || ''); setDeadlineEditing(goal.id); }} className={`p-0.5 rounded ${goal.deadline ? 'text-amber-500' : 'text-zinc-400 hover:text-amber-500'}`} title="Scadenza"><Icons.Calendar className="h-2.5 w-2.5" /></button>
@@ -130,7 +130,7 @@ export function LifeGoalCard({
                 <Icons.ChevronDown className={`h-2.5 w-2.5 transition-transform duration-200 ${showTasks ? 'rotate-180' : ''}`} />
               </button>
             )}
-            {hasFreeTop3Slot && !goal.done && (
+            {!isProject && hasFreeTop3Slot && !goal.done && (
               <button type="button" onClick={() => onAddToTop3(goal.id)} className="p-0.5 rounded text-zinc-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors" title="Pin to Focus">
                 <Icons.Target className="h-2.5 w-2.5" />
               </button>

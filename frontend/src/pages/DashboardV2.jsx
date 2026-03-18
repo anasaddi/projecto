@@ -11,7 +11,7 @@ import { Icons } from '../components/dashboard/Icons';
 import { PomodoroCompact } from '../components/dashboard/PomodoroCompact';
 import { FocusHeatmap } from '../components/dashboard/FocusHeatmap';
 import { PrayersCountdowns } from '../components/dashboard/PrayersCountdowns';
-import { DailyTimelineWidget } from '../components/dashboard/DailyTimelineWidget';
+import { DailyTimelineWidget2 } from '../components/dashboard/DailyTimelineWidget2';
 import { QuickTasksSection } from '../components/dashboard/QuickTasksSection';
 import { Top3Section } from '../components/dashboard/Top3Section';
 import { HabitsSection } from '../components/dashboard/HabitsSection';
@@ -63,10 +63,6 @@ export default function DashboardV2() {
     deleteGoal,
     deleteSharedDashboardProject,
     togglePrayer,
-    timelineRoutines = {},
-    addTimelineRoutine,
-    toggleTimelineRoutine,
-    removeTimelineRoutine,
   } = store ?? {};
 
   const { updateStats } = useDashboardStats() || { updateStats: () => { } };
@@ -310,15 +306,11 @@ export default function DashboardV2() {
 
       <PrayersCountdowns todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} PRAYERS={PRAYERS} countdowns={countdowns} />
 
-      <DailyTimelineWidget
+      <DailyTimelineWidget2
         PRAYERS={PRAYERS}
         todayKey={todayKey}
         todayPrayerLog={todayPrayerLog}
-        timelineRoutines={timelineRoutines}
         togglePrayer={togglePrayer}
-        addTimelineRoutine={addTimelineRoutine}
-        toggleTimelineRoutine={toggleTimelineRoutine}
-        removeTimelineRoutine={removeTimelineRoutine}
       />
 
       <div className="flex-1 min-h-0 px-6 pt-3 pb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 overflow-x-hidden overflow-y-auto lg:overflow-hidden">
