@@ -10,11 +10,12 @@ export function logTimelineEvent(
   id: string,
   title: string,
   val: boolean,
-  projectName: string | null = null
+  projectName: string | null = null,
+  slotKeyOverride?: string
 ): void {
-  if (!title) return;
+  if (val && !title) return;
   const todayKey = toDateKey(new Date());
-  const slotKey = getCurrentSlotKey();
+  const slotKey = slotKeyOverride ?? getCurrentSlotKey();
   if (!s.dailyCompletionLog[todayKey]) {
     s.dailyCompletionLog[todayKey] = { quick: [], project: [], events: [] };
   }

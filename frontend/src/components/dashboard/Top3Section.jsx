@@ -46,6 +46,8 @@ export function Top3Section() {
       const newVal = !slot.done;
       if (slot.taskId === goalId) {
         updateGoal(goalId, g => ({ ...g, done: newVal }));
+        const qt = quickTasks.find(t => t.lifeGoalId === goalId && !t.parentId);
+        if (qt) toggleQuickTask(qt.id, newVal);
       } else {
         updateGoal(goalId, g => ({ ...g, tasks: updateNodeInTree(g.tasks || [], slot.taskId, n => ({ ...n, done: newVal })) }));
       }

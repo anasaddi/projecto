@@ -1,28 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, FormEvent } from 'react';
 import { api } from '../api/client';
 import { Lock, AlertCircle, ArrowRight } from 'lucide-react';
+import type { LoginResponse } from '../types/api';
 
-export default function Login() {
+export default function Login(): React.ReactElement {
   const [key, setKey] = useState('');
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!key.trim()) return;
 
     setLoading(true);
     setError(null);
     try {
-      const res = await api.auth.login(key);
-      if (res.token) {
+      const res = (await api.auth.login(key)) as LoginResponse | undefined;
+      if (res?.token) {
         localStorage.setItem('km-user-role', 'admin');
         localStorage.setItem('km-admin-token', res.token);
         if (res.training) localStorage.setItem('km-training-allowed', '1');
         else localStorage.removeItem('km-training-allowed');
         window.location.href = '/dashboard';
       }
-    } catch (err) {
+    } catch {
       setError('Chiave di accesso non valida o errore del server.');
     } finally {
       setLoading(false);
@@ -77,8 +78,9 @@ export default function Login() {
 
         <div className="pt-4 text-center">
           <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest opacity-50">Private Instance · KM-P01</p>
-          <button 
-            onClick={() => window.location.href = '/'}
+          <button
+            type="button"
+            onClick={() => (window.location.href = '/')}
             className="mt-4 text-[11px] font-black uppercase tracking-widest text-zinc-500 hover:text-indigo-500 transition-colors"
           >
             Torna alla Home

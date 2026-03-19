@@ -5,6 +5,7 @@ Falls back gracefully if Redis is unavailable.
 """
 import json
 import logging
+import time
 from typing import Optional
 from redis.asyncio import Redis, ConnectionPool
 from app.config import get_settings
@@ -13,6 +14,9 @@ logger = logging.getLogger("km.cache")
 
 _pool: Optional[ConnectionPool] = None
 _redis: Optional[Redis] = None
+# Circuit breaker: skip connection attempts until this time (monotonic) when Redis recently failed
+_redis_unavailable_until: float = 0.0
+REDIS_CIRCUIT_BREAKER_SEC = 60
 
 # TTL for cached dashboard state (seconds)
 DASHBOARD_TTL = 300  # 5 minutes
@@ -21,7 +25,9 @@ SHARED_DASHBOARD_TTL = 120  # 2 minutes
 
 async def get_redis() -> Optional[Redis]:
     """Get or create Redis connection. Returns None if unavailable."""
-    global _pool, _redis
+    global _pool, _redis, _redis_unavailable_until
+    if time.monotonic() < _redis_unavailable_until:
+        return None
     if _redis is not None:
         try:
             await _redis.ping()
@@ -36,18 +42,20 @@ async def get_redis() -> Optional[Redis]:
             settings.redis_url,
             max_connections=20,
             decode_responses=True,
-            socket_connect_timeout=2,
-            socket_timeout=2,
-            retry_on_timeout=True,
+            socket_connect_timeout=0.5,
+            socket_timeout=0.5,
+            retry_on_timeout=False,
         )
         _redis = Redis(connection_pool=_pool)
         await _redis.ping()
+        _redis_unavailable_until = 0.0
         logger.info("Redis connected")
         return _redis
     except Exception as e:
         logger.info("Redis not available — running without cache (optional for local dev): %s", e)
         _redis = None
         _pool = None
+        _redis_unavailable_until = time.monotonic() + REDIS_CIRCUIT_BREAKER_SEC
         return None
 
 

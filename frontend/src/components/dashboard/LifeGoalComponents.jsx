@@ -6,7 +6,7 @@ export function LifeGoalCard({
   goal, accent, stats, percentage,
   onToggle, onDelete, onRename, onDeadline,
   onDeadlineClick, deadlineEditing, deadlineInput, setDeadlineInput, setDeadlineEditing,
-  getDeadlineColorClass, formatDeadline, renderTasks, onAddToTop3, hasFreeTop3Slot,
+  getDeadlineColorClass, formatDeadline, renderTasks, onToggleTop3, isInTop3, hasFreeTop3Slot,
   onPromoteProject, onPromoteQuick, isLinkedToProject, isLinkedToQuick,
   compact = false,
 }) {
@@ -41,8 +41,8 @@ export function LifeGoalCard({
           )}
           <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover/goal:opacity-100 transition-opacity">
             <button type="button" onClick={() => onPromoteQuick(goal.id)} className={`p-0.5 rounded ${isLinkedToQuick ? 'text-rose-500 bg-rose-50 dark:bg-rose-500/10' : 'text-zinc-400 hover:text-rose-500'}`} title={isLinkedToQuick ? 'Rimuovi da Quick Tasks' : 'Sincronizza con Quick Tasks'}><Icons.Zap className="h-2.5 w-2.5" /></button>
-            {!isProject && hasFreeTop3Slot && !goal.done && (
-              <button type="button" onClick={() => onAddToTop3(goal.id)} className="p-0.5 rounded text-zinc-400 hover:text-amber-500" title="Top 3"><Icons.Target className="h-2.5 w-2.5" /></button>
+            {!isProject && (isInTop3 || (hasFreeTop3Slot && !goal.done)) && (
+              <button type="button" onClick={() => onToggleTop3(goal.id)} className={`p-0.5 rounded transition-colors ${isInTop3 ? 'text-amber-600 bg-amber-100 dark:bg-amber-900/40' : 'text-zinc-400 hover:text-amber-500'}`} title={isInTop3 ? 'Rimuovi dai Top 3' : 'Top 3'}><Icons.Target className="h-2.5 w-2.5" /></button>
             )}
             <button type="button" onClick={() => { setDeadlineInput(goal.deadline || ''); setDeadlineEditing(goal.id); }} className={`p-0.5 rounded ${goal.deadline ? 'text-amber-500' : 'text-zinc-400 hover:text-amber-500'}`} title="Scadenza"><Icons.Calendar className="h-2.5 w-2.5" /></button>
             <button type="button" onClick={() => onDelete(goal.id)} className="p-0.5 rounded text-zinc-400 hover:text-red-500"><Icons.X className="h-2.5 w-2.5" /></button>
@@ -130,8 +130,8 @@ export function LifeGoalCard({
                 <Icons.ChevronDown className={`h-2.5 w-2.5 transition-transform duration-200 ${showTasks ? 'rotate-180' : ''}`} />
               </button>
             )}
-            {!isProject && hasFreeTop3Slot && !goal.done && (
-              <button type="button" onClick={() => onAddToTop3(goal.id)} className="p-0.5 rounded text-zinc-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors" title="Pin to Focus">
+            {!isProject && (isInTop3 || (hasFreeTop3Slot && !goal.done)) && (
+              <button type="button" onClick={() => onToggleTop3(goal.id)} className={`p-0.5 rounded transition-colors ${isInTop3 ? 'text-amber-600 bg-amber-100 dark:bg-amber-900/40' : 'text-zinc-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10'}`} title={isInTop3 ? 'Rimuovi dai Top 3' : 'Pin to Focus'}>
                 <Icons.Target className="h-2.5 w-2.5" />
               </button>
             )}

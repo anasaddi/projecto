@@ -1,18 +1,23 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
-import { PRAYER_SLOTS, getCurrentSlotKey, toDateKey } from './DashboardUtils';
+import { PRAYER_SLOTS, getCurrentSlotKey } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
 
-const DEFAULT_PRAYER_TIMES = { Fajr: '05:24', Dhuhr: '12:31', Asr: '15:47', Maghrib: '18:22', Isha: '19:48' };
+// Mock degli orari di default
+const DEFAULT_PRAYER_TIMES = {
+  Fajr: '05:24', Dhuhr: '12:31', Asr: '15:47', Maghrib: '18:22', Isha: '19:48'
+};
 
+// Hook orari preghiere (Mantenuto per la logica perfetta)
 function usePrayerTimes() {
   const [times, setTimes] = useState(DEFAULT_PRAYER_TIMES);
-  const [locationName, setLocationName] = useState('');
-  const [loading, setLoading] = useState(true);
+  const[locationName, setLocationName] = useState('');
+  
   useEffect(() => {
-    if (!navigator.geolocation) { setLoading(false); return; }
+    if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(async (position) => {
       const { latitude, longitude } = position.coords;
       try {
@@ -35,336 +40,347 @@ function usePrayerTimes() {
             const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=it`);
             const geoData = await geoRes.json();
             setLocationName(geoData.city || geoData.locality || '');
-          } catch (_) {}
+          } catch (e) {}
         }
-      } catch (err) { console.warn('Failed to fetch prayer times:', err); }
-      finally { setLoading(false); }
-    }, () => setLoading(false));
-  }, []);
-  return { times, locationName, loading };
+      } catch (err) {}
+    }, () => {});
+  },[]);
+  
+  return { times, locationName };
 }
 
-function formatCompletionTime(ts) {
-  if (!ts) return '';
-  const d = new Date(ts);
-  return d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+function getSlotLabel(slotKey) {
+  const [from, to] = slotKey.split('-');
+  return `${from} → ${to}`;
 }
 
+// --- HABIT SELECTOR (UX/UI Ultra-Premium) - Portal per evitare clip nella card ---
+function HabitSelector({ activeHabits, onSelect, onClose, triggerRef }) {
+  const ref = useRef(null);
+  const [position, setPosition] = useState({ bottom: 0, left: 0 });
+
+  useEffect(() => {
+    if (triggerRef?.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPosition({ bottom: window.innerHeight - rect.top + 8, left: rect.left });
+    }
+  }, [triggerRef]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target) && triggerRef?.current && !triggerRef.current.contains(e.target)) onClose();
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [onClose, triggerRef]);
+
+  const content = (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      className="fixed w-[260px] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border border-zinc-200/80 dark:border-zinc-700/80 rounded-2xl z-[9999] p-2 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.2)] dark:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] overflow-hidden"
+      style={{ position: 'fixed', bottom: position.bottom, left: position.left }}
+    >
+      <div className="text-[10px] font-extrabold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest px-3 py-2 mb-1">
+        Aggiungi Micro-Vittoria
+      </div>
+      <div className="max-h-[220px] overflow-y-auto custom-scrollbar flex flex-col gap-1 pr-1">
+        {activeHabits.length === 0 ? (
+          <div className="px-3 py-4 text-xs text-center text-zinc-500 italic">Nessuna abitudine sbloccata</div>
+        ) : (
+          activeHabits.map((h, i) => (
+            <motion.button
+              key={h.id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.03 }}
+              onClick={() => { onSelect(h.id); onClose(); }}
+              className="group flex items-center justify-between w-full px-3 py-2.5 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all duration-200 active:scale-[0.98]"
+            >
+              <span className="text-[13px] font-semibold text-zinc-700 dark:text-zinc-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 truncate pr-2">
+                {h.title}
+              </span>
+              <Icons.Plus className="w-4 h-4 text-zinc-300 dark:text-zinc-600 group-hover:text-indigo-500 shrink-0 transition-colors" />
+            </motion.button>
+          ))
+        )}
+      </div>
+    </motion.div>
+  );
+
+  return createPortal(content, document.body);
+}
+
+// --- WIDGET PRINCIPALE ---
 export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, togglePrayer }) {
-  const { 
-    dailyTaskTemplates, 
-    dailyTaskLogs, 
-    toggleDailyTask,
+  const store = useDashboardStore();
+  const {
+    timelineRoutines,
+    addTimelineRoutine,
+    toggleTimelineRoutine,
+    removeTimelineRoutine,
+    dailyTaskTemplates,
     dailyCompletionLog,
     timelinePanelExpanded,
     setTimelinePanelExpanded
-  } = useDashboardStore();
-  
+  } = store;
+
+  const [selectorOpenSlot, setSelectorOpenSlot] = useState(null);
+  const winTriggerRef = useRef(null);
   const { times: PRAYER_TIMES, locationName } = usePrayerTimes();
-  const open = timelinePanelExpanded !== false;
-  const setOpen = (v) => setTimelinePanelExpanded(typeof v === 'function' ? v(open) : v);
   
-  const activeHabits = useMemo(() => dailyTaskTemplates.filter(t => !t.locked && (t.inTimeline !== false)), [dailyTaskTemplates]);
-  const currentSlot = getCurrentSlotKey();
-  const todayTaskLog = dailyTaskLogs[todayKey] || [];
-  const todayLogMap = useMemo(() => {
-    const map = {};
-    todayTaskLog.forEach(l => map[l.id] = l.done);
-    return map;
-  }, [todayTaskLog]);
-  
-  // Get completed tasks for each slot using the events log (with timestamps)
-  const slotCompletions = useMemo(() => {
-    const completions = {};
-    const logForDay = dailyCompletionLog[todayKey] || {};
-    
-    // Initialize empty arrays for each slot
-    PRAYER_SLOTS.slice(0, 4).forEach(slotKey => {
-      completions[slotKey] = { quick: [], project: [], habits: [], total: 0 };
-    });
-    
-    // Process events - they already have slotKey assigned when completed
-    const events = logForDay.events || [];
-    events.forEach(event => {
-      const slotKey = event.slotKey;
-      if (!slotKey || !completions[slotKey]) return;
-      
-      if (event.type === 'quick' || event.type === 'shared_quick') {
-        completions[slotKey].quick.push({ id: event.id, title: event.title, label: 'Quick Task', timestamp: event.timestamp });
-      } else if (event.type === 'project') {
-        const displayTitle = event.projectName ? `${event.projectName} → ${event.title}` : event.title;
-        completions[slotKey].project.push({ 
-          id: event.id, 
-          title: event.title, 
-          projectName: event.projectName,
-          displayTitle,
-          label: event.projectName ? 'Subtask' : 'Project Task',
-          timestamp: event.timestamp
-        });
-      } else if (event.type === 'habit') {
-        completions[slotKey].habits.push({ id: event.id, title: event.title, label: 'Habit', timestamp: event.timestamp });
+  const activeHabits = useMemo(() => dailyTaskTemplates.filter(t => !t.locked), [dailyTaskTemplates]);
+  const eventsToday = useMemo(() => dailyCompletionLog[todayKey]?.events || [], [dailyCompletionLog, todayKey]);
+  const slotsForDay = useMemo(() => timelineRoutines[todayKey] || {}, [timelineRoutines, todayKey]);
+  const currentSlotKey = getCurrentSlotKey();
+  const isCollapsed = !timelinePanelExpanded;
+
+  // Calcolo progresso
+  const progress = useMemo(() => {
+    const prayerCount = PRAYERS.filter(p => todayPrayerLog[p]).length;
+    let routineDone = 0;
+    let routineTotal = 0;
+    PRAYER_SLOTS.forEach(slotKey => {
+      const list = slotsForDay[slotKey];
+      if (Array.isArray(list)) {
+        list.forEach(r => { routineTotal++; if (r.done) routineDone++; });
       }
     });
-    
-    // Calculate totals
-    PRAYER_SLOTS.slice(0, 4).forEach(slotKey => {
-      const slot = completions[slotKey];
-      slot.total = slot.quick.length + slot.project.length + slot.habits.length;
-    });
-    
-    return completions;
-  }, [dailyCompletionLog, todayKey]);
+    const totalSteps = PRAYERS.length + routineTotal;
+    const doneSteps = prayerCount + routineDone;
+    return { doneSteps, totalSteps, pct: totalSteps ? doneSteps / totalSteps : 0 };
+  }, [PRAYERS, todayPrayerLog, slotsForDay]);
 
-  const progress = useMemo(() => {
-    const prayersDone = PRAYERS.filter(p => todayPrayerLog[p]).length;
-    const habitsDone = activeHabits.filter(h => todayLogMap[h.id]).length;
-    const done = prayersDone + habitsDone;
-    const total = PRAYERS.length + activeHabits.length;
-    return { done, total, pct: total ? done / total : 0, prayersDone, habitsDone, habitsTotal: activeHabits.length };
-  }, [PRAYERS, todayPrayerLog, activeHabits, todayLogMap]);
-
-  // Stesse abitudini in tutte le card dello slot (ogni card mostra la lista completa)
-  const habitsBySlot = useMemo(() => {
-    const distribution = {};
-    PRAYER_SLOTS.slice(0, 4).forEach((slotKey) => {
-      distribution[slotKey] = activeHabits;
-    });
-    return distribution;
-  }, [activeHabits]);
-
-  const isCollapsed = !open;
   return (
-    <div className={`shrink-0 px-4 md:px-6 pt-3 ${isCollapsed ? 'pb-3' : 'pb-6'}`}>
-      <div className="dashboard-panel overflow-hidden rounded-xl py-0">
-        {/* Header: largo come tutta la barra, stesso colore del panel (bg trasparente), padding interno come preghiere */}
-        <button 
-          onClick={() => setOpen(o => !o)} 
-          className={`flex w-full items-center justify-between gap-4 text-left px-3 sm:px-4 py-3 bg-transparent hover:bg-zinc-50/60 dark:hover:bg-white/[0.03] transition-colors duration-200 focus-ring ${isCollapsed ? 'rounded-xl' : 'rounded-t-xl'}`}
+    <div className="shrink-0 px-4 md:px-6 pb-6 mt-2 relative z-10">
+      <div className="dashboard-panel p-0 overflow-hidden flex flex-col border border-zinc-200/80 dark:border-white/[0.08] shadow-2xl shadow-zinc-200/30 dark:shadow-black/50 bg-white/80 dark:bg-[#12141a]/90 backdrop-blur-3xl rounded-[2rem]">
+        
+        {/* HEADER (Sticky & Glass) */}
+        <button
+          type="button"
+          onClick={() => setTimelinePanelExpanded(!timelinePanelExpanded)}
+          className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left transition-colors duration-300 hover:bg-zinc-50/50 dark:hover:bg-white/[0.02] focus-ring z-20"
         >
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-4 min-w-0">
             <motion.div
-              className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-indigo-600 text-white shrink-0 shadow-lg shadow-indigo-500/25 dark:shadow-indigo-600/20 ring-2 ring-white/20 dark:ring-white/10"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.98 }}
+              className="w-12 h-12 flex items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-indigo-600 text-white shrink-0 shadow-[0_0_20px_rgba(99,102,241,0.3)] ring-1 ring-white/20"
+              whileHover={{ scale: 1.05, rotate: 2 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <Icons.Target className="h-4 w-4" />
+              <Icons.Target className="h-5 w-5 drop-shadow-md" />
             </motion.div>
-            <div>
-              <h2 className="text-[15px] font-black text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight mb-0.5">
-                Daily Timeline {locationName && <span className="text-zinc-400 font-normal">• {locationName}</span>}
+            <div className="flex flex-col justify-center">
+              <h2 className="text-lg font-black text-zinc-900 dark:text-white tracking-tight leading-none mb-1.5 flex items-center gap-2">
+                Flow & Timeline
+                {locationName && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">{locationName}</span>}
               </h2>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
-                {progress.prayersDone}/{PRAYERS.length} preghiere • {progress.habitsDone}/{progress.habitsTotal} abitudini
+              <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                {progress.doneSteps} di {progress.totalSteps} micro-step completati
               </p>
             </div>
           </div>
-          
-          <div className="flex items-center gap-4 shrink-0">
-            <div className="hidden sm:flex items-center gap-3">
-              <span className="text-[11px] font-black text-zinc-600 dark:text-zinc-300 tabular-nums">
-                {progress.done}<span className="text-zinc-300 dark:text-zinc-600 mx-0.5 font-normal">/</span>{progress.total}
+
+          <div className="flex items-center gap-6 shrink-0">
+            <div className="hidden md:flex items-center gap-4">
+              <span className="text-xs font-black text-zinc-800 dark:text-zinc-200 tabular-nums">
+                {Math.round(progress.pct * 100)}%
               </span>
-              <div className="h-2 w-24 overflow-hidden rounded-full timeline-track">
-                <motion.div 
-                  className="h-full rounded-full timeline-track-fill"
-                  initial={false} 
-                  animate={{ width: `${Math.max(2, progress.pct * 100)}%` }} 
-                  transition={{ duration: 0.7, ease: [0.32, 0.72, 0, 1] }} 
+              <div className="h-2.5 w-32 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800/80 shadow-inner">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-emerald-400"
+                  initial={false}
+                  animate={{ width: `${Math.max(2, progress.pct * 100)}%` }}
+                  transition={{ duration: 1, ease: "circOut" }}
                 />
               </div>
             </div>
-            <motion.div 
-              animate={{ rotate: open ? 180 : 0 }} 
-              transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-              className="p-2 rounded-xl bg-zinc-100/80 dark:bg-white/[0.06] text-zinc-500 dark:text-zinc-400 border border-zinc-200/50 dark:border-white/[0.04]"
+            <motion.div
+              animate={{ rotate: isCollapsed ? 0 : 180 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
             >
-              <Icons.ChevronDown className="h-3.5 w-3.5" />
+              <Icons.ChevronDown className="h-4 w-4" />
             </motion.div>
           </div>
         </button>
 
-        {/* Content */}
-        {open && (
-          <div className="border-t border-zinc-200/50 dark:border-white/[0.04] min-h-[140px]">
-            <div className="py-4 px-3 md:px-4 no-select-calendar flex items-stretch w-full">
-              {PRAYERS.map((prayer, i) => {
-                const isDone = todayPrayerLog[prayer];
-                const hasSlot = i < PRAYERS.length - 1;
-                const slotKey = PRAYER_SLOTS[i];
-                const isActive = currentSlot === slotKey;
-                const slotHabits = habitsBySlot[slotKey] || [];
-                const slotCompletion = slotCompletions[slotKey] || { quick: [], project: [], total: 0 };
+        {/* TIMELINE CONTENT */}
+        <AnimatePresence initial={false}>
+          {!isCollapsed && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50/30 dark:bg-black/10"
+            >
+              <div className="pt-6 pb-4 px-4 md:px-6 overflow-x-auto custom-scrollbar no-select-calendar">
+                {/* Prayer nodes row + connecting lines */}
+                <div className="flex items-start gap-2 relative">
+                  {PRAYERS.map((prayer, i) => {
+                    const isDone = todayPrayerLog[prayer];
+                    const slotKey = PRAYER_SLOTS[i];
+                    const hasSlotLine = i < PRAYERS.length - 1;
+                    const isPastSlot = PRAYER_SLOTS.indexOf(slotKey) < PRAYER_SLOTS.indexOf(currentSlotKey);
 
-                return (
-                  <div 
-                    key={prayer} 
-                    className={`relative flex flex-col flex-1 min-w-0 ${!hasSlot ? 'max-w-[3rem]' : ''} cursor-pointer group`}
-                    onClick={() => togglePrayer?.(prayer, !isDone)}
-                  >
-                    {/* Prayer Node & Line — compatto */}
-                    <div className="relative flex items-center h-7 w-full z-10 shrink-0">
-                      <motion.button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); togglePrayer?.(prayer, !isDone); }}
-                        className={`w-6 h-6 shrink-0 rounded-full border-2 border-white dark:border-[#0a0d12] relative z-20 flex items-center justify-center transition-all duration-200 focus-ring cursor-pointer ${
-                          isDone
-                            ? 'bg-emerald-500 text-white timeline-node-done shadow-lg shadow-emerald-500/30'
-                            : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-400 hover:bg-indigo-400 dark:hover:bg-indigo-500 hover:text-white hover:shadow-lg hover:shadow-indigo-500/30'
-                        }`}
-                        title={`${isDone ? 'Deseleziona' : 'Segna'} ${prayer}`}
-                        whileTap={{ scale: 0.88 }}
-                        whileHover={{ scale: 1.08 }}
-                      >
-                        {isDone ? (
-                          <Icons.Check className="w-3 h-3" />
-                        ) : (
-                          <div className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
-                        )}
-                      </motion.button>
-                      
-                      {hasSlot && (
-                        <>
-                          <div className="absolute left-6 right-0 h-[1.5px] rounded-full timeline-track top-1/2 -translate-y-1/2" />
-                          {isDone && (
-                            <motion.div 
-                              className="absolute left-6 h-[1.5px] rounded-full timeline-track-fill top-1/2 -translate-y-1/2 origin-left"
-                              initial={{ width: 0 }}
-                              animate={{ width: '100%' }}
-                              transition={{ duration: 0.6, ease: 'easeOut' }}
-                            />
-                          )}
-                        </>
-                      )}
-                    </div>
-
-                    {/* Prayer Label */}
-                    <div className="absolute top-[28px] left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none">
-                      <span className={`text-[8px] font-bold uppercase tracking-wider whitespace-nowrap ${
-                        isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400'
-                      }`}>
-                        {prayer}
-                      </span>
-                      <span className="text-[9px] font-mono font-semibold text-zinc-400 dark:text-zinc-500 tabular-nums mt-0.5">
-                        {PRAYER_TIMES[prayer]}
-                      </span>
-                    </div>
-
-                    {/* Slot Card with Fixed Habits — compatto */}
-                    {hasSlot && (
-                      <div className="mt-6 mx-0.5">
-                        <div className={`relative backdrop-blur-xl rounded-lg border transition-all duration-300 flex flex-col p-2 min-h-0 ${
-                          isActive
-                            ? 'timeline-card-current border-indigo-400/50 dark:border-indigo-500/30'
-                            : 'bg-white/80 dark:bg-white/[0.03] border-zinc-200/70 dark:border-white/[0.05] shadow-md shadow-zinc-200/30 dark:shadow-black/20 hover:border-zinc-300 dark:hover:border-white/[0.08] hover:shadow-lg'
-                        }`}>
-                          
-                          {/* Slot Header */}
-                          <div className="flex items-center justify-center gap-1.5 mb-1.5 shrink-0">
-                            {isActive && (
-                              <span className="flex h-1.5 w-1.5 shrink-0">
-                                <span className="absolute inline-flex h-1.5 w-1.5 rounded-full bg-indigo-500 opacity-75 animate-ping" />
-                                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-indigo-500" />
-                              </span>
-                            )}
-                            <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-zinc-600 dark:text-zinc-400">
-                              {slotKey.replace('-', ' → ')}
-                            </span>
+                    return (
+                      <React.Fragment key={prayer}>
+                        {/* Prayer node */}
+                        <div className="flex flex-col items-center shrink-0 w-[200px] md:w-[220px]">
+                          <motion.button
+                            onClick={() => togglePrayer?.(prayer, !isDone)}
+                            whileHover={{ scale: 1.08 }}
+                            whileTap={{ scale: 0.92 }}
+                            className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border-2 ${
+                              isDone
+                                ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]'
+                                : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-400 hover:border-indigo-400 hover:text-indigo-500'
+                            }`}
+                          >
+                            {isDone ? <Icons.Check className="w-5 h-5" /> : <div className="w-2.5 h-2.5 rounded-full bg-current opacity-40" />}
+                          </motion.button>
+                          <div className="mt-2 flex flex-col items-center">
+                            <span className={`text-[11px] font-black uppercase tracking-widest ${isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400'}`}>{prayer}</span>
+                            <span className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 font-mono mt-0.5">{PRAYER_TIMES[prayer]}</span>
                           </div>
+                        </div>
 
-                          {/* Fixed Habits for this slot */}
-                          {slotHabits.length > 0 && (
-                            <div className="space-y-0.5 mb-1.5 min-w-0 flex-1 overflow-hidden">
-                              {slotHabits.map(habit => {
-                                const isHabitDone = todayLogMap[habit.id];
-                                return (
-                                  <div 
-                                    key={habit.id} 
-                                    className="flex items-center gap-1.5 group/task py-0.5 px-1.5 -mx-1.5 rounded-md hover:bg-zinc-100/60 dark:hover:bg-white/[0.04] transition-colors"
-                                  >
-                                    <TaskCheckbox 
-                                      done={isHabitDone} 
-                                      onClick={() => toggleDailyTask(habit.id, !isHabitDone)} 
-                                    />
-                                    <span className={`text-[11px] font-medium tracking-tight flex-1 min-w-0 truncate transition-colors ${
-                                      isHabitDone 
-                                        ? 'text-zinc-400 line-through dark:text-zinc-500' 
-                                        : 'text-zinc-700 dark:text-zinc-200'
-                                    }`}>
-                                      {habit.title}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
+                        {/* Connecting line between prayer nodes */}
+                        {hasSlotLine && (
+                          <div className="flex-1 shrink-0 w-4 h-[3px] mt-[20px] relative overflow-hidden rounded-full bg-zinc-200/60 dark:bg-zinc-800 min-w-[8px]">
+                            <motion.div
+                              className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500 to-indigo-500 rounded-full"
+                              initial={false}
+                              animate={{ width: isPastSlot ? '100%' : isDone ? '100%' : '0%' }}
+                              transition={{ duration: 0.8, ease: "easeInOut" }}
+                            />
+                          </div>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
 
-                          {/* Completed Tasks Detail View */}
-                          {slotCompletion.total > 0 && (
-                            <div className="mt-2 pt-2 border-t border-zinc-200/60 dark:border-white/[0.04]">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="text-[8px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                                  <Icons.Check className="w-3 h-3" /> Completati
+                {/* Slot cards row — normal flow, same widths as prayer nodes */}
+                <div className="flex items-start gap-2 mt-4">
+                  {PRAYERS.map((prayer, i) => {
+                    const slotKey = PRAYER_SLOTS[i];
+                    const hasSlotCard = !!slotKey;
+                    const hasSlotLine = i < PRAYERS.length - 1;
+                    const isCurrentSlot = currentSlotKey === slotKey;
+                    const isPastSlot = PRAYER_SLOTS.indexOf(slotKey) < PRAYER_SLOTS.indexOf(currentSlotKey);
+
+                    const routines = slotsForDay[slotKey] || [];
+                    const events = eventsToday.filter(e => e.slotKey === slotKey);
+                    const slotTotal = routines.length;
+                    const slotDone = routines.filter(r => r.done).length;
+
+                    return (
+                      <React.Fragment key={prayer}>
+                        {/* Card for this slot */}
+                        <div className={`shrink-0 w-[200px] md:w-[220px] transition-all duration-500 ${hasSlotCard ? '' : 'invisible'} ${
+                          isCurrentSlot ? 'opacity-100 z-30' : isPastSlot ? 'opacity-60 hover:opacity-100' : 'opacity-40 hover:opacity-100'
+                        }`}>
+                          {hasSlotCard && (
+                            <div className={`flex flex-col bg-white dark:bg-zinc-900/80 backdrop-blur-xl border rounded-2xl overflow-hidden transition-all duration-300 ${
+                              isCurrentSlot
+                                ? 'border-indigo-400/60 shadow-[0_8px_30px_rgba(99,102,241,0.15)] ring-1 ring-indigo-500/10'
+                                : 'border-zinc-200/80 dark:border-zinc-800 shadow-lg shadow-zinc-200/20 dark:shadow-black/20 hover:border-zinc-300 dark:hover:border-zinc-700'
+                            }`}>
+                              {/* Slot Header */}
+                              <div className={`px-3 py-2 flex items-center justify-between border-b ${isCurrentSlot ? 'bg-indigo-50/50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20' : 'bg-zinc-50 dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800'}`}>
+                                <span className={`text-[10px] font-black uppercase tracking-[0.12em] flex items-center gap-1.5 ${isCurrentSlot ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-500'}`}>
+                                  {isCurrentSlot && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />}
+                                  {getSlotLabel(slotKey)}
                                 </span>
-                                <span className="text-[9px] font-semibold text-zinc-500 dark:text-zinc-400 tabular-nums bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-200/50 dark:border-emerald-500/20">
-                                  {slotCompletion.total}
-                                </span>
+                                {slotTotal > 0 && (
+                                  <span className="text-[10px] font-bold text-zinc-400 bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded shadow-sm">{slotDone}/{slotTotal}</span>
+                                )}
                               </div>
-                              
-                              <div className="space-y-0.5">
-                                {slotCompletion.habits.map((task) => (
-                                  <div 
-                                    key={`habit-${task.id}`} 
-                                    className="flex items-center gap-1.5 py-0.5 px-1.5 -mx-1.5 rounded bg-emerald-50/50 dark:bg-emerald-500/5 min-w-0"
-                                  >
-                                    <Icons.Check className="w-3 h-3 text-emerald-500 shrink-0" />
-                                    <span className="text-[10px] font-medium text-zinc-700 dark:text-zinc-200 truncate min-w-0 flex-1 tracking-tight" title={task.title}>{task.title}</span>
-                                    <span className="text-[8px] font-mono text-zinc-500 dark:text-zinc-400 shrink-0">{task.label}</span>
-                                    {task.timestamp && <span className="text-[9px] font-mono font-medium text-zinc-500 dark:text-zinc-400 tabular-nums shrink-0 ml-0.5">{formatCompletionTime(task.timestamp)}</span>}
-                                  </div>
-                                ))}
-                                {slotCompletion.quick.map((task) => (
-                                  <div 
-                                    key={`quick-${task.id}`} 
-                                    className="flex items-center gap-1.5 py-0.5 px-1.5 -mx-1.5 rounded bg-emerald-50/50 dark:bg-emerald-500/5 min-w-0"
-                                  >
-                                    <Icons.Check className="w-3 h-3 text-emerald-500 shrink-0" />
-                                    <span className="text-[10px] font-medium text-zinc-700 dark:text-zinc-200 truncate min-w-0 flex-1 tracking-tight" title={task.title}>{task.title}</span>
-                                    <span className="text-[8px] font-mono text-zinc-500 dark:text-zinc-400 shrink-0">{task.label}</span>
-                                    {task.timestamp && <span className="text-[9px] font-mono font-medium text-zinc-500 dark:text-zinc-400 tabular-nums shrink-0 ml-0.5">{formatCompletionTime(task.timestamp)}</span>}
-                                  </div>
-                                ))}
-                                {slotCompletion.project.map((task) => (
-                                  <div 
-                                    key={`project-${task.id}`} 
-                                    className="flex items-center gap-1.5 py-0.5 px-1.5 -mx-1.5 rounded bg-emerald-50/50 dark:bg-emerald-500/5 min-w-0"
-                                  >
-                                    <Icons.Check className="w-3 h-3 text-emerald-500 shrink-0" />
-                                    <span className="text-[10px] font-medium text-zinc-700 dark:text-zinc-200 truncate min-w-0 flex-1 tracking-tight" title={task.displayTitle || task.title}>
-                                      {task.displayTitle || task.title}
-                                    </span>
-                                    <span className="text-[8px] font-mono text-zinc-500 dark:text-zinc-400 shrink-0">{task.label}</span>
-                                    {task.timestamp && <span className="text-[9px] font-mono font-medium text-zinc-500 dark:text-zinc-400 tabular-nums shrink-0 ml-0.5">{formatCompletionTime(task.timestamp)}</span>}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
 
-                          {/* Empty state if no habits assigned */}
-                          {slotHabits.length === 0 && slotCompletion.total === 0 && (
-                            <div className="py-2 text-center">
-                              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 italic tracking-tight">Nessuna abitudine assegnata</span>
+                              <div className="p-2.5 flex flex-col gap-1.5 min-h-[72px]">
+                                {routines.map((r, ri) => {
+                                  const habit = activeHabits.find(h => h.id === r.habitId);
+                                  return (
+                                    <motion.div
+                                      key={r.id}
+                                      initial={{ opacity: 0, x: -5 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      transition={{ delay: ri * 0.05 }}
+                                      className="group/task flex items-center gap-2 p-1.5 rounded-xl hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors relative"
+                                    >
+                                      <TaskCheckbox done={r.done} onClick={() => toggleTimelineRoutine(todayKey, slotKey, r.id, !r.done)} />
+                                      <span className={`text-[11px] font-semibold truncate transition-colors ${r.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}>
+                                        {habit ? habit.title : 'Rimosso'}
+                                      </span>
+                                      <button
+                                        onClick={() => removeTimelineRoutine(todayKey, slotKey, r.id)}
+                                        className="absolute right-1 opacity-0 group-hover/task:opacity-100 p-1 text-zinc-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                                      >
+                                        <Icons.X className="w-3 h-3" />
+                                      </button>
+                                    </motion.div>
+                                  );
+                                })}
+
+                                <div className="relative mt-0.5">
+                                  <button
+                                    ref={selectorOpenSlot === slotKey ? (el) => { winTriggerRef.current = el; } : undefined}
+                                    onClick={() => setSelectorOpenSlot(selectorOpenSlot === slotKey ? null : slotKey)}
+                                    className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700/80 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-indigo-500 hover:border-indigo-300 hover:bg-indigo-50/50 dark:hover:bg-indigo-500/10 transition-all"
+                                  >
+                                    <Icons.Plus className="w-3 h-3" /> Win
+                                  </button>
+                                  <AnimatePresence>
+                                    {selectorOpenSlot === slotKey && (
+                                      <HabitSelector
+                                        activeHabits={activeHabits}
+                                        onSelect={(habitId) => addTimelineRoutine(todayKey, slotKey, habitId)}
+                                        onClose={() => setSelectorOpenSlot(null)}
+                                        triggerRef={winTriggerRef}
+                                      />
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+                              </div>
+
+                              {events.length > 0 && (
+                                <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-2.5">
+                                  <div className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600/80 dark:text-emerald-400/80 mb-1.5">Completati</div>
+                                  <div className="flex flex-col gap-1">
+                                    {events.map((e, ei) => (
+                                      <div key={ei} className="flex items-start gap-1.5 bg-white dark:bg-zinc-800 p-1.5 rounded-lg border border-emerald-100 dark:border-emerald-900/30 shadow-sm">
+                                        <Icons.CheckCircle className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />
+                                        <div className="flex flex-col flex-1 min-w-0">
+                                          <span className="text-[10px] font-bold text-zinc-800 dark:text-zinc-200 leading-tight truncate">{e.title}</span>
+                                          <span className="text-[9px] text-zinc-400 font-mono">{new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+
+                        {/* spacer between cards matching the connecting line width */}
+                        {hasSlotLine && <div className="shrink-0 flex-1 min-w-[8px]" />}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

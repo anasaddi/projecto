@@ -1,5 +1,10 @@
 import type { Project, TaskNode } from '../../types/dashboard';
-import { toDateKey, updateNodeInTree } from '../../components/dashboard/DashboardUtils';
+import {
+  toDateKey,
+  updateNodeInTree,
+  removeNodeFromTree,
+  collectNodeAndDescendantIds,
+} from '../../components/dashboard/DashboardUtils';
 import { uid } from '../../components/dashboard/DashboardUtils';
 import { haptic } from '../../utils/haptics';
 import { logTimelineEvent, findTaskTitle } from '../storeHelpers';
@@ -9,6 +14,7 @@ export type ProjectGet = () => {
   projects: Project[];
   lifeGoals: { tiers: Array<{ goals: Array<{ id: string; tasks: TaskNode[] }> }> } | null;
   dailyCompletionLog: Record<string, { quick?: string[]; project?: string[] }>;
+  top3Manual: unknown[];
 };
 
 export function createProjectSlice(set: ProjectSet, get: ProjectGet) {
@@ -118,6 +124,31 @@ export function createProjectSlice(set: ProjectSet, get: ProjectGet) {
             return parent;
           }) as TaskNode[];
         }
+      }),
+
+    deleteProjectTask: (projectId: string, taskId: string) =>
+      set((s: unknown) => {
+        const state = s as {
+          projects: Project[];
+          top3Manual: Array<{ projectId?: string; taskId?: string; shareId?: string } | null>;
+          dailyCompletionLog: Record<string, { quick?: string[]; project?: string[] }>;
+        };
+        const p = state.projects.find((x) => x.id === projectId);
+        if (!p) return;
+        const idsToClear = collectNodeAndDescendantIds(p.tasks, taskId);
+        p.tasks = removeNodeFromTree(p.tasks, taskId) as TaskNode[];
+        state.top3Manual = state.top3Manual.map((slot) =>
+          slot && slot.projectId === projectId && idsToClear.has(slot.taskId) && !slot.shareId ? null : slot
+        );
+        const todayKey = toDateKey(new Date());
+        Object.keys(state.dailyCompletionLog).forEach((k) => {
+          const day = state.dailyCompletionLog[k];
+          if (!day?.project) return;
+          day.project = day.project.filter((entry) => {
+            const [pid, tid] = String(entry).split(':');
+            return pid !== projectId || !idsToClear.has(tid);
+          });
+        });
       }),
 
     updateSharedDashboardProject: (

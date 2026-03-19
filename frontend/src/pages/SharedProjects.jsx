@@ -7,6 +7,7 @@ import { StandardProjectCard } from '../components/dashboard/ProjectComponents';
 import { DenseTaskNode } from '../components/dashboard/DenseTaskNode';
 import { countTreeStats as countTreeStatsUtil } from '../components/dashboard/DashboardUtils';
 import { ConfirmModal } from '../components/ConfirmModal';
+import FinanzeSection from '../components/shared/FinanzeSection';
 
 /**
  * ----------------------------------------------------------------------
@@ -28,6 +29,9 @@ const Icons = {
   Send: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>,
   ExternalLink: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 22 3 22 9" /><line x1="10" y1="14" x2="22" y2="3" /></svg>,
   Copy: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>,
+  Lock: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>,
+  Settings: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3" /><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M19.78 4.22l-1.42 1.42M5.64 18.36l-1.42 1.42" /></svg>,
+  FileText: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>,
 };
 
 /**
@@ -84,6 +88,24 @@ function removeNodeFromTree(nodes, nodeId) {
     .map((node) => ({ ...node, children: removeNodeFromTree(Array.isArray(node.children) ? node.children : [], nodeId) }));
 }
 
+async function hashPassword(pw) {
+  const enc = new TextEncoder();
+  const buf = await crypto.subtle.digest('SHA-256', enc.encode(pw));
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function isUnlocked(shareId, passwordHash) {
+  if (!shareId || !passwordHash) return true;
+  try {
+    const stored = localStorage.getItem(`km-shared-pwd-${shareId}`);
+    return stored === passwordHash;
+  } catch (_) {
+    return false;
+  }
+}
+
 /**
  * ----------------------------------------------------------------------
  * COMPONENTS
@@ -98,6 +120,12 @@ function SharedListDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [settingsModalFor, setSettingsModalFor] = useState(null);
+  const [pwdInput, setPwdInput] = useState('');
+  const [pwdTrainingInput, setPwdTrainingInput] = useState('');
+  const [pwdTranscriptInput, setPwdTranscriptInput] = useState('');
+  const [pwdSaving, setPwdSaving] = useState(false);
+  const [pwdError, setPwdError] = useState(null);
 
   useEffect(() => {
     api.training.listSharedDashboards({ timeout: 10_000 })
@@ -118,6 +146,58 @@ function SharedListDashboard() {
     });
   };
 
+  const openSettings = (e, sid) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSettingsModalFor(sid);
+    setPwdInput('');
+    setPwdTrainingInput('');
+    setPwdTranscriptInput('');
+    setPwdError(null);
+  };
+
+  const closeSettings = () => {
+    setSettingsModalFor(null);
+    setPwdInput('');
+    setPwdTrainingInput('');
+    setPwdTranscriptInput('');
+    setPwdError(null);
+  };
+
+  const saveAllPasswords = async () => {
+    if (!settingsModalFor) return;
+    setPwdSaving(true);
+    setPwdError(null);
+    try {
+      const mainHash = pwdInput.trim() ? await hashPassword(pwdInput.trim()) : null;
+      const trainingHash = pwdTrainingInput.trim() ? await hashPassword(pwdTrainingInput.trim()) : null;
+      const transcriptHash = pwdTranscriptInput.trim() ? await hashPassword(pwdTranscriptInput.trim()) : null;
+      const currSd = list.find(sd => (sd.share_id || sd.shareId) === settingsModalFor);
+      const currSection = currSd?.data?.sectionPasswords || {};
+      const sectionPasswords = {
+        ...currSection,
+        training: pwdTrainingInput.trim() ? trainingHash : null,
+        transcript: pwdTranscriptInput.trim() ? transcriptHash : null,
+      };
+
+      await api.training.updateSharedDashboard(settingsModalFor, {
+        passwordHash: mainHash,
+        sectionPasswords,
+      });
+      setList(prev => prev.map(sd => {
+        const sid = sd.share_id || sd.shareId;
+        if (sid !== settingsModalFor) return sd;
+        const data = { ...(sd.data || {}), passwordHash: mainHash, sectionPasswords };
+        return { ...sd, data };
+      }));
+      closeSettings();
+    } catch (err) {
+      setPwdError(err?.message || 'Errore nel salvataggio');
+    } finally {
+      setPwdSaving(false);
+    }
+  };
+
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620]">
       <div className="text-gray-500 font-medium">Caricamento...</div>
@@ -131,6 +211,8 @@ function SharedListDashboard() {
     </div>
   );
 
+  const settingsSd = settingsModalFor ? list.find(sd => (sd.share_id || sd.shareId) === settingsModalFor) : null;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] text-gray-900 dark:text-gray-100 p-6 sm:p-10 select-none [&_input]:select-text [&_textarea]:select-text">
       <div className="max-w-4xl mx-auto">
@@ -138,6 +220,84 @@ function SharedListDashboard() {
           <h1 className="text-3xl font-black tracking-tight text-gray-900 dark:text-white mb-2">I miei Condivisi</h1>
           <p className="text-gray-500 dark:text-gray-400 font-medium">Dashboard condivise collegate alla tua area</p>
         </header>
+
+        {/* Pannello di controllo: gestione password per sezione */}
+        <div className="mb-10 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 p-6 shadow-sm">
+          <h2 className="text-sm font-black uppercase tracking-wider text-gray-800 dark:text-gray-200 mb-4">Pannello di controllo</h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+            Clicca <strong>Password</strong> su ogni card per impostare le password. Puoi proteggere l&apos;accesso principale e ogni sezione (Training, Transcript) con password diverse. Sbloccando una sezione non si sbloccano le altre.
+          </p>
+          <p className="text-[11px] font-bold uppercase text-gray-500 dark:text-gray-400">Dove impostare</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Pulsante <strong>Password</strong> su ogni shared ↓
+          </p>
+        </div>
+
+        {settingsModalFor && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.target === e.currentTarget && closeSettings()}
+          >
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-700 max-w-md w-full p-6 my-8">
+              <h2 className="text-lg font-bold text-zinc-900 dark:text-white mb-1">
+                Password per &quot;{settingsSd?.title || settingsModalFor}&quot;
+              </h2>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-5">
+                Ogni password sblocca solo la sua sezione. Vuoto = rimuovi.
+              </p>
+
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1.5">Accesso principale (intero shared)</label>
+                  <input
+                    type="password"
+                    value={pwdInput}
+                    onChange={(e) => { setPwdInput(e.target.value); setPwdError(null); }}
+                    placeholder="Vuoto = rimuovi · Re-inserisci per mantenere"
+                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1.5">Sezione Training</label>
+                  <input
+                    type="password"
+                    value={pwdTrainingInput}
+                    onChange={(e) => { setPwdTrainingInput(e.target.value); setPwdError(null); }}
+                    placeholder="Password per /shared/.../training"
+                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1.5">Sezione Transcript</label>
+                  <input
+                    type="password"
+                    value={pwdTranscriptInput}
+                    onChange={(e) => { setPwdTranscriptInput(e.target.value); setPwdError(null); }}
+                    placeholder="Password per /shared/.../transcript"
+                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-rose-500"
+                  />
+                </div>
+              </div>
+
+              {pwdError && <p className="text-sm text-red-500 mb-4">{pwdError}</p>}
+              <div className="flex gap-3 justify-end">
+                <button type="button" onClick={closeSettings} className="px-4 py-2 rounded-xl text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                  Annulla
+                </button>
+                <button
+                  type="button"
+                  onClick={saveAllPasswords}
+                  disabled={pwdSaving}
+                  className="px-4 py-2 rounded-xl text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50"
+                >
+                  {pwdSaving ? 'Salvataggio...' : 'Salva'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {list.length === 0 ? (
           <div className="rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-white/5 p-12 text-center">
@@ -168,9 +328,20 @@ function SharedListDashboard() {
                 >
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <h3 className="font-bold text-gray-900 dark:text-white truncate flex-1">{title}</h3>
-                    <span className="shrink-0 px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-wider">
-                      Shared
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => openSettings(e, sid)}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 transition-colors border border-gray-200 dark:border-gray-700"
+                        title="Imposta password per questo shared"
+                      >
+                        <Icons.Lock className="w-3.5 h-3.5" />
+                        <span className="text-[10px] font-semibold hidden sm:inline">Password</span>
+                      </button>
+                      <span className="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-wider">
+                        Shared
+                      </span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 mb-4">
                     <span>{projects.length} progetti</span>
@@ -222,6 +393,7 @@ export default function SharedProjects() {
     projects: [],
     quickTasks: [],
     chat: [],
+    bonifici: [],
     title: "Progetti Condivisi",
     loading: true,
     error: null,
@@ -230,6 +402,10 @@ export default function SharedProjects() {
 
   const [projectDeadlineEditing, setProjectDeadlineEditing] = useState(null);
   const [projectDeadlineInput, setProjectDeadlineInput] = useState('');
+  const [needsPassword, setNeedsPassword] = useState(false);
+  const [gatePasswordHash, setGatePasswordHash] = useState(null);
+  const [passwordError, setPasswordError] = useState(null);
+  const [passwordInput, setPasswordInput] = useState('');
 
   const [expandedProjects, setExpandedProjects] = useState(() => {
     try {
@@ -279,12 +455,14 @@ export default function SharedProjects() {
     const serverProjects = Array.isArray(dataPayload.projects) ? dataPayload.projects : [];
     const serverQuickTasks = Array.isArray(dataPayload.quickTasks) ? dataPayload.quickTasks : [];
     const serverChat = Array.isArray(dataPayload.chat) ? dataPayload.chat : [];
+    const serverBonifici = Array.isArray(dataPayload.bonifici) ? dataPayload.bonifici : [];
     const serverTitle = msg.title || "Progetti Condivisi";
     setDashboard(prev => ({
       ...prev,
       projects: serverProjects,
       quickTasks: serverQuickTasks,
       chat: serverChat,
+      bonifici: serverBonifici,
       title: serverTitle,
       loading: false,
       error: null
@@ -361,11 +539,13 @@ export default function SharedProjects() {
         const projects = Array.isArray(payload?.projects) ? payload.projects : [];
         const quickTasks = Array.isArray(payload?.quickTasks) ? payload.quickTasks : [];
         const chat = Array.isArray(payload?.chat) ? payload.chat : [];
+        const bonifici = Array.isArray(payload?.bonifici) ? payload.bonifici : [];
         setDashboard(prev => ({
           ...prev,
           projects,
           quickTasks,
           chat,
+          bonifici,
           title: data?.title || prev.title,
         }));
       })
@@ -419,14 +599,23 @@ export default function SharedProjects() {
       .then((data) => {
         if (cancelled || !mountedRef.current) return;
         const payload = data?.data || data;
+        const pwHash = payload?.passwordHash;
+        if (pwHash && !isUnlocked(id, pwHash)) {
+          setNeedsPassword(true);
+          setGatePasswordHash(pwHash);
+          setDashboard(prev => ({ ...prev, loading: false, error: null }));
+          return;
+        }
         const projects = Array.isArray(payload?.projects) ? payload.projects : [];
         const quickTasks = Array.isArray(payload?.quickTasks) ? payload.quickTasks : [];
         const chat = Array.isArray(payload?.chat) ? payload.chat : [];
+        const bonifici = Array.isArray(payload?.bonifici) ? payload.bonifici : [];
         setDashboard(prev => ({
           ...prev,
           projects,
           quickTasks,
           chat,
+          bonifici,
           title: data?.title || prev.title,
           loading: false,
           error: null
@@ -471,6 +660,7 @@ export default function SharedProjects() {
       projectOrder: Array.isArray(newState.projects) ? newState.projects.map(p => p.id) : [],
       quickTasks: Array.isArray(newState.quickTasks) ? newState.quickTasks : [],
       chat: Array.isArray(newState.chat) ? newState.chat : [],
+      bonifici: Array.isArray(newState.bonifici) ? newState.bonifici : [],
     };
     const payload = { type: 'sync', title: newState.title ?? '', data };
 
@@ -623,6 +813,23 @@ export default function SharedProjects() {
     };
   }, [dashboard.projects]);
 
+  const handleUnlock = async () => {
+    const pw = passwordInput.trim();
+    if (!pw) return;
+    setPasswordError(null);
+    const h = await hashPassword(pw);
+    if (h === gatePasswordHash) {
+      try {
+        localStorage.setItem(`km-shared-pwd-${id}`, gatePasswordHash);
+      } catch (_) {}
+      setNeedsPassword(false);
+      setPasswordInput('');
+      refetchFromApi();
+    } else {
+      setPasswordError('Password errata');
+    }
+  };
+
   if (dashboard.loading) return <div className="p-8 text-center text-gray-500 font-medium">Connessione in corso...</div>;
   if (dashboard.error) return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] p-4">
@@ -632,6 +839,45 @@ export default function SharedProjects() {
       </div>
     </div>
   );
+
+  if (needsPassword) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] p-4">
+        <div className="w-full max-w-sm bg-white dark:bg-[#161920] rounded-2xl border border-gray-200 dark:border-gray-800 p-8 shadow-xl">
+          <div className="flex justify-center mb-6">
+            <div className="p-3 rounded-full bg-indigo-100 dark:bg-indigo-500/20">
+              <Icons.Lock className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+            </div>
+          </div>
+          <h2 className="text-xl font-bold text-center text-gray-900 dark:text-white mb-2">Accesso protetto</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
+            Inserisci la password per accedere a questo spazio condiviso
+          </p>
+          <input
+            type="password"
+            value={passwordInput}
+            onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(null); }}
+            onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
+            placeholder="Password"
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 mb-4"
+            autoFocus
+          />
+          {passwordError && <p className="text-sm text-red-500 mb-4">{passwordError}</p>}
+          <button
+            type="button"
+            onClick={handleUnlock}
+            disabled={!passwordInput.trim()}
+            className="w-full py-3 rounded-xl bg-indigo-500 text-white font-medium hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Accedi
+          </button>
+          <p className="text-xs text-gray-400 text-center mt-4">
+            La password verrà salvata nel browser per i prossimi accessi
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] text-gray-900 dark:text-gray-100 p-4 sm:p-8 md:p-10 font-sans select-none [&_input]:select-text [&_textarea]:select-text antialiased overflow-x-hidden relative">
@@ -873,10 +1119,33 @@ export default function SharedProjects() {
               <span className="text-lg font-bold bg-gradient-to-r from-gray-600 to-gray-800 dark:from-gray-300 dark:to-gray-100 bg-clip-text text-transparent group-hover:from-indigo-500 group-hover:to-purple-600 transition-all duration-300">Crea Progetto</span>
             </button>
           </div>
+
         </div>
 
-        {/* SIDEBAR: QUICK TASKS & CHAT */}
+        {/* SIDEBAR: PAGINE + QUICK TASKS + CHAT */}
         <aside className="w-full lg:w-72 shrink-0 order-1 lg:order-2 pt-[76px] space-y-6">
+          {/* ALTRE PAGINE */}
+          <div className="bg-white/80 dark:bg-[#1a1d24]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 rounded-2xl p-4 shadow-lg">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-3">Altre pagine</h3>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                to={`/shared/${id}/training`}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/20 border border-violet-200/50 dark:border-violet-500/20 transition-colors"
+              >
+                <Icons.Target className="w-3.5 h-3.5" />
+                Training
+              </Link>
+              <Link
+                to={`/shared/${id}/transcript`}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 dark:hover:bg-rose-500/20 border border-rose-200/50 dark:border-rose-500/20 transition-colors"
+              >
+                <Icons.FileText className="w-3.5 h-3.5" />
+                Transcript
+              </Link>
+            </div>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2">Altre pagine in arrivo</p>
+          </div>
+
           {/* QUICK TASKS */}
           <div className="bg-white/80 dark:bg-[#1a1d24]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 rounded-2xl p-6 shadow-lg min-h-[340px] flex flex-col">
             <div className="flex items-center gap-2 mb-4">
@@ -1035,6 +1304,17 @@ export default function SharedProjects() {
         </aside>
 
       </div>
+
+      {/* MODULO FINANZE in fondo (solo shared "nextcode") */}
+      {dashboard.title && String(dashboard.title).toLowerCase().includes('nextcode') && (
+        <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-8 md:px-10 pb-8">
+          <FinanzeSection
+            bonifici={dashboard.bonifici || []}
+            onUpdate={(bonifici) => updateLocal({ bonifici })}
+            defaultCollapsed={true}
+          />
+        </div>
+      )}
     </div>
   );
 }

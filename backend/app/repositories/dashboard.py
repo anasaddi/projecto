@@ -218,9 +218,13 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
         p_data = data["projects"]
         inc_proj_ids = [str(p["id"]) for p in p_data]
         
-        # Only delete projects if "projects" key exists in payload
-        deleted_p_res = await db.execute(select(Project.id).filter(Project.share_id == None, Project.id.not_in(inc_proj_ids)))
-        deleted_p_ids = deleted_p_res.scalars().all()
+        # Only delete projects if "projects" key exists in payload (guard empty list for not_in)
+        if inc_proj_ids:
+            deleted_p_res = await db.execute(select(Project.id).filter(Project.share_id == None, Project.id.not_in(inc_proj_ids)))
+            deleted_p_ids = deleted_p_res.scalars().all()
+        else:
+            deleted_p_res = await db.execute(select(Project.id).filter(Project.share_id == None))
+            deleted_p_ids = [r for r in deleted_p_res.scalars().all()]
         if deleted_p_ids:
             await db.execute(delete(Task).filter(Task.project_id.in_(deleted_p_ids)))
             await db.execute(delete(Project).filter(Project.id.in_(deleted_p_ids)))
@@ -308,9 +312,13 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
 
         if "tiers" in lg:
             incoming_tier_ids = [str(t["id"]) for t in lg["tiers"]]
-            # Careful: deleting goals first due to FK
-            await db.execute(delete(LifeGoal).filter(LifeGoal.tier_id.not_in(incoming_tier_ids)))
-            await db.execute(delete(LifeGoalTier).filter(LifeGoalTier.id.not_in(incoming_tier_ids)))
+            # Careful: deleting goals first due to FK (guard empty list for not_in)
+            if incoming_tier_ids:
+                await db.execute(delete(LifeGoal).filter(LifeGoal.tier_id.not_in(incoming_tier_ids)))
+                await db.execute(delete(LifeGoalTier).filter(LifeGoalTier.id.not_in(incoming_tier_ids)))
+            else:
+                await db.execute(delete(LifeGoal))
+                await db.execute(delete(LifeGoalTier))
             
             ex_tiers_res = await db.execute(select(LifeGoalTier))
             ex_tiers = {str(t.id): t for t in ex_tiers_res.scalars().all()}
@@ -347,15 +355,21 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
                                         type=g.get("type"), done=1 if g.get("done") else 0, 
                                         deadline=g.get("deadline"), ordinal=j))
 
-    # Event Sourcing: append event for Time Travel (same transaction)
+    # Event Sourcing: strip large log arrays to keep event payload small, then append async-style
     try:
         from app.services.event_sourcing import append_dashboard_event
         agg_id = user_id or "default"
-        await append_dashboard_event(db, agg_id, data, user_id)
+        # Strip dailyTaskLogs and dailyCompletionLog (bulk data) to keep event payload small
+        compact_data = {k: v for k, v in data.items() if k not in ("dailyTaskLogs", "dailyCompletionLog", "prayerLogs")}
+        await append_dashboard_event(db, agg_id, compact_data, user_id)
     except Exception:
         pass
+
     await db.commit()
-    return await get_dashboard_state_aggregated(db, key, user_id)
+
+    # Return committed data directly — avoids re-fetching everything (10+ queries) after every PUT.
+    # The frontend (syncMiddleware) does not consume the PUT response body.
+    return data
 
 # --- Shared Dashboards (Optimized) ---
 
@@ -417,6 +431,9 @@ async def get_shared_dashboard_aggregated(db: AsyncSession, share_id: str):
     if not isinstance(shared_data, dict):
         shared_data = _parse_json(shared.data, {}) or {}
     quickTasks = shared_data.get("quickTasks", [])
+    bonifici = shared_data.get("bonifici", [])
+    passwordHash = shared_data.get("passwordHash")
+    sectionPasswords = shared_data.get("sectionPasswords") or {}
 
     return {
         "share_id": shared.share_id,
@@ -424,7 +441,10 @@ async def get_shared_dashboard_aggregated(db: AsyncSession, share_id: str):
         "data": {
             "projects": projects,
             "quickTasks": quickTasks,
-            "chat": chat
+            "chat": chat,
+            "bonifici": bonifici,
+            "passwordHash": passwordHash,
+            "sectionPasswords": sectionPasswords
         },
         "updated_at": _serialize_dt(shared.updated_at)
     }

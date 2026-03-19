@@ -78,8 +78,8 @@ export default defineConfig({
     port: 3000,
     host: true, // ascolta su 0.0.0.0 (utile se accedi da altro dispositivo in LAN)
     proxy: {
-      '/api': { target: 'http://localhost:8000', changeOrigin: true },
-      '/health': { target: 'http://localhost:8000', changeOrigin: true },
+      '/api': { target: 'http://127.0.0.1:8001', changeOrigin: true },
+      '/health': { target: 'http://127.0.0.1:8001', changeOrigin: true },
     },
   },
 })

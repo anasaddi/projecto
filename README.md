@@ -18,8 +18,10 @@ Local-first personal knowledge platform: Dashboard produttività, Learning (Tran
    npm install && npm run dev
    ```
 
-- API: http://localhost:8000  
-- Frontend: http://localhost:3000  
+- **Apri il frontend:** http://localhost:3000 (non la porta 8000).
+- API: http://localhost:8000 (usata in proxy dal frontend).
+
+**Se vedi "Failed to load resource: 404" in console:** avvia anche il backend sulla porta 8000 (il frontend in dev invia le richieste `/api/*` al backend in proxy). Se apri solo http://localhost:8000 vedrai la risposta JSON dell’API, non l’interfaccia.
 
 ## Produzione (Vercel + Railway)
 

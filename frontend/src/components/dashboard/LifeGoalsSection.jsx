@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { Icons } from './Icons';
 import { LifeGoalCard } from './LifeGoalComponents';
 import { DenseTaskNode } from './DenseTaskNode';
+import { LifeGoalTierRow } from './LifeGoalTierRow';
 import { createTaskNode, updateNodeInTree, removeNodeFromTree, countTreeStats, getDeadlineColorClass, formatDeadline } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { useToast } from '../../context/ToastContext';
@@ -35,6 +36,21 @@ export function LifeGoalsSection() {
   } = store ?? {};
 
   const showToast = useToast();
+  const getTop3IndexForGoal = useCallback((gid) => top3Manual.findIndex(s => s && (
+    (s.projectId === `lg-${gid}` && s.taskId === gid) ||
+    (s.quickTaskId && quickTasks.some(qt => qt.id === s.quickTaskId && qt.lifeGoalId === gid))
+  )), [top3Manual, quickTasks]);
+  const handleToggleTop3 = useCallback((gid) => {
+    const idx = getTop3IndexForGoal(gid);
+    if (idx !== -1) setTop3SlotAtIndex(idx, null);
+    else {
+      const free = top3Manual.findIndex(s => !s);
+      if (free !== -1) {
+        const qt = quickTasks.find(t => t.lifeGoalId === gid && !t.parentId);
+        setTop3SlotAtIndex(free, qt ? { quickTaskId: qt.id, shareId: null } : { projectId: `lg-${gid}`, taskId: gid });
+      }
+    }
+  }, [getTop3IndexForGoal, top3Manual, setTop3SlotAtIndex, quickTasks]);
   const handlePromoteProject = useCallback((goalId) => {
     const wasLinked = projects.some((p) => p.lifeGoalId === goalId);
     promoteGoalToProjects(goalId);
@@ -69,47 +85,14 @@ export function LifeGoalsSection() {
 
         {!lifeGoals.collapsed && (
           <div className="flex flex-col gap-3">
-            {(lifeGoals.tiers ?? []).map((tier) => {
-              const completedCount = tier.goals.filter(g => g.done).length;
-              const totalCount = tier.goals.length;
-              const pct = totalCount ? Math.round((completedCount / totalCount) * 100) : 0;
-
-              return (
-                <div
-                  key={tier.id}
-                  className="group/tier flex flex-col rounded-xl border border-zinc-100 dark:border-white/[0.04] transition-all"
-                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-zinc-50/50', 'dark:bg-white/[0.02]'); }}
-                  onDragLeave={(e) => e.currentTarget.classList.remove('bg-zinc-50/50', 'dark:bg-white/[0.02]')}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.classList.remove('bg-zinc-50/50', 'dark:bg-white/[0.02]');
-                    try { const d = JSON.parse(e.dataTransfer.getData('application/json')); if (d.type === 'lifeGoal') moveGoalToTier(d.goalId, tier.id); } catch (_) { }
-                  }}
-                >
-                  <div
-                    className="flex cursor-pointer items-center justify-between px-3 py-2.5 transition-all hover:bg-zinc-50/50 dark:hover:bg-white/[0.02] rounded-xl"
-                    onClick={() => toggleTierCollapse(tier.id)}
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-8 h-8 flex items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 text-base shadow-inner group-hover/tier:scale-105 transition-transform shrink-0">
-                        {tier.emoji}
-                      </div>
-                      <div className="flex flex-col gap-0.5 min-w-0">
-                        <span className="text-[13px] font-black text-zinc-800 dark:text-zinc-100 tracking-tight break-words line-clamp-2 leading-snug">{tier.name}</span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 h-0.5 rounded-full bg-zinc-100 dark:bg-white/5 overflow-hidden">
-                            <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} />
-                          </div>
-                          <span className="text-[9px] font-bold text-zinc-400 tabular-nums">{completedCount}/{totalCount}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <Icons.ChevronDown className={`h-3.5 w-3.5 text-zinc-400 shrink-0 transition-transform duration-200 ${tier.collapsed ? '' : 'rotate-180'}`} />
-                  </div>
-
-                  {!tier.collapsed && (
-                    <div className="animate-slide-down flex flex-col gap-4 px-3 pb-4 pt-1">
-                      {tier.goals.length === 0 && (
+            {(lifeGoals.tiers ?? []).map((tier) => (
+              <LifeGoalTierRow
+                key={tier.id}
+                tier={tier}
+                onToggleCollapse={toggleTierCollapse}
+                onDrop={moveGoalToTier}
+              >
+                {tier.goals.length === 0 && (
                         <div className="relative overflow-hidden min-h-[3rem] rounded-xl border-2 border-dashed border-zinc-100 dark:border-white/[0.04] flex items-center justify-center group/empty transition-all hover:border-indigo-500/30">
                           <span className="text-[10px] font-black text-zinc-300 dark:text-zinc-600 uppercase tracking-widest group-hover/empty:text-indigo-400 transition-colors">Drop or add goals</span>
                         </div>
@@ -136,7 +119,8 @@ export function LifeGoalsSection() {
                                 deadlineEditing={goalDeadlineEditing} deadlineInput={goalDeadlineInput}
                                 setDeadlineInput={setGoalDeadlineInput} setDeadlineEditing={setGoalDeadlineEditing}
                                 getDeadlineColorClass={getDeadlineColorClass} formatDeadline={formatDeadline}
-                                onAddToTop3={(gid) => { const free = top3Manual.findIndex(s => !s); if (free !== -1) setTop3SlotAtIndex(free, { projectId: `lg-${gid}`, taskId: gid }); }}
+                                onToggleTop3={handleToggleTop3}
+                                isInTop3={getTop3IndexForGoal(goal.id) !== -1}
                                 hasFreeTop3Slot={top3Manual.some(s => !s)}
                                 onPromoteProject={handlePromoteProject}
                                 onPromoteQuick={handlePromoteQuick}
@@ -172,7 +156,8 @@ export function LifeGoalsSection() {
                                   deadlineEditing={goalDeadlineEditing} deadlineInput={goalDeadlineInput}
                                   setDeadlineInput={setGoalDeadlineInput} setDeadlineEditing={setGoalDeadlineEditing}
                                   getDeadlineColorClass={getDeadlineColorClass} formatDeadline={formatDeadline}
-                                  onAddToTop3={(gid) => { const free = top3Manual.findIndex(s => !s); if (free !== -1) setTop3SlotAtIndex(free, { projectId: `lg-${gid}`, taskId: gid }); }}
+                                  onToggleTop3={handleToggleTop3}
+                                  isInTop3={getTop3IndexForGoal(goal.id) !== -1}
                                   hasFreeTop3Slot={top3Manual.some(s => !s)}
                                   onPromoteProject={handlePromoteProject}
                                   onPromoteQuick={handlePromoteQuick}
@@ -182,17 +167,11 @@ export function LifeGoalsSection() {
                                     <>
                                       {goal.tasks?.map((node) => (
                                         <DenseTaskNode
-                                          key={node.id} node={node} depth={0} projectId={`lg-${goal.id}`} projectAccent={tier.color}
-                                          onToggle={(tid, val) => {
-                                            updateGoal(goal.id, g => ({ ...g, tasks: updateNodeInTree(g.tasks, tid, n => ({ ...n, done: val })) }));
-                                            setProjects(prev => prev.map(p => p.lifeGoalId === goal.id ? { ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, done: val })) } : p));
-                                          }}
-                                          onDelete={(tid) => updateGoal(goal.id, g => ({ ...g, tasks: removeNodeFromTree(g.tasks, tid) }))}
-                                          onRename={(tid, val) => updateGoal(goal.id, g => ({ ...g, tasks: updateNodeInTree(g.tasks, tid, n => ({ ...n, title: val })) }))}
-                                          onDeadline={(tid, val) => updateGoal(goal.id, g => ({ ...g, tasks: updateNodeInTree(g.tasks, tid, n => ({ ...n, deadline: val || undefined })) }))}
-                                          onAddChild={(tid, val) => updateGoal(goal.id, g => ({ ...g, tasks: updateNodeInTree(g.tasks, tid, n => ({ ...n, children: [...(n.children || []), createTaskNode(val)] })) }))}
-                                          onToggleTop3={(pid, tid) => { const free = top3Manual.findIndex(s => !s); if (free !== -1) setTop3SlotAtIndex(free, { projectId: pid, taskId: tid }); }}
-                                          hasFreeTop3Slot={top3Manual.some(s => !s)}
+                                          key={node.id}
+                                          node={node}
+                                          depth={0}
+                                          projectId={`lg-${goal.id}`}
+                                          projectAccent={tier.color}
                                           hideTop3Button={true}
                                         />
                                       ))}
@@ -223,25 +202,24 @@ export function LifeGoalsSection() {
                         </div>
                       )}
 
-                      <div className="flex items-center gap-2 pt-1">
-                        <button
-                          onClick={() => { const title = window.prompt("Quick goal:"); if (title) addGoalToTier(tier.id, title, 'General', 'quick'); }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-white/5 dark:hover:bg-white/10 text-[10px] font-black uppercase tracking-wider text-zinc-500 transition-all"
-                        >
-                          <Icons.Plus className="h-3 w-3" /> Quick
-                        </button>
-                        <button
-                          onClick={() => { const title = window.prompt("Progetto:"); if (title) addGoalToTier(tier.id, title, 'General', 'project'); }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-600 dark:bg-indigo-500/20 dark:hover:bg-indigo-500/30 text-[10px] font-black uppercase tracking-wider text-white dark:text-indigo-400 transition-all shadow-md shadow-indigo-500/20"
-                        >
-                          <Icons.Plus className="h-3 w-3" /> Project
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => { const title = window.prompt("Quick goal:"); if (title) addGoalToTier(tier.id, title, 'General', 'quick'); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-white/5 dark:hover:bg-white/10 text-[10px] font-black uppercase tracking-wider text-zinc-500 transition-all"
+                  >
+                    <Icons.Plus className="h-3 w-3" /> Quick
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { const title = window.prompt("Progetto:"); if (title) addGoalToTier(tier.id, title, 'General', 'project'); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-600 dark:bg-indigo-500/20 dark:hover:bg-indigo-500/30 text-[10px] font-black uppercase tracking-wider text-white dark:text-indigo-400 transition-all shadow-md shadow-indigo-500/20"
+                  >
+                    <Icons.Plus className="h-3 w-3" /> Project
+                  </button>
                 </div>
-              );
-            })}
+              </LifeGoalTierRow>
+            ))}
           </div>
         )}
       </div>

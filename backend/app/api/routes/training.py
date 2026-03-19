@@ -1,8 +1,23 @@
 import json
+import logging
 from pathlib import Path
 from datetime import date, datetime, timezone, time
 from typing import Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, Header, WebSocket, WebSocketDisconnect
+
+logger = logging.getLogger(__name__)
+
+# Minimal empty dashboard state when DB/cache fails
+EMPTY_DASHBOARD = {
+    "dailyTaskTemplates": [],
+    "dailyTaskLogs": {},
+    "projects": [],
+    "quickTasks": [],
+    "prayerLogs": {},
+    "top3Manual": [None, None, None],
+    "dailyCompletionLog": {},
+    "lifeGoals": {"collapsed": False, "tiers": []},
+}
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
 from app.api.deps import get_current_admin, get_current_user, get_training_access
@@ -214,12 +229,16 @@ async def get_dashboard_state(
 ):
     """Fetch the dashboard state — Redis-first, DB fallback. Filtered by user_id when present."""
     from app.cache import get_cached_dashboard, set_cached_dashboard
-    cached = await get_cached_dashboard()
-    if cached:
-        return {"key": "default", "data": cached, "updated_at": datetime.now(timezone.utc)}
-    data = await dashboard_service.get_dashboard(db, user_id=user_id)
-    await set_cached_dashboard(data)
-    return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
+    try:
+        cached = await get_cached_dashboard()
+        if cached:
+            return {"key": "default", "data": cached, "updated_at": datetime.now(timezone.utc)}
+        data = await dashboard_service.get_dashboard(db, user_id=user_id)
+        await set_cached_dashboard(data)
+        return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
+    except Exception as e:
+        logger.exception("get_dashboard_state failed: %s", e)
+        return {"key": "default", "data": EMPTY_DASHBOARD, "updated_at": datetime.now(timezone.utc)}
 
 @router.get("/dashboard-state/at", response_model=schemas.DashboardStateOut | None, dependencies=[Depends(get_current_admin)])
 async def get_dashboard_state_at(
@@ -249,10 +268,14 @@ async def update_dashboard_state(
 ):
     """Save the dashboard state to DB and invalidate cache. Scoped by user_id when present."""
     from app.cache import invalidate_dashboard, set_cached_dashboard
-    data = await dashboard_service.update_dashboard(db, body.data, user_id=user_id)
-    await invalidate_dashboard()
-    await set_cached_dashboard(data)
-    return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
+    try:
+        data = await dashboard_service.update_dashboard(db, body.data, user_id=user_id)
+        await invalidate_dashboard()
+        await set_cached_dashboard(data)
+        return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
+    except Exception as e:
+        logger.exception("update_dashboard_state failed: %s", e)
+        raise HTTPException(status_code=503, detail=str(e))
 
 # --- Batch Operations ---
 

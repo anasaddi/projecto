@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
+import { useDashboardStore } from '../../store/dashboardStore';
+import { updateNodeInTree, removeNodeFromTree, createTaskNode } from './DashboardUtils';
 
 const MAX_TASK_DEPTH = 2;
 
@@ -38,8 +40,197 @@ function getDeadlineColorClass(deadlineKey, isDone) {
   return 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-900/20';
 }
 
-export function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle, onDelete, onRename, onDeadline, onAddChild, onToggleTop3, onMove, hasFreeTop3Slot = true, checkIsTop3 = () => false, parentId = null, shareId = null, hideTop3Button = false }) {
-  const isTop3 = checkIsTop3(node.id);
+export function DenseTaskNode({
+  node,
+  depth,
+  projectId,
+  projectAccent,
+  parentId = null,
+  shareId = null,
+  hideTop3Button = false,
+  targetIndex = 0,
+  targetParentId = null,
+}) {
+  const top3Manual = useDashboardStore((s) => s.top3Manual);
+  const toggleProjectTask = useDashboardStore((s) => s.toggleProjectTask);
+  const updateProject = useDashboardStore((s) => s.updateProject);
+  const deleteProjectTask = useDashboardStore((s) => s.deleteProjectTask);
+  const setTop3SlotAtIndex = useDashboardStore((s) => s.setTop3SlotAtIndex);
+  const moveProjectTask = useDashboardStore((s) => s.moveProjectTask);
+  const moveSubtask = useDashboardStore((s) => s.moveSubtask);
+  const updateSharedDashboardProject = useDashboardStore((s) => s.updateSharedDashboardProject);
+  const updateGoal = useDashboardStore((s) => s.updateGoal);
+  const setProjects = useDashboardStore((s) => s.setProjects);
+
+  const isLifeGoal = typeof projectId === 'string' && projectId.startsWith('lg-');
+  const goalId = isLifeGoal ? projectId.slice(3) : null;
+  const isShared = !!shareId;
+  const isTop3 = top3Manual.some(
+    (s) => s && s.projectId === projectId && s.taskId === node.id && (isShared ? s.shareId === shareId : !s.shareId)
+  );
+  const hasFreeTop3Slot = top3Manual.some((s) => !s);
+
+  const onToggle = useCallback(
+    (tid, val) => {
+      if (isLifeGoal) {
+        updateGoal(goalId, (g) => ({ ...g, tasks: updateNodeInTree(g.tasks || [], tid, (n) => ({ ...n, done: val })) }));
+        setProjects((prev) =>
+          prev.map((p) =>
+            p.lifeGoalId === goalId ? { ...p, tasks: updateNodeInTree(p.tasks || [], tid, (n) => ({ ...n, done: val })) } : p
+          )
+        );
+      } else if (isShared) {
+        updateSharedDashboardProject(shareId, projectId, (p) => ({
+          ...p,
+          tasks: updateNodeInTree(p.tasks || [], tid, (n) => ({ ...n, done: val })),
+        }));
+      } else {
+        toggleProjectTask(projectId, tid, val);
+      }
+    },
+    [isLifeGoal, goalId, isShared, shareId, projectId, toggleProjectTask, updateProject, updateGoal, setProjects, updateSharedDashboardProject]
+  );
+
+  const onDelete = useCallback(
+    (tid) => {
+      if (isLifeGoal) {
+        updateGoal(goalId, (g) => ({ ...g, tasks: removeNodeFromTree(g.tasks || [], tid) }));
+      } else if (isShared) {
+        updateSharedDashboardProject(shareId, projectId, (p) => ({
+          ...p,
+          tasks: removeNodeFromTree(p.tasks || [], tid),
+        }));
+      } else {
+        deleteProjectTask(projectId, tid);
+      }
+    },
+    [isLifeGoal, goalId, isShared, shareId, projectId, deleteProjectTask, updateGoal, updateSharedDashboardProject]
+  );
+
+  const onRename = useCallback(
+    (tid, val) => {
+      if (isLifeGoal) {
+        updateGoal(goalId, (g) => ({ ...g, tasks: updateNodeInTree(g.tasks || [], tid, (n) => ({ ...n, title: val })) }));
+      } else if (isShared) {
+        updateSharedDashboardProject(shareId, projectId, (p) => ({
+          ...p,
+          tasks: updateNodeInTree(p.tasks || [], tid, (n) => ({ ...n, title: val })),
+        }));
+      } else {
+        updateProject(projectId, (p) => ({
+          ...p,
+          tasks: updateNodeInTree(p.tasks || [], tid, (n) => ({ ...n, title: val })),
+        }));
+      }
+    },
+    [isLifeGoal, goalId, isShared, shareId, projectId, updateProject, updateGoal, updateSharedDashboardProject]
+  );
+
+  const onDeadline = useCallback(
+    (tid, val) => {
+      if (isLifeGoal) {
+        updateGoal(goalId, (g) => ({ ...g, tasks: updateNodeInTree(g.tasks || [], tid, (n) => ({ ...n, deadline: val || undefined })) }));
+      } else if (isShared) {
+        updateSharedDashboardProject(shareId, projectId, (p) => ({
+          ...p,
+          tasks: updateNodeInTree(p.tasks || [], tid, (n) => ({ ...n, deadline: val || undefined })),
+        }));
+      } else {
+        updateProject(projectId, (p) => ({
+          ...p,
+          tasks: updateNodeInTree(p.tasks || [], tid, (n) => ({ ...n, deadline: val || undefined })),
+        }));
+      }
+    },
+    [isLifeGoal, goalId, isShared, shareId, projectId, updateProject, updateGoal, updateSharedDashboardProject]
+  );
+
+  const onAddChild = useCallback(
+    (tid, val) => {
+      if (isLifeGoal) {
+        updateGoal(goalId, (g) => ({
+          ...g,
+          tasks: updateNodeInTree(g.tasks || [], tid, (n) => ({ ...n, children: [...(n.children || []), createTaskNode(val)] })),
+        }));
+      } else if (isShared) {
+        updateSharedDashboardProject(shareId, projectId, (p) => ({
+          ...p,
+          tasks: updateNodeInTree(p.tasks || [], tid, (n) => ({
+            ...n,
+            children: [...(n.children || []), createTaskNode(val)],
+          })),
+        }));
+      } else {
+        updateProject(projectId, (p) => ({
+          ...p,
+          tasks: updateNodeInTree(p.tasks || [], tid, (n) => ({
+            ...n,
+            children: [...(n.children || []), createTaskNode(val)],
+          })),
+        }));
+      }
+    },
+    [isLifeGoal, goalId, isShared, shareId, projectId, updateProject, updateGoal, updateSharedDashboardProject]
+  );
+
+  const onToggleTop3 = useCallback(
+    (pid, tid) => {
+      const existingIdx = top3Manual.findIndex(
+        (s) => s && s.projectId === pid && s.taskId === tid && (isShared ? s.shareId === shareId : !s.shareId)
+      );
+      if (existingIdx !== -1) setTop3SlotAtIndex(existingIdx, null);
+      else {
+        const free = top3Manual.findIndex((s) => !s);
+        if (free !== -1)
+          setTop3SlotAtIndex(free, { projectId: pid, taskId: tid, ...(isShared ? { shareId } : {}) });
+      }
+    },
+    [top3Manual, isShared, shareId, setTop3SlotAtIndex]
+  );
+
+  const onMove = useCallback(
+    (tid) => {
+      if (isLifeGoal) return; // no drag-drop move for life goal tasks
+      if (isShared) {
+        if (targetParentId) {
+          updateSharedDashboardProject(shareId, projectId, (p) => ({
+            ...p,
+            tasks: updateNodeInTree(p.tasks || [], targetParentId, (parent) => {
+              const next = [...(parent.children || [])];
+              const fromIdx = next.findIndex((t) => t.id === tid);
+              if (fromIdx === -1) return parent;
+              const [removed] = next.splice(fromIdx, 1);
+              next.splice(targetIndex, 0, removed);
+              return { ...parent, children: next };
+            }),
+          }));
+        } else {
+          updateSharedDashboardProject(shareId, projectId, (p) => {
+            const next = [...(p.tasks || [])];
+            const fromIdx = next.findIndex((t) => t.id === tid);
+            if (fromIdx === -1) return p;
+            const [removed] = next.splice(fromIdx, 1);
+            next.splice(targetIndex, 0, removed);
+            return { ...p, tasks: next };
+          });
+        }
+      } else {
+        if (targetParentId) moveSubtask(projectId, targetParentId, tid, targetIndex);
+        else moveProjectTask(projectId, tid, targetIndex);
+      }
+    },
+    [
+      isLifeGoal,
+      isShared,
+      shareId,
+      projectId,
+      targetIndex,
+      targetParentId,
+      moveProjectTask,
+      moveSubtask,
+      updateSharedDashboardProject,
+    ]
+  );
   const [draft, setDraft] = useState('');
   const [openAdd, setOpenAdd] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -173,7 +364,7 @@ export function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle,
       {/* Children rendering */}
       {expanded && hasChildren && (
         <div className="ml-2.5 pl-2.5 border-l border-zinc-100 dark:border-white/[0.04] space-y-0.5 flex flex-col w-full">
-          {node.children.map((child) => (
+          {node.children.map((child, cIdx) => (
             <DenseTaskNode
               key={child.id}
               node={child}
@@ -181,17 +372,10 @@ export function DenseTaskNode({ node, depth, projectId, projectAccent, onToggle,
               projectId={projectId}
               projectAccent={projectAccent}
               shareId={shareId}
-              onToggle={onToggle}
-              onDelete={onDelete}
-              onRename={onRename}
-              onDeadline={onDeadline}
-              onAddChild={onAddChild}
-              onToggleTop3={onToggleTop3}
-              onMove={onMove}
               parentId={node.id}
-              hasFreeTop3Slot={hasFreeTop3Slot}
-              checkIsTop3={checkIsTop3}
               hideTop3Button={hideTop3Button}
+              targetIndex={cIdx}
+              targetParentId={node.id}
             />
           ))}
         </div>

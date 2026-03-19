@@ -1,37 +1,27 @@
 import React from 'react';
 import { Icons } from './Icons';
 import { StandardProjectCard } from './ProjectComponents';
+import { ProjectCard } from './ProjectCard';
 import { DenseTaskNode } from './DenseTaskNode';
-import { createTaskNode, collectNodeAndDescendantIds, removeNodeFromTree, updateNodeInTree, countTreeStats, getDeadlineColorClass, formatDeadline } from './DashboardUtils';
+import { createTaskNode, updateNodeInTree, countTreeStats, getDeadlineColorClass, formatDeadline } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
 
 export function ProjectsSection({ PROJECT_ACCENTS }) {
-  const store = useDashboardStore();
-  const {
-    projects = [],
-    createProject,
-    deleteProject,
-    setConfirmState,
-    reorderProjects,
-    reorderSharedDashboardProjects,
-    updateProject,
-    toggleProjectTask,
-    projectTaskDrafts = {},
-    setProjectTaskDrafts,
-    setTop3Manual,
-    setTop3SlotAtIndex,
-    top3Manual = [null, null, null],
-    setDailyCompletionLog,
-    moveProjectTask,
-    moveSubtask,
-    projectDeadlineEditing,
-    projectDeadlineInput,
-    setProjectDeadlineInput,
-    setProjectDeadlineEditing,
-    sharedDashboards = [],
-    updateSharedDashboardProject,
-    deleteSharedDashboardProject,
-  } = store ?? {};
+  const projects = useDashboardStore((s) => s.projects) ?? [];
+  const createProject = useDashboardStore((s) => s.createProject);
+  const setConfirmState = useDashboardStore((s) => s.setConfirmState);
+  const reorderProjects = useDashboardStore((s) => s.reorderProjects);
+  const reorderSharedDashboardProjects = useDashboardStore((s) => s.reorderSharedDashboardProjects);
+  const updateProject = useDashboardStore((s) => s.updateProject);
+  const projectTaskDrafts = useDashboardStore((s) => s.projectTaskDrafts) ?? {};
+  const setProjectTaskDrafts = useDashboardStore((s) => s.setProjectTaskDrafts);
+  const projectDeadlineEditing = useDashboardStore((s) => s.projectDeadlineEditing);
+  const projectDeadlineInput = useDashboardStore((s) => s.projectDeadlineInput);
+  const setProjectDeadlineInput = useDashboardStore((s) => s.setProjectDeadlineInput);
+  const setProjectDeadlineEditing = useDashboardStore((s) => s.setProjectDeadlineEditing);
+  const sharedDashboards = useDashboardStore((s) => s.sharedDashboards) ?? [];
+  const updateSharedDashboardProject = useDashboardStore((s) => s.updateSharedDashboardProject);
+  const deleteSharedDashboardProject = useDashboardStore((s) => s.deleteSharedDashboardProject);
 
   return (
     <div className="dashboard-panel overflow-hidden flex min-h-0 flex-col p-4 sm:p-5 md:col-span-2 lg:col-span-6">
@@ -59,29 +49,14 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
         <>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
           {projects.map((project, idx) => {
-            const dragPayload = { type: 'project', fromIndex: idx };
             const actualStats = countTreeStats(project.tasks);
             const percentage = Math.round(actualStats.ratio * 100);
             const accent = PROJECT_ACCENTS[idx % PROJECT_ACCENTS.length];
             return (
-              <div
+              <ProjectCard
                 key={project.id}
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData('application/json', JSON.stringify(dragPayload));
-                  e.dataTransfer.effectAllowed = 'move';
-                }}
-                onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('ring-2', 'ring-indigo-400'); }}
-                onDragLeave={(e) => e.currentTarget.classList.remove('ring-2', 'ring-indigo-400')}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.classList.remove('ring-2', 'ring-indigo-400');
-                  try {
-                    const p = JSON.parse(e.dataTransfer.getData('application/json'));
-                    if (p.type === 'project') reorderProjects(p.fromIndex, idx);
-                  } catch (_) {}
-                }}
-                className="cursor-grab active:cursor-grabbing rounded-xl"
+                dragPayload={{ type: 'project', fromIndex: idx }}
+                onDrop={(p) => { if (p.type === 'project') reorderProjects(p.fromIndex, idx); }}
               >
               <StandardProjectCard
                 project={project}
@@ -105,33 +80,13 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                   <>
                     {project.tasks?.map((node, tIdx) => (
                       <DenseTaskNode
-                        key={node.id} node={node} depth={0} projectId={project.id} projectAccent={accent}
-                        onToggle={(tid, val) => toggleProjectTask(project.id, tid, val)}
-                        onDelete={(tid) => {
-                          const idsToClear = collectNodeAndDescendantIds(project.tasks, tid);
-                          updateProject(project.id, p => ({ ...p, tasks: removeNodeFromTree(p.tasks, tid) }));
-                          setTop3Manual(prev => prev.map(s => (s && s.projectId === project.id && idsToClear.has(s.taskId)) ? null : s));
-                          setDailyCompletionLog(prev => {
-                            const next = {};
-                            Object.entries(prev).forEach(([k, day]) => {
-                              const projectKeys = Array.isArray(day?.project) ? day.project.filter(x => { const [pid, taskId] = String(x).split(':'); return pid !== project.id || !idsToClear.has(taskId); }) : [];
-                              const quick = Array.isArray(day?.quick) ? day.quick : [];
-                              if (projectKeys.length || quick.length) next[k] = { quick, project: projectKeys };
-                            });
-                            return next;
-                          });
-                        }}
-                        onRename={(tid, val) => updateProject(project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, title: val })) }))}
-                        onDeadline={(tid, val) => updateProject(project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, deadline: val || undefined })) }))}
-                        onAddChild={(tid, val) => updateProject(project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, children: [...(n.children || []), createTaskNode(val)] })) }))}
-                        onToggleTop3={(pid, tid) => {
-                          const existingIdx = top3Manual.findIndex(s => s && s.projectId === pid && s.taskId === tid && !s.shareId);
-                          if (existingIdx !== -1) setTop3SlotAtIndex(existingIdx, null);
-                          else { const free = top3Manual.findIndex(s => !s); if (free !== -1) setTop3SlotAtIndex(free, { projectId: pid, taskId: tid }); }
-                        }}
-                        checkIsTop3={(tid) => top3Manual.some(s => s && s.projectId === project.id && s.taskId === tid && !s.shareId)}
-                        onMove={(tid, targetIdx, pid) => pid ? moveSubtask(project.id, pid, tid, targetIdx) : moveProjectTask(project.id, tid, tIdx)}
-                        hasFreeTop3Slot={top3Manual.some(s => !s)}
+                        key={node.id}
+                        node={node}
+                        depth={0}
+                        projectId={project.id}
+                        projectAccent={accent}
+                        targetIndex={tIdx}
+                        targetParentId={null}
                       />
                     ))}
                     <div className="pt-1 pl-1">
@@ -155,7 +110,7 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                   </>
                 )}
                     />
-              </div>
+              </ProjectCard>
             );
           })}
         </div>
@@ -174,30 +129,15 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                 const sharedProjects = Array.isArray(sharedData.projects) ? sharedData.projects : (Array.isArray(sharedData) ? sharedData : []);
 
                 return sharedProjects.map((project, pIdx) => {
-                  const sharedDragPayload = { type: 'sharedProject', shareId: shared.share_id, fromIndex: pIdx };
                   const actualStats = countTreeStats(project.tasks);
                   const percentage = Math.round(actualStats.ratio * 100);
                   const accent = PROJECT_ACCENTS[(sIdx + pIdx + projects.length) % PROJECT_ACCENTS.length];
 
                   return (
-                    <div
+                    <ProjectCard
                       key={`${shared.share_id}-${project.id}`}
-                      draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData('application/json', JSON.stringify(sharedDragPayload));
-                        e.dataTransfer.effectAllowed = 'move';
-                      }}
-                      onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('ring-2', 'ring-indigo-400'); }}
-                      onDragLeave={(e) => e.currentTarget.classList.remove('ring-2', 'ring-indigo-400')}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.currentTarget.classList.remove('ring-2', 'ring-indigo-400');
-                        try {
-                          const p = JSON.parse(e.dataTransfer.getData('application/json'));
-                          if (p.type === 'sharedProject' && p.shareId === shared.share_id) reorderSharedDashboardProjects(p.shareId, p.fromIndex, pIdx);
-                        } catch (_) {}
-                      }}
-                      className="cursor-grab active:cursor-grabbing rounded-xl"
+                      dragPayload={{ type: 'sharedProject', shareId: shared.share_id, fromIndex: pIdx }}
+                      onDrop={(p) => { if (p.type === 'sharedProject' && p.shareId === shared.share_id) reorderSharedDashboardProjects(p.shareId, p.fromIndex, pIdx); }}
                     >
                     <StandardProjectCard
                       project={project}
@@ -222,43 +162,14 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                         <>
                             {project.tasks?.map((node, tIdx) => (
                             <DenseTaskNode
-                              key={node.id} node={node} depth={0} projectId={project.id} projectAccent={accent} shareId={shared.share_id}
-                              onToggle={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, done: val })) }))}
-                              onDelete={(tid) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: removeNodeFromTree(p.tasks, tid) }))}
-                              onRename={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, title: val })) }))}
-                              onDeadline={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, deadline: val || undefined })) }))}
-                              onAddChild={(tid, val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, children: [...(n.children || []), createTaskNode(val)] })) }))}
-                              onToggleTop3={(pid, tid) => {
-                                const existingIdx = top3Manual.findIndex(s => s && s.projectId === pid && s.taskId === tid && s.shareId === shared.share_id);
-                                if (existingIdx !== -1) setTop3SlotAtIndex(existingIdx, null);
-                                else { const free = top3Manual.findIndex(s => !s); if (free !== -1) setTop3SlotAtIndex(free, { projectId: pid, taskId: tid, shareId: shared.share_id }); }
-                              }}
-                              checkIsTop3={(tid) => top3Manual.some(s => s && s.projectId === project.id && s.taskId === tid && s.shareId === shared.share_id)}
-                              hasFreeTop3Slot={top3Manual.some(s => !s)}
-                              onMove={(tid, targetIdx, pid) => {
-                                if (pid) {
-                                  updateSharedDashboardProject(shared.share_id, project.id, p => ({
-                                    ...p,
-                                    tasks: updateNodeInTree(p.tasks, pid, parent => {
-                                      const next = [...(parent.children || [])];
-                                      const fromIdx = next.findIndex(t => t.id === tid);
-                                      if (fromIdx === -1) return parent;
-                                      const [removed] = next.splice(fromIdx, 1);
-                                      next.splice(targetIdx, 0, removed);
-                                      return { ...parent, children: next };
-                                    })
-                                  }));
-                                } else {
-                                  updateSharedDashboardProject(shared.share_id, project.id, p => {
-                                    const next = [...(p.tasks || [])];
-                                    const fromIdx = next.findIndex(t => t.id === tid);
-                                    if (fromIdx === -1) return p;
-                                    const [removed] = next.splice(fromIdx, 1);
-                                    next.splice(targetIdx, 0, removed);
-                                    return { ...p, tasks: next };
-                                  });
-                                }
-                              }}
+                              key={node.id}
+                              node={node}
+                              depth={0}
+                              projectId={project.id}
+                              projectAccent={accent}
+                              shareId={shared.share_id}
+                              targetIndex={tIdx}
+                              targetParentId={null}
                             />
                           ))}
                           <div className="pt-1 pl-1">
@@ -282,7 +193,7 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                         </>
                       )}
                     />
-                    </div>
+                    </ProjectCard>
                   );
                 });
               })}

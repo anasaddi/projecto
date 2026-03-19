@@ -109,6 +109,24 @@ def create_app() -> FastAPI:
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request, exc):
+        # GET dashboard-state: never 500 — return empty state so frontend can use local data
+        if request.method == "GET" and "/api/training/dashboard-state" in request.url.path and "at" not in request.url.path:
+            logger.warning("dashboard-state GET failed, returning empty state: %s", exc)
+            from datetime import datetime, timezone
+            return JSONResponse(status_code=200, content={
+                "key": "default",
+                "data": {
+                    "dailyTaskTemplates": [],
+                    "dailyTaskLogs": {},
+                    "projects": [],
+                    "quickTasks": [],
+                    "prayerLogs": {},
+                    "top3Manual": [None, None, None],
+                    "dailyCompletionLog": {},
+                    "lifeGoals": {"collapsed": False, "tiers": []},
+                },
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            })
         logger.error(f"Unhandled exception: {exc}", exc_info=True)
         content = {"detail": str(exc)}
         if not settings.is_production:
@@ -144,6 +162,19 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+
+# --- Root (evita 404 se si apre localhost:8000 in browser) ---
+
+@app.get("/")
+async def root():
+    """Root route: API in ascolto. Per la UI apri il frontend (es. http://localhost:3000)."""
+    return {
+        "message": "PROJECTO API",
+        "docs": "/docs",
+        "health": "/health",
+        "frontend_dev": "Avvia il frontend con npm run dev (porta 3000) e apri http://localhost:3000",
+    }
 
 
 # --- Health & Readiness ---

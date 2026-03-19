@@ -16,6 +16,8 @@ def get_current_admin(
         )
 
     try:
+        if x_km_access == settings.admin_access_key:
+            return {"role": "admin", "sub": "legacy"}
         payload = jwt.decode(x_km_access, settings.secret_key, algorithms=["HS256"])
         if payload.get("role") != "admin":
             raise HTTPException(
@@ -29,8 +31,11 @@ def get_current_admin(
             detail="Token expired",
         )
     except jwt.InvalidTokenError:
-        if x_km_access == settings.admin_access_key:
-            return {"role": "admin", "sub": "legacy"}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
