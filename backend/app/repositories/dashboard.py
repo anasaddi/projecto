@@ -465,18 +465,15 @@ async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, dat
         db.add(shared)
     else:
         if title: shared.title = title
-        curr_data = _parse_json(shared.data, {})
-        if isinstance(curr_data, dict):
-            curr_data.update(data)
-            if "projectOrder" in data:
-                curr_data["projectOrder"] = data["projectOrder"]
-            elif "projects" in data:
-                curr_data["projectOrder"] = [p["id"] for p in data["projects"]]
-            shared.data = curr_data
-            flag_modified(shared, "data")
-        else:
-            shared.data = data
-    
+        curr_data = dict(_parse_json(shared.data, {}) or {})
+        curr_data.update(data)
+        if "projectOrder" in data:
+            curr_data["projectOrder"] = data["projectOrder"]
+        elif "projects" in data:
+            curr_data["projectOrder"] = [p["id"] for p in data["projects"]]
+        shared.data = curr_data
+        flag_modified(shared, "data")
+
     # RELATIONAL SYNC
     
     if "projects" in data:

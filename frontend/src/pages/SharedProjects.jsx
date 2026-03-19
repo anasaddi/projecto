@@ -125,15 +125,17 @@ function SharedListDashboard() {
   const [pwdSaving, setPwdSaving] = useState(false);
   const [pwdError, setPwdError] = useState(null);
 
-  useEffect(() => {
+  const fetchList = () =>
     api.training.listSharedDashboards({ timeout: 10_000 })
       .then((data) => {
         const arr = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
         setList(arr);
         setError(null);
       })
-      .catch((err) => setError(err?.message || 'Impossibile caricare i dashboard condivisi'))
-      .finally(() => setLoading(false));
+      .catch((err) => setError(err?.message || 'Impossibile caricare i dashboard condivisi'));
+
+  useEffect(() => {
+    fetchList().finally(() => setLoading(false));
   }, []);
 
   const copyLink = (sid) => {
@@ -168,12 +170,7 @@ function SharedListDashboard() {
       await api.training.updateSharedDashboard(settingsModalFor, {
         passwordHash: mainHash,
       });
-      setList(prev => prev.map(sd => {
-        const sid = sd.share_id || sd.shareId;
-        if (sid !== settingsModalFor) return sd;
-        const data = { ...(sd.data || {}), passwordHash: mainHash };
-        return { ...sd, data };
-      }));
+      await fetchList();
       closeSettings();
     } catch (err) {
       setPwdError(err?.message || 'Errore nel salvataggio');
@@ -237,6 +234,7 @@ function SharedListDashboard() {
                   <label className="block text-[11px] font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1.5">Accesso principale (intero shared)</label>
                   <input
                     type="password"
+                    autoComplete="new-password"
                     value={pwdInput}
                     onChange={(e) => { setPwdInput(e.target.value); setPwdError(null); }}
                     placeholder="Vuoto = rimuovi · Re-inserisci per mantenere"
@@ -819,6 +817,7 @@ export default function SharedProjects() {
           </p>
           <input
             type="password"
+            autoComplete="off"
             value={passwordInput}
             onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(null); }}
             onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}

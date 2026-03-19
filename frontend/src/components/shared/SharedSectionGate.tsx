@@ -100,6 +100,7 @@ export default function SharedSectionGate({ section, children }: SharedSectionGa
           </p>
           <input
             type="password"
+            autoComplete="off"
             value={passwordInput}
             onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(null); }}
             onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
