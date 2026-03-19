@@ -226,7 +226,7 @@ function SharedListDashboard() {
                 Password per &quot;{settingsSd?.title || settingsModalFor}&quot;
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-5">
-                Vuoto = rimuovi password.
+                {settingsSd?.data?.passwordHash ? 'Password impostata. Inserisci nuova per cambiare o lascia vuoto per rimuovere.' : 'Imposta una password per proteggere l\'accesso.'}
               </p>
 
               <div className="space-y-4 mb-6">
@@ -237,7 +237,7 @@ function SharedListDashboard() {
                     autoComplete="new-password"
                     value={pwdInput}
                     onChange={(e) => { setPwdInput(e.target.value); setPwdError(null); }}
-                    placeholder="Vuoto = rimuovi · Re-inserisci per mantenere"
+                    placeholder={settingsSd?.data?.passwordHash ? '•••••••• (inserisci nuova per cambiare)' : 'Inserisci password'}
                     className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
@@ -294,11 +294,11 @@ function SharedListDashboard() {
                       <button
                         type="button"
                         onClick={(e) => openSettings(e, sid)}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400 transition-colors border border-gray-200 dark:border-gray-700"
-                        title="Imposta password per questo shared"
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors border border-gray-200 dark:border-gray-700 ${(sd.data?.passwordHash) ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-500/20 dark:text-indigo-400' : 'text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400'}`}
+                        title={(sd.data?.passwordHash) ? 'Password impostata (clicca per modificare)' : 'Imposta password per questo shared'}
                       >
                         <Icons.Lock className="w-3.5 h-3.5" />
-                        <span className="text-[10px] font-semibold hidden sm:inline">Password</span>
+                        <span className="text-[10px] font-semibold hidden sm:inline">{(sd.data?.passwordHash) ? 'Modifica' : 'Password'}</span>
                       </button>
                       <span className="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-wider">
                         Shared
