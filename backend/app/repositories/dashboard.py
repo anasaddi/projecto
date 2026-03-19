@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.attributes import flag_modified
 from app.db.models import (
     DashboardState, SharedDashboard, Project, Task, QuickTask, 
     Habit, HabitLog, ChatMessage, PrayerLog, Top3Item, 
@@ -472,6 +473,7 @@ async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, dat
             elif "projects" in data:
                 curr_data["projectOrder"] = [p["id"] for p in data["projects"]]
             shared.data = curr_data
+            flag_modified(shared, "data")
         else:
             shared.data = data
     

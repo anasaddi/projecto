@@ -122,8 +122,6 @@ function SharedListDashboard() {
   const [copiedId, setCopiedId] = useState(null);
   const [settingsModalFor, setSettingsModalFor] = useState(null);
   const [pwdInput, setPwdInput] = useState('');
-  const [pwdTrainingInput, setPwdTrainingInput] = useState('');
-  const [pwdTranscriptInput, setPwdTranscriptInput] = useState('');
   const [pwdSaving, setPwdSaving] = useState(false);
   const [pwdError, setPwdError] = useState(null);
 
@@ -151,16 +149,12 @@ function SharedListDashboard() {
     e.stopPropagation();
     setSettingsModalFor(sid);
     setPwdInput('');
-    setPwdTrainingInput('');
-    setPwdTranscriptInput('');
     setPwdError(null);
   };
 
   const closeSettings = () => {
     setSettingsModalFor(null);
     setPwdInput('');
-    setPwdTrainingInput('');
-    setPwdTranscriptInput('');
     setPwdError(null);
   };
 
@@ -170,24 +164,14 @@ function SharedListDashboard() {
     setPwdError(null);
     try {
       const mainHash = pwdInput.trim() ? await hashPassword(pwdInput.trim()) : null;
-      const trainingHash = pwdTrainingInput.trim() ? await hashPassword(pwdTrainingInput.trim()) : null;
-      const transcriptHash = pwdTranscriptInput.trim() ? await hashPassword(pwdTranscriptInput.trim()) : null;
-      const currSd = list.find(sd => (sd.share_id || sd.shareId) === settingsModalFor);
-      const currSection = currSd?.data?.sectionPasswords || {};
-      const sectionPasswords = {
-        ...currSection,
-        training: pwdTrainingInput.trim() ? trainingHash : null,
-        transcript: pwdTranscriptInput.trim() ? transcriptHash : null,
-      };
 
       await api.training.updateSharedDashboard(settingsModalFor, {
         passwordHash: mainHash,
-        sectionPasswords,
       });
       setList(prev => prev.map(sd => {
         const sid = sd.share_id || sd.shareId;
         if (sid !== settingsModalFor) return sd;
-        const data = { ...(sd.data || {}), passwordHash: mainHash, sectionPasswords };
+        const data = { ...(sd.data || {}), passwordHash: mainHash };
         return { ...sd, data };
       }));
       closeSettings();
@@ -225,7 +209,7 @@ function SharedListDashboard() {
         <div className="mb-10 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 p-6 shadow-sm">
           <h2 className="text-sm font-black uppercase tracking-wider text-gray-800 dark:text-gray-200 mb-4">Pannello di controllo</h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-            Clicca <strong>Password</strong> su ogni card per impostare le password. Puoi proteggere l&apos;accesso principale e ogni sezione (Training, Transcript) con password diverse. Sbloccando una sezione non si sbloccano le altre.
+            Clicca <strong>Password</strong> su ogni card per impostare la password di accesso principale.
           </p>
           <p className="text-[11px] font-bold uppercase text-gray-500 dark:text-gray-400">Dove impostare</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -245,7 +229,7 @@ function SharedListDashboard() {
                 Password per &quot;{settingsSd?.title || settingsModalFor}&quot;
               </h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-5">
-                Ogni password sblocca solo la sua sezione. Vuoto = rimuovi.
+                Vuoto = rimuovi password.
               </p>
 
               <div className="space-y-4 mb-6">
@@ -257,26 +241,6 @@ function SharedListDashboard() {
                     onChange={(e) => { setPwdInput(e.target.value); setPwdError(null); }}
                     placeholder="Vuoto = rimuovi · Re-inserisci per mantenere"
                     className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1.5">Sezione Training</label>
-                  <input
-                    type="password"
-                    value={pwdTrainingInput}
-                    onChange={(e) => { setPwdTrainingInput(e.target.value); setPwdError(null); }}
-                    placeholder="Password per /shared/.../training"
-                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-violet-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1.5">Sezione Transcript</label>
-                  <input
-                    type="password"
-                    value={pwdTranscriptInput}
-                    onChange={(e) => { setPwdTranscriptInput(e.target.value); setPwdError(null); }}
-                    placeholder="Password per /shared/.../transcript"
-                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-rose-500"
                   />
                 </div>
               </div>
@@ -1122,30 +1086,8 @@ export default function SharedProjects() {
 
         </div>
 
-        {/* SIDEBAR: PAGINE + QUICK TASKS + CHAT */}
+        {/* SIDEBAR: QUICK TASKS + CHAT */}
         <aside className="w-full lg:w-72 shrink-0 order-1 lg:order-2 pt-[76px] space-y-6">
-          {/* ALTRE PAGINE */}
-          <div className="bg-white/80 dark:bg-[#1a1d24]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 rounded-2xl p-4 shadow-lg">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-3">Altre pagine</h3>
-            <div className="flex flex-wrap gap-2">
-              <Link
-                to={`/shared/${id}/training`}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 dark:hover:bg-violet-500/20 border border-violet-200/50 dark:border-violet-500/20 transition-colors"
-              >
-                <Icons.Target className="w-3.5 h-3.5" />
-                Training
-              </Link>
-              <Link
-                to={`/shared/${id}/transcript`}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 dark:hover:bg-rose-500/20 border border-rose-200/50 dark:border-rose-500/20 transition-colors"
-              >
-                <Icons.FileText className="w-3.5 h-3.5" />
-                Transcript
-              </Link>
-            </div>
-            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-2">Altre pagine in arrivo</p>
-          </div>
-
           {/* QUICK TASKS */}
           <div className="bg-white/80 dark:bg-[#1a1d24]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 rounded-2xl p-6 shadow-lg min-h-[340px] flex flex-col">
             <div className="flex items-center gap-2 mb-4">
