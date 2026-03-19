@@ -99,6 +99,7 @@ async function hashPassword(pw) {
 function isUnlocked(shareId, passwordHash) {
   if (!shareId || !passwordHash) return true;
   try {
+    if (localStorage.getItem('km-admin-token')) return true;
     const stored = localStorage.getItem(`km-shared-pwd-${shareId}`);
     return stored === passwordHash;
   } catch (_) {
