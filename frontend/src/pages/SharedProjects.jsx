@@ -1246,8 +1246,8 @@ export default function SharedProjects() {
 
       </div>
 
-      {/* MODULO FINANZE in fondo (solo shared "nextcode") */}
-      {dashboard.title && String(dashboard.title).toLowerCase().includes('nextcode') && (
+      {/* MODULO FINANZE in fondo (solo shared "nextcode" per titolo o id) */}
+      {((dashboard.title && String(dashboard.title).toLowerCase().includes('nextcode')) || (id && String(id).toLowerCase().includes('nextcode'))) && (
         <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-8 md:px-10 pb-8">
           <FinanzeSection
             bonifici={dashboard.bonifici || []}
