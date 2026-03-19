@@ -13,31 +13,36 @@ const IMPONIBILE_RATE = 0.67;
 const INPS_RATE = 0.2607;
 const IMPOSTA_SOSTITUTIVA_RATE = 0.05;
 
+function round2(n) {
+  if (n == null || isNaN(n)) return 0;
+  return Math.round(Number(n) * 100) / 100;
+}
+
 function fmtNum(n) {
   if (n == null || isNaN(n)) return '0';
-  return Number(n).toLocaleString('it-IT', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  return round2(n).toLocaleString('it-IT', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
 function computeBonifico(cifra, nettoAnasInput, nettoFlavioInput, splitAnas = 50, splitOthman = 50) {
-  const cifraNum = Number(cifra) || 0;
-  const imponibile = cifraNum * IMPONIBILE_RATE;
-  const inps = imponibile * INPS_RATE;
-  const impostaSostitutiva = imponibile * IMPOSTA_SOSTITUTIVA_RATE;
-  const tasse = inps + impostaSostitutiva;
-  const netto = cifraNum - tasse;
-  const anasVal = nettoAnasInput != null && nettoAnasInput !== '' ? parseFloat(String(nettoAnasInput).replace(',', '.')) : null;
-  const flavioVal = nettoFlavioInput != null && nettoFlavioInput !== '' ? parseFloat(String(nettoFlavioInput).replace(',', '.')) : null;
+  const cifraNum = round2(Number(cifra) || 0);
+  const imponibile = round2(cifraNum * IMPONIBILE_RATE);
+  const inps = round2(imponibile * INPS_RATE);
+  const impostaSostitutiva = round2(imponibile * IMPOSTA_SOSTITUTIVA_RATE);
+  const tasse = round2(inps + impostaSostitutiva);
+  const netto = round2(cifraNum - tasse);
+  const anasVal = nettoAnasInput != null && nettoAnasInput !== '' ? round2(parseFloat(String(nettoAnasInput).replace(',', '.'))) : null;
+  const flavioVal = nettoFlavioInput != null && nettoFlavioInput !== '' ? round2(parseFloat(String(nettoFlavioInput).replace(',', '.'))) : null;
   let nettoAnas, nettoFlavio;
   if (anasVal != null && !isNaN(anasVal)) {
     nettoAnas = anasVal;
-    nettoFlavio = netto - anasVal;
+    nettoFlavio = round2(netto - anasVal);
   } else if (flavioVal != null && !isNaN(flavioVal)) {
     nettoFlavio = flavioVal;
-    nettoAnas = netto - flavioVal;
+    nettoAnas = round2(netto - flavioVal);
   } else {
     const totSplit = (Number(splitAnas) || 0) + (Number(splitOthman) || 0) || 1;
-    nettoAnas = netto * ((Number(splitAnas) || 0) / totSplit);
-    nettoFlavio = netto * ((Number(splitOthman) || 0) / totSplit);
+    nettoAnas = round2(netto * ((Number(splitAnas) || 0) / totSplit));
+    nettoFlavio = round2(netto * ((Number(splitOthman) || 0) / totSplit));
   }
   return {
     cifra: cifraNum,
@@ -81,24 +86,24 @@ function BonificoTableRow({ b, onUpdateNetto, onRemove, disabled }) {
   const [anasInput, setAnasInput] = useState('');
   const [flavioInput, setFlavioInput] = useState('');
   const nettoTot = calc.netto ?? 0;
-  const showAnas = anasInput !== '' ? anasInput : (b.nettoAnas != null ? String(b.nettoAnas).replace('.', ',') : fmtNum(calc.nettoAnas));
-  const showFlavio = flavioInput !== '' ? flavioInput : (b.nettoFlavio != null || b.nettoOthman != null ? String(b.nettoFlavio ?? b.nettoOthman).replace('.', ',') : fmtNum(calc.nettoFlavio ?? calc.nettoOthman ?? 0));
+  const showAnas = anasInput !== '' ? anasInput : (b.nettoAnas != null ? fmtNum(b.nettoAnas) : fmtNum(calc.nettoAnas));
+  const showFlavio = flavioInput !== '' ? flavioInput : (b.nettoFlavio != null || b.nettoOthman != null ? fmtNum(b.nettoFlavio ?? b.nettoOthman) : fmtNum(calc.nettoFlavio ?? calc.nettoOthman ?? 0));
 
   const handleAnasChange = (val) => {
     setAnasInput(val);
     setFlavioInput('');
-    const num = parseFloat(String(val).replace(',', '.'));
+    const num = round2(parseFloat(String(val).replace(',', '.')));
     if (!isNaN(num) && nettoTot > 0) {
-      onUpdateNetto(b.id, num, nettoTot - num);
+      onUpdateNetto(b.id, num, round2(nettoTot - num));
     }
   };
 
   const handleFlavioChange = (val) => {
     setFlavioInput(val);
     setAnasInput('');
-    const num = parseFloat(String(val).replace(',', '.'));
+    const num = round2(parseFloat(String(val).replace(',', '.')));
     if (!isNaN(num) && nettoTot > 0) {
-      onUpdateNetto(b.id, nettoTot - num, num);
+      onUpdateNetto(b.id, round2(nettoTot - num), num);
     }
   };
 
@@ -106,48 +111,48 @@ function BonificoTableRow({ b, onUpdateNetto, onRemove, disabled }) {
   const handleFlavioBlur = () => setFlavioInput('');
 
   return (
-    <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 shadow-sm">
-      <table className="w-full text-sm">
+    <div className="rounded-2xl overflow-hidden border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-900/60 shadow-sm hover:shadow-md transition-shadow">
+      <table className="w-full text-xs">
         <tbody>
           <tr>
-            <td colSpan={2} className="text-center py-2 text-gray-600 dark:text-gray-400 font-medium">
+            <td colSpan={2} className="text-center py-1.5 text-gray-500 dark:text-gray-400 font-medium text-[11px]">
               {dateFmt}
             </td>
           </tr>
           <tr>
-            <td colSpan={2} className="bg-blue-700 text-white text-center py-3 text-lg font-bold">
+            <td colSpan={2} className="bg-indigo-600 dark:bg-indigo-700 text-white text-center py-2 text-base font-bold">
               {fmtNum(calc.cifra)} €
             </td>
           </tr>
-          <tr className="border-t border-gray-100 dark:border-gray-800">
-            <td className="px-3 py-2 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">IMPONIBILE (67%)</td>
-            <td className="px-3 py-2 bg-white dark:bg-gray-900 text-right font-semibold text-gray-900 dark:text-gray-100">{fmtNum(calc.imponibile)}</td>
+          <tr className="border-t border-gray-100 dark:border-gray-800/80">
+            <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400 text-[11px]">Imponibile 67%</td>
+            <td className="px-2 py-1.5 text-right font-semibold tabular-nums">{fmtNum(calc.imponibile)}</td>
           </tr>
           <tr>
-            <td className="px-3 py-2 bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300">INPS (26,07%)</td>
-            <td className="px-3 py-2 bg-gray-50 dark:bg-gray-800/50 text-right font-semibold">{fmtNum(calc.inps)}</td>
+            <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400 text-[11px]">INPS 26,07%</td>
+            <td className="px-2 py-1.5 text-right font-semibold tabular-nums">{fmtNum(calc.inps)}</td>
           </tr>
           <tr>
-            <td className="px-3 py-2 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">IMPOSTA SOSTITUTIVA 5%</td>
-            <td className="px-3 py-2 bg-white dark:bg-gray-900 text-right font-semibold">{fmtNum(calc.impostaSostitutiva)}</td>
+            <td className="px-2 py-1.5 text-gray-600 dark:text-gray-400 text-[11px]">Imposta sost. 5%</td>
+            <td className="px-2 py-1.5 text-right font-semibold tabular-nums">{fmtNum(calc.impostaSostitutiva)}</td>
           </tr>
           <tr>
-            <td className="px-3 py-2 bg-emerald-700 text-white font-bold">NETTO</td>
-            <td className="px-3 py-2 bg-red-700 text-white font-bold text-right">TASSE</td>
+            <td className="px-2 py-1.5 bg-emerald-600 dark:bg-emerald-700 text-white font-bold text-[11px]">NETTO</td>
+            <td className="px-2 py-1.5 bg-rose-600 dark:bg-rose-700 text-white font-bold text-[11px] text-right">TASSE</td>
           </tr>
           <tr>
-            <td className="px-3 py-3 bg-emerald-50 dark:bg-emerald-900/30 font-bold text-gray-900 dark:text-gray-100">
+            <td className="px-2 py-2 bg-emerald-50 dark:bg-emerald-900/40 font-bold text-emerald-800 dark:text-emerald-200 tabular-nums">
               {fmtNum(calc.netto)} €
             </td>
-            <td className="px-3 py-3 bg-red-50 dark:bg-red-900/30 font-bold text-red-700 dark:text-red-300 text-right">
+            <td className="px-2 py-2 bg-rose-50 dark:bg-rose-900/40 font-bold text-rose-700 dark:text-rose-300 text-right tabular-nums">
               {fmtNum(calc.tasse)} €
             </td>
           </tr>
         </tbody>
       </table>
-      <div className="px-3 py-3 border-t border-gray-200 dark:border-gray-700 grid grid-cols-2 gap-3">
+      <div className="px-2 py-2 border-t border-gray-200/80 dark:border-gray-700/80 grid grid-cols-2 gap-2">
         <div>
-          <label className="block text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Netto Anas</label>
+          <label className="block text-[9px] font-bold uppercase text-emerald-600 dark:text-emerald-400 mb-0.5">Anas</label>
           <input
             type="text"
             inputMode="decimal"
@@ -156,11 +161,11 @@ function BonificoTableRow({ b, onUpdateNetto, onRemove, disabled }) {
             onBlur={handleAnasBlur}
             disabled={disabled}
             placeholder={fmtNum(calc.nettoAnas)}
-            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full bg-emerald-50/50 dark:bg-emerald-900/20 border border-emerald-200/60 dark:border-emerald-700/40 rounded-xl px-2 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
           />
         </div>
         <div>
-          <label className="block text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Netto Flavio</label>
+          <label className="block text-[9px] font-bold uppercase text-teal-600 dark:text-teal-400 mb-0.5">Flavio</label>
           <input
             type="text"
             inputMode="decimal"
@@ -169,16 +174,16 @@ function BonificoTableRow({ b, onUpdateNetto, onRemove, disabled }) {
             onBlur={handleFlavioBlur}
             disabled={disabled}
             placeholder={fmtNum(calc.nettoFlavio ?? calc.nettoOthman)}
-            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full bg-teal-50/50 dark:bg-teal-900/20 border border-teal-200/60 dark:border-teal-700/40 rounded-xl px-2 py-1.5 text-xs font-medium outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         </div>
       </div>
       {!disabled && (
-        <div className="px-3 pb-3">
+        <div className="px-2 pb-2">
           <button
             type="button"
             onClick={() => onRemove(b.id)}
-            className="text-[11px] text-gray-400 hover:text-red-500 flex items-center gap-1"
+            className="text-[10px] text-gray-400 hover:text-rose-500 flex items-center gap-1 transition-colors"
           >
             <Icons.Trash className="w-3 h-3" /> Elimina
           </button>
@@ -224,35 +229,35 @@ export default function FinanzeSection({ bonifici = [], onUpdate, disabled, defa
   const sortedBonifici = [...bonifici].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   return (
-    <div className="mt-8 w-full rounded-2xl overflow-hidden border border-emerald-200/60 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50/80 to-teal-50/50 dark:from-emerald-950/30 dark:to-teal-950/20 shadow-lg shadow-emerald-500/5">
+    <div className="mt-6 w-full rounded-2xl overflow-hidden border border-emerald-200/60 dark:border-emerald-500/20 bg-white/90 dark:bg-gray-900/60 shadow-lg shadow-emerald-500/5 backdrop-blur-sm">
       <button
         type="button"
         onClick={() => setCollapsed(!collapsed)}
-        className="w-full flex items-center justify-between gap-4 px-5 py-4 hover:bg-emerald-500/5 transition-colors text-left"
+        className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-emerald-500/5 transition-colors text-left"
       >
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 shadow-sm">
-            <Icons.Euro className="w-5 h-5" />
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="p-1.5 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 shrink-0">
+            <Icons.Euro className="w-4 h-4" />
           </div>
-          <div>
-            <h2 className="text-sm font-black uppercase tracking-wider text-gray-800 dark:text-gray-100">
-              Finanze · Regime Forfettario
+          <div className="min-w-0">
+            <h2 className="text-xs font-black uppercase tracking-wider text-gray-800 dark:text-gray-100 truncate">
+              Finanze · Forfettario
             </h2>
-            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-              {bonifici.length} bonifici · Anas {fmtNum(saldi.totAnas)} € · Flavio {fmtNum(saldi.totFlavio)} €
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+              {bonifici.length} bonifici · A {fmtNum(saldi.totAnas)} € · F {fmtNum(saldi.totFlavio)} €
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 shrink-0">
           {Math.abs(saldi.diff) > 0.01 && (
-            <div className="px-3 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-500/20 border border-amber-200/50">
-              <p className="text-[10px] font-bold text-amber-700 dark:text-amber-300">
-                {saldi.diff > 0 ? 'Flavio → Anas' : 'Anas → Flavio'} {fmtNum(Math.abs(saldi.diff))} €
+            <div className="px-2 py-1 rounded-lg bg-amber-100 dark:bg-amber-500/20 border border-amber-200/50">
+              <p className="text-[9px] font-bold text-amber-700 dark:text-amber-300">
+                {saldi.diff > 0 ? 'F→A' : 'A→F'} {fmtNum(Math.abs(saldi.diff))} €
               </p>
             </div>
           )}
-          <span className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500">
-            {collapsed ? <Icons.ChevronDown className="w-4 h-4" /> : <Icons.ChevronUp className="w-4 h-4" />}
+          <span className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500">
+            {collapsed ? <Icons.ChevronDown className="w-3.5 h-3.5" /> : <Icons.ChevronUp className="w-3.5 h-3.5" />}
           </span>
         </div>
       </button>
@@ -263,23 +268,23 @@ export default function FinanzeSection({ bonifici = [], onUpdate, disabled, defa
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-5 pb-5 pt-0 space-y-5 border-t border-emerald-200/40 dark:border-emerald-500/10">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
-                <div>
-                  <label className="block text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Data</label>
+            <div className="px-4 pb-4 pt-0 space-y-4 border-t border-emerald-200/40 dark:border-emerald-500/10">
+              <div className="flex flex-wrap items-end gap-2 pt-3">
+                <div className="flex-1 min-w-[100px]">
+                  <label className="block text-[9px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-0.5">Data</label>
                   <input
                     type="date"
                     value={dateInput}
                     onChange={(e) => setDateInput(e.target.value)}
                     disabled={disabled}
-                    className="w-full bg-white dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full bg-white dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
-                <div>
-                  <label className="block text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Cifra €</label>
+                <div className="flex-1 min-w-[80px]">
+                  <label className="block text-[9px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-0.5">Cifra €</label>
                   <input
                     type="text"
                     inputMode="decimal"
@@ -288,22 +293,20 @@ export default function FinanzeSection({ bonifici = [], onUpdate, disabled, defa
                     onKeyDown={(e) => e.key === 'Enter' && addBonifico()}
                     disabled={disabled}
                     placeholder="15000"
-                    className="w-full bg-white dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full bg-white dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
-                <div className="flex items-end">
-                  <button
-                    type="button"
-                    onClick={addBonifico}
-                    disabled={disabled || !cifraInput}
-                    className="w-full py-2.5 rounded-lg bg-emerald-500 text-white font-semibold hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Icons.Plus className="w-4 h-4" /> Aggiungi
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={addBonifico}
+                  disabled={disabled || !cifraInput}
+                  className="py-1.5 px-4 rounded-xl bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5 shrink-0"
+                >
+                  <Icons.Plus className="w-3.5 h-3.5" /> Aggiungi
+                </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[480px] overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
                 <AnimatePresence initial={false}>
                   {sortedBonifici.map((b) => (
                     <motion.div
@@ -324,10 +327,10 @@ export default function FinanzeSection({ bonifici = [], onUpdate, disabled, defa
                 </AnimatePresence>
               </div>
               {sortedBonifici.length === 0 && (
-                <div className="py-10 text-center text-gray-400 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700">
-                  <Icons.Euro className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm font-medium">Nessun bonifico</p>
-                  <p className="text-xs">Aggiungi il primo con Data e Cifra sopra</p>
+                <div className="col-span-full py-8 text-center text-gray-400 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700">
+                  <Icons.Euro className="w-8 h-8 mx-auto mb-1.5 opacity-50" />
+                  <p className="text-xs font-medium">Nessun bonifico</p>
+                  <p className="text-[10px]">Data + Cifra → Aggiungi</p>
                 </div>
               )}
             </div>
@@ -338,4 +341,4 @@ export default function FinanzeSection({ bonifici = [], onUpdate, disabled, defa
   );
 }
 
-export { computeBonifico, fmtNum, computeSaldi, Icons };
+export { computeBonifico, fmtNum, round2, computeSaldi, Icons };
