@@ -48,43 +48,47 @@ export function LifeGoalCard({
     }, [goal.title]);
 
     return (
-      <div className="relative">
-        <div
-          draggable
-          {...lgZoneProps}
-          onDragStart={(e) => {
-            e.dataTransfer.setData('application/json', JSON.stringify({ type: 'lifeGoal', goalId: goal.id }));
-            e.dataTransfer.effectAllowed = 'move';
-          }}
-          className={`group/goal flex items-start gap-2 rounded-2xl border border-zinc-200/70 bg-white px-3 py-2 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md dark:border-white/[0.08] dark:bg-[#0b0e14]/70 min-h-[2.5rem] ${deadlineEditing === goal.id ? 'z-30' : 'z-auto'}`}
-        >
-          <button type="button" onClick={() => onToggle(goal.id, !goal.done)} className={`shrink-0 mt-0.5 rounded-xl p-1 transition-all ${goal.done ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-zinc-100 text-transparent hover:bg-zinc-200 dark:bg-white/5'}`}>
-            <Icons.CheckCircle className="h-2.5 w-2.5" />
-          </button>
-          <textarea
-            ref={titleRef}
-            value={goal.title}
-            onChange={(e) => onRename(goal.id, e.target.value)}
-            rows={2}
-            className={`min-w-0 flex-1 resize-none overflow-y-auto bg-transparent py-0 text-[12px] font-medium leading-relaxed outline-none break-words [overflow-wrap:anywhere] min-h-[2rem] max-h-[120px] ${goal.done ? 'text-zinc-400 line-through' : 'text-zinc-800 dark:text-zinc-200'}`}
-            onInput={(e) => { const t = e.target; t.style.height = 'auto'; t.style.height = `${Math.min(t.scrollHeight, 120)}px`; }}
-          />
-          {goal.deadline && (
-            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold ${getDeadlineColorClass(goal.deadline, goal.done)}`}>{formatDeadline(goal.deadline)}</span>
-          )}
-          <div ref={lgBarRef} className={`flex shrink-0 items-start gap-0.5 pt-0.5 transition-opacity touch-manipulation ${lgActive ? 'opacity-100' : 'opacity-0 group-hover/goal:opacity-100'}`}>
-            {compactActions.map((act, i) => {
-              const ap = lgGetActionProps(i);
-              return (
-                <button key={i} data-action-idx={i} type="button" onClick={(e) => { if (lgHandledRef.current) { e.preventDefault(); return; } e.stopPropagation(); act.onClick(e); }} title={act.title} aria-label={act.title} className={`dashboard-action-btn p-1 rounded-xl ${act.className || ''} ${ap.className || ''}`}>
-                  {act.icon}
-                </button>
-              );
-            })}
-          </div>
+      <div
+        draggable
+        {...lgZoneProps}
+        onDragStart={(e) => {
+          e.dataTransfer.setData('application/json', JSON.stringify({ type: 'lifeGoal', goalId: goal.id }));
+          e.dataTransfer.effectAllowed = 'move';
+        }}
+        className={`group/goal relative flex items-center gap-3 overflow-hidden rounded-2xl border border-zinc-200/70 bg-white px-3 py-2 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md dark:border-white/[0.08] dark:bg-[#0b0e14]/70 ${deadlineEditing === goal.id ? 'z-30' : 'z-auto'}`}
+      >
+        <div className={`h-8 w-1 shrink-0 rounded-full bg-gradient-to-b ${accentGradient}`} />
+        
+        <button type="button" onClick={() => onToggle(goal.id, !goal.done)} className={`shrink-0 rounded-lg p-1 transition-all ${goal.done ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-zinc-100 text-transparent hover:bg-zinc-200 dark:bg-white/5'}`}>
+          <Icons.CheckCircle className="h-3 w-3" />
+        </button>
+
+        <textarea
+          ref={titleRef}
+          value={goal.title}
+          onChange={(e) => onRename(goal.id, e.target.value)}
+          rows={1}
+          className={`min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-0 text-[13px] font-semibold leading-relaxed outline-none ${goal.done ? 'text-zinc-400 line-through' : 'text-zinc-800 dark:text-zinc-200'}`}
+          onInput={(e) => { const t = e.target; t.style.height = 'auto'; t.style.height = `${Math.min(t.scrollHeight, 120)}px`; }}
+        />
+
+        {goal.deadline && (
+          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${getDeadlineColorClass(goal.deadline, goal.done)}`}>{formatDeadline(goal.deadline)}</span>
+        )}
+
+        <div ref={lgBarRef} className={`flex shrink-0 items-center gap-0.5 transition-opacity touch-manipulation ${lgActive ? 'opacity-100' : 'opacity-0 group-hover/goal:opacity-100'}`}>
+          {compactActions.map((act, i) => {
+            const ap = lgGetActionProps(i);
+            return (
+              <button key={i} data-action-idx={i} type="button" onClick={(e) => { if (lgHandledRef.current) { e.preventDefault(); return; } e.stopPropagation(); act.onClick(e); }} title={act.title} aria-label={act.title} className={`p-1 rounded-lg transition-colors ${act.className || ''} ${ap.className || ''}`}>
+                <div className="scale-90">{act.icon}</div>
+              </button>
+            );
+          })}
         </div>
+
         {deadlineEditing === goal.id && (
-          <div className="absolute left-0 right-0 top-full mt-1 z-20 bg-white dark:bg-zinc-800 p-2 rounded-lg border shadow-lg dark:border-white/10">
+          <div className="absolute inset-x-0 bottom-0 z-20 bg-white dark:bg-zinc-800 p-2 border-t shadow-lg dark:border-white/10 animate-in slide-in-from-bottom-1">
             <input type="date" value={deadlineInput} onChange={(e) => setDeadlineInput(e.target.value)} onBlur={() => onDeadlineClick(goal.id, deadlineInput)} onKeyDown={(e) => { if (e.key === 'Enter') onDeadlineClick(goal.id, deadlineInput); if (e.key === 'Escape') setDeadlineEditing(null); }} autoFocus className="w-full bg-zinc-50 dark:bg-black/20 border border-zinc-200 dark:border-white/10 rounded px-2 py-1 text-[11px] outline-none" />
           </div>
         )}

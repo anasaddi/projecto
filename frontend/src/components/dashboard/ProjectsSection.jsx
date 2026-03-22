@@ -35,17 +35,6 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
         iconColor="text-indigo-500"
         title="Progetti"
         subtitle={hasProjects ? `${projects.length} progetti attivi` : 'Crea il tuo primo progetto'}
-        action={
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={createProject}
-            className="flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 px-3 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30"
-          >
-            <Icons.Plus className="h-3.5 w-3.5" />
-            <span>Nuovo</span>
-          </motion.button>
-        }
       />
 
       <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4 pt-2">
@@ -112,7 +101,7 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                                     setProjectTaskDrafts(prev => ({ ...prev, [project.id]: '' }));
                                   }
                                 }
-                              }}
+                               }}
                               placeholder="Aggiungi task... (Invio)"
                               className="w-full bg-transparent text-sm text-zinc-600 dark:text-zinc-400 outline-none placeholder:text-zinc-300 dark:placeholder:text-zinc-600 py-1 border-b border-transparent focus:border-zinc-300 dark:focus:border-white/10 transition-colors"
                             />
@@ -124,7 +113,7 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                 );
               })}
               
-              <div className="flex xl:col-span-2 min-h-[5.5rem]">
+              <div className={`flex min-h-[5.5rem] ${projects.length % 2 === 0 ? 'xl:col-span-2' : 'xl:col-span-1'}`}>
                 <CreateProjectCard onClick={createProject} className="flex-1" />
               </div>
             </div>

@@ -141,8 +141,8 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
       <main
         className={
           isWorkspace
-            ? `flex w-full max-w-[1600px] mx-auto flex-col flex-1 min-h-0 pt-2 ${isTraining ? 'overflow-x-auto overflow-y-hidden min-w-0' : 'overflow-hidden'}`
-            : 'w-full max-w-[1600px] mx-auto p-4 md:p-6'
+            ? `flex w-full px-4 md:px-6 flex-col flex-1 min-h-0 pt-2 ${isTraining ? 'overflow-x-auto overflow-y-hidden min-w-0' : 'overflow-hidden'}`
+            : 'w-full p-4 md:p-6'
         }
       >
         {children}
