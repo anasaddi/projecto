@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Icons } from './Icons';
 import { Badge, ProgressBar, ActionButton } from './Card';
+import { useLongPressActions } from '../../hooks/useLongPressActions';
 
 export function LifeGoalCard({
   goal, accent, stats, percentage,
@@ -30,37 +31,48 @@ export function LifeGoalCard({
   const isProject = goal.type === 'project';
 
   if (compact && !isProject) {
+    const compactActions = [
+      { icon: <Icons.Zap className="h-2.5 w-2.5" />, onClick: () => onPromoteQuick(goal.id), title: isLinkedToQuick ? 'Rimuovi da Quick Tasks' : 'Sincronizza con Quick Tasks', className: isLinkedToQuick ? 'text-rose-500 bg-rose-50 dark:text-rose-300 dark:bg-rose-500/30 dark:ring-1 dark:ring-rose-400/50' : '' },
+      ...(!isProject && (isInTop3 || (hasFreeTop3Slot && !goal.done)) ? [{ icon: <Icons.Target className="h-2.5 w-2.5" />, onClick: () => onToggleTop3(goal.id), title: isInTop3 ? 'Rimuovi dai Top 3' : 'Top 3', className: isInTop3 ? 'text-amber-600 bg-amber-100 dark:text-amber-300 dark:bg-amber-500/30 dark:ring-1 dark:ring-amber-400/50' : '' }] : []),
+      { icon: <Icons.Calendar className="h-2.5 w-2.5" />, onClick: () => { setDeadlineInput(goal.deadline || ''); setDeadlineEditing(goal.id); }, title: 'Scadenza', className: goal.deadline ? 'text-amber-500 bg-amber-50 dark:text-amber-300 dark:bg-amber-500/30 dark:ring-1 dark:ring-amber-400/50' : '' },
+      { icon: <Icons.X className="h-2.5 w-2.5" />, onClick: () => onDelete(goal.id), title: 'Elimina', className: 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20' },
+    ];
+    const { active: lgActive, barRef: lgBarRef, zoneProps: lgZoneProps, getActionProps: lgGetActionProps, handledByPointerUpRef: lgHandledRef } = useLongPressActions({ actions: compactActions });
+
     return (
       <div className="relative">
         <div
           draggable
+          {...lgZoneProps}
           onDragStart={(e) => {
             e.dataTransfer.setData('application/json', JSON.stringify({ type: 'lifeGoal', goalId: goal.id }));
             e.dataTransfer.effectAllowed = 'move';
           }}
-          className={`group/goal flex items-start gap-2 rounded-2xl border border-zinc-200/70 bg-white/[0.9] px-3 py-2 shadow-sm shadow-zinc-200/35 transition-all hover:border-zinc-300 hover:shadow-md dark:border-white/[0.08] dark:bg-[#141922]/80 ${deadlineEditing === goal.id ? 'z-30' : 'z-auto'}`}
+          className={`group/goal flex items-center gap-2 rounded-2xl border border-zinc-200/70 bg-white/[0.9] px-3 py-2 shadow-sm shadow-zinc-200/35 transition-all hover:border-zinc-300 hover:shadow-md dark:border-white/[0.08] dark:bg-[#141922]/80 ${deadlineEditing === goal.id ? 'z-30' : 'z-auto'}`}
         >
-          <button type="button" onClick={() => onToggle(goal.id, !goal.done)} className={`mt-0.5 shrink-0 rounded-xl p-1 transition-all ${goal.done ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-zinc-100 text-transparent hover:bg-zinc-200 dark:bg-white/5'}`}>
+          <button type="button" onClick={() => onToggle(goal.id, !goal.done)} className={`shrink-0 rounded-xl p-1 transition-all ${goal.done ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-zinc-100 text-transparent hover:bg-zinc-200 dark:bg-white/5'}`}>
             <Icons.CheckCircle className="h-2.5 w-2.5" />
           </button>
           <textarea
             value={goal.title}
             onChange={(e) => onRename(goal.id, e.target.value)}
             rows={1}
-            className={`min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-0 text-[12px] font-medium leading-snug outline-none ${goal.done ? 'text-zinc-400 line-through' : 'text-zinc-800 dark:text-zinc-100'}`}
+            className={`min-w-0 flex-1 resize-none overflow-visible bg-transparent py-0 text-[12px] font-medium leading-snug outline-none break-words [overflow-wrap:anywhere] ${goal.done ? 'text-zinc-400 line-through' : 'text-zinc-800 dark:text-zinc-100'}`}
             style={{ minHeight: '1.25rem' }}
-            onInput={(e) => { const t = e.target; t.style.height = 'auto'; t.style.height = `${Math.min(t.scrollHeight, 60)}px`; }}
+            onInput={(e) => { const t = e.target; t.style.height = 'auto'; t.style.height = `${Math.min(t.scrollHeight, 120)}px`; }}
           />
           {goal.deadline && (
             <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold ${getDeadlineColorClass(goal.deadline, goal.done)}`}>{formatDeadline(goal.deadline)}</span>
           )}
-          <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/goal:opacity-100">
-            <ActionButton size="sm" onClick={() => onPromoteQuick(goal.id)} className={isLinkedToQuick ? 'text-rose-500 bg-rose-50 dark:bg-rose-500/10' : ''} title={isLinkedToQuick ? 'Rimuovi da Quick Tasks' : 'Sincronizza con Quick Tasks'}><Icons.Zap className="h-2.5 w-2.5" /></ActionButton>
-            {!isProject && (isInTop3 || (hasFreeTop3Slot && !goal.done)) && (
-              <ActionButton size="sm" onClick={() => onToggleTop3(goal.id)} className={isInTop3 ? 'text-amber-600 bg-amber-100 dark:bg-amber-900/40' : ''} title={isInTop3 ? 'Rimuovi dai Top 3' : 'Top 3'}><Icons.Target className="h-2.5 w-2.5" /></ActionButton>
-            )}
-            <ActionButton size="sm" onClick={() => { setDeadlineInput(goal.deadline || ''); setDeadlineEditing(goal.id); }} className={goal.deadline ? 'text-amber-500 bg-amber-50 dark:bg-amber-500/10' : ''} title="Scadenza"><Icons.Calendar className="h-2.5 w-2.5" /></ActionButton>
-            <ActionButton size="sm" danger onClick={() => onDelete(goal.id)} title="Elimina"><Icons.X className="h-2.5 w-2.5" /></ActionButton>
+          <div ref={lgBarRef} className={`flex shrink-0 items-center gap-0.5 transition-opacity touch-manipulation ${lgActive ? 'opacity-100' : 'opacity-0 group-hover/goal:opacity-100'}`}>
+            {compactActions.map((act, i) => {
+              const ap = lgGetActionProps(i);
+              return (
+                <button key={i} data-action-idx={i} type="button" onClick={(e) => { if (lgHandledRef.current) { e.preventDefault(); return; } e.stopPropagation(); act.onClick(e); }} title={act.title} aria-label={act.title} className={`dashboard-action-btn p-1 rounded-xl ${act.className || ''} ${ap.className || ''}`}>
+                  {act.icon}
+                </button>
+              );
+            })}
           </div>
         </div>
         {deadlineEditing === goal.id && (
@@ -98,13 +110,13 @@ export function LifeGoalCard({
             />
 
             <div className="flex shrink-0 items-center gap-1 pl-2">
-              <ActionButton size="sm" onClick={() => onPromoteProject(goal.id)} className={isLinkedToProject ? 'text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10' : ''} title={isLinkedToProject ? 'Rimuovi da Progetti' : 'Sincronizza con Progetti'}>
+              <ActionButton size="sm" onClick={() => onPromoteProject(goal.id)} className={isLinkedToProject ? 'text-indigo-500 bg-indigo-50 dark:text-indigo-300 dark:bg-indigo-500/30 dark:ring-1 dark:ring-indigo-400/50' : ''} title={isLinkedToProject ? 'Rimuovi da Progetti' : 'Sincronizza con Progetti'}>
                 <Icons.Target className="h-3 w-3" />
               </ActionButton>
-              <ActionButton size="sm" onClick={() => setShowTasks(!showTasks)} className={showTasks ? 'text-zinc-800 bg-zinc-100 dark:bg-white/10 dark:text-white' : ''} title={showTasks ? 'Chiudi task' : 'Apri task'}>
+              <ActionButton size="sm" onClick={() => setShowTasks(!showTasks)} className={showTasks ? 'text-zinc-800 bg-zinc-100 dark:text-zinc-100 dark:bg-indigo-500/30 dark:ring-1 dark:ring-indigo-400/50' : ''} title={showTasks ? 'Chiudi task' : 'Apri task'}>
                 <Icons.ChevronDown className={`h-3 w-3 transition-transform duration-200 ${showTasks ? 'rotate-180' : ''}`} />
               </ActionButton>
-              <ActionButton size="sm" onClick={() => { setDeadlineInput(goal.deadline || ''); setDeadlineEditing(goal.id); }} className={goal.deadline ? 'text-amber-500 bg-amber-50 dark:bg-amber-500/10' : ''} title="Scadenza">
+              <ActionButton size="sm" onClick={() => { setDeadlineInput(goal.deadline || ''); setDeadlineEditing(goal.id); }} className={goal.deadline ? 'text-amber-500 bg-amber-50 dark:text-amber-300 dark:bg-amber-500/30 dark:ring-1 dark:ring-amber-400/50' : ''} title="Scadenza">
                 <Icons.Calendar className="h-3 w-3" />
               </ActionButton>
               <ActionButton size="sm" danger onClick={() => onDelete(goal.id)} title="Elimina">

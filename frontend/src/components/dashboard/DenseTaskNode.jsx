@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
+import { useLongPressActions } from '../../hooks/useLongPressActions';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { updateNodeInTree, removeNodeFromTree, createTaskNode } from './DashboardUtils';
 
@@ -31,7 +32,7 @@ function formatDeadline(v) {
 }
 
 function getDeadlineColorClass(deadlineKey, isDone) {
-  if (!deadlineKey || isDone) return 'text-gray-400 bg-gray-50 dark:bg-gray-800/50';
+  if (!deadlineKey || isDone) return 'text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50';
   const today = startOfDay(new Date());
   const dead = fromDateKey(deadlineKey);
   if (!dead) return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20';
@@ -265,6 +266,26 @@ export function DenseTaskNode({
     e.dataTransfer.effectAllowed = 'move';
   };
 
+  const taskActions = [
+    !hideTop3Button && !node.done && (isTop3 || hasFreeTop3Slot) && {
+      icon: <Icons.Target className="h-3 w-3" />,
+      onClick: (e) => { e.stopPropagation(); onToggleTop3(projectId, node.id); },
+      title: isTop3 ? 'Rimuovi da Focus' : 'Pin a Focus',
+      className: isTop3 ? 'text-amber-600 bg-amber-100 dark:text-amber-300 dark:bg-amber-500/30 dark:ring-1 dark:ring-amber-400/50' : 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20',
+    },
+    canAddChild && !node.done && {
+      icon: <Icons.Plus className="h-3 w-3" />,
+      onClick: (e) => { e.stopPropagation(); setOpenAdd(true); },
+      title: 'Subtask',
+      className: 'text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20',
+    },
+    { icon: <Icons.Calendar className="h-3 w-3" />, onClick: (e) => { e.stopPropagation(); setShowDeadline(true); }, title: 'Scadenza', className: 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5' },
+    { icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3 w-3"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>, onClick: (e) => { e.stopPropagation(); setEditing(true); }, title: 'Rinomina', className: 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5' },
+    { icon: <Icons.X className="h-3.5 w-3.5" />, onClick: (e) => { e.stopPropagation(); onDelete(node.id); }, title: 'Elimina', className: 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20' },
+  ].filter(Boolean);
+
+  const { active: longPressActive, barRef, zoneProps, getActionProps, handledByPointerUpRef } = useLongPressActions({ actions: taskActions });
+
   return (
     <div
       className={`group/task flex flex-col w-full relative ${showDeadline ? 'z-30' : 'z-auto'}`}
@@ -285,7 +306,8 @@ export function DenseTaskNode({
       <div
         draggable
         onDragStart={handleDragStart}
-        className="group/row relative flex min-h-[36px] w-full min-w-0 cursor-grab items-start gap-2 rounded-lg px-2.5 py-1 text-[13px] font-medium transition-all duration-200 hover:bg-zinc-100/80 active:cursor-grabbing dark:hover:bg-white/[0.04] sm:text-sm"
+        {...zoneProps}
+        className="group/row relative flex min-h-[36px] w-full min-w-0 cursor-grab items-center gap-2 rounded-lg px-2.5 py-1 text-[13px] font-medium transition-all duration-200 hover:bg-zinc-100/80 active:cursor-grabbing dark:hover:bg-white/[0.04] sm:text-sm"
       >
         {/* Chevron + checkbox (colonna fissa) */}
         <div className="flex shrink-0 items-start gap-2 pt-0.5">
@@ -296,12 +318,12 @@ export function DenseTaskNode({
               </button>
             ) : <span className="h-3 w-3" />}
           </div>
-          <div className="shrink-0 pt-0.5"><TaskCheckbox done={node.done} onClick={() => onToggle(node.id, !node.done)} /></div>
+          <div className="shrink-0"><TaskCheckbox done={node.done} onClick={() => onToggle(node.id, !node.done)} /></div>
         </div>
 
         {/* Titolo + azioni: su mobile in colonna (nessuna sovrapposizione), da sm in riga */}
-        <div className="flex min-w-0 w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-start sm:gap-2">
-          <div className="flex min-w-0 w-full flex-1 flex-wrap items-start gap-x-2 gap-y-1 py-0.5" onClick={() => !editing && onToggle(node.id, !node.done)}>
+        <div className="flex min-w-0 w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+          <div className="flex min-w-0 w-full flex-1 flex-wrap items-center gap-x-2 gap-y-1 py-0.5" onClick={() => !editing && onToggle(node.id, !node.done)}>
             {editing ? (
               <input
                 autoFocus
@@ -325,30 +347,26 @@ export function DenseTaskNode({
             )}
           </div>
 
-        <div className={`flex w-full shrink-0 items-center justify-end gap-0.5 sm:w-auto sm:shrink-0 sm:justify-end sm:pt-0.5 transition-all duration-200 ${isTop3 ? 'opacity-100 visible' : 'opacity-0 invisible group-hover/row:opacity-100 group-hover/row:visible'}`}>
-          {!hideTop3Button && !node.done && (isTop3 || hasFreeTop3Slot) && (
-            <button 
-              onClick={(e) => { e.stopPropagation(); onToggleTop3(projectId, node.id); }} 
-              className={`dashboard-action-btn ${isTop3 ? 'text-amber-600 bg-amber-100 dark:bg-amber-900/40' : 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'}`} 
-              title={isTop3 ? "Remove from Focus" : "Pin to Focus"}
-            >
-              <Icons.Target className="h-3 w-3" />
-            </button>
-          )}
-          {canAddChild && !node.done && (
-            <button onClick={(e) => { e.stopPropagation(); setOpenAdd(true); }} className="dashboard-action-btn text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20" title="Subtask">
-              <Icons.Plus className="h-3 w-3" />
-            </button>
-          )}
-          <button onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }} className="dashboard-action-btn text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5" title="Deadline">
-            <Icons.Calendar className="h-3 w-3" />
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); setEditing(true); }} className="dashboard-action-btn text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5" title="Rinomina">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3 w-3"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); onDelete(node.id); }} className="dashboard-action-btn text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" title="Elimina">
-            <Icons.X className="h-3.5 w-3.5" />
-          </button>
+        <div
+          ref={barRef}
+          className={`flex w-full shrink-0 items-center justify-end gap-0.5 sm:w-auto sm:shrink-0 sm:justify-end sm:pt-0.5 transition-all duration-200 touch-manipulation ${longPressActive || isTop3 ? 'opacity-100 visible' : 'opacity-0 invisible group-hover/row:opacity-100 group-hover/row:visible'}`}
+        >
+          {taskActions.map((act, i) => {
+            const ap = getActionProps(i);
+            return (
+              <button
+                key={i}
+                data-action-idx={i}
+                type="button"
+                onClick={(e) => { if (handledByPointerUpRef.current) { e.preventDefault(); return; } e.stopPropagation(); act.onClick(e); }}
+                title={act.title}
+                aria-label={act.title}
+                className={`dashboard-action-btn ${act.className || ''} ${ap.className || ''}`}
+              >
+                {act.icon}
+              </button>
+            );
+          })}
         </div>
         </div>
 

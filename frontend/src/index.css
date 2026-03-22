@@ -26,10 +26,10 @@ html.dark {
 
 html.dark body {
   background:
-    radial-gradient(circle at top left, rgba(99, 102, 241, 0.18), transparent 28%),
-    radial-gradient(circle at top right, rgba(56, 189, 248, 0.1), transparent 22%),
-    linear-gradient(180deg, #0b0e14 0%, #0e131b 100%);
-  color: #f1f5f9;
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.2), transparent 28%),
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 22%),
+    linear-gradient(180deg, #0a0d12 0%, #0d1117 100%);
+  color: #e2e8f0;
 }
 
 #root {
@@ -38,12 +38,12 @@ html.dark body {
 
 /* Dark mode scrollbar */
 html.dark {
-  scrollbar-color: #27272a transparent;
+  scrollbar-color: #3f3f46 transparent;
 }
 
 html.dark ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 html.dark ::-webkit-scrollbar-track {
@@ -51,12 +51,12 @@ html.dark ::-webkit-scrollbar-track {
 }
 
 html.dark ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: #404040;
   border-radius: 9999px;
 }
 
 html.dark ::-webkit-scrollbar-thumb:hover {
-  background: #52525b;
+  background: #525252;
 }
 
 /* Light scrollbar */
@@ -220,7 +220,7 @@ input[type=number] {
 
 /* Contrasto migliore per testo "completato" (WCAG) */
 .text-done {
-  @apply text-zinc-500 dark:text-zinc-400;
+  @apply text-zinc-500 dark:text-zinc-500;
 }
 
 @layer components {
@@ -237,7 +237,7 @@ input[type=number] {
 
   /* Section title */
   .dashboard-section-title {
-    @apply text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500 dark:text-zinc-500;
+    @apply text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500 dark:text-zinc-400;
   }
 
   /* Chip: badge neutro */
@@ -247,7 +247,7 @@ input[type=number] {
 
   /* Action button */
   .dashboard-action-btn {
-    @apply inline-flex items-center justify-center rounded-md p-1.5 text-zinc-400 transition-all duration-200 hover:bg-zinc-100 hover:text-zinc-700 active:scale-95 dark:text-zinc-500 dark:hover:bg-white/[0.08] dark:hover:text-zinc-200;
+    @apply inline-flex items-center justify-center rounded-xl p-1.5 text-zinc-400 transition-all duration-200 hover:bg-zinc-100 hover:text-zinc-700 active:scale-95 dark:text-zinc-400 dark:hover:bg-white/[0.08] dark:hover:text-zinc-100;
   }
 
   /* Primary Button (Linear-like solid) */

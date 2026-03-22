@@ -318,8 +318,10 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                                         {habit ? habit.title : 'Rimosso'}
                                       </span>
                                       <button
+                                        type="button"
                                         onClick={() => removeTimelineRoutine(todayKey, slotKey, r.id)}
-                                        className="absolute right-1 opacity-0 group-hover/task:opacity-100 p-1 text-zinc-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                                        className="absolute right-1 opacity-70 sm:opacity-0 sm:group-hover/task:opacity-100 p-1 text-zinc-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                                        aria-label="Rimuovi da timeline"
                                       >
                                         <Icons.X className="w-3 h-3" />
                                       </button>

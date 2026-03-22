@@ -26,7 +26,7 @@ export function TaskCheckbox({ done, onClick, className = '' }) {
 /**
  * KebabMenu — dropdown minimale con azioni contestuali
  */
-export function KebabMenu({ items, onOpenChange }) {
+export function KebabMenu({ items, onOpenChange, alwaysVisible = false }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -46,8 +46,8 @@ export function KebabMenu({ items, onOpenChange }) {
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
-        className="dashboard-action-btn opacity-0 group-hover:opacity-100"
-        title="Azioni"
+        className={`dashboard-action-btn ${alwaysVisible ? 'opacity-90' : 'opacity-0 group-hover:opacity-100'}`}
+        title="Azioni (Elimina progetto, scadenza)"
       >
         <Icons.MoreHorizontal className="h-3.5 w-3.5" />
       </button>

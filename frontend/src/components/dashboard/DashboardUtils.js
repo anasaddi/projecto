@@ -158,7 +158,7 @@ export function formatDeadline(v) {
 }
 
 export function getDeadlineColorClass(deadlineKey, isDone) {
-  if (!deadlineKey || isDone) return 'text-gray-400 bg-gray-50 dark:bg-gray-800/50';
+  if (!deadlineKey || isDone) return 'text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50';
   const today = startOfDay(new Date());
   const dead = fromDateKey(deadlineKey);
   if (!dead) return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20';

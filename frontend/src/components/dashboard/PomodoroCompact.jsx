@@ -56,7 +56,7 @@ export function PomodoroCompact() {
       </div>
 
       <div className="flex items-center justify-between z-10 mt-2">
-        <div className="text-3xl sm:text-4xl font-black tracking-tighter tabular-nums text-zinc-900 dark:text-zinc-50 leading-none">
+        <div className="text-3xl sm:text-4xl font-medium tracking-tighter tabular-nums text-zinc-900 dark:text-zinc-50 leading-none">
           {String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}
         </div>
         <div className="flex gap-2">

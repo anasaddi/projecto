@@ -87,26 +87,14 @@ export function syncMiddleware<T>(config: (set: SetState, get: GetState, api_sto
       if (syncTimeout) clearTimeout(syncTimeout);
       syncTimeout = setTimeout(async () => {
         if (navigator.onLine) {
-          // #region agent log
-          const _payloadJson = JSON.stringify(fullState);
-          const _payloadKb = Math.round(_payloadJson.length / 1024);
-          let _t0sync = Date.now();
-          fetch('http://127.0.0.1:7646/ingest/71e75ef7-a5d2-4c85-97a5-ec2ed680869f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6bd187'},body:JSON.stringify({sessionId:'6bd187',location:'syncMiddleware.ts:PUT_start',message:'PUT start',data:{payloadKb:_payloadKb,keys:Object.keys(fullState)},timestamp:Date.now()})}).catch(()=>{});
-          // #endregion
           try {
-            await api.training.updateDashboardState(fullState, { timeout: 15_000 });
-            // #region agent log
-            fetch('http://127.0.0.1:7646/ingest/71e75ef7-a5d2-4c85-97a5-ec2ed680869f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6bd187'},body:JSON.stringify({sessionId:'6bd187',location:'syncMiddleware.ts:PUT_done',message:'PUT done',data:{elapsedMs:Date.now()-_t0sync,payloadKb:_payloadKb},timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
+            await api.training.updateDashboardState(fullState, { timeout: 30_000 });
             isApplyingFromBC = true;
             set((s: unknown) => ({ ...(s as object), lastSavedAt: Date.now() }));
             setTimeout(() => {
               isApplyingFromBC = false;
             }, 0);
           } catch (err) {
-            // #region agent log
-            fetch('http://127.0.0.1:7646/ingest/71e75ef7-a5d2-4c85-97a5-ec2ed680869f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'6bd187'},body:JSON.stringify({sessionId:'6bd187',location:'syncMiddleware.ts:PUT_error',message:'PUT error',data:{error:String(err),elapsedMs:Date.now()-_t0sync,payloadKb:_payloadKb},timestamp:Date.now()})}).catch(()=>{});
-            // #endregion
             const { logError, showErrorToast } = await import('../utils/errorLog');
             logError({ action: 'sync', api: 'dashboard-state' }, err as Error, { offline: !navigator.onLine });
             if (navigator.onLine) showErrorToast('Sync non riuscito. Modifiche salvate in coda.');

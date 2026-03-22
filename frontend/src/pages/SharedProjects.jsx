@@ -63,7 +63,7 @@ function startOfDay(date = new Date()) {
 }
 
 function getDeadlineColorClass(deadlineKey, isDone) {
-  if (!deadlineKey || isDone) return 'text-gray-400 bg-gray-50 dark:bg-gray-800/50';
+  if (!deadlineKey || isDone) return 'text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50';
   const today = startOfDay(new Date());
   const dead = fromDateKey(deadlineKey);
   if (!dead) return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20';
@@ -335,7 +335,7 @@ function SharedListDashboard() {
                       )}
                     </button>
                   </div>
-                  <div className="mt-3 flex items-center gap-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="mt-3 flex items-center gap-2 text-indigo-600 dark:text-indigo-400 text-xs font-medium opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                     <Icons.ExternalLink className="w-3.5 h-3.5" />
                     Apri dashboard
                   </div>
@@ -406,9 +406,6 @@ export default function SharedProjects() {
   const applyingFromBCRef = useRef(false);
 
   const applyDashboardFromPayload = (msg) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7646/ingest/71e75ef7-a5d2-4c85-97a5-ec2ed680869f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3a9838'},body:JSON.stringify({sessionId:'3a9838',location:'SharedProjects.jsx:applyDashboardFromPayload',message:'applyDashboardFromPayload called',data:{msgType:msg?.type,hasData:!!msg?.data,dataKeys:msg?.data?Object.keys(msg.data):[],bonificiLen:Array.isArray(msg?.data?.bonifici)?msg.data.bonifici.length:null},timestamp:Date.now(),hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     if (msg.type === 'chat') {
       const newMsg = msg.data;
       setDashboard(prev => {
@@ -580,9 +577,6 @@ export default function SharedProjects() {
         const quickTasks = Array.isArray(payload?.quickTasks) ? payload.quickTasks : [];
         const chat = Array.isArray(payload?.chat) ? payload.chat : [];
         const bonifici = Array.isArray(payload?.bonifici) ? payload.bonifici : [];
-        // #region agent log
-        fetch('http://127.0.0.1:7646/ingest/71e75ef7-a5d2-4c85-97a5-ec2ed680869f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3a9838'},body:JSON.stringify({sessionId:'3a9838',location:'SharedProjects.jsx:initialLoad',message:'Initial API load',data:{bonificiLen:bonifici.length,title:data?.title,shareId:id,payloadKeys:payload?Object.keys(payload):[]},timestamp:Date.now(),hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
         setDashboard(prev => ({
           ...prev,
           projects,
@@ -628,9 +622,6 @@ export default function SharedProjects() {
 
   // Invio aggiornamenti: WebSocket + REST sempre (stessa comunicazione di project tasks). BroadcastChannel per sync tra tab.
   const sendUpdate = (newState) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7646/ingest/71e75ef7-a5d2-4c85-97a5-ec2ed680869f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3a9838'},body:JSON.stringify({sessionId:'3a9838',location:'SharedProjects.jsx:sendUpdate',message:'sendUpdate called',data:{bonificiLen:Array.isArray(newState?.bonifici)?newState.bonifici.length:null,projectsLen:Array.isArray(newState?.projects)?newState.projects.length:null},timestamp:Date.now(),hypothesisId:'E'})}).catch(()=>{});
-    // #endregion
     const data = {
       projects: Array.isArray(newState.projects) ? newState.projects : [],
       projectOrder: Array.isArray(newState.projects) ? newState.projects.map(p => p.id) : [],
@@ -659,10 +650,6 @@ export default function SharedProjects() {
   const updateLocal = (updater) => {
     const nextPartial = typeof updater === 'function' ? updater(dashboard) : updater;
     const nextState = { ...dashboard, ...nextPartial };
-    // #region agent log
-    if (nextPartial && 'bonifici' in nextPartial) fetch('http://127.0.0.1:7646/ingest/71e75ef7-a5d2-4c85-97a5-ec2ed680869f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3a9838'},body:JSON.stringify({sessionId:'3a9838',location:'SharedProjects.jsx:updateLocal',message:'updateLocal bonifici',data:{prevBonificiLen:Array.isArray(dashboard?.bonifici)?dashboard.bonifici.length:null,nextBonificiLen:Array.isArray(nextState?.bonifici)?nextState.bonifici.length:null},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
-
     setDashboard(nextState);
 
     // Inviamo l'aggiornamento al server (fire and forget)
@@ -888,8 +875,7 @@ export default function SharedProjects() {
                     Shared
                   </span>
                 </div>
-                <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Spazio di lavoro condiviso
+                <div className="flex flex-wrap items-center gap-2 text-sm">
                   <span className="rounded-full bg-zinc-100/80 px-2.5 py-1 font-mono text-[11px] text-zinc-500 dark:bg-white/[0.05] dark:text-zinc-400">/shared/{id}</span>
                   <button
                     type="button"
@@ -899,7 +885,7 @@ export default function SharedProjects() {
                   >
                     {linkCopied ? <span>Copiato!</span> : <><Icons.Copy className="w-3.5 h-3.5" /> Copia link</>}
                   </button>
-                </p>
+                </div>
               </div>
 
               <div className="flex flex-col items-end gap-4">
@@ -1097,7 +1083,7 @@ export default function SharedProjects() {
         </div>
 
         {/* SIDEBAR: QUICK TASKS + CHAT */}
-        <aside className="order-1 w-full shrink-0 space-y-6 pt-0 lg:w-80 lg:pt-[76px]">
+        <aside className="order-1 w-full shrink-0 space-y-6 pt-0 lg:w-80">
           {/* QUICK TASKS */}
           <div className="flex min-h-[340px] flex-col rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-6 shadow-[0_22px_50px_-38px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#141922]/82 dark:shadow-[0_30px_60px_-40px_rgba(0,0,0,0.6)]">
             <div className="flex items-center gap-2 mb-4">
@@ -1148,7 +1134,8 @@ export default function SharedProjects() {
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); deleteQuickTask(task.id); }}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
+                        className="opacity-70 sm:opacity-0 sm:group-hover:opacity-100 p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 dark:text-zinc-500 rounded-lg transition-all duration-200"
+                        aria-label="Elimina task"
                       >
                         <Icons.Trash className="w-3 h-3" />
                       </button>
@@ -1264,13 +1251,7 @@ export default function SharedProjects() {
       </div>
 
       {/* MODULO FINANZE in fondo (solo shared "nextcode" per titolo o id) */}
-      {(() => {
-        // #region agent log
-        const showFinanze = (dashboard.title && String(dashboard.title).toLowerCase().includes('nextcode')) || (id && String(id).toLowerCase().includes('nextcode'));
-        fetch('http://127.0.0.1:7646/ingest/71e75ef7-a5d2-4c85-97a5-ec2ed680869f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3a9838'},body:JSON.stringify({sessionId:'3a9838',location:'SharedProjects.jsx:FinanzeVisibility',message:'FinanzeSection visibility',data:{showFinanze,title:dashboard?.title,id,bonificiLen:(dashboard?.bonifici||[]).length},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        return showFinanze;
-      })() && (
+      {((dashboard.title && String(dashboard.title).toLowerCase().includes('nextcode')) || (id && String(id).toLowerCase().includes('nextcode'))) && (
         <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-8 md:px-10 pb-8">
           <FinanzeSection
             bonifici={dashboard.bonifici || []}

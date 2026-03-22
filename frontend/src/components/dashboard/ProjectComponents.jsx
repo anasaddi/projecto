@@ -59,7 +59,7 @@ export function StandardProjectCard({
       glow={expanded}
     >
       <div
-        className="group/header flex cursor-pointer items-start gap-3 p-5"
+        className="group/header flex cursor-pointer items-center gap-3 p-5"
         onClick={() => {
           const next = !expanded;
           setExpanded(next);
@@ -69,7 +69,7 @@ export function StandardProjectCard({
         <div className={`mt-0.5 h-12 w-1.5 shrink-0 rounded-full bg-gradient-to-b ${accentColor.bar} shadow-sm`} />
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center justify-between gap-3">
             <textarea
               ref={(el) => {
                 if (el) {
@@ -84,10 +84,10 @@ export function StandardProjectCard({
               }}
               onClick={(e) => e.stopPropagation()}
               rows={1}
-              className="min-h-[1.5rem] w-full resize-none overflow-visible bg-transparent py-0.5 text-[15px] font-semibold leading-snug tracking-tight text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-50"
+              className="min-h-[1.5rem] w-full resize-none overflow-visible bg-transparent py-0.5 text-[15px] font-semibold leading-snug tracking-tight text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-50 self-center"
             />
 
-            <div className="flex shrink-0 items-center gap-2 self-start pl-2">
+            <div className="flex shrink-0 items-center gap-2 self-center pl-2">
               {isShared && (
                 <Link 
                   to={`/shared/${shareId}`} 
@@ -100,7 +100,7 @@ export function StandardProjectCard({
               )}
 
               <div onClick={(e) => e.stopPropagation()}>
-                <KebabMenu items={menuItems} onOpenChange={setIsMenuOpen} />
+                <KebabMenu items={menuItems} onOpenChange={setIsMenuOpen} alwaysVisible />
               </div>
 
               <motion.div

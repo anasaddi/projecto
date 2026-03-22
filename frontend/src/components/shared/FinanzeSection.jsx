@@ -124,36 +124,36 @@ function BonificoTableRow({ b, onUpdateNetto, onRemove, disabled }) {
   const handleOthmanBlur = () => setOthmanInput('');
 
   return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/80 shadow-sm">
-      <div className="p-2.5 border-b border-gray-100 dark:border-gray-800">
-        <p className="text-[10px] text-gray-500 dark:text-gray-400 text-center">{dateFmt}</p>
-        <p className="text-lg font-bold text-gray-900 dark:text-white text-center tabular-nums mt-0.5">{fmtNum(calc.cifra)} €</p>
+    <div className="rounded-2xl border border-zinc-200/70 dark:border-white/[0.08] bg-white/[0.95] dark:bg-[#141922]/95 shadow-sm overflow-hidden">
+      <div className="p-2.5 border-b border-zinc-100 dark:border-white/[0.04]">
+        <p className="text-[10px] text-zinc-500 dark:text-zinc-400 text-center">{dateFmt}</p>
+        <p className="text-lg font-bold text-zinc-900 dark:text-zinc-50 text-center tabular-nums mt-0.5">{fmtNum(calc.cifra)} €</p>
       </div>
       <div className="p-2.5 space-y-1 text-xs">
-        <div className="flex justify-between text-gray-600 dark:text-gray-400">
+        <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
           <span>Imponibile 67%</span>
-          <span className="tabular-nums font-medium text-gray-800 dark:text-gray-200">{fmtNum(calc.imponibile)}</span>
+          <span className="tabular-nums font-medium text-zinc-800 dark:text-zinc-200">{fmtNum(calc.imponibile)}</span>
         </div>
-        <div className="flex justify-between text-gray-600 dark:text-gray-400">
+        <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
           <span>INPS 26,07%</span>
-          <span className="tabular-nums font-medium text-gray-800 dark:text-gray-200">{fmtNum(calc.inps)}</span>
+          <span className="tabular-nums font-medium text-zinc-800 dark:text-zinc-200">{fmtNum(calc.inps)}</span>
         </div>
-        <div className="flex justify-between text-gray-600 dark:text-gray-400">
+        <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
           <span>Imposta sost. 5%</span>
-          <span className="tabular-nums font-medium text-gray-800 dark:text-gray-200">{fmtNum(calc.impostaSostitutiva)}</span>
+          <span className="tabular-nums font-medium text-zinc-800 dark:text-zinc-200">{fmtNum(calc.impostaSostitutiva)}</span>
         </div>
-        <div className="flex justify-between pt-1.5 mt-1.5 border-t border-gray-100 dark:border-gray-800 font-semibold">
+        <div className="flex justify-between pt-1.5 mt-1.5 border-t border-zinc-100 dark:border-white/[0.04] font-semibold">
           <span className="text-emerald-600 dark:text-emerald-400">Netto</span>
           <span className="tabular-nums text-emerald-700 dark:text-emerald-300">{fmtNum(calc.netto)} €</span>
         </div>
         <div className="flex justify-between font-semibold">
-          <span className="text-gray-500 dark:text-gray-400">Tasse</span>
-          <span className="tabular-nums text-gray-700 dark:text-gray-300">{fmtNum(calc.tasse)} €</span>
+          <span className="text-zinc-500 dark:text-zinc-400">Tasse</span>
+          <span className="tabular-nums text-zinc-700 dark:text-zinc-300">{fmtNum(calc.tasse)} €</span>
         </div>
       </div>
-      <div className="px-2.5 py-2 grid grid-cols-2 gap-2 border-t border-gray-100 dark:border-gray-800">
+      <div className="px-2.5 py-2 grid grid-cols-2 gap-2 border-t border-zinc-100 dark:border-white/[0.04]">
         <div>
-          <label className="block text-[9px] font-semibold text-gray-500 dark:text-gray-400 mb-0.5">Anas</label>
+          <label className="block text-[9px] font-semibold text-zinc-500 dark:text-zinc-400 mb-0.5">Anas</label>
           <input
             type="text"
             inputMode="decimal"
@@ -162,11 +162,11 @@ function BonificoTableRow({ b, onUpdateNetto, onRemove, disabled }) {
             onBlur={handleAnasBlur}
             disabled={disabled}
             placeholder={fmtNum(calc.nettoAnas)}
-            className="w-full bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-xs font-medium tabular-nums outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            className="w-full bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200/70 dark:border-white/[0.08] rounded-xl px-2 py-1.5 text-xs font-medium tabular-nums outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
           />
         </div>
         <div>
-          <label className="block text-[9px] font-semibold text-gray-500 dark:text-gray-400 mb-0.5">Othman</label>
+          <label className="block text-[9px] font-semibold text-zinc-500 dark:text-zinc-400 mb-0.5">Othman</label>
           <input
             type="text"
             inputMode="decimal"
@@ -175,7 +175,7 @@ function BonificoTableRow({ b, onUpdateNetto, onRemove, disabled }) {
             onBlur={handleOthmanBlur}
             disabled={disabled}
             placeholder={fmtNum(calc.nettoOthman)}
-            className="w-full bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-xs font-medium tabular-nums outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            className="w-full bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200/70 dark:border-white/[0.08] rounded-xl px-2 py-1.5 text-xs font-medium tabular-nums outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
           />
         </div>
       </div>
@@ -184,7 +184,7 @@ function BonificoTableRow({ b, onUpdateNetto, onRemove, disabled }) {
           <button
             type="button"
             onClick={() => onRemove(b.id)}
-            className="text-[10px] text-gray-400 hover:text-red-500 flex items-center gap-1 transition-colors"
+            className="text-[10px] text-zinc-400 hover:text-red-500 dark:hover:text-red-400 flex items-center gap-1 transition-colors"
           >
             <Icons.Trash className="w-3 h-3" /> Elimina
           </button>
@@ -195,11 +195,6 @@ function BonificoTableRow({ b, onUpdateNetto, onRemove, disabled }) {
 }
 
 export default function FinanzeSection({ bonifici = [], onUpdate, disabled, defaultCollapsed = true }) {
-  // #region agent log
-  React.useEffect(() => {
-    fetch('http://127.0.0.1:7646/ingest/71e75ef7-a5d2-4c85-97a5-ec2ed680869f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3a9838'},body:JSON.stringify({sessionId:'3a9838',location:'FinanzeSection.jsx:mount',message:'FinanzeSection rendered',data:{bonificiLen:Array.isArray(bonifici)?bonifici.length:0,disabled},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
-  }, [bonifici?.length, disabled]);
-  // #endregion
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const [cifraInput, setCifraInput] = useState('');
   const [dateInput, setDateInput] = useState(toDateKey());
@@ -232,21 +227,21 @@ export default function FinanzeSection({ bonifici = [], onUpdate, disabled, defa
   const sortedBonifici = [...cleanBonifici].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   return (
-    <div className="mt-6 w-full rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/80 shadow-sm">
+    <div className="mt-6 w-full overflow-hidden rounded-[28px] border border-zinc-200/70 dark:border-white/[0.08] bg-white/[0.9] dark:bg-[#141922]/[0.9] backdrop-blur-2xl shadow-[0_24px_60px_-36px_rgba(15,23,42,0.25)] dark:shadow-[0_28px_60px_-36px_rgba(0,0,0,0.55)]">
       <button
         type="button"
         onClick={() => setCollapsed(!collapsed)}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
+        className="w-full flex items-center justify-between gap-3 px-5 py-4 hover:bg-zinc-50/80 dark:hover:bg-white/[0.03] transition-colors text-left border-b border-zinc-100/80 dark:border-white/[0.04]"
       >
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 shrink-0">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-zinc-100/90 dark:bg-white/[0.05] text-emerald-500 dark:text-emerald-400 shadow-sm ring-1 ring-white/60 dark:ring-white/[0.04]">
             <Icons.Euro className="w-4 h-4" />
           </div>
           <div className="min-w-0">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-800 dark:text-gray-100 truncate">
+            <h2 className="text-[15px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 truncate">
               Finanze · Forfettario
             </h2>
-            <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+            <p className="mt-0.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400 truncate">
               {cleanBonifici.length} bonifici · Anas {fmtNum(saldi.totAnas)} € · Othman {fmtNum(saldi.totOthman)} €
             </p>
           </div>
@@ -257,7 +252,7 @@ export default function FinanzeSection({ bonifici = [], onUpdate, disabled, defa
               {saldi.diff > 0 ? 'O→A' : 'A→O'} {fmtNum(Math.abs(saldi.diff))} €
             </span>
           )}
-          <span className="p-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-500">
+          <span className="p-1 rounded-xl bg-zinc-100/90 dark:bg-white/[0.06] text-zinc-500 dark:text-zinc-400">
             {collapsed ? <Icons.ChevronDown className="w-3.5 h-3.5" /> : <Icons.ChevronUp className="w-3.5 h-3.5" />}
           </span>
         </div>
@@ -272,20 +267,20 @@ export default function FinanzeSection({ bonifici = [], onUpdate, disabled, defa
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 pt-0 space-y-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="px-5 pb-5 pt-0 space-y-4 border-t border-zinc-100/80 dark:border-white/[0.04]">
               <div className="flex flex-wrap items-end gap-2 pt-3">
                 <div className="flex-1 min-w-[100px]">
-                  <label className="block text-[9px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-0.5">Data</label>
+                  <label className="block text-[9px] font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-0.5">Data</label>
                   <input
                     type="date"
                     value={dateInput}
                     onChange={(e) => setDateInput(e.target.value)}
                     disabled={disabled}
-                    className="w-full bg-white dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
+                    className="w-full bg-white dark:bg-white/[0.04] border border-zinc-200/70 dark:border-white/[0.08] rounded-xl px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:ring-emerald-500/20"
                   />
                 </div>
                 <div className="flex-1 min-w-[80px]">
-                  <label className="block text-[9px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-0.5">Cifra €</label>
+                  <label className="block text-[9px] font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-0.5">Cifra €</label>
                   <input
                     type="text"
                     inputMode="decimal"
@@ -294,14 +289,14 @@ export default function FinanzeSection({ bonifici = [], onUpdate, disabled, defa
                     onKeyDown={(e) => e.key === 'Enter' && addBonifico()}
                     disabled={disabled}
                     placeholder="15000"
-                    className="w-full bg-white dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
+                    className="w-full bg-white dark:bg-white/[0.04] border border-zinc-200/70 dark:border-white/[0.08] rounded-xl px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:ring-emerald-500/20"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={addBonifico}
                   disabled={disabled || !cifraInput}
-                  className="py-1.5 px-4 rounded-lg bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity flex items-center gap-1.5 shrink-0"
+                  className="py-1.5 px-4 rounded-xl bg-emerald-600 dark:bg-emerald-500 text-white text-xs font-semibold hover:bg-emerald-500 dark:hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1.5 shrink-0 shadow-sm shadow-emerald-500/25"
                 >
                   <Icons.Plus className="w-3.5 h-3.5" /> Aggiungi
                 </button>
@@ -328,7 +323,7 @@ export default function FinanzeSection({ bonifici = [], onUpdate, disabled, defa
                 </AnimatePresence>
               </div>
               {sortedBonifici.length === 0 && (
-                <div className="col-span-full py-8 text-center text-gray-400 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700">
+                <div className="col-span-full py-8 text-center text-zinc-500 dark:text-zinc-400 rounded-2xl border-2 border-dashed border-zinc-200/70 dark:border-white/[0.08]">
                   <Icons.Euro className="w-8 h-8 mx-auto mb-1.5 opacity-50" />
                   <p className="text-xs font-medium">Nessun bonifico</p>
                   <p className="text-[10px]">Data + Cifra → Aggiungi</p>

@@ -41,7 +41,7 @@ export function PrayersCountdowns({
               {countdowns.map(c => (
                 <div key={c.label} className="flex items-center gap-3">
                   <span className="text-xs text-zinc-500 w-10 shrink-0 font-semibold">{c.label}</span>
-                  <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300 tabular-nums shrink-0">{c.remaining}</span>
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 tabular-nums shrink-0">{c.remaining}</span>
                   <div className="w-16 h-1 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden shrink-0">
                     <div className="h-full bg-zinc-400 dark:bg-zinc-500 rounded-full transition-all" style={{ width: `${c.pct * 100}%` }} />
                   </div>
@@ -55,7 +55,7 @@ export function PrayersCountdowns({
             {countdowns.map(c => (
               <div key={c.label} className="flex items-center gap-2 px-3 py-1 rounded-lg bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/50 dark:border-white/[0.05]">
                 <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase">{c.label[0]}</span>
-                <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300 tabular-nums">{c.remaining}</span>
+                <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 tabular-nums">{c.remaining}</span>
               </div>
             ))}
           </div>
@@ -66,7 +66,7 @@ export function PrayersCountdowns({
               {countdowns.map(c => (
                 <div key={c.label} className="flex items-center gap-1.5 whitespace-nowrap bg-zinc-50 dark:bg-white/[0.03] px-2 py-1 rounded-md border border-zinc-100 dark:border-white/5">
                   <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-tighter">{c.label[0]}</span>
-                  <span className="text-[11px] font-black text-zinc-800 dark:text-zinc-200">{c.remaining}</span>
+                  <span className="text-[11px] font-medium text-zinc-800 dark:text-zinc-200">{c.remaining}</span>
                 </div>
               ))}
             </div>
