@@ -285,49 +285,47 @@ export function DenseTaskNode({
       <div
         draggable
         onDragStart={handleDragStart}
-        className="group/row task-row relative cursor-grab active:cursor-grabbing flex items-stretch"
+        className="group/row relative flex min-h-[36px] w-full min-w-0 cursor-grab items-start gap-2 rounded-lg px-2.5 py-1 text-[13px] font-medium transition-all duration-200 hover:bg-zinc-100/80 active:cursor-grabbing dark:hover:bg-white/[0.04] sm:text-sm"
       >
-        {/* Expand Toggle */}
-        <div className="flex h-4 w-3 shrink-0 items-center justify-center self-center">
-          {hasChildren ? (
-            <button type="button" onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }} className="text-zinc-400 transition-colors hover:text-zinc-600 dark:hover:text-zinc-300">
-              {expanded ? <Icons.ChevronDown className="h-3 w-3" /> : <Icons.ChevronRight className="h-3 w-3" />}
-            </button>
-          ) : <span className="h-3 w-3" />}
+        {/* Chevron + checkbox (colonna fissa) */}
+        <div className="flex shrink-0 items-start gap-2 pt-0.5">
+          <div className="flex h-4 w-3 shrink-0 items-center justify-center">
+            {hasChildren ? (
+              <button type="button" onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }} className="text-zinc-400 transition-colors hover:text-zinc-600 dark:hover:text-zinc-300">
+                {expanded ? <Icons.ChevronDown className="h-3 w-3" /> : <Icons.ChevronRight className="h-3 w-3" />}
+              </button>
+            ) : <span className="h-3 w-3" />}
+          </div>
+          <div className="shrink-0 pt-0.5"><TaskCheckbox done={node.done} onClick={() => onToggle(node.id, !node.done)} /></div>
         </div>
 
-        {/* Checkbox universale */}
-        <div className="self-center shrink-0"><TaskCheckbox done={node.done} onClick={() => onToggle(node.id, !node.done)} /></div>
+        {/* Titolo + azioni: su mobile in colonna (nessuna sovrapposizione), da sm in riga */}
+        <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 py-0.5" onClick={() => !editing && onToggle(node.id, !node.done)}>
+            {editing ? (
+              <input
+                autoFocus
+                defaultValue={node.title}
+                onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
+                className="min-w-0 flex-1 bg-transparent border-b border-indigo-400 outline-none text-xs py-0.5 text-zinc-900 dark:text-zinc-100"
+              />
+            ) : (
+              <span className={`min-w-0 max-w-full flex-1 text-xs leading-snug break-words ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-300 font-medium'}`} title={node.title}>
+                {node.title}
+              </span>
+            )}
+            {node.deadline && !editing && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
+                className={`shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-bold tabular-nums border border-transparent hover:border-current transition-colors ${getDeadlineColorClass(node.deadline, node.done)}`}
+              >
+                {formatDeadline(node.deadline)}
+              </button>
+            )}
+          </div>
 
-        {/* Title - seamless editing, full width */}
-        <div className="flex flex-1 min-w-0 items-center gap-2 py-0.5 overflow-hidden" onClick={() => !editing && onToggle(node.id, !node.done)}>
-          {editing ? (
-            <input
-              autoFocus
-              defaultValue={node.title}
-              onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
-              onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
-              className="flex-1 min-w-0 bg-transparent border-b border-indigo-400 outline-none text-xs py-0.5 text-zinc-900 dark:text-zinc-100"
-            />
-          ) : (
-            <span className={`flex-1 min-w-0 text-xs leading-snug whitespace-nowrap overflow-hidden text-ellipsis ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-300 font-medium'}`} title={node.title}>
-              {node.title}
-            </span>
-          )}
-          
-          {/* Deadline pill */}
-          {node.deadline && !editing && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
-              className={`shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-bold tabular-nums border border-transparent hover:border-current transition-colors ${getDeadlineColorClass(node.deadline, node.done)}`}
-            >
-              {formatDeadline(node.deadline)}
-            </button>
-          )}
-        </div>
-
-        {/* Hover Actions — flex con ml-auto, mai sovrapposto al titolo */}
-        <div className={`flex items-center gap-0.5 shrink-0 ml-auto pl-2 transition-all duration-200 ${isTop3 ? 'opacity-100 visible' : 'opacity-0 invisible group-hover/row:opacity-100 group-hover/row:visible'}`}>
+        <div className={`flex w-full shrink-0 items-center justify-end gap-0.5 pl-0 sm:w-auto sm:justify-start sm:pl-0 transition-all duration-200 ${isTop3 ? 'opacity-100 visible' : 'opacity-0 invisible group-hover/row:opacity-100 group-hover/row:visible'}`}>
           {!hideTop3Button && !node.done && (isTop3 || hasFreeTop3Slot) && (
             <button 
               onClick={(e) => { e.stopPropagation(); onToggleTop3(projectId, node.id); }} 
@@ -351,6 +349,7 @@ export function DenseTaskNode({
           <button onClick={(e) => { e.stopPropagation(); onDelete(node.id); }} className="dashboard-action-btn text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" title="Elimina">
             <Icons.X className="h-3.5 w-3.5" />
           </button>
+        </div>
         </div>
 
         {/* Inline Deadline Editor */}
