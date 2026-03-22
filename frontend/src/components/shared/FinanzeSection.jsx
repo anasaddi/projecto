@@ -195,6 +195,11 @@ function BonificoTableRow({ b, onUpdateNetto, onRemove, disabled }) {
 }
 
 export default function FinanzeSection({ bonifici = [], onUpdate, disabled, defaultCollapsed = true }) {
+  // #region agent log
+  React.useEffect(() => {
+    fetch('http://127.0.0.1:7646/ingest/71e75ef7-a5d2-4c85-97a5-ec2ed680869f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3a9838'},body:JSON.stringify({sessionId:'3a9838',location:'FinanzeSection.jsx:mount',message:'FinanzeSection rendered',data:{bonificiLen:Array.isArray(bonifici)?bonifici.length:0,disabled},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
+  }, [bonifici?.length, disabled]);
+  // #endregion
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const [cifraInput, setCifraInput] = useState('');
   const [dateInput, setDateInput] = useState(toDateKey());

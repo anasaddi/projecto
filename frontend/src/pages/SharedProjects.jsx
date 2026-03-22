@@ -402,6 +402,9 @@ export default function SharedProjects() {
   const applyingFromBCRef = useRef(false);
 
   const applyDashboardFromPayload = (msg) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7646/ingest/71e75ef7-a5d2-4c85-97a5-ec2ed680869f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3a9838'},body:JSON.stringify({sessionId:'3a9838',location:'SharedProjects.jsx:applyDashboardFromPayload',message:'applyDashboardFromPayload called',data:{msgType:msg?.type,hasData:!!msg?.data,dataKeys:msg?.data?Object.keys(msg.data):[],bonificiLen:Array.isArray(msg?.data?.bonifici)?msg.data.bonifici.length:null},timestamp:Date.now(),hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
     if (msg.type === 'chat') {
       const newMsg = msg.data;
       setDashboard(prev => {
@@ -573,6 +576,9 @@ export default function SharedProjects() {
         const quickTasks = Array.isArray(payload?.quickTasks) ? payload.quickTasks : [];
         const chat = Array.isArray(payload?.chat) ? payload.chat : [];
         const bonifici = Array.isArray(payload?.bonifici) ? payload.bonifici : [];
+        // #region agent log
+        fetch('http://127.0.0.1:7646/ingest/71e75ef7-a5d2-4c85-97a5-ec2ed680869f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3a9838'},body:JSON.stringify({sessionId:'3a9838',location:'SharedProjects.jsx:initialLoad',message:'Initial API load',data:{bonificiLen:bonifici.length,title:data?.title,shareId:id,payloadKeys:payload?Object.keys(payload):[]},timestamp:Date.now(),hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
         setDashboard(prev => ({
           ...prev,
           projects,
@@ -618,6 +624,9 @@ export default function SharedProjects() {
 
   // Invio aggiornamenti: WebSocket + REST sempre (stessa comunicazione di project tasks). BroadcastChannel per sync tra tab.
   const sendUpdate = (newState) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7646/ingest/71e75ef7-a5d2-4c85-97a5-ec2ed680869f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3a9838'},body:JSON.stringify({sessionId:'3a9838',location:'SharedProjects.jsx:sendUpdate',message:'sendUpdate called',data:{bonificiLen:Array.isArray(newState?.bonifici)?newState.bonifici.length:null,projectsLen:Array.isArray(newState?.projects)?newState.projects.length:null},timestamp:Date.now(),hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
     const data = {
       projects: Array.isArray(newState.projects) ? newState.projects : [],
       projectOrder: Array.isArray(newState.projects) ? newState.projects.map(p => p.id) : [],
@@ -646,6 +655,9 @@ export default function SharedProjects() {
   const updateLocal = (updater) => {
     const nextPartial = typeof updater === 'function' ? updater(dashboard) : updater;
     const nextState = { ...dashboard, ...nextPartial };
+    // #region agent log
+    if (nextPartial && 'bonifici' in nextPartial) fetch('http://127.0.0.1:7646/ingest/71e75ef7-a5d2-4c85-97a5-ec2ed680869f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3a9838'},body:JSON.stringify({sessionId:'3a9838',location:'SharedProjects.jsx:updateLocal',message:'updateLocal bonifici',data:{prevBonificiLen:Array.isArray(dashboard?.bonifici)?dashboard.bonifici.length:null,nextBonificiLen:Array.isArray(nextState?.bonifici)?nextState.bonifici.length:null},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
 
     setDashboard(nextState);
 
@@ -1248,7 +1260,13 @@ export default function SharedProjects() {
       </div>
 
       {/* MODULO FINANZE in fondo (solo shared "nextcode" per titolo o id) */}
-      {((dashboard.title && String(dashboard.title).toLowerCase().includes('nextcode')) || (id && String(id).toLowerCase().includes('nextcode'))) && (
+      {(() => {
+        // #region agent log
+        const showFinanze = (dashboard.title && String(dashboard.title).toLowerCase().includes('nextcode')) || (id && String(id).toLowerCase().includes('nextcode'));
+        fetch('http://127.0.0.1:7646/ingest/71e75ef7-a5d2-4c85-97a5-ec2ed680869f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3a9838'},body:JSON.stringify({sessionId:'3a9838',location:'SharedProjects.jsx:FinanzeVisibility',message:'FinanzeSection visibility',data:{showFinanze,title:dashboard?.title,id,bonificiLen:(dashboard?.bonifici||[]).length},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        return showFinanze;
+      })() && (
         <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-8 md:px-10 pb-8">
           <FinanzeSection
             bonifici={dashboard.bonifici || []}
