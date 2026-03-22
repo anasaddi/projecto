@@ -209,20 +209,18 @@ export function CreateProjectCard({ onClick, className = '' }) {
       onClick={onClick}
       whileHover={{ scale: 1.01, y: -2 }}
       whileTap={{ scale: 0.98 }}
-      className={`group relative flex h-full min-h-[92px] w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-dashed border-zinc-300/90 bg-white/[0.72] p-4 shadow-sm shadow-zinc-200/30 transition-all hover:border-indigo-400/80 hover:bg-indigo-50/40 hover:shadow-[0_20px_40px_-30px_rgba(99,102,241,0.25)] dark:border-white/[0.14] dark:bg-[#141922]/70 dark:hover:border-indigo-500/40 dark:hover:bg-indigo-500/[0.06] ${className}`}
+      className={`group relative flex h-full min-h-[5.5rem] w-full flex-row items-center justify-center gap-4 overflow-hidden rounded-xl border border-dashed border-zinc-200/90 bg-white/[0.6] p-3 shadow-none transition-all hover:border-indigo-400/80 hover:bg-indigo-50/40 dark:border-white/[0.1] dark:bg-white/[0.02] dark:hover:bg-indigo-500/[0.06] ${className}`}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/0 via-violet-500/0 to-sky-500/0 transition-all duration-500 group-hover:from-indigo-500/6 group-hover:via-violet-500/6 group-hover:to-sky-500/6" />
-      
-      <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-zinc-200 to-zinc-300 shadow-sm transition-all duration-300 group-hover:from-indigo-500 group-hover:to-violet-600 group-hover:shadow-md group-hover:shadow-indigo-500/20 dark:from-white/[0.06] dark:to-white/[0.12]">
-        <Icons.Plus className="h-5 w-5 text-zinc-500 transition-colors group-hover:text-white dark:text-zinc-400" />
+      <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 dark:bg-white/5 transition-all duration-300 group-hover:bg-indigo-500 group-hover:text-white group-hover:shadow-md group-hover:shadow-indigo-500/20">
+        <Icons.Plus className="h-4 w-4 text-zinc-400 group-hover:text-white" />
       </div>
       
-      <div className="relative text-center px-1">
-        <p className="text-[15px] font-semibold tracking-tight text-zinc-800 transition-colors group-hover:text-indigo-600 dark:text-zinc-200 dark:group-hover:text-indigo-400">
+      <div className="relative text-left">
+        <p className="text-[13px] font-bold tracking-tight text-zinc-700 transition-colors group-hover:text-indigo-600 dark:text-zinc-200 dark:group-hover:text-indigo-400">
           Nuovo Progetto
         </p>
-        <p className="mt-1 text-[11px] font-medium text-zinc-500 dark:text-zinc-500">
-          Crea una nuova colonna di lavoro
+        <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500">
+          Crea un'unità di lavoro
         </p>
       </div>
     </motion.button>

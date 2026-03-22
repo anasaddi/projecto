@@ -124,7 +124,7 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                 );
               })}
               
-              <div className="flex min-h-[5.75rem]">
+              <div className="flex xl:col-span-2 min-h-[5.5rem]">
                 <CreateProjectCard onClick={createProject} className="flex-1" />
               </div>
             </div>

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Icons } from './Icons';
 
 import { useGlobalConfig } from '../../context/GlobalConfigContext';
+import { Card, CardHeader, CardBody } from './Card';
 
 const DEFAULT_PRAYERS = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
@@ -101,38 +102,42 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
   }, [heatmapDays]);
 
   return (
-    <div className="dashboard-panel p-5 flex flex-col gap-4 select-none">
-      <div className="flex justify-between items-center">
-        <h3 className="flex items-center gap-1.5 dashboard-section-title text-emerald-500 dark:text-emerald-400">
-          <Icons.Flame className="w-3.5 h-3.5" /> Ultimi 30 giorni
-        </h3>
-        {streak > 0 && (
-          <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-            {streak}d streak
-          </span>
-        )}
-      </div>
-      <div className="grid grid-cols-10 gap-2">
-        {heatmapDays.map(({ key, score, isToday }) => (
-          <div
-            key={key}
-            title={`${Math.round(score * 100)}% · ${key}`}
-            className={`w-5 h-5 rounded-md ${getColor(score)} ${isToday ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-indigo-400 ring-offset-white dark:ring-offset-[#161920]' : ''} transition-colors`}
-          />
-        ))}
-      </div>
-      <div className="flex items-center gap-2 text-[9px] text-zinc-500 dark:text-zinc-400">
-        <span>Meno</span>
-        <div className="flex items-center gap-0.5">
-          <div className="w-3 h-3 rounded-[2px] bg-zinc-100 dark:bg-white/[0.04]" title="0%" />
-          <div className="w-3 h-3 rounded-[2px] bg-amber-200 dark:bg-amber-500/40" title="&gt;0%" />
-          <div className="w-3 h-3 rounded-[2px] bg-amber-400 dark:bg-amber-500" title="&ge;40%" />
-          <div className="w-3 h-3 rounded-[2px] bg-emerald-500 dark:bg-emerald-400" title="&ge;65%" />
-          <div className="w-3 h-3 rounded-[2px] bg-emerald-600 dark:bg-emerald-500" title="&ge;90%" />
+    <Card className="flex flex-col select-none">
+      <CardHeader
+        icon={Icons.Flame}
+        iconColor="text-emerald-500"
+        title="Ultimi 30 giorni"
+        action={
+          streak > 0 && (
+            <span className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+              {streak}d streak
+            </span>
+          )
+        }
+      />
+      <CardBody padding="normal" className="flex flex-col gap-4">
+        <div className="grid grid-cols-10 gap-2">
+          {heatmapDays.map(({ key, score, isToday }) => (
+            <div
+              key={key}
+              title={`${Math.round(score * 100)}% · ${key}`}
+              className={`w-5 h-5 rounded-md ${getColor(score)} ${isToday ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-indigo-400 ring-offset-white dark:ring-offset-[#161920]' : ''} transition-colors`}
+            />
+          ))}
         </div>
-        <span>Più</span>
-      </div>
-      <LightAnalyticsInner dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} now={now} PRAYERS={PRAYERS} />
-    </div>
+        <div className="flex items-center gap-2 text-[9px] text-zinc-500 dark:text-zinc-400">
+          <span>Meno</span>
+          <div className="flex items-center gap-0.5">
+            <div className="w-3 h-3 rounded-[2px] bg-zinc-100 dark:bg-white/[0.04]" title="0%" />
+            <div className="w-3 h-3 rounded-[2px] bg-amber-200 dark:bg-amber-500/40" title="&gt;0%" />
+            <div className="w-3 h-3 rounded-[2px] bg-amber-400 dark:bg-amber-500" title="&ge;40%" />
+            <div className="w-3 h-3 rounded-[2px] bg-emerald-500 dark:bg-emerald-400" title="&ge;65%" />
+            <div className="w-3 h-3 rounded-[2px] bg-emerald-600 dark:bg-emerald-500" title="&ge;90%" />
+          </div>
+          <span>Più</span>
+        </div>
+        <LightAnalyticsInner dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} now={now} PRAYERS={PRAYERS} />
+      </CardBody>
+    </Card>
   );
 }

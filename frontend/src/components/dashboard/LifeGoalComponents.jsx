@@ -56,7 +56,7 @@ export function LifeGoalCard({
             e.dataTransfer.setData('application/json', JSON.stringify({ type: 'lifeGoal', goalId: goal.id }));
             e.dataTransfer.effectAllowed = 'move';
           }}
-          className={`group/goal flex items-start gap-2 rounded-2xl border border-zinc-200/70 bg-white/[0.9] px-3 py-2 shadow-sm shadow-zinc-200/35 transition-all hover:border-zinc-300 hover:shadow-md dark:border-white/[0.08] dark:bg-[#141922]/80 min-h-[2.5rem] ${deadlineEditing === goal.id ? 'z-30' : 'z-auto'}`}
+          className={`group/goal flex items-start gap-2 rounded-2xl border border-zinc-200/70 bg-white px-3 py-2 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md dark:border-white/[0.08] dark:bg-[#0b0e14]/70 min-h-[2.5rem] ${deadlineEditing === goal.id ? 'z-30' : 'z-auto'}`}
         >
           <button type="button" onClick={() => onToggle(goal.id, !goal.done)} className={`shrink-0 mt-0.5 rounded-xl p-1 transition-all ${goal.done ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-zinc-100 text-transparent hover:bg-zinc-200 dark:bg-white/5'}`}>
             <Icons.CheckCircle className="h-2.5 w-2.5" />
@@ -99,7 +99,7 @@ export function LifeGoalCard({
         e.dataTransfer.setData('application/json', JSON.stringify({ type: 'lifeGoal', goalId: goal.id }));
         e.dataTransfer.effectAllowed = 'move';
       }}
-      className={`group/goal relative flex flex-col overflow-hidden rounded-[28px] border border-zinc-200/70 bg-white/[0.92] shadow-[0_22px_50px_-34px_rgba(15,23,42,0.22)] transition-all hover:border-zinc-300 hover:shadow-[0_26px_60px_-36px_rgba(79,70,229,0.22)] dark:border-white/[0.08] dark:bg-[#141922]/88 dark:shadow-[0_30px_60px_-38px_rgba(0,0,0,0.55)] ${deadlineEditing === goal.id ? 'z-30' : 'z-auto'}`}
+      className={`group/goal relative flex flex-col overflow-hidden rounded-[28px] border border-zinc-200/70 bg-white shadow-sm transition-all hover:border-zinc-300 hover:shadow-[0_26px_60px_-36px_rgba(79,70,229,0.22)] dark:border-white/[0.08] dark:bg-[#0b0e14]/70 dark:shadow-none ${deadlineEditing === goal.id ? 'z-30' : 'z-auto'}`}
     >
       <div className="flex items-start gap-3 p-5">
         <div className={`mt-0.5 h-12 w-1.5 shrink-0 rounded-full bg-gradient-to-b ${accentGradient}`} />

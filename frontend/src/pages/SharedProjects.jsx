@@ -920,7 +920,7 @@ export default function SharedProjects() {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-[26px] border border-zinc-200/70 bg-zinc-50/70 p-5 shadow-inner shadow-white/50 dark:border-white/[0.06] dark:bg-white/[0.02]"
+                className="rounded-[26px] border border-zinc-200/70 bg-zinc-50/70 p-5 shadow-inner dark:border-white/[0.06] dark:bg-white/[0.02]"
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -1252,7 +1252,7 @@ export default function SharedProjects() {
 
       {/* MODULO FINANZE in fondo (solo shared "nextcode" per titolo o id) */}
       {((dashboard.title && String(dashboard.title).toLowerCase().includes('nextcode')) || (id && String(id).toLowerCase().includes('nextcode'))) && (
-        <div className="max-w-[1400px] mx-auto w-full">
+        <div className="max-w-[1440px] mx-auto w-full">
           <FinanzeSection
             bonifici={dashboard.bonifici || []}
             onUpdate={(bonifici) => updateLocal({ bonifici })}
