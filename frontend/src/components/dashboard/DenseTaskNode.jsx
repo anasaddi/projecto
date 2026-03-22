@@ -300,7 +300,7 @@ export function DenseTaskNode({
         <div className="self-center shrink-0"><TaskCheckbox done={node.done} onClick={() => onToggle(node.id, !node.done)} /></div>
 
         {/* Title - seamless editing, full width */}
-        <div className="flex flex-1 min-w-0 items-center gap-2 py-0.5" onClick={() => !editing && onToggle(node.id, !node.done)}>
+        <div className="flex flex-1 min-w-0 items-center gap-2 py-0.5 overflow-hidden" onClick={() => !editing && onToggle(node.id, !node.done)}>
           {editing ? (
             <input
               autoFocus
@@ -310,7 +310,7 @@ export function DenseTaskNode({
               className="flex-1 min-w-0 bg-transparent border-b border-indigo-400 outline-none text-xs py-0.5 text-zinc-900 dark:text-zinc-100"
             />
           ) : (
-            <span className={`flex-1 min-w-0 text-xs leading-snug line-clamp-2 break-words ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-300 font-medium'}`} title={node.title}>
+            <span className={`flex-1 min-w-0 text-xs leading-snug whitespace-nowrap overflow-hidden text-ellipsis ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-300 font-medium'}`} title={node.title}>
               {node.title}
             </span>
           )}

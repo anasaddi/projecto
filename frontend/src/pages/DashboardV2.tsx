@@ -16,6 +16,16 @@ import { LifeGoalsSection } from '../components/dashboard/LifeGoalsSection';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { HabitSkeleton, ProjectSkeleton, Top3Skeleton, QuickTaskSkeleton } from '../components/dashboard/SkeletonSection';
 
+// #region agent log - Debug React #130
+const components = { Icons, PomodoroCompact, FocusHeatmap, PrayersCountdowns, DailyTimelineWidget2, QuickTasksSection, Top3Section, HabitsSection, ProjectsSection, LifeGoalsSection, ConfirmModal, HabitSkeleton, ProjectSkeleton, Top3Skeleton, QuickTaskSkeleton };
+Object.entries(components).forEach(([name, comp]) => {
+  if (comp === undefined) {
+    fetch('http://127.0.0.1:7646/ingest/71e75ef7-a5d2-4c85-97a5-ec2ed680869f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3a9838'},body:JSON.stringify({sessionId:'3a9838',location:'DashboardV2.tsx:imports',message:'Component is undefined',data:{componentName:name},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
+    console.error(`DEBUG: Component ${name} is undefined`);
+  }
+});
+// #endregion
+
 import {
   STORAGE_KEY,
   toDateKey,
