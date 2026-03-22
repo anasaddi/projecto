@@ -26,10 +26,10 @@ html.dark {
 
 html.dark body {
   background:
-    radial-gradient(circle at top left, rgba(99, 102, 241, 0.2), transparent 28%),
-    radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 22%),
-    linear-gradient(180deg, #0a0d12 0%, #0d1117 100%);
-  color: #e2e8f0;
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.1), transparent 22%),
+    linear-gradient(180deg, #0c0f14 0%, #0f1319 100%);
+  color: #d4d4d8;
 }
 
 #root {
@@ -227,12 +227,12 @@ input[type=number] {
 
   /* Panel: card contenitore principale (Premium Glass/Solid Hybrid) */
   .dashboard-panel {
-    @apply rounded-xl border border-zinc-200/60 bg-white/90 backdrop-blur-xl shadow-sm dark:border-white/[0.06] dark:bg-[#12161f]/80 dark:shadow-2xl dark:shadow-black/60;
+    @apply rounded-xl border border-zinc-200/60 bg-white/90 backdrop-blur-xl shadow-sm dark:border-zinc-700/50 dark:bg-[#131820]/90 dark:shadow-2xl dark:shadow-black/60;
   }
 
   /* Panel muted: card annidata (nested) */
   .dashboard-panel-muted {
-    @apply rounded-lg border border-zinc-900/[0.04] bg-zinc-50/50 dark:border-white/[0.03] dark:bg-white/[0.02];
+    @apply rounded-lg border border-zinc-900/[0.04] bg-zinc-50/50 dark:border-white/[0.04] dark:bg-white/[0.02];
   }
 
   /* Section title */

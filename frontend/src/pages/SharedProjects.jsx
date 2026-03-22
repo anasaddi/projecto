@@ -203,7 +203,7 @@ function SharedListDashboard() {
               Shared workspace
             </span>
           </div>
-          <h1 className="mb-2 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">I miei Condivisi</h1>
+          <h1 className="mb-2 text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">I miei Condivisi</h1>
           <p className="max-w-2xl text-sm font-medium text-gray-500 dark:text-gray-400">Dashboard condivise collegate alla tua area, con accesso rapido, avanzamento e strumenti collaborativi.</p>
         </header>
 
@@ -294,7 +294,7 @@ function SharedListDashboard() {
                   className="group block rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-5 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.2)] backdrop-blur-2xl transition-all hover:-translate-y-0.5 hover:border-indigo-300/80 hover:shadow-[0_24px_60px_-38px_rgba(99,102,241,0.18)] dark:border-white/[0.08] dark:bg-[#141922]/82 dark:hover:border-indigo-500/35 dark:hover:shadow-[0_28px_60px_-38px_rgba(0,0,0,0.62)]"
                 >
                   <div className="flex items-start justify-between gap-4 mb-3">
-                    <h3 className="flex-1 truncate text-[15px] font-semibold tracking-tight text-gray-900 dark:text-white">{title}</h3>
+                    <h3 className="flex-1 truncate text-[15px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">{title}</h3>
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"
@@ -815,7 +815,7 @@ export default function SharedProjects() {
               <Icons.Lock className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
             </div>
           </div>
-          <h2 className="text-xl font-bold text-center text-gray-900 dark:text-white mb-2">Accesso protetto</h2>
+          <h2 className="text-xl font-bold text-center text-zinc-900 dark:text-zinc-100 mb-2">Accesso protetto</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
             Inserisci la password per accedere a questo spazio condiviso
           </p>

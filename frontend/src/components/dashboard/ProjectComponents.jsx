@@ -66,10 +66,10 @@ export function StandardProjectCard({
           onToggleExpand?.(next);
         }}
       >
-        <div className={`mt-0.5 h-12 w-1.5 shrink-0 rounded-full bg-gradient-to-b ${accentColor.bar} shadow-sm`} />
+        <div className={`h-12 w-1.5 shrink-0 self-center rounded-full bg-gradient-to-b ${accentColor.bar} shadow-sm`} />
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1 flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
             <textarea
               ref={(el) => {
                 if (el) {
@@ -84,61 +84,41 @@ export function StandardProjectCard({
               }}
               onClick={(e) => e.stopPropagation()}
               rows={1}
-              className="min-h-[1.5rem] w-full resize-none overflow-visible bg-transparent py-0.5 text-[15px] font-semibold leading-snug tracking-tight text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-50 self-center"
+              className="min-h-[1.5rem] w-full min-w-[80px] resize-none overflow-visible bg-transparent py-0.5 text-[15px] font-semibold leading-snug tracking-tight text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100"
             />
-
-            <div className="flex shrink-0 items-center gap-2 self-center pl-2">
-              {isShared && (
-                <Link 
-                  to={`/shared/${shareId}`} 
-                  onClick={(e) => e.stopPropagation()} 
-                  className="rounded-xl border border-transparent p-2 text-zinc-400 transition-colors hover:border-zinc-200 hover:bg-zinc-100/90 hover:text-indigo-500 dark:hover:border-white/[0.08] dark:hover:bg-white/[0.06]"
-                  title="Apri condivisa"
-                >
-                  <Icons.ExternalLink className="h-3.5 w-3.5" />
-                </Link>
-              )}
-
-              <div onClick={(e) => e.stopPropagation()}>
-                <KebabMenu items={menuItems} onOpenChange={setIsMenuOpen} alwaysVisible />
-              </div>
-
-              <motion.div
-                animate={{ rotate: expanded ? 180 : 0 }}
-                transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
-                className="rounded-xl border border-transparent p-1.5 text-zinc-400 transition-colors group-hover/header:bg-zinc-100/90 group-hover/header:text-zinc-600 dark:group-hover/header:bg-white/[0.06] dark:group-hover/header:text-zinc-300"
-              >
-                <Icons.ChevronDown className="h-4 w-4" />
-              </motion.div>
-            </div>
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Badge variant="default" size="sm">
-              <span className={accentColor.text}>Project</span>
-            </Badge>
-            <Badge variant={percentage === 100 && totalTasks > 0 ? 'success' : 'primary'} size="sm">
-              {completedTasks}/{totalTasks || 0} task
-            </Badge>
             {project.deadline && projectDeadlineEditing !== project.id && (
-              <Badge 
-                variant={isPastDeadline ? 'danger' : 'warning'}
-                size="sm"
-              >
+              <Badge variant={isPastDeadline ? 'danger' : 'warning'} size="sm">
                 <Icons.Calendar className="h-3 w-3" />
                 <span>{formatDeadline(project.deadline)}</span>
                 {isPastDeadline && <span className="ml-0.5">!</span>}
               </Badge>
             )}
-            <div className="min-w-[120px] flex-1 sm:max-w-[220px]">
-              <ProgressBar 
-                value={percentage} 
-                max={100} 
-                size="sm" 
-                showLabel
-                color={accent}
-              />
+            <div className="min-w-[100px] flex-1 sm:max-w-[180px]">
+              <ProgressBar value={percentage} max={100} size="sm" showLabel color={accent} />
             </div>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2 pl-2">
+            {isShared && (
+              <Link
+                to={`/shared/${shareId}`}
+                onClick={(e) => e.stopPropagation()}
+                className="rounded-xl border border-transparent p-2 text-zinc-400 transition-colors hover:border-zinc-200 hover:bg-zinc-100/90 hover:text-indigo-500 dark:hover:border-white/[0.08] dark:hover:bg-white/[0.06]"
+                title="Apri condivisa"
+              >
+                <Icons.ExternalLink className="h-3.5 w-3.5" />
+              </Link>
+            )}
+            <div onClick={(e) => e.stopPropagation()}>
+              <KebabMenu items={menuItems} onOpenChange={setIsMenuOpen} alwaysVisible />
+            </div>
+            <motion.div
+              animate={{ rotate: expanded ? 180 : 0 }}
+              transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
+              className="rounded-xl border border-transparent p-1.5 text-zinc-400 transition-colors group-hover/header:bg-zinc-100/90 group-hover/header:text-zinc-600 dark:group-hover/header:bg-white/[0.06] dark:group-hover/header:text-zinc-300"
+            >
+              <Icons.ChevronDown className="h-4 w-4" />
+            </motion.div>
           </div>
         </div>
 

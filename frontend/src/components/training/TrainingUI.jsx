@@ -18,7 +18,7 @@ export const SectionHeader = ({ icon: Icon, title, subtitle, colorClass }) => (
       <Icon size={18} className="text-white" />
     </div>
     <div>
-      <h3 className="text-[14px] font-bold text-zinc-900 dark:text-white leading-tight tracking-tight">{title}</h3>
+      <h3 className="text-[14px] font-bold text-zinc-900 dark:text-zinc-100 leading-tight tracking-tight">{title}</h3>
       <p className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">{subtitle}</p>
     </div>
   </div>

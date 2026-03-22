@@ -124,7 +124,7 @@ function BonificoTableRow({ b, onUpdateNetto, onRemove, disabled }) {
   const handleOthmanBlur = () => setOthmanInput('');
 
   return (
-    <div className="rounded-2xl border border-zinc-200/70 dark:border-white/[0.08] bg-white/[0.95] dark:bg-[#141922]/95 shadow-sm overflow-hidden">
+    <div className="rounded-2xl border border-zinc-200/70 dark:border-zinc-700/50 bg-white/[0.95] dark:bg-[#131820]/95 shadow-sm overflow-hidden">
       <div className="p-2.5 border-b border-zinc-100 dark:border-white/[0.04]">
         <p className="text-[10px] text-zinc-500 dark:text-zinc-400 text-center">{dateFmt}</p>
         <p className="text-lg font-bold text-zinc-900 dark:text-zinc-50 text-center tabular-nums mt-0.5">{fmtNum(calc.cifra)} €</p>
@@ -227,18 +227,18 @@ export default function FinanzeSection({ bonifici = [], onUpdate, disabled, defa
   const sortedBonifici = [...cleanBonifici].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   return (
-    <div className="mt-6 w-full overflow-hidden rounded-[28px] border border-zinc-200/70 dark:border-white/[0.08] bg-white/[0.9] dark:bg-[#141922]/[0.9] backdrop-blur-2xl shadow-[0_24px_60px_-36px_rgba(15,23,42,0.25)] dark:shadow-[0_28px_60px_-36px_rgba(0,0,0,0.55)]">
+    <div className="mt-6 w-full overflow-hidden rounded-[28px] border border-zinc-200/70 dark:border-zinc-700/50 bg-white/[0.9] dark:bg-[#131820]/95 backdrop-blur-2xl shadow-[0_24px_60px_-36px_rgba(15,23,42,0.25)] dark:shadow-[0_28px_60px_-36px_rgba(0,0,0,0.55)]">
       <button
         type="button"
         onClick={() => setCollapsed(!collapsed)}
-        className="w-full flex items-center justify-between gap-3 px-5 py-4 hover:bg-zinc-50/80 dark:hover:bg-white/[0.03] transition-colors text-left border-b border-zinc-100/80 dark:border-white/[0.04]"
+        className="w-full flex items-center justify-between gap-3 px-5 py-4 rounded-t-[28px] hover:bg-zinc-50/60 dark:hover:bg-white/[0.02] transition-colors text-left border-b border-zinc-100/80 dark:border-zinc-700/40"
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-zinc-100/90 dark:bg-white/[0.05] text-emerald-500 dark:text-emerald-400 shadow-sm ring-1 ring-white/60 dark:ring-white/[0.04]">
             <Icons.Euro className="w-4 h-4" />
           </div>
           <div className="min-w-0">
-            <h2 className="text-[15px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 truncate">
+            <h2 className="text-[15px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 truncate">
               Finanze · Forfettario
             </h2>
             <p className="mt-0.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400 truncate">
@@ -267,7 +267,7 @@ export default function FinanzeSection({ bonifici = [], onUpdate, disabled, defa
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-5 pb-5 pt-0 space-y-4 border-t border-zinc-100/80 dark:border-white/[0.04]">
+            <div className="px-5 pb-5 pt-4 space-y-4 border-t border-zinc-100/80 dark:border-zinc-700/40">
               <div className="flex flex-wrap items-end gap-2 pt-3">
                 <div className="flex-1 min-w-[100px]">
                   <label className="block text-[9px] font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-0.5">Data</label>

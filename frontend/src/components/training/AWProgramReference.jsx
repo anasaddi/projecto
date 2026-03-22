@@ -60,7 +60,7 @@ const AWProgramReference = ({ awProgram }) => {
       {awProgram.max_day && (
         <Card className="border-amber-100 dark:border-amber-900/30 overflow-hidden">
           <div className="px-4 py-3 bg-gradient-to-r from-amber-50/50 to-transparent dark:from-amber-500/10 dark:to-transparent border-b border-amber-100 dark:border-amber-800/30">
-            <h3 className="text-xs font-bold text-gray-900 dark:text-white">{awProgram.max_day.title}</h3>
+            <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{awProgram.max_day.title}</h3>
           </div>
           <div className="p-3 overflow-x-auto custom-scrollbar">
             <table className="w-full text-[10px] border-collapse">
@@ -90,7 +90,7 @@ const AWProgramReference = ({ awProgram }) => {
       {awProgram.light && (
         <Card className="border-amber-100 dark:border-amber-900/30 overflow-hidden">
           <div className="px-4 py-3 bg-gradient-to-r from-amber-50/50 to-transparent dark:from-amber-500/10 dark:to-transparent border-b border-amber-100 dark:border-amber-800/30">
-            <h3 className="text-xs font-bold text-gray-900 dark:text-white">{awProgram.light.title}</h3>
+            <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{awProgram.light.title}</h3>
           </div>
           <div className="p-3 overflow-x-auto custom-scrollbar">
             <table className="w-full text-[10px] border-collapse">
@@ -124,7 +124,7 @@ const AWProgramReference = ({ awProgram }) => {
       {awProgram.heavy && (
         <Card className="border-amber-100 dark:border-amber-900/30 overflow-hidden">
           <div className="px-4 py-3 bg-gradient-to-r from-amber-50/50 to-transparent dark:from-amber-500/10 dark:to-transparent border-b border-amber-100 dark:border-amber-800/30">
-            <h3 className="text-xs font-bold text-gray-900 dark:text-white">{awProgram.heavy.title}</h3>
+            <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{awProgram.heavy.title}</h3>
           </div>
           <div className="p-3 overflow-x-auto custom-scrollbar">
             <table className="w-full text-[10px] border-collapse">
@@ -158,7 +158,7 @@ const AWProgramReference = ({ awProgram }) => {
       {awProgram.speed && (
         <Card className="border-amber-100 dark:border-amber-900/30 overflow-hidden">
           <div className="px-4 py-3 bg-gradient-to-r from-amber-50/50 to-transparent dark:from-amber-500/10 dark:to-transparent border-b border-amber-100 dark:border-amber-800/30">
-            <h3 className="text-xs font-bold text-gray-900 dark:text-white">{awProgram.speed.title}</h3>
+            <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{awProgram.speed.title}</h3>
           </div>
           <div className="p-3 overflow-x-auto custom-scrollbar">
             <table className="w-full text-[10px] border-collapse">
