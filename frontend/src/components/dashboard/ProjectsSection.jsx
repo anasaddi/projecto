@@ -6,7 +6,7 @@ import { ProjectCard } from './ProjectCard';
 import { DenseTaskNode } from './DenseTaskNode';
 import { createTaskNode, updateNodeInTree, countTreeStats, getDeadlineColorClass, formatDeadline } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
-import { Card, CardHeader } from './Card';
+import { Card, CardHeader, CardBody } from './Card';
 
 export function ProjectsSection({ PROJECT_ACCENTS }) {
   const projects = useDashboardStore((s) => s.projects) ?? [];
