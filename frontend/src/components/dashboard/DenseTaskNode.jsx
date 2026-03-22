@@ -327,7 +327,7 @@ export function DenseTaskNode({
         </div>
 
         {/* Hover Actions — flex con ml-auto, mai sovrapposto al titolo */}
-        <div className={`flex items-center gap-0.5 shrink-0 ml-2 transition-all duration-200 ${isTop3 ? 'opacity-100 visible' : 'opacity-0 invisible group-hover/row:opacity-100 group-hover/row:visible'}`}>
+        <div className={`flex items-center gap-0.5 shrink-0 ml-auto pl-2 transition-all duration-200 ${isTop3 ? 'opacity-100 visible' : 'opacity-0 invisible group-hover/row:opacity-100 group-hover/row:visible'}`}>
           {!hideTop3Button && !node.done && (isTop3 || hasFreeTop3Slot) && (
             <button 
               onClick={(e) => { e.stopPropagation(); onToggleTop3(projectId, node.id); }} 
