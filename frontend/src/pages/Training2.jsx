@@ -4,6 +4,7 @@ import WeeklyCalendar from '../components/WeeklyCalendar';
 import StrengthTable2 from '../components/StrengthTable2';
 import { Dumbbell, Swords, Target, Undo2, Redo2, History as HistoryIcon, User, Activity, X, Calendar as CalendarIcon, SkipForward, ChevronDown, ChevronUp } from 'lucide-react';
 import TodayCard from '../components/training/TodayCard';
+import { AppLogo } from '../components/AppLogo';
 
 // Import modular components
 import { Card, SectionHeader } from '../components/training/TrainingUI';
@@ -349,8 +350,8 @@ export default function Training2() {
         <header className="sticky top-0 z-40 border-b border-zinc-200/50 dark:border-white/[0.06] bg-white/70 dark:bg-[#0b0e14]/70 backdrop-blur-xl shrink-0 transition-colors">
           <div className="max-w-[1600px] mx-auto px-5 h-16 flex items-center justify-between">
             <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-[12px] bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0 transition-transform active:scale-95">
-                <Activity className="text-white" size={20} />
+              <div className="transition-transform active:scale-95 shrink-0">
+                <AppLogo size="sm" />
               </div>
               <div>
                 <h1 className="text-[15px] font-bold text-zinc-900 dark:text-white leading-tight tracking-tight">Training Protocol</h1>

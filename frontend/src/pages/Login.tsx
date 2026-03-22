@@ -1,6 +1,7 @@
 import React, { useState, FormEvent } from 'react';
 import { api } from '../api/client';
-import { Lock, AlertCircle, ArrowRight } from 'lucide-react';
+import { AlertCircle, ArrowRight } from 'lucide-react';
+import { AppLogo } from '../components/AppLogo';
 import type { LoginResponse } from '../types/api';
 
 export default function Login(): React.ReactElement {
@@ -34,8 +35,8 @@ export default function Login(): React.ReactElement {
     <div className="min-h-screen bg-zinc-50 dark:bg-[#09090B] flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8 bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-2xl">
         <div className="text-center space-y-2">
-          <div className="mx-auto w-16 h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-6">
-            <Lock className="text-indigo-500 w-8 h-8" />
+          <div className="flex justify-center mb-6">
+            <AppLogo size="lg" />
           </div>
           <h2 className="text-3xl font-black text-zinc-900 dark:text-white tracking-tight">PROJECTO</h2>
           <p className="text-zinc-500 dark:text-zinc-400 font-medium tracking-tight">Area Riservata</p>

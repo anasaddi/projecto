@@ -1,6 +1,7 @@
 import { useEffect, useState, ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useDashboardStats } from '../context/DashboardStatsContext';
+import { AppLogo } from './AppLogo';
 
 interface LayoutProps {
   children: ReactNode;
@@ -55,20 +56,8 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
     >
       <header className="sticky top-0 z-50 border-b border-zinc-200/50 dark:border-white/[0.06] bg-white/70 dark:bg-[#0b0e14]/70 backdrop-blur-xl shadow-sm dark:shadow-black/50 px-5 py-3 flex items-center gap-6 shrink-0 transition-colors">
         <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-          <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/20 group-hover:shadow-indigo-500/40 group-active:scale-95 transition-all">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-4 w-4"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <circle cx="12" cy="12" r="6" />
-              <circle cx="12" cy="12" r="2" />
-            </svg>
+          <div className="group-hover:shadow-indigo-500/40 group-active:scale-95 transition-all">
+            <AppLogo size="xs" />
           </div>
           <span className="font-bold tracking-tight text-zinc-800 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors hidden sm:inline">
             PROJECTO

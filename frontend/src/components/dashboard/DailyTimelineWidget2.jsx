@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from './Icons';
+import { AppLogo } from '../AppLogo';
 import { TaskCheckbox } from './DashboardComponents';
 import { PRAYER_SLOTS, getCurrentSlotKey } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
@@ -165,12 +166,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
           className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left transition-colors duration-300 hover:bg-zinc-50/50 dark:hover:bg-white/[0.02] focus-ring z-20"
         >
           <div className="flex items-center gap-4 min-w-0">
-            <motion.div
-              className="w-12 h-12 flex items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-indigo-600 text-white shrink-0 shadow-[0_0_20px_rgba(99,102,241,0.3)] ring-1 ring-white/20"
-              whileHover={{ scale: 1.05, rotate: 2 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Icons.Target className="h-5 w-5 drop-shadow-md" />
+            <motion.div whileHover={{ scale: 1.05, rotate: 2 }} whileTap={{ scale: 0.95 }}>
+              <AppLogo size="md" />
             </motion.div>
             <div className="flex flex-col justify-center">
               <h2 className="text-lg font-black text-zinc-900 dark:text-white tracking-tight leading-none mb-1.5 flex items-center gap-2">

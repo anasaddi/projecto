@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AppLogo } from '../components/AppLogo';
 
 export default function Welcome() {
   const [isDark, setIsDark] = useState(() => localStorage.getItem('km-theme') === 'dark');
@@ -30,9 +31,7 @@ export default function Welcome() {
             transition={{ delay: 0.2 }}
             className="flex justify-center"
           >
-             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-2xl shadow-indigo-500/20">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>
-            </div>
+            <AppLogo size="lg" className="shadow-2xl shadow-indigo-500/20" />
           </motion.div>
 
           <div className="space-y-3">

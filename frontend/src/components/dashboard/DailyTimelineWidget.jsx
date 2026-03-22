@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from './Icons';
+import { AppLogo } from '../AppLogo';
 import { TaskCheckbox } from './DashboardComponents';
 import { PRAYER_SLOTS, getCurrentSlotKey } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
@@ -175,12 +176,8 @@ export function DailyTimelineWidget({ PRAYERS, todayKey, todayPrayerLog, toggleP
           className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left hover:bg-zinc-50/60 dark:hover:bg-white/[0.03] transition-colors duration-200 focus-ring rounded-t-[1.5rem]"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <motion.div
-              className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-indigo-600 text-white shrink-0 shadow-lg shadow-indigo-500/25 dark:shadow-indigo-600/20 ring-2 ring-white/20 dark:ring-white/10"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Icons.Target className="h-4 w-4" />
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
+              <AppLogo size="xs" />
             </motion.div>
             <div>
               <h2 className="text-[15px] font-black text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight mb-0.5">

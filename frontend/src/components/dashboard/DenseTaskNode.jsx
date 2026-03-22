@@ -285,10 +285,10 @@ export function DenseTaskNode({
       <div
         draggable
         onDragStart={handleDragStart}
-        className="group/row task-row cursor-grab active:cursor-grabbing"
+        className="group/row task-row relative cursor-grab active:cursor-grabbing flex items-stretch"
       >
         {/* Expand Toggle */}
-        <div className="flex h-4 w-3 shrink-0 items-center justify-center">
+        <div className="flex h-4 w-3 shrink-0 items-center justify-center self-center">
           {hasChildren ? (
             <button type="button" onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }} className="text-zinc-400 transition-colors hover:text-zinc-600 dark:hover:text-zinc-300">
               {expanded ? <Icons.ChevronDown className="h-3 w-3" /> : <Icons.ChevronRight className="h-3 w-3" />}
@@ -297,20 +297,20 @@ export function DenseTaskNode({
         </div>
 
         {/* Checkbox universale */}
-        <TaskCheckbox done={node.done} onClick={() => onToggle(node.id, !node.done)} />
+        <div className="self-center shrink-0"><TaskCheckbox done={node.done} onClick={() => onToggle(node.id, !node.done)} /></div>
 
-        {/* Title - seamless editing */}
-        <div className="flex flex-1 min-w-0 items-center gap-2" onClick={() => !editing && onToggle(node.id, !node.done)}>
+        {/* Title - seamless editing, full width (pr per non sovrapporsi ai pulsanti hover) */}
+        <div className="flex flex-1 min-w-0 items-center gap-2 py-0.5 pr-14" onClick={() => !editing && onToggle(node.id, !node.done)}>
           {editing ? (
             <input
               autoFocus
               defaultValue={node.title}
               onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
               onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
-              className="flex-1 bg-transparent border-b border-indigo-400 outline-none text-xs py-0.5 text-zinc-900 dark:text-zinc-100"
+              className="flex-1 min-w-0 bg-transparent border-b border-indigo-400 outline-none text-xs py-0.5 text-zinc-900 dark:text-zinc-100"
             />
           ) : (
-            <span className={`flex-1 break-words text-xs leading-relaxed ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-300 font-medium'}`}>
+            <span className={`flex-1 min-w-0 text-xs leading-snug line-clamp-2 break-words ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-300 font-medium'}`} title={node.title}>
               {node.title}
             </span>
           )}
@@ -326,8 +326,8 @@ export function DenseTaskNode({
           )}
         </div>
 
-        {/* Hover Actions — Pin to Focus solo sui task/sottotask in Progetti; nascosto in Life Goals (hideTop3Button) */}
-        <div className={`flex items-center gap-0.5 transition-opacity ml-1 pr-1 ${isTop3 ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'}`}>
+        {/* Hover Actions — overlay a destra, non rubano spazio al titolo */}
+        <div className={`absolute right-0 top-0 bottom-0 flex items-center gap-0.5 pl-4 bg-gradient-to-l from-white via-white to-transparent dark:from-[#161920] dark:via-[#161920] dark:to-transparent transition-opacity shrink-0 ${isTop3 ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'}`}>
           {!hideTop3Button && !node.done && (isTop3 || hasFreeTop3Slot) && (
             <button 
               onClick={(e) => { e.stopPropagation(); onToggleTop3(projectId, node.id); }} 

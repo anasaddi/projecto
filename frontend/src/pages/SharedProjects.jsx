@@ -8,6 +8,7 @@ import { DenseTaskNode } from '../components/dashboard/DenseTaskNode';
 import { countTreeStats as countTreeStatsUtil } from '../components/dashboard/DashboardUtils';
 import { ConfirmModal } from '../components/ConfirmModal';
 import FinanzeSection from '../components/shared/FinanzeSection';
+import { AppLogo } from '../components/AppLogo';
 
 /**
  * ----------------------------------------------------------------------
@@ -1089,8 +1090,8 @@ export default function SharedProjects() {
               onClick={createProject}
               className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl hover:border-indigo-500 hover:bg-indigo-500/5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 text-gray-400 hover:text-indigo-500 group min-h-[240px]"
             >
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center group-hover:from-indigo-500 group-hover:to-purple-600 group-hover:text-white transition-all duration-300 transform group-hover:scale-110 shadow-lg group-hover:shadow-indigo-500/25">
-                <Icons.Plus className="w-7 h-7 transition-transform group-hover:rotate-90 duration-300" />
+              <div className="group-hover:scale-110 transition-transform duration-300">
+                <AppLogo size="md" />
               </div>
               <span className="text-lg font-bold bg-gradient-to-r from-gray-600 to-gray-800 dark:from-gray-300 dark:to-gray-100 bg-clip-text text-transparent group-hover:from-indigo-500 group-hover:to-purple-600 transition-all duration-300">Crea Progetto</span>
             </button>
