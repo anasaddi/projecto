@@ -209,7 +209,7 @@ export function CreateProjectCard({ onClick, className = '' }) {
       onClick={onClick}
       whileHover={{ scale: 1.01, y: -2 }}
       whileTap={{ scale: 0.98 }}
-      className={`group relative flex h-full min-h-[128px] w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-[28px] border border-dashed border-zinc-300/90 bg-white/[0.72] p-5 shadow-sm shadow-zinc-200/30 transition-all hover:border-indigo-400/80 hover:bg-indigo-50/40 hover:shadow-[0_26px_60px_-38px_rgba(99,102,241,0.32)] dark:border-white/[0.14] dark:bg-[#141922]/70 dark:hover:border-indigo-500/40 dark:hover:bg-indigo-500/[0.06] ${className}`}
+      className={`group relative flex h-full min-h-[92px] w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-dashed border-zinc-300/90 bg-white/[0.72] p-4 shadow-sm shadow-zinc-200/30 transition-all hover:border-indigo-400/80 hover:bg-indigo-50/40 hover:shadow-[0_20px_40px_-30px_rgba(99,102,241,0.25)] dark:border-white/[0.14] dark:bg-[#141922]/70 dark:hover:border-indigo-500/40 dark:hover:bg-indigo-500/[0.06] ${className}`}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/0 via-violet-500/0 to-sky-500/0 transition-all duration-500 group-hover:from-indigo-500/6 group-hover:via-violet-500/6 group-hover:to-sky-500/6" />
       

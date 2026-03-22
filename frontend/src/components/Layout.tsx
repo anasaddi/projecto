@@ -2,6 +2,9 @@ import { useEffect, useState, ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useDashboardStats } from '../context/DashboardStatsContext';
 import { AppLogo } from './AppLogo';
+import { motion } from 'framer-motion';
+import { useDashboardStore } from '../store/dashboardStore';
+import { Icons } from './dashboard/Icons';
 
 interface LayoutProps {
   children: ReactNode;
@@ -15,6 +18,15 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
   const isShared = pathname.startsWith('/shared');
   const isWorkspace = isYouTube || isDashboard || isTraining || isShared;
   const { stats } = useDashboardStats();
+
+  const lastSavedAt = useDashboardStore((s) => s.lastSavedAt);
+  const setLastSavedAt = useDashboardStore((s) => s.setLastSavedAt);
+
+  useEffect(() => {
+    if (!lastSavedAt) return;
+    const t = setTimeout(() => setLastSavedAt(null), 2500);
+    return () => clearTimeout(t);
+  }, [lastSavedAt, setLastSavedAt]);
 
   const [isDark, setIsDark] = useState(() => localStorage.getItem('km-theme') === 'dark');
   useEffect(() => {
@@ -52,9 +64,9 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
 
   return (
     <div
-      className={`min-h-screen text-zinc-900 dark:text-zinc-100 transition-colors ${isWorkspace ? 'flex flex-col' : ''}`}
+      className={`min-h-screen text-zinc-900 dark:text-zinc-100 transition-colors bg-white dark:bg-[#0b0e14] ${isWorkspace ? 'flex flex-col' : ''}`}
     >
-      <header className="sticky top-0 z-50 mx-2 mt-2 flex shrink-0 items-center gap-6 rounded-[26px] border border-zinc-200/70 bg-white/[0.88] px-5 py-3 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.28)] backdrop-blur-2xl transition-colors dark:border-white/[0.08] dark:bg-[#11161f]/[0.86] dark:shadow-[0_26px_60px_-34px_rgba(0,0,0,0.65)]">
+      <header className="sticky top-4 z-50 mx-4 mt-4 flex shrink-0 items-center gap-6 rounded-[26px] border border-zinc-200/70 bg-white/[0.88] px-5 py-3 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.28)] backdrop-blur-2xl transition-colors dark:border-white/[0.08] dark:bg-[#11161f]/[0.86] dark:shadow-[0_26px_60px_-34px_rgba(0,0,0,0.65)]">
         <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
           <div className="group-hover:shadow-indigo-500/40 group-active:scale-95 transition-all">
             <AppLogo size="xs" />
@@ -101,15 +113,27 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
             {stats.totalFocusItems}
           </span>
         )}
-        <button
-          type="button"
-          onClick={() => setIsDark((d) => !d)}
-          className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-zinc-200/70 text-zinc-400 transition-all hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-700 active:scale-95 dark:border-white/[0.06] dark:text-zinc-500 dark:hover:border-white/[0.08] dark:hover:bg-white/[0.06] dark:hover:text-zinc-200"
-          aria-label={isDark ? 'Tema chiaro' : 'Tema scuro'}
-          title={isDark ? 'Tema chiaro' : 'Tema scuro'}
-        >
-          {isDark ? '☀️' : '🌙'}
-        </button>
+        <div className="flex items-center gap-3 ml-auto">
+          {lastSavedAt && (
+            <motion.span 
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400"
+            >
+              <Icons.Check className="h-3.5 w-3.5" />
+              Salvato
+            </motion.span>
+          )}
+          <button
+            type="button"
+            onClick={() => setIsDark((d) => !d)}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-zinc-200/70 text-zinc-400 transition-all hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-700 active:scale-95 dark:border-white/[0.06] dark:text-zinc-500 dark:hover:border-white/[0.08] dark:hover:bg-white/[0.06] dark:hover:text-zinc-200"
+            aria-label={isDark ? 'Tema chiaro' : 'Tema scuro'}
+            title={isDark ? 'Tema chiaro' : 'Tema scuro'}
+          >
+            {isDark ? '☀️' : '🌙'}
+          </button>
+        </div>
       </header>
       <main
         className={

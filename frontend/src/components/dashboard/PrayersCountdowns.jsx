@@ -2,11 +2,15 @@ import React from 'react';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
 
-export function PrayersCountdowns({ 
-  todayPrayerLog, 
-  togglePrayer, 
-  PRAYERS, 
-  countdowns 
+export function PrayersCountdowns({
+  todayPrayerLog,
+  togglePrayer,
+  PRAYERS,
+  countdowns,
+  todayFocusScore = 0,
+  focusStreak = 0,
+  onReset,
+  now
 }) {
   return (
     <div className="shrink-0 px-6 pt-6 pb-3">
@@ -32,7 +36,47 @@ export function PrayersCountdowns({
           </div>
 
           {/* Divider */}
-          <div className="hidden md:block h-8 w-px shrink-0 bg-zinc-200 dark:bg-white/[0.06]" />
+          <div className="hidden md:block h-12 w-px shrink-0 bg-zinc-200 dark:bg-white/[0.06]" />
+
+          {/* Progress Bar & Info */}
+          <div className="flex flex-col items-center gap-2 flex-1 min-w-0">
+             <div className="flex items-center gap-3 w-full max-w-[200px]">
+                <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700/80">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500"
+                    style={{ width: `${Math.round(todayFocusScore * 100)}%` }}
+                  />
+                </div>
+                <span className="text-[11px] font-bold tabular-nums text-zinc-700 dark:text-zinc-200">
+                  {Math.round(todayFocusScore * 100)}%
+                </span>
+             </div>
+             
+             <div className="flex items-center gap-3">
+               {focusStreak > 0 && (
+                 <div className="flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200/60 dark:ring-amber-700/30">
+                   <Icons.Flame className="h-3 w-3 shrink-0" />
+                   <span className="text-[10px] font-bold tabular-nums">{focusStreak}d</span>
+                 </div>
+               )}
+               {now && (
+                 <time className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 tabular-nums">
+                   {now.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })}
+                 </time>
+               )}
+               <button
+                  type="button"
+                  onClick={onReset}
+                  className="rounded-lg p-1 text-zinc-300 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors"
+                  title="Reset dashboard"
+                >
+                  <Icons.X className="h-3.5 w-3.5" />
+                </button>
+             </div>
+          </div>
+
+          {/* Divider */}
+          <div className="hidden md:block h-12 w-px shrink-0 bg-zinc-200 dark:bg-white/[0.06]" />
 
           {/* Time Remaining — ancorato a destra */}
           <div className="hidden xl:flex shrink-0 items-center justify-end gap-6">

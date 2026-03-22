@@ -197,7 +197,7 @@ function SharedListDashboard() {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.06),transparent_18%),linear-gradient(180deg,#f8fafc_0%,#f3f6fb_100%)] p-6 text-gray-900 select-none [&_input]:select-text [&_textarea]:select-text dark:bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.16),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.08),transparent_18%),linear-gradient(180deg,#0b0f18_0%,#0e131b_100%)] dark:text-gray-100 sm:p-10">
       <div className="max-w-4xl mx-auto">
-        <header className="mb-8 rounded-[32px] border border-zinc-200/70 bg-white/[0.88] p-7 shadow-[0_26px_60px_-40px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#141922]/85 dark:shadow-[0_30px_70px_-42px_rgba(0,0,0,0.62)]">
+        <header className="mb-8 rounded-[32px] border border-zinc-200/70 bg-white/[0.88] p-7 shadow-[0_26px_60px_-40px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-[0_30px_70px_-42px_rgba(0,0,0,0.62)]">
           <div className="flex flex-wrap items-center gap-3 mb-3">
             <span className="inline-flex rounded-full border border-indigo-200/80 bg-indigo-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/20 dark:text-indigo-300">
               Shared workspace
@@ -208,7 +208,7 @@ function SharedListDashboard() {
         </header>
 
         {/* Pannello di controllo: gestione password per sezione */}
-        <div className="mb-10 rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-6 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.22)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#141922]/82 dark:shadow-[0_30px_60px_-40px_rgba(0,0,0,0.6)]">
+        <div className="mb-10 rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-6 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.22)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/85 dark:shadow-[0_30px_60px_-40px_rgba(0,0,0,0.6)]">
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-zinc-700 dark:text-zinc-200">Pannello di controllo</h2>
           <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
             Clicca <strong>Password</strong> su ogni card per impostare la password di accesso principale.
@@ -291,7 +291,7 @@ function SharedListDashboard() {
                 <Link
                   key={sid}
                   to={`/shared/${sid}`}
-                  className="group block rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-5 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.2)] backdrop-blur-2xl transition-all hover:-translate-y-0.5 hover:border-indigo-300/80 hover:shadow-[0_24px_60px_-38px_rgba(99,102,241,0.18)] dark:border-white/[0.08] dark:bg-[#141922]/82 dark:hover:border-indigo-500/35 dark:hover:shadow-[0_28px_60px_-38px_rgba(0,0,0,0.62)]"
+                  className="group block rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-5 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.2)] backdrop-blur-2xl transition-all hover:-translate-y-0.5 hover:border-indigo-300/80 hover:shadow-[0_24px_60px_-38px_rgba(99,102,241,0.18)] dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:hover:border-indigo-500/35 dark:hover:shadow-[0_28px_60px_-38px_rgba(0,0,0,0.62)]"
                 >
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <h3 className="flex-1 truncate text-[15px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">{title}</h3>
@@ -1085,7 +1085,7 @@ export default function SharedProjects() {
         {/* SIDEBAR: QUICK TASKS + CHAT */}
         <aside className="order-1 w-full shrink-0 space-y-6 pt-0 lg:w-80">
           {/* QUICK TASKS */}
-          <div className="flex min-h-[340px] flex-col rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-6 shadow-[0_22px_50px_-38px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#141922]/82 dark:shadow-[0_30px_60px_-40px_rgba(0,0,0,0.6)]">
+          <div className="flex min-h-[340px] flex-col rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-6 shadow-[0_22px_50px_-38px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-[0_30px_60px_-40px_rgba(0,0,0,0.6)]">
             <div className="flex items-center gap-2 mb-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
                 <Icons.Zap className="w-4 h-4" />
@@ -1160,7 +1160,7 @@ export default function SharedProjects() {
           </div>
 
           {/* CHAT BOX */}
-          <div className="flex min-h-[420px] flex-col rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-6 shadow-[0_22px_50px_-38px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#141922]/82 dark:shadow-[0_30px_60px_-40px_rgba(0,0,0,0.6)]">
+          <div className="flex min-h-[420px] flex-col rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-6 shadow-[0_22px_50px_-38px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-[0_30px_60px_-40px_rgba(0,0,0,0.6)]">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
@@ -1252,7 +1252,7 @@ export default function SharedProjects() {
 
       {/* MODULO FINANZE in fondo (solo shared "nextcode" per titolo o id) */}
       {((dashboard.title && String(dashboard.title).toLowerCase().includes('nextcode')) || (id && String(id).toLowerCase().includes('nextcode'))) && (
-        <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-8 md:px-10 pb-8">
+        <div className="max-w-[1400px] mx-auto w-full">
           <FinanzeSection
             bonifici={dashboard.bonifici || []}
             onUpdate={(bonifici) => updateLocal({ bonifici })}

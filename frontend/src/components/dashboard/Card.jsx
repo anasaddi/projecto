@@ -9,8 +9,8 @@ import { motion } from 'framer-motion';
 const baseClasses = `
   relative overflow-hidden
   rounded-[28px]
-  border border-zinc-200/70 dark:border-zinc-700/50
-  bg-white/[0.9] dark:bg-[#131820]/95
+  border border-zinc-200/70 dark:border-white/[0.08]
+  bg-white/[0.9] dark:bg-[#131820]/90
   backdrop-blur-2xl
   shadow-[0_24px_60px_-36px_rgba(15,23,42,0.25)] dark:shadow-[0_28px_60px_-36px_rgba(0,0,0,0.55)]
   before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/70 before:to-transparent dark:before:via-white/[0.06]

@@ -112,11 +112,7 @@ export default function DashboardV2(): React.ReactElement {
     if (updateStats) updateStats(doneFocusItems, totalFocusItems);
   }, [doneFocusItems, totalFocusItems, updateStats]);
 
-  useEffect(() => {
-    if (!lastSavedAt) return;
-    const t = setTimeout(() => setLastSavedAt(null), 2500);
-    return () => clearTimeout(t);
-  }, [lastSavedAt, setLastSavedAt]);
+  // lastSavedAt is now handled in Layout.tsx
 
   const countdowns = useMemo(() => {
     const n = new Date(now);
@@ -170,52 +166,19 @@ export default function DashboardV2(): React.ReactElement {
   const confirmPayload = confirmState && typeof confirmState === 'object' && 'payload' in confirmState ? (confirmState as { payload?: { shareId?: string; projectId?: string; goalId?: string } }).payload : undefined;
 
   return (
-    <div className="min-h-full w-full flex flex-col overflow-y-auto overflow-x-hidden font-sans font-normal select-none selection:bg-indigo-500/30 antialiased">
-      <header className="shrink-0 border-b border-zinc-200/50 dark:border-white/[0.06] bg-white/70 dark:bg-[#0b0e14]/70 backdrop-blur-xl shadow-sm dark:shadow-black/50 px-6 py-3">
-        <div className="flex items-center justify-between gap-4">
-          <div className="w-0 sm:w-4 shrink-0" />
-          <div className="flex items-center gap-3 flex-1 justify-center min-w-0">
-            {focusStreak > 0 && (
-              <div className="flex items-center gap-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 px-2 sm:px-3 py-1 sm:py-1.5 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200/60 dark:ring-amber-700/30">
-                <Icons.Flame className="h-3 sm:h-3.5 w-3 sm:w-3.5 shrink-0" />
-                <span className="text-[10px] sm:text-[11px] font-bold tabular-nums">{focusStreak}d</span>
-              </div>
-            )}
-            <div className="flex items-center gap-2 rounded-full bg-zinc-100/80 dark:bg-white/[0.06] px-2 sm:px-3 py-1 sm:py-1.5 ring-1 ring-zinc-200/60 dark:ring-white/[0.08]">
-              <div className="relative h-1.5 sm:h-2 w-12 sm:w-20 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700/80">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500"
-                  style={{ width: `${Math.round(todayFocusScore * 100)}%` }}
-                />
-              </div>
-              <span className="min-w-[1.75rem] sm:min-w-[2.25rem] text-[10px] sm:text-[11px] font-bold tabular-nums text-zinc-700 dark:text-zinc-200">
-                {Math.round(todayFocusScore * 100)}%
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {lastSavedAt && (
-              <span className="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400" title="Modifiche salvate">
-                <Icons.Check className="h-3.5 w-3.5 shrink-0" />
-                Salvato
-              </span>
-            )}
-            <time className="hidden sm:block text-[11px] font-medium text-zinc-500 dark:text-zinc-400 tabular-nums">
-              {now.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })}
-            </time>
-            <button
-              type="button"
-              onClick={() => setConfirmState({ id: 'reset' })}
-              className="touch-target rounded-lg p-2 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors focus-ring"
-              title="Reset dashboard"
-            >
-              <Icons.X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-full w-full flex flex-col overflow-y-auto overflow-x-hidden font-sans font-normal select-none selection:bg-indigo-500/30 antialiased bg-white dark:bg-[#0b0e14]">
+      {/* Redundant header removed - items moved to Layout and PrayersCountdowns */}
 
-      <PrayersCountdowns todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} PRAYERS={PRAYERS} countdowns={countdowns} />
+      <PrayersCountdowns 
+        todayPrayerLog={todayPrayerLog} 
+        togglePrayer={togglePrayer} 
+        PRAYERS={PRAYERS} 
+        countdowns={countdowns} 
+        todayFocusScore={todayFocusScore}
+        focusStreak={focusStreak}
+        onReset={() => setConfirmState({ id: 'reset' })}
+        now={now}
+      />
 
       <DailyTimelineWidget2 PRAYERS={PRAYERS} todayKey={todayKey} todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} />
 
