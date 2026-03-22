@@ -32,8 +32,10 @@ export function ThisWeekWidget({ dailyTaskLogs, activeHabits, now }) {
     return Array.from({ length: 7 }, (_, i) => {
       const d = addDays(start, i);
       const key = toDateKey(d);
-      const taskLog = dailyTaskLogs[key] || {};
-      const done = activeHabits.reduce((acc, t) => acc + (taskLog[t.id] ? 1 : 0), 0);
+      const logsRaw = dailyTaskLogs[key] || [];
+      const taskMap = {};
+      logsRaw.forEach(l => { if (l && l.id) taskMap[l.id] = l.done; });
+      const done = activeHabits.reduce((acc, t) => acc + (taskMap[t.id] ? 1 : 0), 0);
       const pct = activeHabits.length ? done / activeHabits.length : 0;
       const labels = ['L', 'M', 'M', 'G', 'V', 'S', 'D'];
       return { key, label: labels[i], pct, isToday: key === todayKey };

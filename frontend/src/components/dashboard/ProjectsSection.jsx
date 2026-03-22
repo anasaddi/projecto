@@ -101,8 +101,8 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                                     setProjectTaskDrafts(prev => ({ ...prev, [project.id]: '' }));
                                   }
                                 }
-                               }}
-                              placeholder="Aggiungi task... (Invio)"
+                              }}
+                              placeholder="Aggiungi task..."
                               className="w-full bg-transparent text-sm text-zinc-600 dark:text-zinc-400 outline-none placeholder:text-zinc-300 dark:placeholder:text-zinc-600 py-1 border-b border-transparent focus:border-zinc-300 dark:focus:border-white/10 transition-colors"
                             />
                           </div>
@@ -196,7 +196,7 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                                         }
                                       }
                                     }}
-                                    placeholder="Aggiungi task... (Invio)"
+                                    placeholder="Aggiungi task..."
                                     className="w-full bg-transparent text-sm text-zinc-600 dark:text-zinc-400 outline-none placeholder:text-zinc-300 dark:placeholder:text-zinc-600 py-1 border-b border-transparent focus:border-zinc-300 dark:focus:border-white/10 transition-colors"
                                   />
                                 </div>

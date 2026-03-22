@@ -1,83 +1,69 @@
 import React from 'react';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
-import { Card, CardBody } from './Card';
+import { Card, CardBody, ProgressBar } from './Card';
 
 export function PrayersCountdowns({
   todayPrayerLog,
   togglePrayer,
   PRAYERS,
-  countdowns,
+  countdowns = [],
   todayFocusScore = 0,
-  focusStreak = 0,
-  onReset,
-  now
+  focusStreak = 0
 }) {
   return (
-    <div className="shrink-0 px-6 pt-5 pb-2">
-      <Card className="p-1">
-        <CardBody className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4 py-3 px-5">
-          
-          {/* Section 1: Prayers (Icons only) */}
-          <div className="flex items-center gap-4 shrink-0">
-            {PRAYERS.map((p) => (
-              <div key={p} className="flex items-center gap-2 group cursor-pointer" onClick={() => togglePrayer(p, !todayPrayerLog[p])}>
-                <TaskCheckbox
-                  done={!!todayPrayerLog[p]}
-                  onClick={() => {}}
-                  className="h-4.5 w-4.5"
-                />
-                <span className={`text-[11px] font-bold uppercase tracking-widest transition-colors ${todayPrayerLog[p] ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-500'}`}>
-                  {p.slice(0, 3)}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Section 2: Progress Bar (Wider) */}
-          <div className="flex flex-1 items-center gap-6 min-w-[300px] border-x border-zinc-100 dark:border-white/5 px-8">
-            <div className="flex items-center gap-4 w-full">
-              <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-zinc-100 dark:bg-white/5 shadow-inner">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-violet-500 transition-all duration-700 ease-out"
-                  style={{ width: `${Math.round(todayFocusScore * 100)}%` }}
-                />
-              </div>
-              <span className="text-xs font-black tabular-nums text-indigo-600 dark:text-indigo-400 min-w-[36px]">
-                {Math.round(todayFocusScore * 100)}%
+    <Card className="flex flex-col min-h-0 bg-white/80 dark:bg-[#0b0e14]/80 backdrop-blur-xl border-zinc-200/50 dark:border-white/[0.06] shadow-sm dark:shadow-black/50">
+      <CardBody padding="normal" className="flex items-center gap-4 py-2.5">
+        {/* Section 1: Prayers icons only */}
+        <div className="flex items-center gap-1.5 shrink-0 px-2">
+          {PRAYERS.map((p) => (
+            <div key={p} className="flex flex-col items-center gap-0.5">
+              <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-tighter">
+                {p[0]}
               </span>
+              <TaskCheckbox
+                done={!!todayPrayerLog[p]}
+                onClick={() => togglePrayer(p, !todayPrayerLog[p])}
+                className="scale-[0.85]"
+              />
             </div>
-            
-            <div className="flex items-center gap-3">
-              {focusStreak > 0 && (
-                <div className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2 py-1 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500/20">
-                  <Icons.Flame className="h-3.5 w-3.5" />
-                  <span className="text-[10px] font-black">{focusStreak}d</span>
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={onReset}
-                className="rounded-lg p-1.5 text-zinc-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
-                title="Reset"
-              >
-                <Icons.X className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
+          ))}
+        </div>
 
-          {/* Section 3: Time Remaining (Wider) */}
-          <div className="flex items-center gap-8 shrink-0">
-            {countdowns.map((c) => (
-              <div key={c.label} className="flex items-center gap-3">
-                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500">{c.label === 'Next' ? 'Prox' : c.label}</span>
-                <span className="text-base font-bold tabular-nums tracking-tighter text-zinc-800 dark:text-zinc-100">{c.remaining}</span>
-              </div>
-            ))}
+        <div className="h-6 w-px bg-zinc-100 dark:bg-white/[0.04] shrink-0 mx-1" />
+
+        {/* Section 2: Progress Score */}
+        <div className="flex flex-1 items-center gap-4 px-2 min-w-[120px]">
+          <div className="flex-1">
+            <ProgressBar value={todayFocusScore * 100} max={100} size="md" color="emerald" showLabel />
           </div>
-          
-        </CardBody>
-      </Card>
-    </div>
+          {focusStreak > 0 && (
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/20 shrink-0">
+              <Icons.Flame className="h-3 w-3 text-orange-500" />
+              <span className="text-[10px] font-black text-orange-600 dark:text-orange-400 tabular-nums">{focusStreak}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="h-6 w-px bg-zinc-100 dark:bg-white/[0.04] shrink-0 mx-1" />
+
+        {/* Section 3: Periodic Countdowns */}
+        <div className="flex items-center gap-5 shrink-0 px-2 min-w-[180px]">
+          {Array.isArray(countdowns) && countdowns.map((c) => (
+            <div key={c.label} className="flex flex-col items-end">
+              <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-tighter">
+                {c.label}
+              </span>
+              <span className="text-xs font-bold tabular-nums text-zinc-800 dark:text-zinc-200 leading-none mt-0.5">
+                {c.remaining}
+              </span>
+              <div className="w-8 h-[2px] bg-zinc-100 dark:bg-white/[0.04] rounded-full overflow-hidden mt-1">
+                <div className="h-full bg-indigo-500 transition-all duration-1000" style={{ width: `${(c.pct || 0) * 100}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardBody>
+    </Card>
   );
 }
