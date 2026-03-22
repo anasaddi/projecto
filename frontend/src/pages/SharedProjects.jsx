@@ -847,7 +847,7 @@ export default function SharedProjects() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.06),transparent_18%),linear-gradient(180deg,#f8fafc_0%,#f3f6fb_100%)] p-4 font-sans antialiased text-gray-900 select-none [&_input]:select-text [&_textarea]:select-text dark:bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.16),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.08),transparent_18%),linear-gradient(180deg,#0b0f18_0%,#0e131b_100%)] dark:text-gray-100 sm:p-8 md:p-10">
+    <div className="relative min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.06),transparent_18%),linear-gradient(180deg,#f8fafc_0%,#f3f6fb_100%)] p-0 font-sans antialiased text-gray-900 select-none [&_input]:select-text [&_textarea]:select-text dark:bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.16),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.08),transparent_18%),linear-gradient(180deg,#0b0f18_0%,#0e131b_100%)] dark:text-gray-100">
       <ConfirmModal
         open={confirmResetChat}
         title="Cancella cronologia chat"

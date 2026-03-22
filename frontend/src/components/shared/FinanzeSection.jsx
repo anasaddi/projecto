@@ -227,33 +227,33 @@ export default function FinanzeSection({ bonifici = [], onUpdate, disabled, defa
   const sortedBonifici = [...cleanBonifici].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   return (
-    <div className="mt-6 w-full overflow-hidden rounded-[28px] border border-zinc-200/70 dark:border-zinc-700/50 bg-white/[0.9] dark:bg-[#131820]/95 backdrop-blur-2xl shadow-[0_24px_60px_-36px_rgba(15,23,42,0.25)] dark:shadow-[0_28px_60px_-36px_rgba(0,0,0,0.55)]">
+    <div className="w-full overflow-hidden rounded-[28px] border border-zinc-200/70 dark:border-zinc-700/50 bg-white/[0.9] dark:bg-[#131820]/95 backdrop-blur-2xl shadow-[0_24px_60px_-36px_rgba(15,23,42,0.25)] dark:shadow-[0_28px_60px_-36px_rgba(0,0,0,0.55)] transition-all hover:ring-1 hover:ring-indigo-500/20">
       <button
         type="button"
         onClick={() => setCollapsed(!collapsed)}
-        className="w-full flex items-center justify-between gap-3 px-5 py-4 rounded-t-[28px] hover:bg-zinc-50/60 dark:hover:bg-white/[0.02] transition-colors text-left border-b border-zinc-100/80 dark:border-zinc-700/40"
+        className="w-full flex items-center justify-between gap-3 px-6 py-5 rounded-t-[28px] hover:bg-zinc-50/60 dark:hover:bg-white/[0.02] transition-colors text-left"
       >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-zinc-100/90 dark:bg-white/[0.05] text-emerald-500 dark:text-emerald-400 shadow-sm ring-1 ring-white/60 dark:ring-white/[0.04]">
-            <Icons.Euro className="w-4 h-4" />
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 shadow-sm ring-1 ring-emerald-500/20">
+            <Icons.Euro className="w-5 h-5 transition-transform group-hover:scale-110" />
           </div>
           <div className="min-w-0">
-            <h2 className="text-[15px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 truncate">
-              Finanze · Forfettario
+            <h2 className="text-base font-bold tracking-tight text-zinc-900 dark:text-zinc-100 truncate">
+              Gestione Finanze · <span className="text-emerald-600 dark:text-emerald-400">Forfettario</span>
             </h2>
-            <p className="mt-0.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400 truncate">
-              {cleanBonifici.length} bonifici · Anas {fmtNum(saldi.totAnas)} € · Othman {fmtNum(saldi.totOthman)} €
+            <p className="mt-0.5 text-[12px] font-medium text-zinc-500 dark:text-zinc-400 truncate">
+              {cleanBonifici.length} bonifici · <span className="text-zinc-700 dark:text-zinc-300">Anas {fmtNum(saldi.totAnas)} €</span> · <span className="text-zinc-700 dark:text-zinc-300">Othman {fmtNum(saldi.totOthman)} €</span>
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
           {Math.abs(saldi.diff) > 0.01 && (
-            <span className="px-2 py-1 rounded-md bg-amber-50 dark:bg-amber-900/30 text-[9px] font-semibold text-amber-700 dark:text-amber-400">
+            <span className="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-[10px] font-bold text-amber-700 dark:text-amber-400 border border-amber-200/50 dark:border-amber-500/20">
               {saldi.diff > 0 ? 'O→A' : 'A→O'} {fmtNum(Math.abs(saldi.diff))} €
             </span>
           )}
-          <span className="p-1 rounded-xl bg-zinc-100/90 dark:bg-white/[0.06] text-zinc-500 dark:text-zinc-400">
-            {collapsed ? <Icons.ChevronDown className="w-3.5 h-3.5" /> : <Icons.ChevronUp className="w-3.5 h-3.5" />}
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-100/90 dark:bg-white/[0.06] text-zinc-500 dark:text-zinc-400 transition-transform group-hover:scale-105">
+            {collapsed ? <Icons.ChevronDown className="w-4 h-4" /> : <Icons.ChevronUp className="w-4 h-4" />}
           </span>
         </div>
       </button>

@@ -27,7 +27,7 @@ import {
   resolveTop3Slots,
   POMODORO_STORAGE,
 } from '../components/dashboard/DashboardUtils';
-import { useDashboardSync } from '../hooks/useDashboardSync.ts';
+import { useDashboardSync } from '../hooks/useDashboardSync';
 
 const PROJECT_ACCENTS = ['indigo', 'sky', 'violet', 'emerald', 'amber', 'rose'];
 
