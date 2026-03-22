@@ -50,6 +50,12 @@ export function DenseTaskNode({
   hideTop3Button = false,
   targetIndex = 0,
   targetParentId = null,
+  onToggle: onToggleProp,
+  onDelete: onDeleteProp,
+  onRename: onRenameProp,
+  onDeadline: onDeadlineProp,
+  onAddChild: onAddChildProp,
+  onMove: onMoveProp,
 }) {
   const top3Manual = useDashboardStore((s) => s.top3Manual);
   const toggleProjectTask = useDashboardStore((s) => s.toggleProjectTask);
@@ -72,6 +78,7 @@ export function DenseTaskNode({
 
   const onToggle = useCallback(
     (tid, val) => {
+      if (onToggleProp) return onToggleProp(tid, val);
       if (isLifeGoal) {
         updateGoal(goalId, (g) => ({ ...g, tasks: updateNodeInTree(g.tasks || [], tid, (n) => ({ ...n, done: val })) }));
         setProjects((prev) =>
@@ -88,11 +95,12 @@ export function DenseTaskNode({
         toggleProjectTask(projectId, tid, val);
       }
     },
-    [isLifeGoal, goalId, isShared, shareId, projectId, toggleProjectTask, updateProject, updateGoal, setProjects, updateSharedDashboardProject]
+    [onToggleProp, isLifeGoal, goalId, isShared, shareId, projectId, toggleProjectTask, updateProject, updateGoal, setProjects, updateSharedDashboardProject]
   );
 
   const onDelete = useCallback(
     (tid) => {
+      if (onDeleteProp) return onDeleteProp(tid);
       if (isLifeGoal) {
         updateGoal(goalId, (g) => ({ ...g, tasks: removeNodeFromTree(g.tasks || [], tid) }));
       } else if (isShared) {
@@ -104,11 +112,12 @@ export function DenseTaskNode({
         deleteProjectTask(projectId, tid);
       }
     },
-    [isLifeGoal, goalId, isShared, shareId, projectId, deleteProjectTask, updateGoal, updateSharedDashboardProject]
+    [onDeleteProp, isLifeGoal, goalId, isShared, shareId, projectId, deleteProjectTask, updateGoal, updateSharedDashboardProject]
   );
 
   const onRename = useCallback(
     (tid, val) => {
+      if (onRenameProp) return onRenameProp(tid, val);
       if (isLifeGoal) {
         updateGoal(goalId, (g) => ({ ...g, tasks: updateNodeInTree(g.tasks || [], tid, (n) => ({ ...n, title: val })) }));
       } else if (isShared) {
@@ -123,11 +132,12 @@ export function DenseTaskNode({
         }));
       }
     },
-    [isLifeGoal, goalId, isShared, shareId, projectId, updateProject, updateGoal, updateSharedDashboardProject]
+    [onRenameProp, isLifeGoal, goalId, isShared, shareId, projectId, updateProject, updateGoal, updateSharedDashboardProject]
   );
 
   const onDeadline = useCallback(
     (tid, val) => {
+      if (onDeadlineProp) return onDeadlineProp(tid, val);
       if (isLifeGoal) {
         updateGoal(goalId, (g) => ({ ...g, tasks: updateNodeInTree(g.tasks || [], tid, (n) => ({ ...n, deadline: val || undefined })) }));
       } else if (isShared) {
@@ -142,11 +152,12 @@ export function DenseTaskNode({
         }));
       }
     },
-    [isLifeGoal, goalId, isShared, shareId, projectId, updateProject, updateGoal, updateSharedDashboardProject]
+    [onDeadlineProp, isLifeGoal, goalId, isShared, shareId, projectId, updateProject, updateGoal, updateSharedDashboardProject]
   );
 
   const onAddChild = useCallback(
     (tid, val) => {
+      if (onAddChildProp) return onAddChildProp(tid, val);
       if (isLifeGoal) {
         updateGoal(goalId, (g) => ({
           ...g,
@@ -170,7 +181,7 @@ export function DenseTaskNode({
         }));
       }
     },
-    [isLifeGoal, goalId, isShared, shareId, projectId, updateProject, updateGoal, updateSharedDashboardProject]
+    [onAddChildProp, isLifeGoal, goalId, isShared, shareId, projectId, updateProject, updateGoal, updateSharedDashboardProject]
   );
 
   const onToggleTop3 = useCallback(
@@ -190,6 +201,7 @@ export function DenseTaskNode({
 
   const onMove = useCallback(
     (tid) => {
+      if (onMoveProp) return onMoveProp(tid, targetIndex, targetParentId);
       if (isLifeGoal) return; // no drag-drop move for life goal tasks
       if (isShared) {
         if (targetParentId) {
@@ -220,12 +232,13 @@ export function DenseTaskNode({
       }
     },
     [
+      onMoveProp,
+      targetIndex,
+      targetParentId,
       isLifeGoal,
       isShared,
       shareId,
       projectId,
-      targetIndex,
-      targetParentId,
       moveProjectTask,
       moveSubtask,
       updateSharedDashboardProject,
