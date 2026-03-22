@@ -299,8 +299,8 @@ export function DenseTaskNode({
         {/* Checkbox universale */}
         <div className="self-center shrink-0"><TaskCheckbox done={node.done} onClick={() => onToggle(node.id, !node.done)} /></div>
 
-        {/* Title - seamless editing, full width (pr per non sovrapporsi ai pulsanti hover) */}
-        <div className="flex flex-1 min-w-0 items-center gap-2 py-0.5 pr-14" onClick={() => !editing && onToggle(node.id, !node.done)}>
+        {/* Title - seamless editing, full width */}
+        <div className="flex flex-1 min-w-0 items-center gap-2 py-0.5" onClick={() => !editing && onToggle(node.id, !node.done)}>
           {editing ? (
             <input
               autoFocus
@@ -319,15 +319,15 @@ export function DenseTaskNode({
           {node.deadline && !editing && (
             <button
               onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
-              className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold tabular-nums border border-transparent hover:border-current transition-colors ${getDeadlineColorClass(node.deadline, node.done)}`}
+              className={`shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-bold tabular-nums border border-transparent hover:border-current transition-colors ${getDeadlineColorClass(node.deadline, node.done)}`}
             >
               {formatDeadline(node.deadline)}
             </button>
           )}
         </div>
 
-        {/* Hover Actions — overlay a destra, non rubano spazio al titolo */}
-        <div className={`absolute right-0 top-0 bottom-0 flex items-center gap-0.5 pl-4 bg-gradient-to-l from-white via-white to-transparent dark:from-[#161920] dark:via-[#161920] dark:to-transparent transition-opacity shrink-0 ${isTop3 ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'}`}>
+        {/* Hover Actions — flex con ml-auto, mai sovrapposto al titolo */}
+        <div className={`flex items-center gap-0.5 shrink-0 ml-2 transition-all duration-200 ${isTop3 ? 'opacity-100 visible' : 'opacity-0 invisible group-hover/row:opacity-100 group-hover/row:visible'}`}>
           {!hideTop3Button && !node.done && (isTop3 || hasFreeTop3Slot) && (
             <button 
               onClick={(e) => { e.stopPropagation(); onToggleTop3(projectId, node.id); }} 
