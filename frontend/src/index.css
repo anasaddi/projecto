@@ -8,8 +8,9 @@ html {
 
 body {
   margin: 0;
-  font-family: "Outfit", system-ui, -apple-system, sans-serif;
+  font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
   font-size: 1rem;
+  font-weight: 400;
   background: #f8fafc;
   /* Cleaner light mode background */
   color: #0f172a;

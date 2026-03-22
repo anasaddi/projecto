@@ -300,18 +300,18 @@ export function DenseTaskNode({
         </div>
 
         {/* Titolo + azioni: su mobile in colonna (nessuna sovrapposizione), da sm in riga */}
-        <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 py-0.5" onClick={() => !editing && onToggle(node.id, !node.done)}>
+        <div className="flex min-w-0 w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-start sm:gap-2">
+          <div className="flex min-w-0 w-full flex-1 flex-wrap items-start gap-x-2 gap-y-1 py-0.5" onClick={() => !editing && onToggle(node.id, !node.done)}>
             {editing ? (
               <input
                 autoFocus
                 defaultValue={node.title}
                 onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
                 onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
-                className="min-w-0 flex-1 bg-transparent border-b border-indigo-400 outline-none text-xs py-0.5 text-zinc-900 dark:text-zinc-100"
+                className="min-w-0 w-full flex-1 bg-transparent border-b border-indigo-400 outline-none text-xs py-0.5 text-zinc-900 dark:text-zinc-100"
               />
             ) : (
-              <span className={`min-w-0 max-w-full flex-1 text-xs leading-snug break-words ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-300 font-medium'}`} title={node.title}>
+              <span className={`block w-full min-w-0 text-xs leading-relaxed break-words [overflow-wrap:anywhere] ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-300 font-medium'}`} title={node.title}>
                 {node.title}
               </span>
             )}
@@ -325,7 +325,7 @@ export function DenseTaskNode({
             )}
           </div>
 
-        <div className={`flex w-full shrink-0 items-center justify-end gap-0.5 pl-0 sm:w-auto sm:justify-start sm:pl-0 transition-all duration-200 ${isTop3 ? 'opacity-100 visible' : 'opacity-0 invisible group-hover/row:opacity-100 group-hover/row:visible'}`}>
+        <div className={`flex w-full shrink-0 items-center justify-end gap-0.5 sm:w-auto sm:shrink-0 sm:justify-end sm:pt-0.5 transition-all duration-200 ${isTop3 ? 'opacity-100 visible' : 'opacity-0 invisible group-hover/row:opacity-100 group-hover/row:visible'}`}>
           {!hideTop3Button && !node.done && (isTop3 || hasFreeTop3Slot) && (
             <button 
               onClick={(e) => { e.stopPropagation(); onToggleTop3(projectId, node.id); }} 

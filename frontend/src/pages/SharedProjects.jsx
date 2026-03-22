@@ -3,13 +3,11 @@ import { Link, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../api/client';
 import { getSharedDashboardWsUrl } from '../config';
-import { StandardProjectCard } from '../components/dashboard/ProjectComponents';
+import { StandardProjectCard, CreateProjectCard } from '../components/dashboard/ProjectComponents';
 import { DenseTaskNode } from '../components/dashboard/DenseTaskNode';
 import { countTreeStats as countTreeStatsUtil } from '../components/dashboard/DashboardUtils';
 import { ConfirmModal } from '../components/ConfirmModal';
 import FinanzeSection from '../components/shared/FinanzeSection';
-import { AppLogo } from '../components/AppLogo';
-
 /**
  * ----------------------------------------------------------------------
  * ICONS (Lucide-inspired)
@@ -1086,15 +1084,9 @@ export default function SharedProjects() {
               );
             })}
 
-            <button
-              onClick={createProject}
-              className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-2xl hover:border-indigo-500 hover:bg-indigo-500/5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 text-gray-400 hover:text-indigo-500 group min-h-[240px]"
-            >
-              <div className="group-hover:scale-110 transition-transform duration-300">
-                <AppLogo size="md" />
-              </div>
-              <span className="text-lg font-bold bg-gradient-to-r from-gray-600 to-gray-800 dark:from-gray-300 dark:to-gray-100 bg-clip-text text-transparent group-hover:from-indigo-500 group-hover:to-purple-600 transition-all duration-300">Crea Progetto</span>
-            </button>
+            <motion.div layout className="flex min-h-[5.75rem]">
+              <CreateProjectCard onClick={createProject} className="flex-1" />
+            </motion.div>
           </div>
 
         </div>
@@ -1142,7 +1134,7 @@ export default function SharedProjects() {
                       <span className={`shrink-0 ${task.done ? 'text-emerald-500' : 'text-gray-300 dark:text-gray-600'} transition-colors duration-200`}>
                         {task.done ? <Icons.CheckCircle className="w-4 h-4" /> : <Icons.Circle className="w-4 h-4" />}
                       </span>
-                      <span title={task.title} className={`flex-1 text-xs min-w-0 break-words line-clamp-2 leading-snug ${task.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
+                      <span title={task.title} className={`min-w-0 flex-1 break-words text-xs leading-relaxed [overflow-wrap:anywhere] ${task.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
                         {task.title}
                       </span>
                       <button

@@ -186,7 +186,7 @@ export function QuickTasksSection() {
                           setQuickTaskEditingTitle(task.title);
                         }}
                         title={task.title}
-                        className={`cursor-pointer select-text text-sm leading-snug break-words line-clamp-2 min-w-0 transition-colors ${task.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}
+                        className={`min-w-0 cursor-pointer select-text text-sm leading-relaxed break-words [overflow-wrap:anywhere] transition-colors ${task.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}
                       >
                         {task.title}
                         {isShared && task.sharedTitle && (

@@ -67,7 +67,7 @@ export function Top3Section() {
   };
 
   return (
-    <Card className="flex flex-col shrink-0" glow>
+    <Card className="flex flex-col shrink-0">
       <CardHeader
         icon={Icons.Target}
         iconColor="text-amber-500"
@@ -118,13 +118,12 @@ export function Top3Section() {
                 backgroundColor: isDragOver ? 'rgba(251, 191, 36, 0.15)' : filled ? 'rgba(0, 0, 0, 0)' : 'rgba(0, 0, 0, 0)',
               }}
               className={`
-                relative overflow-hidden min-h-[3.5rem] rounded-xl border-2 
-                transition-all duration-200
+                relative overflow-hidden min-h-[3.25rem] rounded-2xl border transition-all duration-200
                 ${isDragOver 
-                  ? 'border-amber-400 dark:border-amber-400 bg-amber-50/80 dark:bg-amber-900/20 ring-2 ring-amber-400/30' 
+                  ? 'border-amber-400/80 dark:border-amber-500/50 bg-amber-50/80 dark:bg-amber-900/20 ring-1 ring-amber-400/25' 
                   : filled 
-                    ? 'border-zinc-200 dark:border-white/[0.08] bg-zinc-50/80 dark:bg-white/[0.03] cursor-grab active:cursor-grabbing hover:border-amber-300 dark:hover:border-amber-500/30' 
-                    : 'border-dashed border-zinc-300 dark:border-white/[0.12] bg-transparent hover:border-zinc-400 dark:hover:border-white/[0.2]'
+                    ? 'border-zinc-200/60 dark:border-white/[0.08] bg-white/60 dark:bg-[#161920]/40 cursor-grab active:cursor-grabbing hover:border-zinc-300 dark:hover:border-white/[0.12] shadow-sm shadow-zinc-200/40 dark:shadow-black/20' 
+                    : 'border-dashed border-zinc-300/80 dark:border-white/[0.12] bg-zinc-50/30 dark:bg-white/[0.02] hover:border-zinc-400 dark:hover:border-white/[0.18]'
                 }
               `}
             >
@@ -140,18 +139,18 @@ export function Top3Section() {
                   </span>
                 </div>
               ) : filled ? (
-                <div className="relative z-10 flex items-center gap-3 px-3 py-3 h-full">
-                  <div onClick={(e) => e.stopPropagation()}>
+                <div className="relative z-10 flex items-start gap-3 px-3 py-3 h-full">
+                  <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
                     <TaskCheckbox done={isDone} onClick={() => toggleTop3Slot(slot)} />
                   </div>
                   
                   <div 
                     onClick={() => toggleTop3Slot(slot)}
-                    className="flex flex-col flex-1 min-w-0 cursor-pointer"
+                    className="flex flex-col flex-1 min-w-0 cursor-pointer pr-1"
                   >
                     <span 
                       title={slot.title} 
-                      className={`text-sm font-semibold break-words line-clamp-2 leading-snug transition-colors duration-150 ${isDone ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-800 dark:text-zinc-100'}`}
+                      className={`text-sm font-semibold break-words leading-snug transition-colors duration-150 ${isDone ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-800 dark:text-zinc-100'}`}
                     >
                       {slot.title}
                     </span>

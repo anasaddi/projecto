@@ -132,14 +132,16 @@ export function ProgressBar({
     emerald: 'from-emerald-500 to-teal-500',
     amber: 'from-amber-500 to-orange-500',
     rose: 'from-rose-500 to-pink-500',
-    sky: 'from-sky-500 to-cyan-500'
+    sky: 'from-sky-500 to-cyan-500',
+    violet: 'from-violet-500 to-purple-500'
   };
-  
+  const barGradient = colorClasses[color] || colorClasses.indigo;
+
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <div className={`flex-1 ${sizeClasses[size]} rounded-full bg-zinc-200 dark:bg-white/[0.08] overflow-hidden`}>
         <motion.div
-          className={`h-full rounded-full bg-gradient-to-r ${colorClasses[color]} shadow-sm`}
+          className={`h-full rounded-full bg-gradient-to-r ${barGradient} shadow-sm`}
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}

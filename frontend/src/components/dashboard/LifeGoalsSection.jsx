@@ -6,6 +6,7 @@ import { LifeGoalTierRow } from './LifeGoalTierRow';
 import { createTaskNode, updateNodeInTree, removeNodeFromTree, countTreeStats, getDeadlineColorClass, formatDeadline } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { useToast } from '../../context/ToastContext';
+import { Card, CardHeader, CardBody } from './Card';
 
 export function LifeGoalsSection() {
   const store = useDashboardStore();
@@ -63,28 +64,27 @@ export function LifeGoalsSection() {
   }, [quickTasks, promoteGoalToQuickTasks, showToast]);
 
   return (
-    <div className="shrink-0 px-4 pb-4 lg:pb-6">
-      <div className="dashboard-panel flex flex-col gap-3 p-4 border-none shadow-xl bg-white/70 backdrop-blur-md dark:bg-[#161920]/70">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-violet-500 text-white shadow-md shadow-violet-500/25">
-              <Icons.Target className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-base font-black tracking-tight text-zinc-900 dark:text-white">Life Goals</h2>
-              <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Building the Future</p>
-            </div>
-          </div>
-          <button
-            onClick={() => updateLifeGoals(p => ({ ...p, collapsed: !p.collapsed }))}
-            className="p-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-white/5 dark:hover:bg-white/10 transition-all text-zinc-500"
-          >
-            {lifeGoals.collapsed ? <Icons.ChevronDown className="h-4 w-4" /> : <Icons.ChevronUp className="h-4 w-4" />}
-          </button>
-        </div>
+    <div className="shrink-0 px-6 pb-6">
+      <Card className="flex flex-col">
+        <CardHeader
+          icon={Icons.Target}
+          iconColor="text-violet-500"
+          title="Life Goals"
+          subtitle="Costruisci il futuro"
+          action={
+            <button
+              type="button"
+              onClick={() => updateLifeGoals((p) => ({ ...p, collapsed: !p.collapsed }))}
+              className="rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 dark:hover:bg-white/[0.06]"
+              aria-expanded={!lifeGoals.collapsed}
+            >
+              {lifeGoals.collapsed ? <Icons.ChevronDown className="h-4 w-4" /> : <Icons.ChevronUp className="h-4 w-4" />}
+            </button>
+          }
+        />
 
         {!lifeGoals.collapsed && (
-          <div className="flex flex-col gap-3">
+          <CardBody padding="normal" className="flex flex-col gap-3 pt-2">
             {(lifeGoals.tiers ?? []).map((tier) => (
               <LifeGoalTierRow
                 key={tier.id}
@@ -93,14 +93,14 @@ export function LifeGoalsSection() {
                 onDrop={moveGoalToTier}
               >
                 {tier.goals.length === 0 && (
-                        <div className="relative overflow-hidden min-h-[3rem] rounded-xl border-2 border-dashed border-zinc-100 dark:border-white/[0.04] flex items-center justify-center group/empty transition-all hover:border-indigo-500/30">
-                          <span className="text-[10px] font-black text-zinc-300 dark:text-zinc-600 uppercase tracking-widest group-hover/empty:text-indigo-400 transition-colors">Drop or add goals</span>
+                        <div className="relative flex min-h-[3rem] items-center justify-center overflow-hidden rounded-xl border border-dashed border-zinc-200/80 dark:border-white/[0.1] bg-zinc-50/40 dark:bg-white/[0.02] transition-all group/empty hover:border-indigo-400/40 dark:hover:border-indigo-500/30">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 transition-colors group-hover/empty:text-indigo-500 dark:group-hover/empty:text-indigo-400">Trascina o aggiungi obiettivi</span>
                         </div>
                       )}
 
                       {tier.goals.some(g => g.type === 'quick') && (
                         <div className="space-y-2">
-                          <h4 className="px-0.5 text-[9px] font-black uppercase tracking-widest text-zinc-400/80">Micro Movements</h4>
+                          <h4 className="px-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Micro movements</h4>
                           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5">
                             {tier.goals.filter(g => g.type === 'quick').map((goal) => (
                               <LifeGoalCard
@@ -135,7 +135,7 @@ export function LifeGoalsSection() {
 
                       {tier.goals.some(g => g.type === 'project') && (
                         <div className="space-y-2">
-                          <h4 className="px-0.5 text-[9px] font-black uppercase tracking-widest text-zinc-400/80">Macro Projects</h4>
+                          <h4 className="px-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Macro progetti</h4>
                           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
                             {tier.goals.filter(g => g.type === 'project').map((goal) => {
                               const stats = countTreeStats(goal.tasks);
@@ -190,7 +190,7 @@ export function LifeGoalsSection() {
                                             }
                                           }}
                                           placeholder="+ Aggiungi task..."
-                                          className="w-full bg-transparent text-xs text-zinc-500 dark:text-zinc-400 outline-none placeholder:text-zinc-300 dark:placeholder:text-zinc-700"
+                                          className="w-full border-b border-transparent bg-transparent py-1 text-sm text-zinc-600 outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-300 dark:text-zinc-400 dark:placeholder:text-zinc-600 dark:focus:border-white/10"
                                         />
                                       </div>
                                     </>
@@ -206,23 +206,23 @@ export function LifeGoalsSection() {
                   <button
                     type="button"
                     onClick={() => { const title = window.prompt("Quick goal:"); if (title) addGoalToTier(tier.id, title, 'General', 'quick'); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-white/5 dark:hover:bg-white/10 text-[10px] font-black uppercase tracking-wider text-zinc-500 transition-all"
+                    className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-600 transition-all hover:bg-zinc-200 dark:bg-white/[0.05] dark:text-zinc-400 dark:hover:bg-white/[0.08]"
                   >
                     <Icons.Plus className="h-3 w-3" /> Quick
                   </button>
                   <button
                     type="button"
                     onClick={() => { const title = window.prompt("Progetto:"); if (title) addGoalToTier(tier.id, title, 'General', 'project'); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-600 dark:bg-indigo-500/20 dark:hover:bg-indigo-500/30 text-[10px] font-black uppercase tracking-wider text-white dark:text-indigo-400 transition-all shadow-md shadow-indigo-500/20"
+                    className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-white shadow-md shadow-indigo-500/25 transition-all hover:shadow-lg hover:shadow-indigo-500/30 dark:from-indigo-500/90 dark:to-violet-600/90"
                   >
                     <Icons.Plus className="h-3 w-3" /> Project
                   </button>
                 </div>
               </LifeGoalTierRow>
             ))}
-          </div>
+          </CardBody>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

@@ -170,7 +170,7 @@ export default function DashboardV2(): React.ReactElement {
   const confirmPayload = confirmState && typeof confirmState === 'object' && 'payload' in confirmState ? (confirmState as { payload?: { shareId?: string; projectId?: string; goalId?: string } }).payload : undefined;
 
   return (
-    <div className="min-h-full w-full flex flex-col overflow-y-auto overflow-x-hidden font-sans font-medium select-none selection:bg-indigo-500/30 antialiased">
+    <div className="min-h-full w-full flex flex-col overflow-y-auto overflow-x-hidden font-sans font-normal select-none selection:bg-indigo-500/30 antialiased">
       <header className="shrink-0 border-b border-zinc-200/50 dark:border-white/[0.06] bg-white/70 dark:bg-[#0b0e14]/70 backdrop-blur-xl shadow-sm dark:shadow-black/50 px-6 py-3">
         <div className="flex items-center justify-between gap-4">
           <div className="w-0 sm:w-4 shrink-0" />

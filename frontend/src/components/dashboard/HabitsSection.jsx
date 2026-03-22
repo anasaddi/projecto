@@ -185,7 +185,7 @@ export function HabitsSection() {
                             setHabitEditingTitle(task.title); 
                           }}
                           title={task.title}
-                          className={`cursor-pointer select-text text-sm leading-snug break-words line-clamp-2 transition-colors ${isDone ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-700 dark:text-zinc-200'}`}
+                          className={`cursor-pointer select-text text-sm leading-relaxed break-words [overflow-wrap:anywhere] transition-colors ${isDone ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-700 dark:text-zinc-200'}`}
                         >
                           {task.title}
                         </span>

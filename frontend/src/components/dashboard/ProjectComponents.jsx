@@ -58,7 +58,7 @@ export function StandardProjectCard({
     >
       {/* Header */}
       <div
-        className="flex cursor-pointer items-center gap-3 p-4 group/header"
+        className="group/header flex cursor-pointer items-start gap-3 p-4"
         onClick={() => {
           const next = !expanded;
           setExpanded(next);
@@ -66,7 +66,7 @@ export function StandardProjectCard({
         }}
       >
         {/* Accent indicator */}
-        <div className={`w-1.5 h-10 rounded-full bg-gradient-to-b ${accentColor.bar} shadow-sm shrink-0`} />
+        <div className={`mt-0.5 h-10 w-1.5 shrink-0 rounded-full bg-gradient-to-b ${accentColor.bar} shadow-sm`} />
 
         {/* Title */}
         <textarea
@@ -83,11 +83,11 @@ export function StandardProjectCard({
           }}
           onClick={(e) => e.stopPropagation()}
           rows={1}
-          className="flex-1 text-sm font-bold text-zinc-800 dark:text-zinc-100 resize-none outline-none bg-transparent overflow-hidden break-words py-0.5 leading-snug placeholder:text-zinc-400"
+          className="flex-1 min-h-[1.25rem] text-sm font-bold text-zinc-800 dark:text-zinc-100 resize-none outline-none bg-transparent overflow-visible break-words py-0.5 leading-snug placeholder:text-zinc-400"
         />
 
         {/* Meta info */}
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2 self-center pt-0.5">
           {/* Deadline */}
           {project.deadline && projectDeadlineEditing !== project.id && (
             <Badge 
@@ -195,7 +195,7 @@ export function CompactProjectCard({
       <div className="flex items-center gap-3">
         <div className={`w-1 h-8 rounded-full bg-gradient-to-b ${accentColor.bar}`} />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100 truncate">{project.title}</p>
+          <p className="text-sm font-semibold leading-relaxed text-zinc-800 break-words [overflow-wrap:anywhere] dark:text-zinc-100">{project.title}</p>
           <div className="flex items-center gap-2 mt-1">
             <div className="flex-1 h-1.5 rounded-full bg-zinc-100 dark:bg-white/[0.06] overflow-hidden">
               <div 
@@ -226,15 +226,15 @@ export function CreateProjectCard({ onClick }) {
       {/* Background glow effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/0 via-purple-500/0 to-indigo-500/0 group-hover:from-indigo-500/5 group-hover:via-purple-500/5 group-hover:to-indigo-500/5 transition-all duration-500" />
       
-      <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-white/[0.06] dark:to-white/[0.12] flex items-center justify-center group-hover:from-indigo-500 group-hover:to-purple-600 group-hover:text-white transition-all duration-300 shadow-sm group-hover:shadow-lg group-hover:shadow-indigo-500/25">
-        <Icons.Plus className="h-6 w-6 text-zinc-500 dark:text-zinc-400 group-hover:text-white transition-colors" />
+      <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-white/[0.06] dark:to-white/[0.12] shadow-sm transition-all duration-300 group-hover:from-indigo-500 group-hover:to-violet-600 group-hover:text-white group-hover:shadow-md group-hover:shadow-indigo-500/20">
+        <Icons.Plus className="h-5 w-5 text-zinc-500 dark:text-zinc-400 group-hover:text-white transition-colors" />
       </div>
       
-      <div className="relative text-center">
-        <p className="text-sm font-bold text-zinc-600 dark:text-zinc-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+      <div className="relative text-center px-1">
+        <p className="text-sm font-bold text-zinc-700 dark:text-zinc-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
           Nuovo Progetto
         </p>
-        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+        <p className="text-[10px] font-medium text-zinc-500 dark:text-zinc-500">
           Clicca per iniziare
         </p>
       </div>

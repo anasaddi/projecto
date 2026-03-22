@@ -124,8 +124,9 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                 );
               })}
               
-              {/* Add project placeholder in grid */}
-              <CreateProjectCard onClick={createProject} />
+              <div className="flex min-h-[5.75rem]">
+                <CreateProjectCard onClick={createProject} className="flex-1" />
+              </div>
             </div>
 
             {/* Shared Projects */}

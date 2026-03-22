@@ -11,7 +11,7 @@ export function LifeGoalTierRow({ tier, onToggleCollapse, onDrop, children }) {
 
   return (
     <div
-      className="group/tier flex flex-col rounded-xl border border-zinc-100 dark:border-white/[0.04] transition-all"
+      className="group/tier flex flex-col overflow-hidden rounded-2xl border border-zinc-200/60 bg-zinc-50/40 dark:border-white/[0.08] dark:bg-white/[0.02] transition-all"
       onDragOver={(e) => {
         e.preventDefault();
         e.currentTarget.classList.add('bg-zinc-50/50', 'dark:bg-white/[0.02]');
@@ -27,7 +27,7 @@ export function LifeGoalTierRow({ tier, onToggleCollapse, onDrop, children }) {
       }}
     >
       <div
-        className="flex cursor-pointer items-center justify-between px-3 py-2.5 transition-all hover:bg-zinc-50/50 dark:hover:bg-white/[0.02] rounded-xl"
+        className="flex cursor-pointer items-center justify-between border-b border-zinc-100/80 px-4 py-3 transition-all hover:bg-zinc-100/50 dark:border-white/[0.04] dark:hover:bg-white/[0.03]"
         onClick={() => onToggleCollapse(tier.id)}
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -35,7 +35,7 @@ export function LifeGoalTierRow({ tier, onToggleCollapse, onDrop, children }) {
             {tier.emoji}
           </div>
           <div className="flex flex-col gap-0.5 min-w-0">
-            <span className="text-[13px] font-black text-zinc-800 dark:text-zinc-100 tracking-tight break-words line-clamp-2 leading-snug">
+            <span className="break-words text-sm font-semibold leading-snug tracking-tight text-zinc-800 dark:text-zinc-100">
               {tier.name}
             </span>
             <div className="flex items-center gap-2">
@@ -53,7 +53,7 @@ export function LifeGoalTierRow({ tier, onToggleCollapse, onDrop, children }) {
         />
       </div>
 
-      {!tier.collapsed && <div className="animate-slide-down flex flex-col gap-4 px-3 pb-4 pt-1">{children}</div>}
+      {!tier.collapsed && <div className="animate-slide-down flex flex-col gap-4 px-4 pb-4 pt-3">{children}</div>}
     </div>
   );
 }
