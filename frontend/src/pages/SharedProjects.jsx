@@ -195,21 +195,26 @@ function SharedListDashboard() {
   const settingsSd = settingsModalFor ? list.find(sd => (sd.share_id || sd.shareId) === settingsModalFor) : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] text-gray-900 dark:text-gray-100 p-6 sm:p-10 select-none [&_input]:select-text [&_textarea]:select-text">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.06),transparent_18%),linear-gradient(180deg,#f8fafc_0%,#f3f6fb_100%)] p-6 text-gray-900 select-none [&_input]:select-text [&_textarea]:select-text dark:bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.16),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.08),transparent_18%),linear-gradient(180deg,#0b0f18_0%,#0e131b_100%)] dark:text-gray-100 sm:p-10">
       <div className="max-w-4xl mx-auto">
-        <header className="mb-10">
-          <h1 className="text-3xl font-black tracking-tight text-gray-900 dark:text-white mb-2">I miei Condivisi</h1>
-          <p className="text-gray-500 dark:text-gray-400 font-medium">Dashboard condivise collegate alla tua area</p>
+        <header className="mb-8 rounded-[32px] border border-zinc-200/70 bg-white/[0.88] p-7 shadow-[0_26px_60px_-40px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#141922]/85 dark:shadow-[0_30px_70px_-42px_rgba(0,0,0,0.62)]">
+          <div className="flex flex-wrap items-center gap-3 mb-3">
+            <span className="inline-flex rounded-full border border-indigo-200/80 bg-indigo-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/20 dark:text-indigo-300">
+              Shared workspace
+            </span>
+          </div>
+          <h1 className="mb-2 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">I miei Condivisi</h1>
+          <p className="max-w-2xl text-sm font-medium text-gray-500 dark:text-gray-400">Dashboard condivise collegate alla tua area, con accesso rapido, avanzamento e strumenti collaborativi.</p>
         </header>
 
         {/* Pannello di controllo: gestione password per sezione */}
-        <div className="mb-10 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 p-6 shadow-sm">
-          <h2 className="text-sm font-black uppercase tracking-wider text-gray-800 dark:text-gray-200 mb-4">Pannello di controllo</h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+        <div className="mb-10 rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-6 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.22)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#141922]/82 dark:shadow-[0_30px_60px_-40px_rgba(0,0,0,0.6)]">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-zinc-700 dark:text-zinc-200">Pannello di controllo</h2>
+          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
             Clicca <strong>Password</strong> su ogni card per impostare la password di accesso principale.
           </p>
-          <p className="text-[11px] font-bold uppercase text-gray-500 dark:text-gray-400">Dove impostare</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">Dove impostare</p>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
             Pulsante <strong>Password</strong> su ogni shared ↓
           </p>
         </div>
@@ -262,7 +267,7 @@ function SharedListDashboard() {
         )}
 
         {list.length === 0 ? (
-          <div className="rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-white/5 p-12 text-center">
+          <div className="rounded-[28px] border border-dashed border-zinc-300/80 bg-white/[0.78] p-12 text-center shadow-[0_16px_48px_-38px_rgba(15,23,42,0.2)] backdrop-blur-2xl dark:border-white/[0.12] dark:bg-[#141922]/70">
             <Icons.MessageCircle className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
             <p className="text-gray-500 dark:text-gray-400 font-medium mb-2">Nessun dashboard condiviso</p>
             <p className="text-sm text-gray-400 dark:text-gray-500">I dashboard condivisi appariranno qui quando ne creerai o ne riceverai.</p>
@@ -286,10 +291,10 @@ function SharedListDashboard() {
                 <Link
                   key={sid}
                   to={`/shared/${sid}`}
-                  className="group block rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 p-5 hover:border-indigo-300 dark:hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/10 transition-all"
+                  className="group block rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-5 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.2)] backdrop-blur-2xl transition-all hover:-translate-y-0.5 hover:border-indigo-300/80 hover:shadow-[0_24px_60px_-38px_rgba(99,102,241,0.18)] dark:border-white/[0.08] dark:bg-[#141922]/82 dark:hover:border-indigo-500/35 dark:hover:shadow-[0_28px_60px_-38px_rgba(0,0,0,0.62)]"
                 >
                   <div className="flex items-start justify-between gap-4 mb-3">
-                    <h3 className="font-bold text-gray-900 dark:text-white truncate flex-1">{title}</h3>
+                    <h3 className="flex-1 truncate text-[15px] font-semibold tracking-tight text-gray-900 dark:text-white">{title}</h3>
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"
@@ -300,7 +305,7 @@ function SharedListDashboard() {
                         <Icons.Lock className="w-3.5 h-3.5" />
                         <span className="text-[10px] font-semibold hidden sm:inline">{(sd.data?.passwordHash) ? 'Modifica' : 'Password'}</span>
                       </button>
-                      <span className="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-wider">
+                      <span className="rounded-full border border-indigo-200/80 bg-indigo-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/20 dark:text-indigo-300">
                         Shared
                       </span>
                     </div>
@@ -311,7 +316,7 @@ function SharedListDashboard() {
                     <span>{quickTasks.length} quick tasks</span>
                   </div>
                   {totalTasks > 0 && (
-                    <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mb-4">
+                    <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                       <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full" style={{ width: `${pct}%` }} />
                     </div>
                   )}
@@ -855,7 +860,7 @@ export default function SharedProjects() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] text-gray-900 dark:text-gray-100 p-4 sm:p-8 md:p-10 font-sans select-none [&_input]:select-text [&_textarea]:select-text antialiased overflow-x-hidden relative">
+    <div className="relative min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.06),transparent_18%),linear-gradient(180deg,#f8fafc_0%,#f3f6fb_100%)] p-4 font-sans antialiased text-gray-900 select-none [&_input]:select-text [&_textarea]:select-text dark:bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.16),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.08),transparent_18%),linear-gradient(180deg,#0b0f18_0%,#0e131b_100%)] dark:text-gray-100 sm:p-8 md:p-10">
       <ConfirmModal
         open={confirmResetChat}
         title="Cancella cronologia chat"
@@ -866,30 +871,30 @@ export default function SharedProjects() {
         onConfirm={() => updateLocal({ chat: [] })}
         onCancel={() => setConfirmResetChat(false)}
       />
-      <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-8">
+      <div className="mx-auto flex max-w-[1440px] flex-col gap-8 lg:flex-row">
 
         {/* MAIN CONTENT: PROJECTS */}
         <div className="flex-1 space-y-8 min-w-0 order-2 lg:order-1">
-          <header className="mb-10">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+          <header className="mb-8 rounded-[32px] border border-zinc-200/70 bg-white/[0.88] p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#141922]/85 dark:shadow-[0_30px_70px_-42px_rgba(0,0,0,0.62)] md:p-8">
+            <div className="mb-6 flex flex-col justify-between gap-6 md:flex-row md:items-end">
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
                   <input
                     value={dashboard.title}
                     onChange={(e) => updateLocal({ title: e.target.value })}
-                    className="text-4xl font-black tracking-tighter bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-500 rounded px-2 py-1 w-full sm:w-auto transition-all text-gray-900 dark:text-white"
+                    className="w-full rounded-2xl border border-transparent bg-transparent px-2 py-1 text-3xl font-semibold tracking-tight text-gray-900 outline-none transition-all focus:border-zinc-200 focus:bg-white/60 focus:ring-2 focus:ring-indigo-500/20 dark:text-white dark:focus:border-white/[0.08] dark:focus:bg-white/[0.03] sm:w-auto md:text-4xl"
                   />
-                  <span className="px-3 py-1 bg-indigo-500 text-white text-[10px] font-black rounded-full uppercase tracking-widest shadow-lg shadow-indigo-500/20">
+                  <span className="rounded-full border border-indigo-200/80 bg-indigo-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/20 dark:text-indigo-300">
                     Shared
                   </span>
                 </div>
-                <p className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
+                <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400">
                   Spazio di lavoro condiviso
-                  <span className="font-mono text-[11px] text-gray-400 dark:text-gray-500">/shared/{id}</span>
+                  <span className="rounded-full bg-zinc-100/80 px-2.5 py-1 font-mono text-[11px] text-zinc-500 dark:bg-white/[0.05] dark:text-zinc-400">/shared/{id}</span>
                   <button
                     type="button"
                     onClick={copyShareLink}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-transparent px-2.5 py-1.5 text-xs font-medium text-indigo-600 transition-colors hover:border-indigo-100 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:border-indigo-500/10 dark:hover:bg-indigo-500/10"
                     title="Copia link completo"
                   >
                     {linkCopied ? <span>Copiato!</span> : <><Icons.Copy className="w-3.5 h-3.5" /> Copia link</>}
@@ -904,7 +909,7 @@ export default function SharedProjects() {
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="flex items-center gap-2 text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-500/20"
+                        className="flex items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300"
                       >
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                         LIVE
@@ -913,7 +918,7 @@ export default function SharedProjects() {
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="flex items-center gap-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-500/10 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-500/20"
+                        className="flex items-center gap-2 rounded-full border border-slate-200/80 bg-slate-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:border-slate-500/20 dark:bg-slate-500/10 dark:text-slate-300"
                       >
                         <div className="w-1.5 h-1.5 rounded-full bg-slate-500" />
                         Sincronizzazione manuale
@@ -929,7 +934,7 @@ export default function SharedProjects() {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white dark:bg-[#161920]/50 border border-zinc-200 dark:border-white/[0.06] rounded-xl p-5 shadow-sm"
+                className="rounded-[26px] border border-zinc-200/70 bg-zinc-50/70 p-5 shadow-inner shadow-white/50 dark:border-white/[0.06] dark:bg-white/[0.02]"
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -959,7 +964,7 @@ export default function SharedProjects() {
             )}
           </header>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 2xl:grid-cols-3">
             {dashboard.projects.map((proj, pIdx) => {
               const dragPayload = { type: 'project', fromIndex: pIdx };
               const stats = countTreeStatsUtil(proj.tasks);
@@ -1092,14 +1097,17 @@ export default function SharedProjects() {
         </div>
 
         {/* SIDEBAR: QUICK TASKS + CHAT */}
-        <aside className="w-full lg:w-72 shrink-0 order-1 lg:order-2 pt-[76px] space-y-6">
+        <aside className="order-1 w-full shrink-0 space-y-6 pt-0 lg:w-80 lg:pt-[76px]">
           {/* QUICK TASKS */}
-          <div className="bg-white/80 dark:bg-[#1a1d24]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 rounded-2xl p-6 shadow-lg min-h-[340px] flex flex-col">
+          <div className="flex min-h-[340px] flex-col rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-6 shadow-[0_22px_50px_-38px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#141922]/82 dark:shadow-[0_30px_60px_-40px_rgba(0,0,0,0.6)]">
             <div className="flex items-center gap-2 mb-4">
-              <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
                 <Icons.Zap className="w-4 h-4" />
               </div>
-              <h2 className="text-sm font-black uppercase tracking-wider text-gray-800 dark:text-gray-200">Quick Tasks</h2>
+              <div>
+                <h2 className="text-[15px] font-semibold tracking-tight text-gray-900 dark:text-zinc-100">Quick Tasks</h2>
+                <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">Task leggere condivise</p>
+              </div>
             </div>
 
             <div className="space-y-3 flex-1 flex flex-col">
@@ -1108,12 +1116,12 @@ export default function SharedProjects() {
                   value={quickTaskDraft}
                   onChange={(e) => setQuickTaskDraft(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addQuickTask(quickTaskDraft)}
-                  className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl pl-4 pr-10 py-2.5 text-xs outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500 transition-colors"
+                  className="w-full rounded-2xl border border-zinc-200/70 bg-zinc-100/80 py-3 pl-4 pr-10 text-sm outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20 dark:border-white/[0.06] dark:bg-white/[0.04]"
                   placeholder="Nuova task veloce..."
                 />
                 <button
                   onClick={() => { addQuickTask(quickTaskDraft); setQuickTaskDraft(""); }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-amber-500 transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl p-2 text-gray-400 transition-colors hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-amber-500/10"
                 >
                   <Icons.Plus className="w-4 h-4" />
                 </button>
@@ -1129,7 +1137,7 @@ export default function SharedProjects() {
                       exit={{ opacity: 0, x: -20 }}
                       whileHover={{ scale: 1.02 }}
                       onClick={() => toggleQuickTask(task.id)}
-                      className="group flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-gray-100 dark:hover:border-gray-800 cursor-pointer"
+                      className="group flex cursor-pointer items-center gap-3 rounded-2xl border border-transparent p-3 transition-all duration-200 hover:border-zinc-200/80 hover:bg-zinc-50 dark:hover:border-white/[0.06] dark:hover:bg-white/[0.04]"
                     >
                       <span className={`shrink-0 ${task.done ? 'text-emerald-500' : 'text-gray-300 dark:text-gray-600'} transition-colors duration-200`}>
                         {task.done ? <Icons.CheckCircle className="w-4 h-4" /> : <Icons.Circle className="w-4 h-4" />}
@@ -1165,13 +1173,16 @@ export default function SharedProjects() {
           </div>
 
           {/* CHAT BOX */}
-          <div className="bg-white/80 dark:bg-[#1a1d24]/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 rounded-2xl p-6 shadow-lg min-h-[420px] flex flex-col">
+          <div className="flex min-h-[420px] flex-col rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-6 shadow-[0_22px_50px_-38px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#141922]/82 dark:shadow-[0_30px_60px_-40px_rgba(0,0,0,0.6)]">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
                   <Icons.MessageCircle className="w-4 h-4" />
                 </div>
-                <h2 className="text-sm font-black uppercase tracking-wider text-gray-800 dark:text-gray-200">Chat</h2>
+                <div>
+                  <h2 className="text-[15px] font-semibold tracking-tight text-gray-900 dark:text-zinc-100">Chat</h2>
+                  <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">Conversazione del workspace</p>
+                </div>
               </div>
               {dashboard.chat.length > 0 && (
                 <button
@@ -1199,9 +1210,9 @@ export default function SharedProjects() {
                     transition={{ duration: 0.2 }}
                   >
                     <div
-                      className={`max-w-[85%] p-3 rounded-2xl text-sm shadow-lg backdrop-blur-sm ${isMe
-                        ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-tr-none shadow-indigo-500/25'
-                        : 'bg-white/90 dark:bg-gray-800/90 text-gray-800 dark:text-gray-200 rounded-tl-none border border-gray-200/50 dark:border-gray-700/50 shadow-gray-500/10'
+                      className={`max-w-[85%] rounded-3xl p-3 text-sm shadow-lg backdrop-blur-sm ${isMe
+                        ? 'rounded-tr-none bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-indigo-500/25'
+                        : 'rounded-tl-none border border-zinc-200/70 bg-white/90 text-gray-800 shadow-gray-500/10 dark:border-white/[0.08] dark:bg-[#1b202b]/90 dark:text-gray-200'
                         }`}
                     >
                       {!isMe && (
@@ -1237,12 +1248,12 @@ export default function SharedProjects() {
                 value={chatDraft}
                 onChange={(e) => setChatDraft(e.target.value)}
                 placeholder="Scrivi un messaggio..."
-                className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 rounded-xl pl-4 pr-12 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+                className="w-full rounded-2xl border border-zinc-200/70 bg-zinc-100/80 py-3 pl-4 pr-12 text-sm outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-white/[0.06] dark:bg-white/[0.04]"
               />
               <button
                 type="submit"
                 disabled={!chatDraft.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl p-2 text-indigo-500 transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-indigo-500/10"
               >
                 <Icons.Send className="w-4 h-4" />
               </button>

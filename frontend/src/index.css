@@ -11,8 +11,10 @@ body {
   font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
   font-size: 1rem;
   font-weight: 400;
-  background: #f8fafc;
-  /* Cleaner light mode background */
+  background:
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.08), transparent 28%),
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.06), transparent 22%),
+    linear-gradient(180deg, #f8fafc 0%, #f4f7fb 100%);
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -23,9 +25,15 @@ html.dark {
 }
 
 html.dark body {
-  background: #0b0e14;
-  /* Deep premium dark */
+  background:
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.1), transparent 22%),
+    linear-gradient(180deg, #0b0e14 0%, #0e131b 100%);
   color: #f1f5f9;
+}
+
+#root {
+  min-height: 100vh;
 }
 
 /* Dark mode scrollbar */

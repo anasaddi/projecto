@@ -62,7 +62,7 @@ export function HabitsSection() {
         }
       />
 
-      <div className="p-4 pt-2 flex flex-col gap-2">
+      <div className="p-5 pt-4 flex flex-col gap-3">
         {/* Input */}
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -76,7 +76,7 @@ export function HabitsSection() {
                 }
               }}
               placeholder="Nuova abitudine..."
-              className="w-full py-2 px-3 pr-9 text-sm rounded-xl bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-400/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
+              className="w-full rounded-2xl border border-zinc-200/70 bg-zinc-100/85 px-4 py-3 pr-9 text-sm outline-none transition-all placeholder:text-zinc-400 focus:border-sky-400/50 focus:ring-2 focus:ring-sky-500/20 dark:border-white/[0.06] dark:bg-white/[0.04] dark:placeholder:text-zinc-500"
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-zinc-400 hidden sm:block">
               ↵
@@ -87,7 +87,7 @@ export function HabitsSection() {
             whileTap={{ scale: 0.95 }}
             onClick={addHabit}
             disabled={!habitDraft.trim()}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-600 text-white shadow-lg shadow-sky-500/25 transition-all hover:shadow-xl hover:shadow-sky-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-600 text-white shadow-lg shadow-sky-500/25 transition-all hover:shadow-xl hover:shadow-sky-500/30 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Icons.Plus className="h-5 w-5" />
           </motion.button>
@@ -141,10 +141,10 @@ export function HabitsSection() {
                     onMouseEnter={() => setHoveredHabitId(task.id)}
                     onMouseLeave={() => setHoveredHabitId(null)}
                     className={`
-                      group flex items-center gap-2 p-2 rounded-xl
+                      group flex items-center gap-2 rounded-2xl border border-transparent p-3
                       ${isLocked ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}
                       transition-colors duration-200
-                      ${isHovered ? 'bg-zinc-100 dark:bg-white/[0.04]' : 'bg-transparent'}
+                      ${isHovered ? 'border-zinc-200/70 bg-zinc-100/90 dark:border-white/[0.06] dark:bg-white/[0.04]' : 'bg-transparent'}
                     `}
                   >
                     <TaskCheckbox 

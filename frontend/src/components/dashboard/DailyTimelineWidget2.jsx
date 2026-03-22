@@ -156,25 +156,25 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
   }, [PRAYERS, todayPrayerLog, slotsForDay]);
 
   return (
-    <div className="shrink-0 px-4 md:px-6 pb-6 mt-2 relative z-10">
-      <div className="dashboard-panel p-0 overflow-hidden flex flex-col border border-zinc-200/80 dark:border-white/[0.08] shadow-2xl shadow-zinc-200/30 dark:shadow-black/50 bg-white/80 dark:bg-[#12141a]/90 backdrop-blur-3xl rounded-[2rem]">
+    <div className="relative z-10 mt-2 shrink-0 px-6 pb-6">
+      <div className="flex flex-col overflow-hidden rounded-[32px] border border-zinc-200/70 bg-white/[0.9] shadow-[0_28px_70px_-42px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#141922]/88 dark:shadow-[0_30px_70px_-42px_rgba(0,0,0,0.62)]">
         
         {/* HEADER (Sticky & Glass) */}
         <button
           type="button"
           onClick={() => setTimelinePanelExpanded(!timelinePanelExpanded)}
-          className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left transition-colors duration-300 hover:bg-zinc-50/50 dark:hover:bg-white/[0.02] focus-ring z-20"
+          className="z-20 flex w-full items-center justify-between gap-4 px-6 py-5 text-left transition-colors duration-300 hover:bg-zinc-50/60 dark:hover:bg-white/[0.03] focus-ring"
         >
           <div className="flex items-center gap-4 min-w-0">
             <motion.div whileHover={{ scale: 1.05, rotate: 2 }} whileTap={{ scale: 0.95 }}>
               <AppLogo size="md" />
             </motion.div>
             <div className="flex flex-col justify-center">
-              <h2 className="text-lg font-black text-zinc-900 dark:text-white tracking-tight leading-none mb-1.5 flex items-center gap-2">
+              <h2 className="mb-1.5 flex items-center gap-2 text-[18px] font-semibold leading-none tracking-tight text-zinc-900 dark:text-white">
                 Flow & Timeline
-                {locationName && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">{locationName}</span>}
+                {locationName && <span className="rounded-full border border-zinc-200/80 bg-zinc-100/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-zinc-400">{locationName}</span>}
               </h2>
-              <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+              <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -184,12 +184,12 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
             </div>
           </div>
 
-          <div className="flex items-center gap-6 shrink-0">
+          <div className="flex shrink-0 items-center gap-6">
             <div className="hidden md:flex items-center gap-4">
-              <span className="text-xs font-black text-zinc-800 dark:text-zinc-200 tabular-nums">
+              <span className="text-xs font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">
                 {Math.round(progress.pct * 100)}%
               </span>
-              <div className="h-2.5 w-32 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800/80 shadow-inner">
+              <div className="h-2.5 w-32 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800/80">
                 <motion.div
                   className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-emerald-400"
                   initial={false}
@@ -201,7 +201,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
             <motion.div
               animate={{ rotate: isCollapsed ? 0 : 180 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
+              className="rounded-2xl border border-zinc-200/70 bg-zinc-100/90 p-2.5 text-zinc-500 transition-colors hover:text-zinc-900 dark:border-white/[0.06] dark:bg-zinc-800/80 dark:hover:text-white"
             >
               <Icons.ChevronDown className="h-4 w-4" />
             </motion.div>
@@ -216,7 +216,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="border-t border-zinc-100 dark:border-zinc-800/60 bg-zinc-50/30 dark:bg-black/10"
+              className="border-t border-zinc-100/80 bg-zinc-50/40 dark:border-zinc-800/60 dark:bg-black/10"
             >
               <div className="pt-6 pb-4 px-4 md:px-6 overflow-x-auto custom-scrollbar no-select-calendar">
                 {/* Prayer nodes row + connecting lines */}
