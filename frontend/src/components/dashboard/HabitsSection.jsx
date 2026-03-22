@@ -1,11 +1,14 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
 import { toDateKey } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { ThisWeekWidget } from './ThisWeekWidget';
+import { Card, CardHeader, Badge, ActionButton } from './Card';
 
 export function HabitsSection() {
+  const [hoveredHabitId, setHoveredHabitId] = useState(null);
   const store = useDashboardStore();
   const {
     dailyTaskTemplates = [],
@@ -37,108 +40,205 @@ export function HabitsSection() {
   const activeHabits = useMemo(() => dailyTaskTemplates.filter((t) => !t.locked), [dailyTaskTemplates]);
   const todayDone = useMemo(() => activeHabits.reduce((acc, t) => acc + (todayTaskLog[t.id] ? 1 : 0), 0), [activeHabits, todayTaskLog]);
 
+  const addHabit = () => {
+    const t = habitDraft.trim();
+    if (t) {
+      setDailyTaskTemplates(p => [...p, { id: `daily-${Date.now()}`, title: t, locked: false, ordinal: p.length }]);
+      setHabitDraft('');
+    }
+  };
+
   return (
-    <div className="dashboard-panel flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-4">
-      <div className="mb-3 flex shrink-0 items-center justify-between">
-        <h3 className="flex items-center gap-2 dashboard-section-title text-sky-500 dark:text-sky-400">
-          <Icons.Flame className="w-3.5 h-3.5" /> Habits
-        </h3>
-        <span className="text-[10px] font-bold bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 px-2 py-0.5 rounded-full">{todayDone}/{activeHabits.length}</span>
-      </div>
+    <Card className="flex flex-col min-h-0 flex-1">
+      <CardHeader
+        icon={Icons.Flame}
+        iconColor="text-sky-500"
+        title="Abitudini"
+        subtitle="Routine giornaliere"
+        action={
+          <Badge variant={todayDone === activeHabits.length && activeHabits.length > 0 ? 'success' : 'primary'} size="sm">
+            {todayDone}/{activeHabits.length}
+          </Badge>
+        }
+      />
 
-      <div className="mb-2 flex shrink-0 gap-1.5">
-        <input
-          value={habitDraft}
-          onChange={(e) => setHabitDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              const t = habitDraft.trim();
-              if (t) {
-                setDailyTaskTemplates(p => [...p, { id: `daily-${Date.now()}`, title: t, locked: false, ordinal: p.length }]);
-                setHabitDraft('');
-              }
-            }
-          }}
-          placeholder="Nuova abitudine..."
-          className="dashboard-input flex-1 py-1.5 text-sm"
-        />
-        <button
-          onClick={() => {
-            const t = habitDraft.trim();
-            if (t) {
-              setDailyTaskTemplates(p => [...p, { id: `daily-${Date.now()}`, title: t, locked: false, ordinal: p.length }]);
-              setHabitDraft('');
-            }
-          }}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500 text-white transition-all hover:bg-sky-600 active:scale-95"
-        >
-          <Icons.Plus className="h-3.5 w-3.5" />
-        </button>
-      </div>
-
-      <div className="flex-1 min-h-[150px] overflow-y-auto custom-scrollbar">
-        {dailyTaskTemplates.length === 0 && (
-          <div className="flex flex-col items-center justify-center gap-1.5 py-6 px-4 rounded-xl border-2 border-dashed border-zinc-200 dark:border-white/[0.08] bg-zinc-50/50 dark:bg-white/[0.02]">
-            <span className="text-2xl text-zinc-300 dark:text-zinc-600">◇</span>
-            <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 text-center">Nessuna abitudine ancora</span>
-            <span className="text-[10px] text-zinc-400 dark:text-zinc-500 text-center">Scrivi sopra e premi Invio per aggiungerne una</span>
+      <div className="p-4 pt-2 flex flex-col gap-2">
+        {/* Input */}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <input
+              value={habitDraft}
+              onChange={(e) => setHabitDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addHabit();
+                }
+              }}
+              placeholder="Nuova abitudine..."
+              className="w-full py-2 px-3 pr-9 text-sm rounded-xl bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-400/50 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-zinc-400 hidden sm:block">
+              ↵
+            </span>
           </div>
-        )}
-        {dailyTaskTemplates.map((task, idx) => {
-          const isLocked = task.locked;
-          const isDone = todayTaskLog[task.id];
-          return (
-            <div
-              key={task.id}
-              data-habit-index={idx}
-              draggable={!isLocked}
-              onDragStart={(e) => { e.dataTransfer.setData('application/json', JSON.stringify({ type: 'habit', fromIndex: idx })); e.dataTransfer.effectAllowed = 'move'; }}
-              onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('bg-zinc-50'); }}
-              onDragLeave={(e) => e.currentTarget.classList.remove('bg-zinc-50')}
-              onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('bg-zinc-50'); try { const p = JSON.parse(e.dataTransfer.getData('application/json')); if (p.type === 'habit') reorderHabits(p.fromIndex, idx); } catch (_) { } }}
-              className={`group task-row ${isLocked ? 'opacity-40' : 'cursor-grab active:cursor-grabbing'}`}
-            >
-              <TaskCheckbox done={isDone} onClick={() => !isLocked && toggleDailyTask(task.id, !isDone)} />
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={addHabit}
+            disabled={!habitDraft.trim()}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-600 text-white shadow-lg shadow-sky-500/25 transition-all hover:shadow-xl hover:shadow-sky-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Icons.Plus className="h-5 w-5" />
+          </motion.button>
+        </div>
 
-              <div className="flex flex-1 min-w-0 items-center" onClick={() => !isLocked && toggleDailyTask(task.id, !isDone)}>
-                {habitEditingId === task.id ? (
-                  <input
-                    autoFocus
-                    value={habitEditingTitle}
-                    onChange={(e) => setHabitEditingTitle(e.target.value)}
-                    onBlur={() => { const t = habitEditingTitle.trim(); if (t) setDailyTaskTemplates(p => p.map(h => h.id === task.id ? { ...h, title: t } : h)); setHabitEditingId(null); }}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { const t = habitEditingTitle.trim(); if (t) setDailyTaskTemplates(p => p.map(h => h.id === task.id ? { ...h, title: t } : h)); setHabitEditingId(null); } if (e.key === 'Escape') setHabitEditingId(null); }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="seamless-input text-sm text-zinc-800 dark:text-zinc-100"
-                  />
-                ) : (
-                  <span
-                    onDoubleClick={(e) => { e.stopPropagation(); setHabitEditingId(task.id); setHabitEditingTitle(task.title); }}
-                    title={task.title}
-                    className={`cursor-pointer select-text text-sm leading-snug break-words line-clamp-2 ${isDone ? 'text-zinc-500 line-through dark:text-zinc-400' : 'text-zinc-700 dark:text-zinc-200'}`}
+        {/* Habits list */}
+        <div className="flex flex-col gap-1 flex-1 min-h-[120px] overflow-y-auto custom-scrollbar pr-1">
+          <AnimatePresence mode="popLayout">
+            {dailyTaskTemplates.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col items-center justify-center gap-2 py-6 px-4 rounded-xl border-2 border-dashed border-zinc-200 dark:border-white/[0.08] bg-zinc-50/50 dark:bg-white/[0.02]"
+              >
+                <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-white/[0.04] flex items-center justify-center">
+                  <Icons.Flame className="h-5 w-5 text-zinc-400 dark:text-zinc-500" />
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Nessuna abitudine</p>
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">Aggiungi la tua prima routine</p>
+                </div>
+              </motion.div>
+            ) : (
+              dailyTaskTemplates.map((task, idx) => {
+                const isLocked = task.locked;
+                const isDone = todayTaskLog[task.id];
+                const isHovered = hoveredHabitId === task.id;
+                const inTimeline = task.inTimeline !== false;
+                
+                return (
+                  <motion.div
+                    key={task.id}
+                    layout
+                    data-habit-index={idx}
+                    draggable={!isLocked}
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: isLocked ? 0.5 : 1, y: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    onDragStart={(e) => { 
+                      e.dataTransfer.setData('application/json', JSON.stringify({ type: 'habit', fromIndex: idx })); 
+                      e.dataTransfer.effectAllowed = 'move'; 
+                    }}
+                    onDragOver={(e) => { e.preventDefault(); }}
+                    onDrop={(e) => { 
+                      e.preventDefault(); 
+                      try { 
+                        const p = JSON.parse(e.dataTransfer.getData('application/json')); 
+                        if (p.type === 'habit') reorderHabits(p.fromIndex, idx); 
+                      } catch (_) { } 
+                    }}
+                    onMouseEnter={() => setHoveredHabitId(task.id)}
+                    onMouseLeave={() => setHoveredHabitId(null)}
+                    className={`
+                      group flex items-center gap-2 p-2 rounded-xl
+                      ${isLocked ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}
+                      transition-colors duration-200
+                      ${isHovered ? 'bg-zinc-100 dark:bg-white/[0.04]' : 'bg-transparent'}
+                    `}
                   >
-                    {task.title}
-                  </span>
-                )}
-              </div>
+                    <TaskCheckbox 
+                      done={isDone} 
+                      onClick={() => !isLocked && toggleDailyTask(task.id, !isDone)} 
+                    />
 
-              <div className={`flex items-center gap-0.5 transition-opacity ${task.inTimeline !== false ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} onClick={(e) => e.stopPropagation()}>
-                <button type="button" onClick={() => toggleHabitInTimeline(task.id)} className={`dashboard-action-btn p-1 rounded-md ${task.inTimeline !== false ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-500/25' : 'hover:text-indigo-500'}`} title={task.inTimeline !== false ? 'Rimuovi da Daily Timeline' : 'Assegna a Daily Timeline (tutte le card)'}>
-                  <Icons.LayoutList className="h-3 w-3 shrink-0" />
-                </button>
-                <button type="button" onClick={() => toggleHabitLock(task.id)} className={`dashboard-action-btn p-1 ${isLocked ? 'text-amber-500' : 'hover:text-amber-500'}`} title={isLocked ? 'Sblocca' : 'Blocca'}>
-                  <Icons.Lock className="h-3 w-3" />
-                </button>
-                <button type="button" onClick={() => removeDailyTask(task.id)} className="dashboard-action-btn p-1 hover:text-red-500" title="Elimina">
-                  <Icons.X className="h-3 w-3" />
-                </button>
-              </div>
-            </div>
-          );
-        })}
+                    <div 
+                      className="flex flex-1 min-w-0 items-center"
+                      onClick={() => !isLocked && toggleDailyTask(task.id, !isDone)}
+                    >
+                      {habitEditingId === task.id ? (
+                        <input
+                          autoFocus
+                          value={habitEditingTitle}
+                          onChange={(e) => setHabitEditingTitle(e.target.value)}
+                          onBlur={() => { 
+                            const t = habitEditingTitle.trim(); 
+                            if (t) setDailyTaskTemplates(p => p.map(h => h.id === task.id ? { ...h, title: t } : h)); 
+                            setHabitEditingId(null); 
+                          }}
+                          onKeyDown={(e) => { 
+                            if (e.key === 'Enter') { 
+                              const t = habitEditingTitle.trim(); 
+                              if (t) setDailyTaskTemplates(p => p.map(h => h.id === task.id ? { ...h, title: t } : h)); 
+                              setHabitEditingId(null); 
+                            } 
+                            if (e.key === 'Escape') setHabitEditingId(null); 
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex-1 py-1 px-2 text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/[0.08] outline-none focus:ring-2 focus:ring-sky-500/30"
+                        />
+                      ) : (
+                        <span
+                          onDoubleClick={(e) => { 
+                            e.stopPropagation(); 
+                            setHabitEditingId(task.id); 
+                            setHabitEditingTitle(task.title); 
+                          }}
+                          title={task.title}
+                          className={`cursor-pointer select-text text-sm leading-snug break-words line-clamp-2 transition-colors ${isDone ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-700 dark:text-zinc-200'}`}
+                        >
+                          {task.title}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <motion.div 
+                      className="flex items-center gap-0.5"
+                      initial={false}
+                      animate={{ 
+                        opacity: inTimeline || isHovered ? 1 : 0,
+                        x: inTimeline || isHovered ? 0 : 10
+                      }}
+                      transition={{ duration: 0.15 }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ActionButton 
+                        size="sm"
+                        title={inTimeline ? 'Rimuovi da Timeline' : 'Aggiungi a Timeline'}
+                        onClick={() => toggleHabitInTimeline(task.id)}
+                        className={inTimeline ? 'text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10' : ''}
+                      >
+                        <Icons.LayoutList className="h-3 w-3" />
+                      </ActionButton>
+                      
+                      <ActionButton 
+                        size="sm"
+                        title={isLocked ? 'Sblocca' : 'Blocca'}
+                        onClick={() => toggleHabitLock(task.id)}
+                        className={isLocked ? 'text-amber-500' : ''}
+                      >
+                        {isLocked ? <Icons.Lock className="h-3 w-3" /> : <Icons.Unlock className="h-3 w-3" />}
+                      </ActionButton>
+                      
+                      <ActionButton 
+                        size="sm"
+                        danger
+                        title="Elimina"
+                        onClick={() => removeDailyTask(task.id)}
+                      >
+                        <Icons.X className="h-3 w-3" />
+                      </ActionButton>
+                    </motion.div>
+                  </motion.div>
+                );
+              })
+            )}
+          </AnimatePresence>
+        </div>
       </div>
+      
       <ThisWeekWidget dailyTaskLogs={dailyTaskLogs} activeHabits={activeHabits} now={now} />
-    </div>
+    </Card>
   );
 }

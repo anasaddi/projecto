@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
 import { resolveTop3Slots, updateNodeInTree } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
+import { Card, CardHeader, Badge } from './Card';
 
 export function Top3Section() {
   const [dragOverIndex, setDragOverIndex] = useState(null);
@@ -65,30 +67,36 @@ export function Top3Section() {
   };
 
   return (
-    <div className="dashboard-panel flex flex-col shrink-0 overflow-hidden px-4 py-4">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="flex items-center gap-2 dashboard-section-title text-amber-500 dark:text-amber-400">
-          <Icons.Target className="w-3.5 h-3.5" /> Top 3 Focus
-        </h3>
-        <span className="text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full">{top3DoneCount}/3</span>
-      </div>
-
-      {top3Resolved.every((s) => !s || s.missing) && (
-        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mb-2 text-center">I tuoi 3 focus appariranno qui</p>
-      )}
-      <div className="flex flex-col gap-3">
+    <Card className="flex flex-col shrink-0" glow>
+      <CardHeader
+        icon={Icons.Target}
+        iconColor="text-amber-500"
+        title="Top 3 Focus"
+        subtitle="Le tue priorità principali"
+        action={
+          <Badge variant={top3DoneCount === 3 ? 'success' : 'warning'} size="sm">
+            {top3DoneCount}/3
+          </Badge>
+        }
+      />
+      
+      <div className="p-4 pt-2 flex flex-col gap-2">
         {[0, 1, 2].map((idx) => {
           const slot = top3Resolved[idx];
           const filled = slot && !slot.missing;
           const isDone = slot?.done;
-
           const isDragOver = dragOverIndex === idx;
+          
           return (
-            <div
+            <motion.div
               key={idx}
+              layout
               data-slot-index={idx}
               draggable={filled}
-              onDragStart={filled ? (e) => { e.dataTransfer.setData('application/json', JSON.stringify({ type: 'top3', fromIndex: idx })); e.dataTransfer.effectAllowed = 'move'; } : undefined}
+              onDragStart={filled ? (e) => { 
+                e.dataTransfer.setData('application/json', JSON.stringify({ type: 'top3', fromIndex: idx })); 
+                e.dataTransfer.effectAllowed = 'move'; 
+              } : undefined}
               onDragOver={(e) => { e.preventDefault(); setDragOverIndex(idx); }}
               onDragLeave={() => setDragOverIndex(null)}
               onDrop={(e) => {
@@ -104,33 +112,81 @@ export function Top3Section() {
                   else if (payload.type === 'quick' && payload.quickTaskId) setTop3SlotAtIndex(toIndex, { quickTaskId: payload.quickTaskId, shareId: payload.shareId ?? null });
                 } catch (_) { }
               }}
-              className={`relative overflow-hidden min-h-[3.25rem] rounded-xl border flex items-center transition-all duration-150 ${isDragOver ? 'border-amber-400 dark:border-amber-400 bg-amber-50/80 dark:bg-amber-900/20 ring-2 ring-amber-400/50' : filled ? 'border-zinc-200 dark:border-white/[0.06] dark:hover:border-white/[0.1] bg-zinc-50/50 dark:bg-white/[0.02] cursor-grab active:cursor-grabbing' : 'border-dashed border-zinc-200 dark:border-white/[0.06] bg-transparent'}`}
+              initial={false}
+              animate={{
+                scale: isDragOver ? 1.02 : 1,
+                backgroundColor: isDragOver ? 'rgba(251, 191, 36, 0.15)' : filled ? 'rgba(0, 0, 0, 0)' : 'rgba(0, 0, 0, 0)',
+              }}
+              className={`
+                relative overflow-hidden min-h-[3.5rem] rounded-xl border-2 
+                transition-all duration-200
+                ${isDragOver 
+                  ? 'border-amber-400 dark:border-amber-400 bg-amber-50/80 dark:bg-amber-900/20 ring-2 ring-amber-400/30' 
+                  : filled 
+                    ? 'border-zinc-200 dark:border-white/[0.08] bg-zinc-50/80 dark:bg-white/[0.03] cursor-grab active:cursor-grabbing hover:border-amber-300 dark:hover:border-amber-500/30' 
+                    : 'border-dashed border-zinc-300 dark:border-white/[0.12] bg-transparent hover:border-zinc-400 dark:hover:border-white/[0.2]'
+                }
+              `}
             >
-              <span className="absolute -right-2 -bottom-3 text-[4rem] font-black text-zinc-200 dark:text-white/[0.04] pointer-events-none select-none leading-none z-0">{idx + 1}</span>
+              {/* Large number watermark */}
+              <span className="absolute -right-1 -bottom-2 text-[3.5rem] font-black text-zinc-100 dark:text-white/[0.03] pointer-events-none select-none leading-none z-0">
+                {idx + 1}
+              </span>
+              
               {isDragOver && !filled ? (
-                <span className="relative z-10 pl-4 text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-widest">Rilascia per aggiungere ai Top 3</span>
+                <div className="relative z-10 h-full flex items-center justify-center">
+                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest">
+                    Rilascia per aggiungere
+                  </span>
+                </div>
               ) : filled ? (
-                <>
-                  <div onClick={() => toggleTop3Slot(slot)} className="relative z-10 flex items-center gap-3 pl-4 w-full cursor-pointer">
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <TaskCheckbox done={isDone} onClick={() => toggleTop3Slot(slot)} />
-                    </div>
-                    <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-                      <span title={slot.title} className={`text-sm font-semibold break-words line-clamp-2 leading-snug transition-colors duration-150 ${isDone ? 'text-zinc-500 line-through dark:text-zinc-400' : 'text-zinc-700 dark:text-zinc-100'}`}>{slot.title}</span>
-                      {slot.projectTitle && <span title={slot.projectTitle} className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-0.5 break-words line-clamp-1">{slot.projectTitle}</span>}
-                    </div>
+                <div className="relative z-10 flex items-center gap-3 px-3 py-3 h-full">
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <TaskCheckbox done={isDone} onClick={() => toggleTop3Slot(slot)} />
                   </div>
-                  <button type="button" onClick={(e) => { e.stopPropagation(); removeFromTop3(idx); }} className="relative z-10 p-3 text-zinc-400 hover:text-red-500 dark:hover:text-red-400 transition-colors duration-150">
+                  
+                  <div 
+                    onClick={() => toggleTop3Slot(slot)}
+                    className="flex flex-col flex-1 min-w-0 cursor-pointer"
+                  >
+                    <span 
+                      title={slot.title} 
+                      className={`text-sm font-semibold break-words line-clamp-2 leading-snug transition-colors duration-150 ${isDone ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-800 dark:text-zinc-100'}`}
+                    >
+                      {slot.title}
+                    </span>
+                    {slot.projectTitle && (
+                      <span 
+                        title={slot.projectTitle} 
+                        className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mt-0.5"
+                      >
+                        {slot.projectTitle}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <motion.button 
+                    type="button" 
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={(e) => { e.stopPropagation(); removeFromTop3(idx); }} 
+                    className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                  >
                     <Icons.X className="w-4 h-4" />
-                  </button>
-                </>
+                  </motion.button>
+                </div>
               ) : (
-                <span className="relative z-10 pl-4 text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Trascina qui</span>
+                <div className="relative z-10 h-full flex items-center justify-center">
+                  <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                    <Icons.Plus className="w-3 h-3" />
+                    Trascina qui
+                  </span>
+                </div>
               )}
-            </div>
+            </motion.div>
           );
         })}
       </div>
-    </div>
+    </Card>
   );
 }

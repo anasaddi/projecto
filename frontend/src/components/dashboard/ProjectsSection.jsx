@@ -1,10 +1,12 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Icons } from './Icons';
-import { StandardProjectCard } from './ProjectComponents';
+import { StandardProjectCard, CreateProjectCard } from './ProjectComponents';
 import { ProjectCard } from './ProjectCard';
 import { DenseTaskNode } from './DenseTaskNode';
 import { createTaskNode, updateNodeInTree, countTreeStats, getDeadlineColorClass, formatDeadline } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
+import { Card, CardHeader } from './Card';
 
 export function ProjectsSection({ PROJECT_ACCENTS }) {
   const projects = useDashboardStore((s) => s.projects) ?? [];
@@ -23,133 +25,59 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
   const updateSharedDashboardProject = useDashboardStore((s) => s.updateSharedDashboardProject);
   const deleteSharedDashboardProject = useDashboardStore((s) => s.deleteSharedDashboardProject);
 
-  return (
-    <div className="dashboard-panel overflow-hidden flex min-h-0 flex-col p-4 sm:p-5 md:col-span-2 lg:col-span-6">
-      <div className="mb-4 flex shrink-0 items-center justify-between">
-        <h2 className="flex items-center gap-2 dashboard-section-title text-indigo-500 dark:text-indigo-400">
-          <Icons.Square className="w-3.5 h-3.5" /> Projects
-        </h2>
-        <button
-          onClick={createProject}
-          className="flex h-7 items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 text-xs font-semibold text-indigo-600 transition-all hover:bg-indigo-100 active:scale-95 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-500/20"
-        >
-          <Icons.Plus className="h-3.5 w-3.5" />
-          <span>Nuovo</span>
-        </button>
-      </div>
+  const hasProjects = projects.length > 0;
+  const hasShared = sharedDashboards.length > 0;
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar pr-1">
-        {projects.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-1.5 py-8 px-4 rounded-xl border-2 border-dashed border-zinc-200 dark:border-white/[0.08] bg-zinc-50/50 dark:bg-white/[0.02]">
-            <span className="text-2xl text-indigo-300 dark:text-indigo-600">□</span>
-            <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 text-center">Nessun progetto</span>
-            <span className="text-[10px] text-zinc-400 dark:text-zinc-500 text-center">Clicca &quot;Nuovo&quot; per crearne uno</span>
+  return (
+    <Card className="flex flex-col min-h-0 md:col-span-2 lg:col-span-6" glow={hasProjects && projects.every(p => countTreeStats(p.tasks).ratio === 1)}>
+      <CardHeader
+        icon={Icons.Square}
+        iconColor="text-indigo-500"
+        title="Progetti"
+        subtitle={hasProjects ? `${projects.length} progetti attivi` : 'Crea il tuo primo progetto'}
+        action={
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={createProject}
+            className="flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 px-3 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30"
+          >
+            <Icons.Plus className="h-3.5 w-3.5" />
+            <span>Nuovo</span>
+          </motion.button>
+        }
+      />
+
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4 pt-2">
+        {!hasProjects ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-10">
+            <CreateProjectCard onClick={createProject} />
           </div>
         ) : (
-        <>
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-          {projects.map((project, idx) => {
-            const actualStats = countTreeStats(project.tasks);
-            const percentage = Math.round(actualStats.ratio * 100);
-            const accent = PROJECT_ACCENTS[idx % PROJECT_ACCENTS.length];
-            return (
-              <ProjectCard
-                key={project.id}
-                dragPayload={{ type: 'project', fromIndex: idx }}
-                onDrop={(p) => { if (p.type === 'project') reorderProjects(p.fromIndex, idx); }}
-              >
-              <StandardProjectCard
-                project={project}
-                stats={actualStats}
-                percentage={percentage}
-                accent={accent}
-                isShared={false}
-                onTitleChange={(val) => updateProject(project.id, p => ({ ...p, title: val }))}
-                onDelete={() => setConfirmState?.({ id: 'deleteProject', payload: { projectId: project.id } })}
-                onDeadlineClick={(val) => {
-                  updateProject(project.id, p => ({ ...p, deadline: val.trim() || undefined }));
-                  setProjectDeadlineEditing(null);
-                }}
-                projectDeadlineEditing={projectDeadlineEditing}
-                projectDeadlineInput={projectDeadlineInput}
-                setProjectDeadlineInput={setProjectDeadlineInput}
-                setProjectDeadlineEditing={setProjectDeadlineEditing}
-                getDeadlineColorClass={getDeadlineColorClass}
-                formatDeadline={formatDeadline}
-                renderTasks={() => (
-                  <>
-                    {project.tasks?.map((node, tIdx) => (
-                      <DenseTaskNode
-                        key={node.id}
-                        node={node}
-                        depth={0}
-                        projectId={project.id}
-                        projectAccent={accent}
-                        targetIndex={tIdx}
-                        targetParentId={null}
-                      />
-                    ))}
-                    <div className="pt-1 pl-1">
-                      <input
-                        value={projectTaskDrafts[project.id] ?? ''}
-                        onChange={(e) => setProjectTaskDrafts(prev => ({ ...prev, [project.id]: e.target.value }))}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            const title = (projectTaskDrafts[project.id] ?? '').trim();
-                            if (title) {
-                              updateProject(project.id, p => ({ ...p, tasks: [...(p.tasks || []), createTaskNode(title)] }));
-                              setProjectTaskDrafts(prev => ({ ...prev, [project.id]: '' }));
-                            }
-                          }
-                        }}
-                        placeholder="Aggiungi task... (Invio)"
-                        className="seamless-input text-sm text-zinc-500 dark:text-zinc-400 placeholder:text-zinc-300 dark:placeholder:text-zinc-600"
-                      />
-                    </div>
-                  </>
-                )}
-                    />
-              </ProjectCard>
-            );
-          })}
-        </div>
-
-        {/* SHARED PROJECTS */}
-        {sharedDashboards.length > 0 && (
-          <div className="flex flex-col gap-3 mt-2">
-            <div className="flex items-center gap-2 shrink-0 border-t border-zinc-100 dark:border-white/[0.05] pt-3">
-              <h3 className="flex items-center gap-2 dashboard-section-title text-indigo-500 dark:text-indigo-400">
-                <Icons.MessageCircle className="w-3.5 h-3.5" /> Shared
-              </h3>
-            </div>
+          <div className="flex flex-col gap-4">
+            {/* Personal Projects */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-              {sharedDashboards.map((shared, sIdx) => {
-                const sharedData = shared.data || {};
-                const sharedProjects = Array.isArray(sharedData.projects) ? sharedData.projects : (Array.isArray(sharedData) ? sharedData : []);
-
-                return sharedProjects.map((project, pIdx) => {
-                  const actualStats = countTreeStats(project.tasks);
-                  const percentage = Math.round(actualStats.ratio * 100);
-                  const accent = PROJECT_ACCENTS[(sIdx + pIdx + projects.length) % PROJECT_ACCENTS.length];
-
-                  return (
-                    <ProjectCard
-                      key={`${shared.share_id}-${project.id}`}
-                      dragPayload={{ type: 'sharedProject', shareId: shared.share_id, fromIndex: pIdx }}
-                      onDrop={(p) => { if (p.type === 'sharedProject' && p.shareId === shared.share_id) reorderSharedDashboardProjects(p.shareId, p.fromIndex, pIdx); }}
-                    >
+              {projects.map((project, idx) => {
+                const actualStats = countTreeStats(project.tasks);
+                const percentage = Math.round(actualStats.ratio * 100);
+                const accent = PROJECT_ACCENTS[idx % PROJECT_ACCENTS.length];
+                
+                return (
+                  <ProjectCard
+                    key={project.id}
+                    dragPayload={{ type: 'project', fromIndex: idx }}
+                    onDrop={(p) => { if (p.type === 'project') reorderProjects(p.fromIndex, idx); }}
+                  >
                     <StandardProjectCard
                       project={project}
                       stats={actualStats}
                       percentage={percentage}
                       accent={accent}
-                      isShared={true}
-                      shareId={shared.share_id}
-                      onTitleChange={(val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, title: val }))}
-                      onDelete={() => deleteSharedDashboardProject(shared.share_id, project.id)}
+                      isShared={false}
+                      onTitleChange={(val) => updateProject(project.id, p => ({ ...p, title: val }))}
+                      onDelete={() => setConfirmState?.({ id: 'deleteProject', payload: { projectId: project.id } })}
                       onDeadlineClick={(val) => {
-                        updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, deadline: val.trim() || undefined }));
+                        updateProject(project.id, p => ({ ...p, deadline: val.trim() || undefined }));
                         setProjectDeadlineEditing(null);
                       }}
                       projectDeadlineEditing={projectDeadlineEditing}
@@ -160,49 +88,141 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                       formatDeadline={formatDeadline}
                       renderTasks={() => (
                         <>
-                            {project.tasks?.map((node, tIdx) => (
+                          {project.tasks?.map((node, tIdx) => (
                             <DenseTaskNode
                               key={node.id}
                               node={node}
                               depth={0}
                               projectId={project.id}
                               projectAccent={accent}
-                              shareId={shared.share_id}
                               targetIndex={tIdx}
                               targetParentId={null}
                             />
                           ))}
-                          <div className="pt-1 pl-1">
+                          <div className="pt-2 pl-1">
                             <input
-                              value={projectTaskDrafts[`${shared.share_id}-${project.id}`] ?? ''}
-                              onChange={(e) => setProjectTaskDrafts(prev => ({ ...prev, [`${shared.share_id}-${project.id}`]: e.target.value }))}
+                              value={projectTaskDrafts[project.id] ?? ''}
+                              onChange={(e) => setProjectTaskDrafts(prev => ({ ...prev, [project.id]: e.target.value }))}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                   e.preventDefault();
-                                  const title = (projectTaskDrafts[`${shared.share_id}-${project.id}`] ?? '').trim();
+                                  const title = (projectTaskDrafts[project.id] ?? '').trim();
                                   if (title) {
-                                    updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: [...(p.tasks || []), createTaskNode(title)] }));
-                                    setProjectTaskDrafts(prev => ({ ...prev, [`${shared.share_id}-${project.id}`]: '' }));
+                                    updateProject(project.id, p => ({ ...p, tasks: [...(p.tasks || []), createTaskNode(title)] }));
+                                    setProjectTaskDrafts(prev => ({ ...prev, [project.id]: '' }));
                                   }
                                 }
                               }}
                               placeholder="Aggiungi task... (Invio)"
-                              className="seamless-input text-sm text-zinc-500 dark:text-zinc-400 placeholder:text-zinc-300 dark:placeholder:text-zinc-600"
+                              className="w-full bg-transparent text-sm text-zinc-600 dark:text-zinc-400 outline-none placeholder:text-zinc-300 dark:placeholder:text-zinc-600 py-1 border-b border-transparent focus:border-zinc-300 dark:focus:border-white/10 transition-colors"
                             />
                           </div>
                         </>
                       )}
                     />
-                    </ProjectCard>
-                  );
-                });
+                  </ProjectCard>
+                );
               })}
+              
+              {/* Add project placeholder in grid */}
+              <CreateProjectCard onClick={createProject} />
             </div>
+
+            {/* Shared Projects */}
+            {hasShared && (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3 py-2 border-t border-zinc-100 dark:border-white/[0.04]">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-500/10">
+                      <Icons.MessageCircle className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+                      Condivisi
+                    </span>
+                  </div>
+                  <div className="flex-1 h-px bg-zinc-100 dark:bg-white/[0.04]" />
+                </div>
+                
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                  {sharedDashboards.map((shared, sIdx) => {
+                    const sharedData = shared.data || {};
+                    const sharedProjects = Array.isArray(sharedData.projects) ? sharedData.projects : (Array.isArray(sharedData) ? sharedData : []);
+
+                    return sharedProjects.map((project, pIdx) => {
+                      const actualStats = countTreeStats(project.tasks);
+                      const percentage = Math.round(actualStats.ratio * 100);
+                      const accent = PROJECT_ACCENTS[(sIdx + pIdx + projects.length) % PROJECT_ACCENTS.length];
+
+                      return (
+                        <ProjectCard
+                          key={`${shared.share_id}-${project.id}`}
+                          dragPayload={{ type: 'sharedProject', shareId: shared.share_id, fromIndex: pIdx }}
+                          onDrop={(p) => { if (p.type === 'sharedProject' && p.shareId === shared.share_id) reorderSharedDashboardProjects(p.shareId, p.fromIndex, pIdx); }}
+                        >
+                          <StandardProjectCard
+                            project={project}
+                            stats={actualStats}
+                            percentage={percentage}
+                            accent={accent}
+                            isShared={true}
+                            shareId={shared.share_id}
+                            onTitleChange={(val) => updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, title: val }))}
+                            onDelete={() => deleteSharedDashboardProject(shared.share_id, project.id)}
+                            onDeadlineClick={(val) => {
+                              updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, deadline: val.trim() || undefined }));
+                              setProjectDeadlineEditing(null);
+                            }}
+                            projectDeadlineEditing={projectDeadlineEditing}
+                            projectDeadlineInput={projectDeadlineInput}
+                            setProjectDeadlineInput={setProjectDeadlineInput}
+                            setProjectDeadlineEditing={setProjectDeadlineEditing}
+                            getDeadlineColorClass={getDeadlineColorClass}
+                            formatDeadline={formatDeadline}
+                            renderTasks={() => (
+                              <>
+                                {project.tasks?.map((node, tIdx) => (
+                                  <DenseTaskNode
+                                    key={node.id}
+                                    node={node}
+                                    depth={0}
+                                    projectId={project.id}
+                                    projectAccent={accent}
+                                    shareId={shared.share_id}
+                                    targetIndex={tIdx}
+                                    targetParentId={null}
+                                  />
+                                ))}
+                                <div className="pt-2 pl-1">
+                                  <input
+                                    value={projectTaskDrafts[`${shared.share_id}-${project.id}`] ?? ''}
+                                    onChange={(e) => setProjectTaskDrafts(prev => ({ ...prev, [`${shared.share_id}-${project.id}`]: e.target.value }))}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        const title = (projectTaskDrafts[`${shared.share_id}-${project.id}`] ?? '').trim();
+                                        if (title) {
+                                          updateSharedDashboardProject(shared.share_id, project.id, p => ({ ...p, tasks: [...(p.tasks || []), createTaskNode(title)] }));
+                                          setProjectTaskDrafts(prev => ({ ...prev, [`${shared.share_id}-${project.id}`]: '' }));
+                                        }
+                                      }
+                                    }}
+                                    placeholder="Aggiungi task... (Invio)"
+                                    className="w-full bg-transparent text-sm text-zinc-600 dark:text-zinc-400 outline-none placeholder:text-zinc-300 dark:placeholder:text-zinc-600 py-1 border-b border-transparent focus:border-zinc-300 dark:focus:border-white/10 transition-colors"
+                                  />
+                                </div>
+                              </>
+                            )}
+                          />
+                        </ProjectCard>
+                      );
+                    });
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
-        </>
-      ) }
       </div>
-    </div>
+    </Card>
   );
 }
