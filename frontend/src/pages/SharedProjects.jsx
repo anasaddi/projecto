@@ -167,6 +167,94 @@ function normalizeSharedNotes(notes) {
 }
 
 /**
+ * NoteCard — stato collapse locale, immune a WS sync
+ */
+function NoteCard({ note, onUpdate, onDelete }) {
+  const [open, setOpen] = useState(true);
+  const [titleDraft, setTitleDraft] = useState(note.title);
+  const titleFocused = useRef(false);
+
+  useEffect(() => {
+    if (!titleFocused.current) setTitleDraft(note.title);
+  }, [note.title]);
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-zinc-200/60 bg-white/95 dark:border-white/[0.07] dark:bg-[#141b26]/95">
+      <div
+        className="group/hd flex cursor-pointer items-center gap-2.5 px-4 py-3 select-none"
+        onClick={() => setOpen(v => !v)}
+      >
+        <motion.div
+          animate={{ rotate: open ? 90 : 0 }}
+          transition={{ duration: 0.15 }}
+          className="shrink-0 text-zinc-400"
+        >
+          <Icons.ChevronRight className="h-3.5 w-3.5" />
+        </motion.div>
+        <input
+          value={titleDraft}
+          onChange={(e) => { e.stopPropagation(); setTitleDraft(e.target.value); }}
+          onClick={(e) => e.stopPropagation()}
+          onFocus={(e) => { e.stopPropagation(); titleFocused.current = true; }}
+          onBlur={() => {
+            titleFocused.current = false;
+            const v = titleDraft.trim() || deriveNoteTitle(note.content);
+            onUpdate({ ...note, title: v, updatedAt: Date.now() });
+          }}
+          placeholder="Titolo nota"
+          className="min-w-0 flex-1 bg-transparent text-[13px] font-semibold tracking-tight text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100"
+        />
+        {note.updatedAt ? (
+          <span className="shrink-0 text-[10px] text-zinc-400 dark:text-zinc-500">
+            {new Date(note.updatedAt).toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+          </span>
+        ) : null}
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onDelete(note.id); }}
+          className="shrink-0 rounded-lg p-1.5 text-zinc-300 opacity-0 transition-all hover:bg-rose-50 hover:text-rose-500 group-hover/hd:opacity-100 dark:text-zinc-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+          aria-label="Elimina nota"
+        >
+          <Icons.Trash className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="body"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18, ease: [0.32, 0.72, 0, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="border-t border-zinc-100 px-4 pb-4 pt-3 dark:border-white/[0.05]">
+              <textarea
+                value={note.content}
+                onChange={(e) => onUpdate({ ...note, content: e.target.value })}
+                onBlur={(e) => {
+                  const normalized = normalizeNoteContent(e.target.value);
+                  onUpdate({
+                    ...note,
+                    content: normalized,
+                    title: note.title?.trim() || deriveNoteTitle(normalized),
+                    updatedAt: Date.now(),
+                  });
+                }}
+                placeholder="Scrivi la nota, roadmap, snippet o checklist..."
+                spellCheck={false}
+                className="min-h-[10rem] w-full resize-none bg-transparent font-mono text-[12.5px] leading-[1.8] text-zinc-700 outline-none placeholder:text-zinc-400 dark:text-zinc-300 dark:placeholder:text-zinc-600"
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/**
  * ----------------------------------------------------------------------
  * COMPONENTS
  * ----------------------------------------------------------------------
@@ -452,7 +540,6 @@ export default function SharedProjects() {
   const chatScrollRef = useRef(null);
   const chatInputRef = useRef(null);
   const [notesPanelCollapsed, setNotesPanelCollapsed] = useState(false);
-  const [noteCollapsedMap, setNoteCollapsedMap] = useState(() => new Map());
 
   useEffect(() => {
     if (chatScrollRef.current && dashboard.chat.length > 0) {
@@ -1096,99 +1183,21 @@ export default function SharedProjects() {
                   transition={{ duration: 0.24, ease: [0.32, 0.72, 0, 1] }}
                   className="overflow-hidden"
                 >
-                  <div className="space-y-4 px-5 py-5 md:px-6">
+                  <div className="space-y-2 px-5 py-4 md:px-6">
                     {normalizeSharedNotes(dashboard.notes).length === 0 ? (
-                      <div className="rounded-[24px] border border-dashed border-zinc-200/70 bg-zinc-50/60 px-6 py-10 text-center dark:border-white/[0.08] dark:bg-white/[0.02]">
+                      <div className="rounded-2xl border border-dashed border-zinc-200/70 bg-zinc-50/60 px-6 py-8 text-center dark:border-white/[0.08] dark:bg-white/[0.02]">
                         <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Nessuna nota ancora.</p>
-                        <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
-                          Crea una nota lunga per roadmap, piani di deploy, snippet o specifiche tecniche.
-                        </p>
+                        <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Crea una nota per roadmap, deploy, snippet o checklist.</p>
                       </div>
                     ) : (
-                      normalizeSharedNotes(dashboard.notes).map((note) => {
-                        const isCollapsed = noteCollapsedMap.has(note.id)
-                          ? noteCollapsedMap.get(note.id)
-                          : note.collapsed;
-                        return (
-                        <motion.article
+                      normalizeSharedNotes(dashboard.notes).map((note) => (
+                        <NoteCard
                           key={note.id}
-                          layout
-                          className="overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.78),rgba(248,250,252,0.86))] shadow-[0_18px_50px_-38px_rgba(15,23,42,0.22)] dark:bg-[linear-gradient(180deg,rgba(22,28,38,0.98),rgba(15,20,29,0.98))] dark:shadow-[0_24px_60px_-40px_rgba(0,0,0,0.5)]"
-                        >
-                          <div className="flex items-start justify-between gap-3 border-b border-zinc-200/60 px-4 py-3.5 dark:border-white/[0.06]">
-                            <div className="min-w-0 flex-1">
-                              <input
-                                value={note.title}
-                                onChange={(e) => updateNote(note.id, (current) => ({ ...current, title: e.target.value }))}
-                                onBlur={(e) => updateNote(note.id, (current) => ({ ...current, title: e.target.value.trim() || deriveNoteTitle(current.content), updatedAt: Date.now() }))}
-                                placeholder="Titolo nota"
-                                className="w-full bg-transparent text-[15px] font-semibold tracking-tight text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-50"
-                              />
-                              <p className="mt-1 text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
-                                {note.updatedAt ? `Aggiornata ${new Date(note.updatedAt).toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} • Salvataggio automatico` : 'Nota nuova • Salvataggio automatico'}
-                              </p>
-                            </div>
-
-                            <div className="flex shrink-0 items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const next = !isCollapsed;
-                                  setNoteCollapsedMap((m) => new Map(m).set(note.id, next));
-                                  updateNote(note.id, (current) => ({ ...current, collapsed: next }));
-                                }}
-                                className="rounded-xl p-2 text-zinc-400 transition-colors hover:bg-zinc-100/80 hover:text-zinc-600 dark:hover:bg-white/[0.05] dark:hover:text-zinc-200"
-                                aria-label={isCollapsed ? 'Apri nota' : 'Chiudi nota'}
-                              >
-                                <motion.div animate={{ rotate: isCollapsed ? -90 : 0 }} transition={{ duration: 0.18 }}>
-                                  <Icons.ChevronDown className="h-4 w-4" />
-                                </motion.div>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => deleteNote(note.id)}
-                                className="rounded-xl p-2 text-zinc-400 transition-colors hover:bg-rose-500/10 hover:text-rose-500 dark:hover:bg-rose-500/12"
-                                aria-label="Elimina nota"
-                              >
-                                <Icons.Trash className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </div>
-
-                          <AnimatePresence initial={false}>
-                            {!isCollapsed && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.2 }}
-                                className="overflow-hidden"
-                              >
-                                <div className="px-4 py-4">
-                                  <div className="overflow-hidden rounded-[22px] border border-zinc-200/70 bg-white/70 shadow-inner dark:border-white/[0.06] dark:bg-[#0f141c]">
-                                    <textarea
-                                      value={note.content}
-                                      onChange={(e) => updateNote(note.id, (current) => ({ ...current, content: e.target.value }))}
-                                      onBlur={(e) => {
-                                        const normalized = normalizeNoteContent(e.target.value);
-                                        updateNote(note.id, (current) => ({
-                                          ...current,
-                                          content: normalized,
-                                          title: current.title?.trim() || deriveNoteTitle(normalized),
-                                          updatedAt: Date.now(),
-                                        }));
-                                      }}
-                                      placeholder="Scrivi una nota lunga, roadmap, piano di rilascio, snippet o checklist..."
-                                      spellCheck={false}
-                                      className="min-h-[20rem] w-full resize-none bg-transparent px-4 py-4 font-mono text-[13px] leading-7 text-zinc-800 outline-none placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-500"
-                                    />
-                                  </div>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </motion.article>
-                      ); })
+                          note={note}
+                          onUpdate={(updated) => updateNote(note.id, () => updated)}
+                          onDelete={deleteNote}
+                        />
+                      ))
                     )}
                   </div>
                 </motion.div>

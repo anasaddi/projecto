@@ -76,7 +76,7 @@ export function StandardProjectCard({
       glow={expanded}
     >
       <div
-        className={`group/header flex cursor-pointer items-center gap-3 ${sharedWorkspaceChrome ? 'p-4 sm:p-4 pt-[26px]' : 'p-5'}`}
+        className={`group/header flex cursor-pointer items-start gap-3 ${sharedWorkspaceChrome ? 'px-4 pb-4 pt-8' : 'p-5'}`}
         onClick={() => {
           const next = !expanded;
           setExpanded(next);
@@ -158,7 +158,7 @@ export function StandardProjectCard({
             )}
           </div>
 
-          <div className="flex shrink-0 items-center gap-2 pl-2">
+          <div className={`flex shrink-0 items-center gap-2 ${sharedWorkspaceChrome ? 'ml-auto pl-4' : 'pl-2'}`}>
             {showExplicitProjectDelete && (
               <button
                 type="button"
