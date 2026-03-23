@@ -355,14 +355,14 @@ export function DenseTaskNode({
         draggable
         onDragStart={handleDragStart}
         {...zoneProps}
-        className={`group/row relative flex w-full min-w-0 cursor-grab rounded-lg px-2.5 text-[13px] font-medium transition-all duration-200 hover:bg-zinc-100/80 active:cursor-grabbing dark:hover:bg-white/[0.04] sm:text-sm ${
+        className={`group/row relative flex w-full min-w-0 cursor-grab rounded-lg px-2 text-[13px] transition-all duration-200 hover:bg-zinc-100/80 active:cursor-grabbing dark:hover:bg-white/[0.04] sm:text-sm ${
           emphasizedTaskUI
-            ? 'min-h-[70px] items-start gap-3.5 rounded-2xl border border-zinc-200/80 bg-white/90 px-3.5 py-3 shadow-sm shadow-zinc-200/50 hover:border-zinc-300/80 hover:bg-white dark:border-white/[0.06] dark:bg-white/[0.04] dark:shadow-black/20 dark:hover:bg-white/[0.06]'
+            ? 'min-h-[44px] items-start gap-3 rounded-xl border border-zinc-200/70 bg-white/80 px-3 py-2.5 shadow-sm hover:border-zinc-300/60 hover:bg-white dark:border-white/[0.05] dark:bg-white/[0.03] dark:hover:bg-white/[0.05]'
             : 'min-h-[36px] items-center gap-2 py-1'
         }`}
       >
         {/* Chevron + checkbox (colonna fissa) */}
-        <div className={`flex shrink-0 items-start gap-2 ${emphasizedTaskUI ? 'pt-1' : 'pt-0.5'}`}>
+        <div className={`flex shrink-0 items-center gap-2 ${emphasizedTaskUI ? '' : ''}`}>
           <div className="flex h-4 w-3 shrink-0 items-center justify-center">
             {hasChildren ? (
               <button type="button" onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }} className="text-zinc-400 transition-colors hover:text-zinc-600 dark:hover:text-zinc-300">
@@ -375,27 +375,27 @@ export function DenseTaskNode({
 
         {emphasizedTaskUI ? (
           <>
-            <div className="min-w-0 flex-1 flex flex-col gap-2.5 pr-1" onClick={() => !editing && onToggle(node.id, !node.done)}>
+            <div className="min-w-0 flex-1 flex flex-col gap-1.5" onClick={() => !editing && onToggle(node.id, !node.done)}>
               {editing ? (
                 <input
                   autoFocus
                   defaultValue={node.title}
                   onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
                   onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
-                  className="w-full min-w-0 bg-transparent border-b border-indigo-400 outline-none py-1 text-[15px] leading-snug text-zinc-900 dark:text-zinc-100"
+                  className="w-full min-w-0 bg-transparent border-b border-indigo-400 outline-none py-0.5 text-sm leading-snug text-zinc-900 dark:text-zinc-100"
                 />
               ) : (
                 <p
-                  className={`w-full min-w-0 text-base font-medium leading-5 text-left [overflow-wrap:normal] break-words ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-900 dark:text-zinc-50'}`}
+                  className={`w-full min-w-0 text-sm font-medium leading-5 text-left [overflow-wrap:normal] break-words ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-900 dark:text-zinc-50'}`}
                   title={node.title}
                 >
                   {node.title}
                 </p>
               )}
               {!editing && ((showWorkingByBadge && wb) || node.deadline) && (
-                <div className="flex flex-wrap items-center gap-2.5 mt-1">
+                <div className="flex flex-wrap items-center gap-2">
                   {showWorkingByBadge && wb && (
-                    <span className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-medium ${workingByTone}`}>
+                    <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${workingByTone}`}>
                       <Icons.User className="h-3 w-3" />
                       {workingByLabel}
                     </span>
@@ -404,7 +404,7 @@ export function DenseTaskNode({
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
-                      className={`inline-flex shrink-0 items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium tabular-nums transition-colors hover:border-current ${getDeadlineColorClass(node.deadline, node.done)}`}
+                      className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium tabular-nums transition-colors hover:border-current ${getDeadlineColorClass(node.deadline, node.done)}`}
                     >
                       <Icons.Calendar className="h-3 w-3" />
                       {formatDeadlineDisplay(node.deadline)}

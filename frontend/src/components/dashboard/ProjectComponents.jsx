@@ -166,7 +166,7 @@ export function StandardProjectCard({
         transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
         className="overflow-hidden"
       >
-        <div className="px-5 pb-5 pt-4 space-y-3 border-t border-zinc-100/80 dark:border-zinc-700/40">
+        <div className="px-4 pb-4 pt-3 space-y-2 border-t border-zinc-100/80 dark:border-zinc-700/40">
           {renderTasks()}
         </div>
       </motion.div>
