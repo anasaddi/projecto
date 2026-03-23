@@ -87,7 +87,7 @@ export function StandardProjectCard({
 
         <div className="min-w-0 flex-1 flex items-center justify-between gap-3">
           <div className={`min-w-0 flex-1 ${sharedWorkspaceChrome ? 'flex flex-col gap-2' : 'flex flex-wrap items-center gap-2'}`}>
-            <div className={`min-w-0 ${sharedWorkspaceChrome ? 'flex items-start justify-between gap-3' : 'flex min-w-0 flex-1 flex-wrap items-center gap-2'}`}>
+            <div className={`min-w-0 ${sharedWorkspaceChrome ? 'flex items-center justify-between gap-3' : 'flex min-w-0 flex-1 flex-wrap items-center gap-2'}`}>
               <div className="min-w-0 flex-1">
                 <textarea
                   ref={(el) => {
@@ -109,15 +109,9 @@ export function StandardProjectCard({
                   }}
                   onClick={(e) => e.stopPropagation()}
                   rows={1}
-                  className={`min-h-[1.5rem] w-full min-w-[80px] resize-none overflow-visible bg-transparent py-0.5 font-semibold leading-snug tracking-tight text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100 ${sharedWorkspaceChrome ? 'text-[14px]' : 'text-[15px]'}`}
+                  className={`min-h-[1.5rem] w-full min-w-[80px] resize-none overflow-visible bg-transparent ${sharedWorkspaceChrome ? 'py-1 text-[13px]' : 'py-0.5 text-[15px]'} font-semibold leading-snug tracking-tight text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100`}
                 />
               </div>
-
-              {sharedWorkspaceChrome && (
-                <span className={`shrink-0 pt-0.5 text-[12px] font-bold tabular-nums ${accentColor.text}`}>
-                  {percentage}%
-                </span>
-              )}
             </div>
 
             {sharedWorkspaceChrome ? (
@@ -144,8 +138,8 @@ export function StandardProjectCard({
             )}
 
             {sharedWorkspaceChrome ? (
-              <div className="w-full">
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10 dark:bg-white/[0.08]">
+              <div className="flex items-center gap-2.5">
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10 dark:bg-white/[0.08]">
                   <motion.div
                     className={`h-full rounded-full bg-gradient-to-r ${accentColor.bar}`}
                     initial={{ width: 0 }}
@@ -153,6 +147,9 @@ export function StandardProjectCard({
                     transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
                   />
                 </div>
+                <span className={`shrink-0 text-[11px] font-bold tabular-nums ${accentColor.text}`}>
+                  {percentage}%
+                </span>
               </div>
             ) : (
               <div className="min-w-[100px] flex-1 sm:max-w-[180px]">
@@ -169,7 +166,7 @@ export function StandardProjectCard({
                   e.stopPropagation();
                   onDelete(project.id);
                 }}
-                className="rounded-xl border border-transparent p-2 text-zinc-400 transition-colors hover:border-rose-500/15 hover:bg-rose-500/10 hover:text-rose-500 dark:text-zinc-500 dark:hover:border-rose-500/20 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+                className={`rounded-xl border border-transparent p-2 text-zinc-400 transition-all hover:border-rose-500/15 hover:bg-rose-500/10 hover:text-rose-500 dark:text-zinc-500 dark:hover:border-rose-500/20 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 ${sharedWorkspaceChrome ? 'opacity-100 sm:pointer-events-none sm:opacity-0 sm:group-hover/header:pointer-events-auto sm:group-hover/header:opacity-100' : ''}`}
                 title="Elimina progetto"
                 aria-label="Elimina progetto"
               >

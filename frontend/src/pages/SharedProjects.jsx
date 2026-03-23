@@ -1050,7 +1050,7 @@ export default function SharedProjects() {
             )}
           </header>
 
-          <section className="overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.82] shadow-[0_24px_60px_-40px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:bg-[#141922]/88 dark:shadow-[0_30px_70px_-42px_rgba(0,0,0,0.62)]">
+          <section className="overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.82] shadow-[0_24px_60px_-40px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:bg-[linear-gradient(180deg,rgba(18,23,31,0.96),rgba(12,16,23,0.98))] dark:shadow-[0_30px_70px_-42px_rgba(0,0,0,0.62)]">
             <div className="flex items-start justify-between gap-4 border-b border-zinc-200/60 px-5 py-5 dark:border-white/[0.06] md:px-6">
               <div className="flex min-w-0 items-start gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-indigo-200/70 bg-indigo-500/10 text-indigo-600 shadow-sm dark:border-indigo-500/25 dark:bg-indigo-500/12 dark:text-indigo-300">
@@ -1058,9 +1058,6 @@ export default function SharedProjects() {
                 </div>
                 <div className="min-w-0">
                   <h2 className="text-[16px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">Note Workspace</h2>
-                  <p className="mt-1 text-[12px] font-medium text-zinc-500 dark:text-zinc-400">
-                    Note ampie, leggibili e condivise in tempo reale. Supportano testo tecnico, checklist e snippet.
-                  </p>
                 </div>
               </div>
 
@@ -1111,7 +1108,7 @@ export default function SharedProjects() {
                         <motion.article
                           key={note.id}
                           layout
-                          className="overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.78),rgba(248,250,252,0.86))] shadow-[0_18px_50px_-38px_rgba(15,23,42,0.22)] dark:bg-[linear-gradient(180deg,rgba(24,30,41,0.96),rgba(17,22,31,0.96))] dark:shadow-[0_24px_60px_-40px_rgba(0,0,0,0.5)]"
+                          className="overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.78),rgba(248,250,252,0.86))] shadow-[0_18px_50px_-38px_rgba(15,23,42,0.22)] dark:bg-[linear-gradient(180deg,rgba(22,28,38,0.98),rgba(15,20,29,0.98))] dark:shadow-[0_24px_60px_-40px_rgba(0,0,0,0.5)]"
                         >
                           <div className="flex items-start justify-between gap-3 border-b border-zinc-200/60 px-4 py-3.5 dark:border-white/[0.06]">
                             <div className="min-w-0 flex-1">
@@ -1158,12 +1155,8 @@ export default function SharedProjects() {
                                 transition={{ duration: 0.2 }}
                                 className="overflow-hidden"
                               >
-                                <div className="grid gap-4 px-4 py-4 xl:grid-cols-[minmax(0,1fr)_minmax(260px,320px)]">
-                                  <div className="overflow-hidden rounded-[22px] border border-zinc-200/70 bg-white/70 shadow-inner dark:border-white/[0.06] dark:bg-black/10">
-                                    <div className="flex items-center justify-between gap-3 border-b border-zinc-200/70 px-4 py-3 dark:border-white/[0.06]">
-                                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">Editor</span>
-                                      <span className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500">Auto normalize on blur</span>
-                                    </div>
+                                <div className="px-4 py-4">
+                                  <div className="overflow-hidden rounded-[22px] border border-zinc-200/70 bg-white/70 shadow-inner dark:border-white/[0.06] dark:bg-[#0f141c]">
                                     <textarea
                                       value={note.content}
                                       onChange={(e) => updateNote(note.id, (current) => ({ ...current, content: e.target.value }))}
@@ -1180,18 +1173,6 @@ export default function SharedProjects() {
                                       spellCheck={false}
                                       className="min-h-[20rem] w-full resize-y bg-transparent px-4 py-4 font-mono text-[13px] leading-7 text-zinc-800 outline-none placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                                     />
-                                  </div>
-
-                                  <div className="overflow-hidden rounded-[22px] border border-white/10 bg-zinc-950 text-zinc-100 shadow-[0_20px_50px_-36px_rgba(15,23,42,0.7)]">
-                                    <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
-                                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-400">Preview</span>
-                                      <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-medium text-zinc-400">
-                                        Plain text / markdown / snippets
-                                      </span>
-                                    </div>
-                                    <pre className="min-h-[20rem] overflow-auto whitespace-pre-wrap break-words px-4 py-4 font-mono text-[13px] leading-7 text-zinc-100">
-{note.content || 'La preview apparira qui mentre scrivi la nota.'}
-                                    </pre>
                                   </div>
                                 </div>
                               </motion.div>
@@ -1258,7 +1239,7 @@ export default function SharedProjects() {
                     isShared={false}
                     showExplicitProjectDelete
                     sharedWorkspaceChrome
-                    taskListClassName="border-t border-white/[0.04] px-2.5 pb-2.5 pt-1.5 space-y-1 dark:border-white/[0.03]"
+                    taskListClassName="border-t border-white/[0.04] px-2.5 pb-3 pt-2 space-y-2 dark:border-white/[0.03]"
                     onTitleChange={(val) => updateProject(proj.id, p => ({ ...p, title: val }))}
                     onDelete={() => deleteProject(proj.id)}
                     onDeadlineClick={(val) => {

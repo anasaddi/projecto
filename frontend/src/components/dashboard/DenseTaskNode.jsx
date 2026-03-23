@@ -357,6 +357,9 @@ export function DenseTaskNode({
   const workingByTone = wb === 'anas'
     ? 'border-sky-200/80 bg-sky-50 text-sky-800 dark:border-sky-500/40 dark:bg-sky-500/20 dark:text-sky-200'
     : 'border-violet-200/80 bg-violet-50 text-violet-800 dark:border-violet-500/40 dark:bg-violet-500/20 dark:text-violet-200';
+  const deadlineTone = getDeadlineColorClass(node.deadline, node.done);
+  const sharedMetaTagBase = 'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-tight';
+
   const taskActions = [
     !hideTop3Button && !node.done && (isTop3 || hasFreeTop3Slot) && {
       icon: <Icons.Target className="h-3 w-3" />,
@@ -418,7 +421,7 @@ export function DenseTaskNode({
         {...zoneProps}
         className={`group/row relative flex w-full min-w-0 cursor-grab text-[13px] transition-all duration-200 active:cursor-grabbing sm:text-sm ${
           sharedWorkspaceTaskUI
-            ? `items-start gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 backdrop-blur-sm hover:bg-white/[0.05] dark:border-white/[0.05] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] ${node.done ? 'opacity-45' : ''}`
+            ? `items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 backdrop-blur-sm hover:bg-white/[0.05] dark:border-white/[0.05] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] ${node.done ? 'opacity-45' : ''}`
             : emphasizedTaskUI
               ? 'min-h-[44px] items-start gap-3 rounded-xl border border-zinc-200/70 bg-white/80 px-3 py-2.5 shadow-sm hover:border-zinc-300/60 hover:bg-white dark:border-white/[0.05] dark:bg-white/[0.03] dark:hover:bg-white/[0.05]'
               : 'min-h-[36px] items-center gap-2 rounded-lg px-2 py-1 hover:bg-zinc-100/80 dark:hover:bg-white/[0.04]'
@@ -444,7 +447,7 @@ export function DenseTaskNode({
 
         {sharedWorkspaceTaskUI ? (
           <>
-            <div className="min-w-0 flex-1 flex flex-col" onClick={() => !editing && onToggle(node.id, !node.done)}>
+            <div className="min-w-0 flex-1 flex flex-col justify-center" onClick={() => !editing && onToggle(node.id, !node.done)}>
               {editing ? (
                 <input
                   autoFocus
@@ -462,14 +465,14 @@ export function DenseTaskNode({
                 </p>
               )}
               {!editing && ((showWorkingByBadge && wb) || node.deadline) && (
-                <div className="mt-1 flex flex-wrap items-center gap-2">
+                <div className="mt-1 flex flex-wrap items-center gap-1.5">
                   {showWorkingByBadge && wb && (
-                    <span className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium ${
+                    <span className={`${sharedMetaTagBase} ${
                       wb === 'anas'
-                        ? 'border-sky-500/30 bg-sky-500/10 text-sky-400'
-                        : 'border-violet-500/30 bg-violet-500/10 text-violet-400'
+                        ? 'border-sky-500/20 bg-sky-500/8 text-sky-300'
+                        : 'border-violet-500/20 bg-violet-500/8 text-violet-300'
                     }`}>
-                      <Icons.User className="h-3 w-3" />
+                      <span className={`h-1.5 w-1.5 rounded-full ${wb === 'anas' ? 'bg-sky-400' : 'bg-violet-400'}`} />
                       {workingByLabel}
                     </span>
                   )}
@@ -477,17 +480,25 @@ export function DenseTaskNode({
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
-                      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium transition-opacity hover:opacity-80 ${
+                      className={`${sharedMetaTagBase} transition-opacity hover:opacity-80 ${
                         node.done
-                          ? 'border-zinc-600/50 bg-zinc-800/50 text-zinc-400'
-                          : getDeadlineColorClass(node.deadline, node.done).includes('red')
-                            ? 'border-rose-500/30 bg-rose-500/10 text-rose-400'
-                            : getDeadlineColorClass(node.deadline, node.done).includes('amber')
-                              ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
-                              : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                          ? 'border-zinc-600/40 bg-zinc-800/35 text-zinc-400'
+                          : deadlineTone.includes('red')
+                            ? 'border-rose-500/20 bg-rose-500/8 text-rose-300'
+                            : deadlineTone.includes('amber')
+                              ? 'border-amber-500/20 bg-amber-500/8 text-amber-300'
+                              : 'border-emerald-500/20 bg-emerald-500/8 text-emerald-300'
                       }`}
                     >
-                      <Icons.Calendar className="h-3 w-3" />
+                      <span className={`h-1.5 w-1.5 rounded-full ${
+                        node.done
+                          ? 'bg-zinc-400'
+                          : deadlineTone.includes('red')
+                            ? 'bg-rose-400'
+                            : deadlineTone.includes('amber')
+                              ? 'bg-amber-400'
+                              : 'bg-emerald-400'
+                      }`} />
                       {formatDeadlineDisplay(node.deadline)}
                     </button>
                   )}
@@ -674,7 +685,7 @@ export function DenseTaskNode({
 
       {/* Children rendering */}
       {expanded && hasChildren && (
-        <div className="ml-2.5 pl-2.5 border-l border-zinc-100 dark:border-white/[0.04] space-y-0.5 flex flex-col w-full">
+        <div className={`ml-2.5 mt-2 pl-2.5 border-l border-zinc-100 dark:border-white/[0.04] flex flex-col w-full ${sharedWorkspaceTaskUI ? 'space-y-2' : 'space-y-0.5'}`}>
           {node.children.map((child, cIdx) => (
             <DenseTaskNode
               key={child.id}
@@ -687,7 +698,13 @@ export function DenseTaskNode({
               hideTop3Button={hideTop3Button}
               emphasizedTaskUI={emphasizedTaskUI}
               sharedWorkspaceTaskUI={sharedWorkspaceTaskUI}
+              onToggle={onToggleProp}
+              onDelete={onDeleteProp}
+              onRename={onRenameProp}
+              onDeadline={onDeadlineProp}
               onWorking={onWorkingProp}
+              onAddChild={onAddChildProp}
+              onMove={onMoveProp}
               showWorkingByBadge={showWorkingByBadge}
               targetIndex={cIdx}
               targetParentId={node.id}
@@ -698,7 +715,7 @@ export function DenseTaskNode({
 
       {/* Inline subtask creation */}
       {openAdd && (
-        <div className="ml-5 mt-1 animate-slide-down">
+        <div className={`ml-5 animate-slide-down ${sharedWorkspaceTaskUI ? 'mt-2' : 'mt-1'}`}>
           <input
             autoFocus
             type="text"
