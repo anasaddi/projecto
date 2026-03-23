@@ -143,7 +143,14 @@ export function collectNodeAndDescendantIds(nodes, targetId) {
 }
 
 export function createTaskNode(title) {
-  return { id: uid('task'), title: title.trim(), done: false, children: [], deadline: undefined };
+  return { id: uid('task'), title: title.trim(), done: false, children: [], deadline: undefined, workingBy: undefined };
+}
+
+/** Data scadenza leggibile (es. 15 mar 2025) */
+export function formatDeadlineDisplay(v) {
+  const d = fromDateKey(v);
+  if (!d) return '';
+  return d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 export function fromDateKey(v) {

@@ -12,11 +12,14 @@ from pydantic import BaseModel, Field
 
 # --- Task node (shared by projects and life-goal tasks) ---
 class TaskNode(BaseModel):
+    model_config = {"populate_by_name": True}
+
     id: str
     title: str
     done: bool = False
     children: list["TaskNode"] = Field(default_factory=list)
     deadline: Optional[str] = None
+    working_by: Optional[Literal["anas", "othmane"]] = Field(None, alias="workingBy")
 
 
 TaskNode.model_rebuild()

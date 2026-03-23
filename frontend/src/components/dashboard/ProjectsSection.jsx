@@ -37,15 +37,15 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
         subtitle={hasProjects ? `${projects.length} progetti attivi` : 'Crea il tuo primo progetto'}
       />
 
-      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4 pt-2">
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-5 pt-3">
         {!hasProjects ? (
           <div className="flex flex-col items-center justify-center gap-3 py-10">
             <CreateProjectCard onClick={createProject} />
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-5">
             {/* Personal Projects */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
               {projects.map((project, idx) => {
                 const actualStats = countTreeStats(project.tasks);
                 const percentage = Math.round(actualStats.ratio * 100);
@@ -120,7 +120,7 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
 
             {/* Shared Projects */}
             {hasShared && (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-5">
                 <div className="flex items-center gap-3 py-2 border-t border-zinc-100 dark:border-white/[0.04]">
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-500/10">
@@ -133,7 +133,7 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                   <div className="flex-1 h-px bg-zinc-100 dark:bg-white/[0.04]" />
                 </div>
                 
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                   {sharedDashboards.map((shared, sIdx) => {
                     const sharedData = shared.data || {};
                     const sharedProjects = Array.isArray(sharedData.projects) ? sharedData.projects : (Array.isArray(sharedData) ? sharedData : []);

@@ -3,7 +3,8 @@ import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
 import { useLongPressActions } from '../../hooks/useLongPressActions';
 import { useDashboardStore } from '../../store/dashboardStore';
-import { updateNodeInTree, removeNodeFromTree, createTaskNode } from './DashboardUtils';
+import { updateNodeInTree, removeNodeFromTree, createTaskNode, formatDeadlineDisplay } from './DashboardUtils';
+import { getCollabIdentity, collabDisplayName } from '../../utils/collabIdentity';
 
 const MAX_TASK_DEPTH = 2;
 
@@ -49,12 +50,14 @@ export function DenseTaskNode({
   parentId = null,
   shareId = null,
   hideTop3Button = false,
+  emphasizedTaskUI = false,
   targetIndex = 0,
   targetParentId = null,
   onToggle: onToggleProp,
   onDelete: onDeleteProp,
   onRename: onRenameProp,
   onDeadline: onDeadlineProp,
+  onWorking: onWorkingProp,
   onAddChild: onAddChildProp,
   onMove: onMoveProp,
 }) {
@@ -154,6 +157,26 @@ export function DenseTaskNode({
       }
     },
     [onDeadlineProp, isLifeGoal, goalId, isShared, shareId, projectId, updateProject, updateGoal, updateSharedDashboardProject]
+  );
+
+  const onWorking = useCallback(
+    (tid, workingBy) => {
+      if (onWorkingProp) return onWorkingProp(tid, workingBy);
+      if (isLifeGoal) {
+        updateGoal(goalId, (g) => ({ ...g, tasks: updateNodeInTree(g.tasks || [], tid, (n) => ({ ...n, workingBy })) }));
+      } else if (isShared) {
+        updateSharedDashboardProject(shareId, projectId, (p) => ({
+          ...p,
+          tasks: updateNodeInTree(p.tasks || [], tid, (n) => ({ ...n, workingBy })),
+        }));
+      } else {
+        updateProject(projectId, (p) => ({
+          ...p,
+          tasks: updateNodeInTree(p.tasks || [], tid, (n) => ({ ...n, workingBy })),
+        }));
+      }
+    },
+    [onWorkingProp, isLifeGoal, goalId, isShared, shareId, projectId, updateProject, updateGoal, updateSharedDashboardProject]
   );
 
   const onAddChild = useCallback(
@@ -266,12 +289,32 @@ export function DenseTaskNode({
     e.dataTransfer.effectAllowed = 'move';
   };
 
+  const me = getCollabIdentity();
+  const wb = node.workingBy;
   const taskActions = [
     !hideTop3Button && !node.done && (isTop3 || hasFreeTop3Slot) && {
       icon: <Icons.Target className="h-3 w-3" />,
       onClick: (e) => { e.stopPropagation(); onToggleTop3(projectId, node.id); },
       title: isTop3 ? 'Rimuovi da Focus' : 'Pin a Focus',
       className: isTop3 ? 'text-amber-600 bg-amber-100 dark:text-amber-300 dark:bg-amber-500/30 dark:ring-1 dark:ring-amber-400/50' : 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20',
+    },
+    !node.done && {
+      icon: <Icons.User className="h-3 w-3" />,
+      onClick: (e) => {
+        e.stopPropagation();
+        const next = wb === me ? null : me;
+        onWorking(node.id, next);
+      },
+      title: wb === me
+        ? 'Non sto più lavorando su questo task'
+        : wb
+          ? `${collabDisplayName(wb)} in lavorazione — clic per segnare te`
+          : 'Segna che ci sto lavorando io',
+      className: wb === me
+        ? 'text-sky-600 bg-sky-50 dark:text-sky-300 dark:bg-sky-500/25 dark:ring-1 dark:ring-sky-400/40'
+        : wb
+          ? 'text-violet-600 bg-violet-50 dark:text-violet-300 dark:bg-violet-500/25 dark:ring-1 dark:ring-violet-400/30'
+          : 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5',
     },
     canAddChild && !node.done && {
       icon: <Icons.Plus className="h-3 w-3" />,
@@ -330,26 +373,41 @@ export function DenseTaskNode({
                 defaultValue={node.title}
                 onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
                 onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
-                className="min-w-0 w-full flex-1 bg-transparent border-b border-indigo-400 outline-none text-xs py-0.5 text-zinc-900 dark:text-zinc-100"
+                className={`min-w-0 w-full flex-1 bg-transparent border-b border-indigo-400 outline-none py-0.5 text-zinc-900 dark:text-zinc-100 ${emphasizedTaskUI ? 'text-sm' : 'text-xs'}`}
               />
             ) : (
-              <span className={`block w-full min-w-0 text-xs leading-relaxed break-words [overflow-wrap:anywhere] ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-300 font-medium'}`} title={node.title}>
+              <span
+                className={`block w-full min-w-0 break-words [overflow-wrap:anywhere] ${emphasizedTaskUI ? 'text-sm leading-snug font-semibold' : 'text-xs leading-relaxed font-medium'} ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-800 dark:text-zinc-100'}`}
+                title={node.title}
+              >
                 {node.title}
+              </span>
+            )}
+            {wb && !editing && (
+              <span
+                className={`shrink-0 rounded-lg border font-bold tabular-nums ${
+                  wb === 'anas'
+                    ? 'border-sky-200/80 bg-sky-50 text-sky-800 dark:border-sky-500/40 dark:bg-sky-500/20 dark:text-sky-200'
+                    : 'border-violet-200/80 bg-violet-50 text-violet-800 dark:border-violet-500/40 dark:bg-violet-500/20 dark:text-violet-200'
+                } ${emphasizedTaskUI ? 'px-2 py-1 text-[11px]' : 'px-1.5 py-0.5 text-[9px]'}`}
+              >
+                {collabDisplayName(wb)}
               </span>
             )}
             {node.deadline && !editing && (
               <button
+                type="button"
                 onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
-                className={`shrink-0 px-1.5 py-0.5 rounded-full text-[9px] font-bold tabular-nums border border-transparent hover:border-current transition-colors ${getDeadlineColorClass(node.deadline, node.done)}`}
+                className={`shrink-0 rounded-lg font-semibold tabular-nums border border-transparent hover:border-current transition-colors ${getDeadlineColorClass(node.deadline, node.done)} ${emphasizedTaskUI ? 'px-2.5 py-1 text-[11px]' : 'px-1.5 py-0.5 text-[9px]'}`}
               >
-                {formatDeadline(node.deadline)}
+                {emphasizedTaskUI ? formatDeadlineDisplay(node.deadline) : formatDeadline(node.deadline)}
               </button>
             )}
           </div>
 
         <div
           ref={barRef}
-          className={`flex w-full shrink-0 items-center justify-end gap-0.5 sm:w-auto sm:shrink-0 sm:justify-end sm:pt-0.5 transition-all duration-200 touch-manipulation ${longPressActive || isTop3 ? 'opacity-100 visible' : 'opacity-0 invisible group-hover/row:opacity-100 group-hover/row:visible'}`}
+          className={`flex w-full shrink-0 items-center justify-end gap-0.5 sm:w-auto sm:shrink-0 sm:justify-end sm:pt-0.5 transition-all duration-200 touch-manipulation ${longPressActive || (!hideTop3Button && isTop3) ? 'opacity-100 visible' : 'opacity-0 invisible group-hover/row:opacity-100 group-hover/row:visible'}`}
         >
           {taskActions.map((act, i) => {
             const ap = getActionProps(i);
@@ -404,6 +462,8 @@ export function DenseTaskNode({
               shareId={shareId}
               parentId={node.id}
               hideTop3Button={hideTop3Button}
+              emphasizedTaskUI={emphasizedTaskUI}
+              onWorking={onWorkingProp}
               targetIndex={cIdx}
               targetParentId={node.id}
             />

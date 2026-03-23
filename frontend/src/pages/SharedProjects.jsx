@@ -950,7 +950,7 @@ export default function SharedProjects() {
             )}
           </header>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
             {dashboard.projects.map((proj, pIdx) => {
               const dragPayload = { type: 'project', fromIndex: pIdx };
               const stats = countTreeStatsUtil(proj.tasks);
@@ -1019,14 +1019,14 @@ export default function SharedProjects() {
                         {proj.tasks?.map((node, tIdx) => (
                           <DenseTaskNode
                             key={node.id} node={node} depth={0} projectId={proj.id} projectAccent={accent}
+                            hideTop3Button
+                            emphasizedTaskUI
                             onToggle={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, done: val })) }))}
                             onDelete={(tid) => updateProject(proj.id, p => ({ ...p, tasks: removeNodeFromTree(p.tasks, tid) }))}
                             onRename={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, title: val })) }))}
                             onDeadline={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, deadline: val || undefined })) }))}
+                            onWorking={(tid, wb) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, workingBy: wb })) }))}
                             onAddChild={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, children: [...(n.children || []), { id: uid('task'), title: val, done: false } ] })) }))}
-                            onToggleTop3={() => {}}
-                            hasFreeTop3Slot={false}
-                            checkIsTop3={() => false}
                             onMove={(tid, targetIdx, parentId) => updateProject(proj.id, p => {
                               if (parentId) {
                                 return {
@@ -1128,7 +1128,7 @@ export default function SharedProjects() {
                       <span className={`shrink-0 ${task.done ? 'text-emerald-500' : 'text-gray-300 dark:text-gray-600'} transition-colors duration-200`}>
                         {task.done ? <Icons.CheckCircle className="w-4 h-4" /> : <Icons.Circle className="w-4 h-4" />}
                       </span>
-                      <span title={task.title} className={`min-w-0 flex-1 break-words text-xs leading-relaxed [overflow-wrap:anywhere] ${task.done ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
+                      <span title={task.title} className={`min-w-0 flex-1 break-words text-sm font-medium leading-snug [overflow-wrap:anywhere] ${task.done ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-800 dark:text-zinc-100'}`}>
                         {task.title}
                       </span>
                       <button

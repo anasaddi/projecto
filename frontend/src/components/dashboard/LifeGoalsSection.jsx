@@ -64,7 +64,7 @@ export function LifeGoalsSection() {
   }, [quickTasks, promoteGoalToQuickTasks, showToast]);
 
   return (
-    <div className="shrink-0 px-6 pb-6">
+    <div className="shrink-0 mt-5 px-6 pb-6">
       <Card className="flex flex-col">
         <CardHeader
           icon={Icons.Target}

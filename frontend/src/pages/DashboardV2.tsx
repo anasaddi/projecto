@@ -169,7 +169,7 @@ export default function DashboardV2(): React.ReactElement {
     <div className="min-h-full w-full flex flex-col overflow-y-auto overflow-x-hidden font-sans font-normal select-none selection:bg-indigo-500/30 antialiased bg-white dark:bg-[#0b0e14]">
       {/* Redundant header removed - items moved to Layout and PrayersCountdowns */}
 
-      <div className="px-6 pt-3">
+      <div className="px-6 pt-4">
         <PrayersCountdowns 
           todayPrayerLog={todayPrayerLog} 
           togglePrayer={togglePrayer} 
@@ -182,10 +182,12 @@ export default function DashboardV2(): React.ReactElement {
         />
       </div>
 
-      <DailyTimelineWidget2 PRAYERS={PRAYERS} todayKey={todayKey} todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} />
+      <div className="mt-5 shrink-0 px-6">
+        <DailyTimelineWidget2 PRAYERS={PRAYERS} todayKey={todayKey} todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} />
+      </div>
 
-      <div className="flex-1 min-h-0 px-6 pt-3 pb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 overflow-x-hidden overflow-y-auto lg:overflow-hidden">
-        <div className="flex flex-col gap-4 min-h-0 lg:col-span-3">
+      <div className="flex-1 min-h-0 px-6 pt-4 pb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5 overflow-x-hidden overflow-y-auto lg:overflow-hidden">
+        <div className="flex flex-col gap-5 min-h-0 lg:col-span-3">
           <PomodoroCompact />
           {isLoaded ? <QuickTasksSection /> : <QuickTaskSkeleton />}
           <FocusHeatmap
@@ -196,7 +198,7 @@ export default function DashboardV2(): React.ReactElement {
             now={now}
           />
         </div>
-        <div className="flex flex-col gap-4 min-h-0 lg:col-span-3">
+        <div className="flex flex-col gap-5 min-h-0 lg:col-span-3">
           {isLoaded ? <Top3Section /> : <Top3Skeleton />}
           {isLoaded ? <HabitsSection /> : <HabitSkeleton />}
         </div>

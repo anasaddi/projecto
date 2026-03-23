@@ -4,12 +4,16 @@
  */
 
 // --- Task node (projects & life-goal tasks) ---
+export type TaskWorkingBy = 'anas' | 'othmane';
+
 export interface TaskNode {
   id: string;
   title: string;
   done: boolean;
   children?: TaskNode[];
   deadline?: string;
+  /** Chi sta lavorando su questo task (sync con socio). */
+  workingBy?: TaskWorkingBy | null;
 }
 
 // --- Habits ---

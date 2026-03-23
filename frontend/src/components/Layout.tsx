@@ -5,6 +5,7 @@ import { AppLogo } from './AppLogo';
 import { motion } from 'framer-motion';
 import { useDashboardStore } from '../store/dashboardStore';
 import { Icons } from './dashboard/Icons';
+import { getCollabIdentity, setCollabIdentity, type CollabIdentity } from '../utils/collabIdentity';
 
 interface LayoutProps {
   children: ReactNode;
@@ -30,6 +31,7 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
   }, [lastSavedAt, setLastSavedAt]);
 
   const [isDark, setIsDark] = useState(() => localStorage.getItem('km-theme') === 'dark');
+  const [collabWho, setCollabWho] = useState<CollabIdentity>(() => getCollabIdentity());
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
     localStorage.setItem('km-theme', isDark ? 'dark' : 'light');
@@ -116,6 +118,30 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
           </span>
         )}
         <div className="flex items-center gap-3 ml-auto">
+          {(isDashboard || isSharedProject) && (
+            <div
+              className="hidden sm:flex items-center gap-0.5 rounded-2xl border border-zinc-200/70 bg-zinc-50/80 p-0.5 dark:border-white/[0.06] dark:bg-white/[0.03]"
+              title="Chi sei su questo dispositivo (task «in lavorazione» e badge nome)"
+            >
+              {(['anas', 'othmane'] as const).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => {
+                    setCollabIdentity(id);
+                    setCollabWho(id);
+                  }}
+                  className={`rounded-xl px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide transition-colors ${
+                    collabWho === id
+                      ? 'bg-indigo-600 text-white shadow-sm dark:bg-indigo-500'
+                      : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                  }`}
+                >
+                  {id === 'anas' ? 'Anas' : 'Othmane'}
+                </button>
+              ))}
+            </div>
+          )}
           {lastSavedAt && (
             <motion.span 
               initial={{ opacity: 0, x: 10 }}
