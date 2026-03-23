@@ -418,7 +418,7 @@ export function DenseTaskNode({
         {...zoneProps}
         className={`group/row relative flex w-full min-w-0 cursor-grab text-[13px] transition-all duration-200 active:cursor-grabbing sm:text-sm ${
           sharedWorkspaceTaskUI
-            ? 'items-center gap-2 rounded-xl border border-zinc-200/60 bg-white/[0.92] px-2.5 py-1.5 shadow-[0_1px_0_rgba(255,255,255,0.55)_inset,0_8px_24px_-16px_rgba(15,23,42,0.12)] hover:border-zinc-300/65 hover:bg-white dark:border-white/[0.07] dark:bg-[#151a22]/98 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_12px_32px_-20px_rgba(0,0,0,0.45)] dark:hover:border-white/[0.11] dark:hover:bg-[#191f29]'
+            ? 'items-start gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 backdrop-blur-sm hover:bg-white/[0.05] dark:border-white/[0.05] dark:bg-white/[0.02] dark:hover:bg-white/[0.04]'
             : emphasizedTaskUI
               ? 'min-h-[44px] items-start gap-3 rounded-xl border border-zinc-200/70 bg-white/80 px-3 py-2.5 shadow-sm hover:border-zinc-300/60 hover:bg-white dark:border-white/[0.05] dark:bg-white/[0.03] dark:hover:bg-white/[0.05]'
               : 'min-h-[36px] items-center gap-2 rounded-lg px-2 py-1 hover:bg-zinc-100/80 dark:hover:bg-white/[0.04]'
@@ -438,59 +438,51 @@ export function DenseTaskNode({
 
         {sharedWorkspaceTaskUI ? (
           <>
-            <div className="min-w-0 flex-1 flex flex-col gap-1" onClick={() => !editing && onToggle(node.id, !node.done)}>
+            <div className="min-w-0 flex-1 flex flex-col" onClick={() => !editing && onToggle(node.id, !node.done)}>
               {editing ? (
                 <input
                   autoFocus
                   defaultValue={node.title}
                   onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
                   onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
-                  className="w-full min-w-0 border-b border-indigo-400 bg-transparent py-0.5 text-sm leading-snug text-zinc-900 outline-none dark:text-zinc-100"
+                  className="w-full min-w-0 border-b border-indigo-400 bg-transparent py-0.5 text-sm leading-snug text-zinc-100 outline-none"
                 />
               ) : (
                 <p
-                  className={`line-clamp-2 w-full min-w-0 text-left text-sm font-medium leading-snug text-zinc-900 dark:text-zinc-100 ${node.done ? 'text-zinc-400 line-through' : ''}`}
+                  className={`line-clamp-1 w-full min-w-0 text-left text-[13px] font-medium leading-snug text-zinc-100 ${node.done ? 'text-zinc-500 line-through' : ''}`}
                   title={node.title}
                 >
                   {node.title}
                 </p>
               )}
               {!editing && ((showWorkingByBadge && wb) || node.deadline) && (
-                <div className="mt-0.5 flex flex-wrap items-stretch gap-2">
-                  {showWorkingByBadge && wb && (() => {
-                    const am = assigneeMetaStyles(wb);
-                    return (
-                      <span
-                        className={`inline-flex max-w-full items-center gap-2 rounded-full border px-1 py-1 pr-2.5 shadow-sm backdrop-blur-[2px] ${am.shell}`}
-                      >
-                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${am.icon}`}>
-                          <Icons.User className="h-3.5 w-3.5" />
-                        </span>
-                        <span className="min-w-0 py-0.5 text-left">
-                          <span className={`block leading-none ${am.label}`}>In lavorazione</span>
-                          <span className={`mt-0.5 block truncate leading-tight ${am.name}`}>{workingByLabel}</span>
-                        </span>
-                      </span>
-                    );
-                  })()}
-                  {node.deadline && (() => {
-                    const dm = deadlineMetaStyles(node.deadline, node.done);
-                    return (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
-                        className={`inline-flex max-w-full items-center gap-2 rounded-full border px-1 py-1 pr-2.5 text-left shadow-sm backdrop-blur-[2px] transition-[transform,opacity] hover:opacity-95 active:scale-[0.99] ${dm.shell}`}
-                      >
-                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${dm.icon}`}>
-                          <Icons.Calendar className="h-3.5 w-3.5" />
-                        </span>
-                        <span className="min-w-0 py-0.5">
-                          <span className={`block leading-none ${dm.label}`}>Scadenza</span>
-                          <span className={`mt-0.5 block leading-tight ${dm.primary}`}>{formatDeadlineDisplay(node.deadline)}</span>
-                        </span>
-                      </button>
-                    );
-                  })()}
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  {showWorkingByBadge && wb && (
+                    <span className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium ${
+                      wb === 'anas'
+                        ? 'border-sky-500/30 bg-sky-500/10 text-sky-400'
+                        : 'border-violet-500/30 bg-violet-500/10 text-violet-400'
+                    }`}>
+                      <Icons.User className="h-3 w-3" />
+                      {workingByLabel}
+                    </span>
+                  )}
+                  {node.deadline && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
+                      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium transition-opacity hover:opacity-80 ${
+                        node.done
+                          ? 'border-zinc-600/50 bg-zinc-800/50 text-zinc-400'
+                          : new Date(node.deadline) < new Date()
+                            ? 'border-rose-500/30 bg-rose-500/10 text-rose-400'
+                            : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                      }`}
+                    >
+                      <Icons.Calendar className="h-3 w-3" />
+                      {formatDeadlineDisplay(node.deadline)}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -536,39 +528,33 @@ export function DenseTaskNode({
                 </p>
               )}
               {!editing && ((showWorkingByBadge && wb) || node.deadline) && (
-                <div className="mt-0.5 flex flex-wrap items-stretch gap-2">
-                  {showWorkingByBadge && wb && (() => {
-                    const am = assigneeMetaStyles(wb);
-                    return (
-                      <span className={`inline-flex max-w-full items-center gap-2 rounded-full border px-1 py-1 pr-2.5 shadow-sm backdrop-blur-[2px] ${am.shell}`}>
-                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${am.icon}`}>
-                          <Icons.User className="h-3.5 w-3.5" />
-                        </span>
-                        <span className="min-w-0 py-0.5 text-left">
-                          <span className={`block leading-none ${am.label}`}>In lavorazione</span>
-                          <span className={`mt-0.5 block truncate leading-tight ${am.name}`}>{workingByLabel}</span>
-                        </span>
-                      </span>
-                    );
-                  })()}
-                  {node.deadline && (() => {
-                    const dm = deadlineMetaStyles(node.deadline, node.done);
-                    return (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
-                        className={`inline-flex max-w-full items-center gap-2 rounded-full border px-1 py-1 pr-2.5 text-left shadow-sm backdrop-blur-[2px] transition-[transform,opacity] hover:opacity-95 active:scale-[0.99] ${dm.shell}`}
-                      >
-                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${dm.icon}`}>
-                          <Icons.Calendar className="h-3.5 w-3.5" />
-                        </span>
-                        <span className="min-w-0 py-0.5">
-                          <span className={`block leading-none ${dm.label}`}>Scadenza</span>
-                          <span className={`mt-0.5 block leading-tight ${dm.primary}`}>{formatDeadlineDisplay(node.deadline)}</span>
-                        </span>
-                      </button>
-                    );
-                  })()}
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  {showWorkingByBadge && wb && (
+                    <span className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium ${
+                      wb === 'anas'
+                        ? 'border-sky-500/30 bg-sky-500/10 text-sky-400'
+                        : 'border-violet-500/30 bg-violet-500/10 text-violet-400'
+                    }`}>
+                      <Icons.User className="h-3 w-3" />
+                      {workingByLabel}
+                    </span>
+                  )}
+                  {node.deadline && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
+                      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium transition-opacity hover:opacity-80 ${
+                        node.done
+                          ? 'border-zinc-600/50 bg-zinc-800/50 text-zinc-400'
+                          : new Date(node.deadline) < new Date()
+                            ? 'border-rose-500/30 bg-rose-500/10 text-rose-400'
+                            : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                      }`}
+                    >
+                      <Icons.Calendar className="h-3 w-3" />
+                      {formatDeadlineDisplay(node.deadline)}
+                    </button>
+                  )}
                 </div>
               )}
             </div>

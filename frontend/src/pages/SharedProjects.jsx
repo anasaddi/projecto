@@ -1009,7 +1009,7 @@ export default function SharedProjects() {
                     isShared={false}
                     showExplicitProjectDelete
                     sharedWorkspaceChrome
-                    taskListClassName="border-t border-zinc-100/70 px-3 pb-3 pt-2 space-y-1.5 dark:border-zinc-700/35"
+                    taskListClassName="border-t border-white/[0.04] px-2.5 pb-2.5 pt-1.5 space-y-1 dark:border-white/[0.03]"
                     onTitleChange={(val) => updateProject(proj.id, p => ({ ...p, title: val }))}
                     onDelete={() => deleteProject(proj.id)}
                     onDeadlineClick={(val) => {
