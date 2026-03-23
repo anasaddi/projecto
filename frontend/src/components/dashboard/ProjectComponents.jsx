@@ -33,7 +33,11 @@ export function StandardProjectCard({
   formatDeadline,
   renderTasks,
   defaultExpanded = false,
-  onToggleExpand
+  onToggleExpand,
+  /** Workspace shared: pulsante elimina progetto visibile (non solo nel kebab) */
+  showExplicitProjectDelete = false,
+  /** Classi aggiuntive per l’area lista task (es. shared più compatta) */
+  taskListClassName,
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -54,8 +58,12 @@ export function StandardProjectCard({
       icon: <Icons.Calendar className="h-3.5 w-3.5" />,
       onClick: () => { setProjectDeadlineInput(project.deadline || ''); setProjectDeadlineEditing(project.id); }
     },
-    'divider',
-    { label: 'Elimina progetto', icon: <Icons.X className="h-3.5 w-3.5" />, danger: true, onClick: () => onDelete(project.id) }
+    ...(showExplicitProjectDelete
+      ? []
+      : [
+          'divider',
+          { label: 'Elimina progetto', icon: <Icons.X className="h-3.5 w-3.5" />, danger: true, onClick: () => onDelete(project.id) }
+        ]),
   ];
 
   const isPastDeadline = getDeadlinePastLabel(project.deadline);
@@ -112,6 +120,20 @@ export function StandardProjectCard({
           </div>
 
           <div className="flex shrink-0 items-center gap-2 pl-2">
+            {showExplicitProjectDelete && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(project.id);
+                }}
+                className="rounded-xl border border-transparent p-2 text-rose-500 transition-colors hover:border-rose-200/80 hover:bg-rose-50 dark:hover:border-rose-500/20 dark:hover:bg-rose-500/10"
+                title="Elimina progetto"
+                aria-label="Elimina progetto"
+              >
+                <Icons.Trash2 className="h-4 w-4" />
+              </button>
+            )}
             {isShared && (
               <Link
                 to={`/shared/${shareId}`}
@@ -166,7 +188,12 @@ export function StandardProjectCard({
         transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
         className="overflow-hidden"
       >
-        <div className="px-4 pb-4 pt-3 space-y-2 border-t border-zinc-100/80 dark:border-zinc-700/40">
+        <div
+          className={
+            taskListClassName ??
+            'border-t border-zinc-100/80 px-4 pb-4 pt-3 space-y-2 dark:border-zinc-700/40'
+          }
+        >
           {renderTasks()}
         </div>
       </motion.div>

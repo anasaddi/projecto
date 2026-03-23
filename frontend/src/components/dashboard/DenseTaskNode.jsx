@@ -61,6 +61,8 @@ export function DenseTaskNode({
   onAddChild: onAddChildProp,
   onMove: onMoveProp,
   showWorkingByBadge = true,
+  /** UI dedicata workspace /shared (riga compatta, azioni orizzontali) */
+  sharedWorkspaceTaskUI = false,
 }) {
   const top3Manual = useDashboardStore((s) => s.top3Manual);
   const toggleProjectTask = useDashboardStore((s) => s.toggleProjectTask);
@@ -355,14 +357,16 @@ export function DenseTaskNode({
         draggable
         onDragStart={handleDragStart}
         {...zoneProps}
-        className={`group/row relative flex w-full min-w-0 cursor-grab rounded-lg px-2 text-[13px] transition-all duration-200 hover:bg-zinc-100/80 active:cursor-grabbing dark:hover:bg-white/[0.04] sm:text-sm ${
-          emphasizedTaskUI
-            ? 'min-h-[44px] items-start gap-3 rounded-xl border border-zinc-200/70 bg-white/80 px-3 py-2.5 shadow-sm hover:border-zinc-300/60 hover:bg-white dark:border-white/[0.05] dark:bg-white/[0.03] dark:hover:bg-white/[0.05]'
-            : 'min-h-[36px] items-center gap-2 py-1'
+        className={`group/row relative flex w-full min-w-0 cursor-grab text-[13px] transition-all duration-200 active:cursor-grabbing sm:text-sm ${
+          sharedWorkspaceTaskUI
+            ? 'items-center gap-2 rounded-lg border border-zinc-200/70 bg-white/85 px-2 py-1.5 shadow-sm hover:border-zinc-300/70 hover:bg-white dark:border-white/[0.08] dark:bg-[#161b24]/95 dark:hover:border-white/[0.12] dark:hover:bg-[#1a202c]'
+            : emphasizedTaskUI
+              ? 'min-h-[44px] items-start gap-3 rounded-xl border border-zinc-200/70 bg-white/80 px-3 py-2.5 shadow-sm hover:border-zinc-300/60 hover:bg-white dark:border-white/[0.05] dark:bg-white/[0.03] dark:hover:bg-white/[0.05]'
+              : 'min-h-[36px] items-center gap-2 rounded-lg px-2 py-1 hover:bg-zinc-100/80 dark:hover:bg-white/[0.04]'
         }`}
       >
         {/* Chevron + checkbox (colonna fissa) */}
-        <div className={`flex shrink-0 items-center gap-2 ${emphasizedTaskUI ? '' : ''}`}>
+        <div className="flex shrink-0 items-center gap-1.5">
           <div className="flex h-4 w-3 shrink-0 items-center justify-center">
             {hasChildren ? (
               <button type="button" onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }} className="text-zinc-400 transition-colors hover:text-zinc-600 dark:hover:text-zinc-300">
@@ -373,7 +377,69 @@ export function DenseTaskNode({
           <div className="shrink-0"><TaskCheckbox done={node.done} onClick={() => onToggle(node.id, !node.done)} /></div>
         </div>
 
-        {emphasizedTaskUI ? (
+        {sharedWorkspaceTaskUI ? (
+          <>
+            <div className="min-w-0 flex-1 flex flex-col gap-1" onClick={() => !editing && onToggle(node.id, !node.done)}>
+              {editing ? (
+                <input
+                  autoFocus
+                  defaultValue={node.title}
+                  onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
+                  className="w-full min-w-0 border-b border-indigo-400 bg-transparent py-0.5 text-sm leading-snug text-zinc-900 outline-none dark:text-zinc-100"
+                />
+              ) : (
+                <p
+                  className={`line-clamp-2 w-full min-w-0 text-left text-sm font-medium leading-snug text-zinc-900 dark:text-zinc-100 ${node.done ? 'text-zinc-400 line-through' : ''}`}
+                  title={node.title}
+                >
+                  {node.title}
+                </p>
+              )}
+              {!editing && ((showWorkingByBadge && wb) || node.deadline) && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {showWorkingByBadge && wb && (
+                    <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${workingByTone}`}>
+                      <Icons.User className="h-3 w-3 shrink-0" />
+                      {workingByLabel}
+                    </span>
+                  )}
+                  {node.deadline && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
+                      className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium tabular-nums transition-colors hover:border-current ${getDeadlineColorClass(node.deadline, node.done)}`}
+                    >
+                      <Icons.Calendar className="h-3 w-3 shrink-0" />
+                      {formatDeadlineDisplay(node.deadline)}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+            <div
+              ref={barRef}
+              className={`flex shrink-0 flex-row items-center gap-0.5 transition-opacity duration-200 touch-manipulation ${longPressActive || (!hideTop3Button && isTop3) ? 'opacity-100' : 'opacity-100 sm:opacity-90 sm:group-hover/row:opacity-100'}`}
+            >
+              {taskActions.map((act, i) => {
+                const ap = getActionProps(i);
+                return (
+                  <button
+                    key={i}
+                    data-action-idx={i}
+                    type="button"
+                    onClick={(e) => { if (handledByPointerUpRef.current) { e.preventDefault(); return; } e.stopPropagation(); act.onClick(e); }}
+                    title={act.title}
+                    aria-label={act.title}
+                    className={`dashboard-action-btn ${act.className || ''} ${ap.className || ''}`}
+                  >
+                    {act.icon}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        ) : emphasizedTaskUI ? (
           <>
             <div className="min-w-0 flex-1 flex flex-col gap-1.5" onClick={() => !editing && onToggle(node.id, !node.done)}>
               {editing ? (
@@ -533,6 +599,7 @@ export function DenseTaskNode({
               parentId={node.id}
               hideTop3Button={hideTop3Button}
               emphasizedTaskUI={emphasizedTaskUI}
+              sharedWorkspaceTaskUI={sharedWorkspaceTaskUI}
               onWorking={onWorkingProp}
               showWorkingByBadge={showWorkingByBadge}
               targetIndex={cIdx}

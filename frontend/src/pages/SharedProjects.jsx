@@ -1006,7 +1006,9 @@ export default function SharedProjects() {
                     stats={stats}
                     percentage={percentage}
                     accent={accent}
-                    isShared={false} // shared links are shown differently anyway
+                    isShared={false}
+                    showExplicitProjectDelete
+                    taskListClassName="border-t border-zinc-100/80 px-3 pb-3 pt-2 space-y-1.5 dark:border-zinc-700/40"
                     onTitleChange={(val) => updateProject(proj.id, p => ({ ...p, title: val }))}
                     onDelete={() => deleteProject(proj.id)}
                     onDeadlineClick={(val) => {
@@ -1027,7 +1029,7 @@ export default function SharedProjects() {
                           <DenseTaskNode
                             key={node.id} node={node} depth={0} projectId={proj.id} projectAccent={accent}
                             hideTop3Button
-                            emphasizedTaskUI
+                            sharedWorkspaceTaskUI
                             onToggle={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, done: val })) }))}
                             onDelete={(tid) => updateProject(proj.id, p => ({ ...p, tasks: removeNodeFromTree(p.tasks, tid) }))}
                             onRename={(tid, val) => updateProject(proj.id, p => ({ ...p, tasks: updateNodeInTree(p.tasks, tid, n => ({ ...n, title: val })) }))}
