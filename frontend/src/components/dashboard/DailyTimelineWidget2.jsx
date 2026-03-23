@@ -6,6 +6,7 @@ import { AppLogo } from '../AppLogo';
 import { TaskCheckbox } from './DashboardComponents';
 import { PRAYER_SLOTS, getCurrentSlotKey } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
+import { Card } from './Card';
 
 // Mock degli orari di default
 const DEFAULT_PRAYER_TIMES = {

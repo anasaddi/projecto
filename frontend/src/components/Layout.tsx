@@ -67,7 +67,7 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
     <div
       className={`min-h-screen text-zinc-900 dark:text-zinc-100 transition-colors bg-white dark:bg-[#0b0e14] ${isWorkspace ? 'flex flex-col' : ''}`}
     >
-      {!isSharedProject && (
+      {(isAdmin || !isSharedProject) && (
         <header className="sticky top-4 z-50 mx-4 mt-4 flex shrink-0 items-center gap-6 rounded-[26px] border border-zinc-200/70 bg-white/[0.88] px-5 py-3 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.28)] backdrop-blur-2xl transition-colors dark:border-white/[0.08] dark:bg-[#11161f]/[0.86] dark:shadow-[0_26px_60px_-34px_rgba(0,0,0,0.65)]">
         <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
           <div className="group-hover:shadow-indigo-500/40 group-active:scale-95 transition-all">
