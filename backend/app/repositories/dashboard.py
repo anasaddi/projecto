@@ -432,6 +432,7 @@ async def get_shared_dashboard_aggregated(db: AsyncSession, share_id: str):
     if not isinstance(shared_data, dict):
         shared_data = _parse_json(shared.data, {}) or {}
     quickTasks = shared_data.get("quickTasks", [])
+    notes = shared_data.get("notes", [])
     bonifici = shared_data.get("bonifici", [])
     passwordHash = shared_data.get("passwordHash")
     sectionPasswords = shared_data.get("sectionPasswords") or {}
@@ -442,6 +443,7 @@ async def get_shared_dashboard_aggregated(db: AsyncSession, share_id: str):
         "data": {
             "projects": projects,
             "quickTasks": quickTasks,
+            "notes": notes,
             "chat": chat,
             "bonifici": bonifici,
             "passwordHash": passwordHash,
