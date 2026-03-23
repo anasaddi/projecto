@@ -8,6 +8,7 @@ import { DenseTaskNode } from '../components/dashboard/DenseTaskNode';
 import { countTreeStats as countTreeStatsUtil } from '../components/dashboard/DashboardUtils';
 import { ConfirmModal } from '../components/ConfirmModal';
 import FinanzeSection from '../components/shared/FinanzeSection';
+import { DASHBOARD_CONTENT_CLASS } from '../constants/layout';
 /**
  * ----------------------------------------------------------------------
  * ICONS (Lucide-inspired)
@@ -846,8 +847,13 @@ export default function SharedProjects() {
     );
   }
 
+  const sharedBgLight =
+    'bg-[radial-gradient(ellipse_100%_80%_at_50%_0%,rgba(99,102,241,0.14),transparent_55%),radial-gradient(ellipse_90%_60%_at_100%_40%,rgba(56,189,248,0.1),transparent_50%),radial-gradient(ellipse_90%_60%_at_0%_40%,rgba(99,102,241,0.08),transparent_50%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)]';
+  const sharedBgDark =
+    'dark:bg-[radial-gradient(ellipse_100%_80%_at_50%_0%,rgba(99,102,241,0.22),transparent_55%),radial-gradient(ellipse_90%_60%_at_100%_40%,rgba(56,189,248,0.14),transparent_50%),radial-gradient(ellipse_90%_60%_at_0%_40%,rgba(99,102,241,0.12),transparent_50%),linear-gradient(180deg,#0b0e14_0%,#0d1117_100%)]';
+
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-fixed bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(99,102,241,0.2),transparent),radial-gradient(ellipse_80%_50%_at_100%_50%,rgba(56,189,248,0.12),transparent),radial-gradient(ellipse_80%_50%_at_0%_50%,rgba(99,102,241,0.1),transparent),linear-gradient(180deg,#f8fafc_0%,#f3f6fb_50%,#f1f5f9_100%)] p-0 pb-[60px] font-sans antialiased text-gray-900 select-none [&_input]:select-text [&_textarea]:select-text dark:bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(99,102,241,0.25),transparent),radial-gradient(ellipse_80%_50%_at_100%_50%,rgba(56,189,248,0.15),transparent),radial-gradient(ellipse_80%_50%_at_0%_50%,rgba(99,102,241,0.12),transparent),linear-gradient(180deg,#0b0e14_0%,#0d1117_50%,#0c0f14_100%)] dark:text-gray-100">
+    <div className={`min-h-screen overflow-x-hidden bg-fixed font-sans antialiased text-gray-900 select-none [&_input]:select-text [&_textarea]:select-text dark:text-gray-100 ${sharedBgLight} ${sharedBgDark}`}>
       <ConfirmModal
         open={confirmResetChat}
         title="Cancella cronologia chat"
@@ -858,7 +864,7 @@ export default function SharedProjects() {
         onConfirm={() => updateLocal({ chat: [] })}
         onCancel={() => setConfirmResetChat(false)}
       />
-      <div className="mx-auto flex max-w-[1440px] flex-col gap-8 lg:flex-row py-[60px] px-4 sm:px-8 md:px-10">
+      <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-6 py-6 pb-14 lg:flex-row lg:py-10`}>
 
         {/* MAIN CONTENT: PROJECTS */}
         <div className="flex-1 space-y-8 min-w-0 order-2 lg:order-1">
@@ -1252,7 +1258,7 @@ export default function SharedProjects() {
 
       {/* MODULO FINANZE in fondo (solo shared "nextcode" per titolo o id) */}
       {((dashboard.title && String(dashboard.title).toLowerCase().includes('nextcode')) || (id && String(id).toLowerCase().includes('nextcode'))) && (
-        <div className="max-w-[1440px] mx-auto w-full">
+        <div className={DASHBOARD_CONTENT_CLASS}>
           <FinanzeSection
             bonifici={dashboard.bonifici || []}
             onUpdate={(bonifici) => updateLocal({ bonifici })}

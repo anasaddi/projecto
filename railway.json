@@ -1,7 +1,10 @@
 {
     "$schema": "https://railway.app/railway.schema.json",
     "build": {
-        "rootDirectory": "backend"
+        "rootDirectory": "backend",
+        "watchPatterns": [
+            "backend/**"
+        ]
     },
     "deploy": {
         "startCommand": "bash start.sh",

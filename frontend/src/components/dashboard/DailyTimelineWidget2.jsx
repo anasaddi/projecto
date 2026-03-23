@@ -157,7 +157,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
   }, [PRAYERS, todayPrayerLog, slotsForDay]);
 
   return (
-    <div className="relative z-10 mt-2 shrink-0 px-6 pb-6">
+    <div className="relative z-10 w-full min-w-0">
       <Card className="flex flex-col overflow-hidden rounded-[32px]">
         
         {/* HEADER (Sticky & Glass) */}
@@ -217,11 +217,11 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="border-t border-zinc-100/80 bg-zinc-50/40 dark:border-zinc-800/60 dark:bg-black/10"
+              className="border-t border-zinc-100/80 bg-zinc-50/40 dark:border-zinc-800/60 dark:bg-white/[0.02]"
             >
-              <div className="pt-6 pb-4 px-4 md:px-6 overflow-x-auto custom-scrollbar no-select-calendar">
+              <div className="overflow-x-auto px-5 py-5 custom-scrollbar no-select-calendar md:px-6">
                 {/* Prayer nodes row + connecting lines */}
-                <div className="flex items-start gap-2 relative">
+                <div className="relative flex items-start gap-3">
                   {PRAYERS.map((prayer, i) => {
                     const isDone = todayPrayerLog[prayer];
                     const slotKey = PRAYER_SLOTS[i];
@@ -231,7 +231,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                     return (
                       <React.Fragment key={prayer}>
                         {/* Prayer node */}
-                        <div className="flex flex-col items-center shrink-0 w-[200px] md:w-[220px]">
+                        <div className="flex w-[220px] shrink-0 flex-col items-center md:w-[248px]">
                           <motion.button
                             onClick={() => togglePrayer?.(prayer, !isDone)}
                             whileHover={{ scale: 1.08 }}
@@ -252,7 +252,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
 
                         {/* Connecting line between prayer nodes */}
                         {hasSlotLine && (
-                          <div className="flex-1 shrink-0 w-4 h-[3px] mt-[20px] relative overflow-hidden rounded-full bg-zinc-200/60 dark:bg-zinc-800 min-w-[8px]">
+                          <div className="relative mt-[20px] h-[3px] min-w-[12px] w-6 shrink-0 flex-1 overflow-hidden rounded-full bg-zinc-200/60 dark:bg-zinc-800">
                             <motion.div
                               className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500 to-indigo-500 rounded-full"
                               initial={false}
@@ -267,7 +267,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                 </div>
 
                 {/* Slot cards row — normal flow, same widths as prayer nodes */}
-                <div className="flex items-start gap-2 mt-4">
+                <div className="mt-4 flex items-start gap-3">
                   {PRAYERS.map((prayer, i) => {
                     const slotKey = PRAYER_SLOTS[i];
                     const hasSlotCard = !!slotKey;
@@ -283,7 +283,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                     return (
                       <React.Fragment key={prayer}>
                         {/* Card for this slot */}
-                        <div className={`shrink-0 w-[200px] md:w-[220px] transition-all duration-500 ${hasSlotCard ? '' : 'invisible'} ${
+                        <div className={`w-[220px] shrink-0 transition-all duration-500 md:w-[248px] ${hasSlotCard ? '' : 'invisible'} ${
                           isCurrentSlot ? 'opacity-100 z-30' : isPastSlot ? 'opacity-60 hover:opacity-100' : 'opacity-40 hover:opacity-100'
                         }`}>
                           {hasSlotCard && (
@@ -372,7 +372,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                         </div>
 
                         {/* spacer between cards matching the connecting line width */}
-                        {hasSlotLine && <div className="shrink-0 flex-1 min-w-[8px]" />}
+                        {hasSlotLine && <div className="min-w-[12px] w-6 shrink-0 flex-1" />}
                       </React.Fragment>
                     );
                   })}

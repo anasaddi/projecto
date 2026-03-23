@@ -86,6 +86,7 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                               projectAccent={accent}
                               targetIndex={tIdx}
                               targetParentId={null}
+                              showWorkingByBadge={false}
                             />
                           ))}
                           <div className="pt-2 pl-1">
@@ -180,6 +181,7 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                                     shareId={shared.share_id}
                                     targetIndex={tIdx}
                                     targetParentId={null}
+                                  showWorkingByBadge={false}
                                   />
                                 ))}
                                 <div className="pt-2 pl-1">

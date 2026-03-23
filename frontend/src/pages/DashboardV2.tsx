@@ -28,6 +28,7 @@ import {
   POMODORO_STORAGE,
 } from '../components/dashboard/DashboardUtils';
 import { useDashboardSync } from '../hooks/useDashboardSync';
+import { DASHBOARD_CONTENT_CLASS } from '../constants/layout';
 
 const PROJECT_ACCENTS = ['indigo', 'sky', 'violet', 'emerald', 'amber', 'rose'];
 
@@ -169,24 +170,21 @@ export default function DashboardV2(): React.ReactElement {
     <div className="min-h-full w-full flex flex-col overflow-y-auto overflow-x-hidden font-sans font-normal select-none selection:bg-indigo-500/30 antialiased bg-white dark:bg-[#0b0e14]">
       {/* Redundant header removed - items moved to Layout and PrayersCountdowns */}
 
-      <div className="px-6 pt-4 mb-5">
-        <PrayersCountdowns 
-          todayPrayerLog={todayPrayerLog} 
-          togglePrayer={togglePrayer} 
-          PRAYERS={PRAYERS} 
-          countdowns={countdowns} 
+      <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-5 py-5 md:py-6 flex-1 min-h-0`}>
+        <PrayersCountdowns
+          todayPrayerLog={todayPrayerLog}
+          togglePrayer={togglePrayer}
+          PRAYERS={PRAYERS}
+          countdowns={countdowns}
           todayFocusScore={todayFocusScore}
           focusStreak={focusStreak}
           onReset={() => setConfirmState({ id: 'reset' })}
           now={now}
         />
-      </div>
 
-      <div className="mt-5 shrink-0 px-6">
         <DailyTimelineWidget2 PRAYERS={PRAYERS} todayKey={todayKey} todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} />
-      </div>
 
-      <div className="flex-1 min-h-0 px-6 pt-4 pb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5 overflow-x-hidden overflow-y-auto lg:overflow-hidden">
+        <div className="flex-1 min-h-0 grid grid-cols-1 gap-5 overflow-x-hidden overflow-y-auto pb-1 md:grid-cols-2 lg:grid-cols-12 lg:overflow-hidden">
         <div className="flex flex-col gap-5 min-h-0 lg:col-span-3">
           <PomodoroCompact />
           {isLoaded ? <QuickTasksSection /> : <QuickTaskSkeleton />}
@@ -203,6 +201,9 @@ export default function DashboardV2(): React.ReactElement {
           {isLoaded ? <HabitsSection /> : <HabitSkeleton />}
         </div>
         {isLoaded ? <ProjectsSection PROJECT_ACCENTS={PROJECT_ACCENTS} /> : <ProjectSkeleton />}
+        </div>
+
+        <LifeGoalsSection />
       </div>
 
       <ConfirmModal
@@ -246,8 +247,6 @@ export default function DashboardV2(): React.ReactElement {
         }}
         onCancel={() => setConfirmState(null)}
       />
-
-      <LifeGoalsSection />
     </div>
   );
 }

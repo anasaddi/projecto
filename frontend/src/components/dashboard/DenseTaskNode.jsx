@@ -60,6 +60,7 @@ export function DenseTaskNode({
   onWorking: onWorkingProp,
   onAddChild: onAddChildProp,
   onMove: onMoveProp,
+  showWorkingByBadge = true,
 }) {
   const top3Manual = useDashboardStore((s) => s.top3Manual);
   const toggleProjectTask = useDashboardStore((s) => s.toggleProjectTask);
@@ -291,6 +292,10 @@ export function DenseTaskNode({
 
   const me = getCollabIdentity();
   const wb = node.workingBy;
+  const workingByLabel = wb ? collabDisplayName(wb) : null;
+  const workingByTone = wb === 'anas'
+    ? 'border-sky-200/80 bg-sky-50 text-sky-800 dark:border-sky-500/40 dark:bg-sky-500/20 dark:text-sky-200'
+    : 'border-violet-200/80 bg-violet-50 text-violet-800 dark:border-violet-500/40 dark:bg-violet-500/20 dark:text-violet-200';
   const taskActions = [
     !hideTop3Button && !node.done && (isTop3 || hasFreeTop3Slot) && {
       icon: <Icons.Target className="h-3 w-3" />,
@@ -350,10 +355,14 @@ export function DenseTaskNode({
         draggable
         onDragStart={handleDragStart}
         {...zoneProps}
-        className="group/row relative flex min-h-[36px] w-full min-w-0 cursor-grab items-center gap-2 rounded-lg px-2.5 py-1 text-[13px] font-medium transition-all duration-200 hover:bg-zinc-100/80 active:cursor-grabbing dark:hover:bg-white/[0.04] sm:text-sm"
+        className={`group/row relative flex w-full min-w-0 cursor-grab rounded-lg px-2.5 text-[13px] font-medium transition-all duration-200 hover:bg-zinc-100/80 active:cursor-grabbing dark:hover:bg-white/[0.04] sm:text-sm ${
+          emphasizedTaskUI
+            ? 'min-h-[70px] items-start gap-3.5 rounded-2xl border border-zinc-200/80 bg-white/90 px-3.5 py-3 shadow-sm shadow-zinc-200/50 hover:border-zinc-300/80 hover:bg-white dark:border-white/[0.06] dark:bg-white/[0.04] dark:shadow-black/20 dark:hover:bg-white/[0.06]'
+            : 'min-h-[36px] items-center gap-2 py-1'
+        }`}
       >
         {/* Chevron + checkbox (colonna fissa) */}
-        <div className="flex shrink-0 items-start gap-2 pt-0.5">
+        <div className={`flex shrink-0 items-start gap-2 ${emphasizedTaskUI ? 'pt-1' : 'pt-0.5'}`}>
           <div className="flex h-4 w-3 shrink-0 items-center justify-center">
             {hasChildren ? (
               <button type="button" onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }} className="text-zinc-400 transition-colors hover:text-zinc-600 dark:hover:text-zinc-300">
@@ -364,7 +373,72 @@ export function DenseTaskNode({
           <div className="shrink-0"><TaskCheckbox done={node.done} onClick={() => onToggle(node.id, !node.done)} /></div>
         </div>
 
-        {/* Titolo + azioni: su mobile in colonna (nessuna sovrapposizione), da sm in riga */}
+        {emphasizedTaskUI ? (
+          <>
+            <div className="min-w-0 flex-1 flex flex-col gap-2.5 pr-1" onClick={() => !editing && onToggle(node.id, !node.done)}>
+              {editing ? (
+                <input
+                  autoFocus
+                  defaultValue={node.title}
+                  onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
+                  className="w-full min-w-0 bg-transparent border-b border-indigo-400 outline-none py-1 text-[15px] leading-snug text-zinc-900 dark:text-zinc-100"
+                />
+              ) : (
+                <p
+                  className={`w-full min-w-0 text-[15px] font-semibold leading-6 text-left [overflow-wrap:anywhere] break-words hyphens-auto ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-900 dark:text-zinc-50'}`}
+                  title={node.title}
+                >
+                  {node.title}
+                </p>
+              )}
+              {!editing && ((showWorkingByBadge && wb) || node.deadline) && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {showWorkingByBadge && wb && (
+                    <span className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-[11px] font-semibold shadow-sm ${workingByTone}`}>
+                      <Icons.User className="h-3.5 w-3.5" />
+                      <span className="uppercase tracking-[0.14em] opacity-70">Owner</span>
+                      <span className="text-[11px] font-bold normal-case tracking-normal opacity-100">{workingByLabel}</span>
+                    </span>
+                  )}
+                  {node.deadline && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
+                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-[11px] font-semibold tabular-nums shadow-sm transition-colors hover:border-current ${getDeadlineColorClass(node.deadline, node.done)}`}
+                    >
+                      <Icons.Calendar className="h-3.5 w-3.5" />
+                      <span className="uppercase tracking-[0.14em] opacity-70">Due</span>
+                      {formatDeadlineDisplay(node.deadline)}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+            <div
+              ref={barRef}
+              className={`flex shrink-0 flex-col items-end justify-start gap-0.5 pt-1 transition-all duration-200 touch-manipulation ${longPressActive || (!hideTop3Button && isTop3) ? 'opacity-100 visible' : 'opacity-0 invisible group-hover/row:opacity-100 group-hover/row:visible'}`}
+            >
+              {taskActions.map((act, i) => {
+                const ap = getActionProps(i);
+                return (
+                  <button
+                    key={i}
+                    data-action-idx={i}
+                    type="button"
+                    onClick={(e) => { if (handledByPointerUpRef.current) { e.preventDefault(); return; } e.stopPropagation(); act.onClick(e); }}
+                    title={act.title}
+                    aria-label={act.title}
+                    className={`dashboard-action-btn ${act.className || ''} ${ap.className || ''}`}
+                  >
+                    {act.icon}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+        <>
         <div className="flex min-w-0 w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
           <div className="flex min-w-0 w-full flex-1 flex-wrap items-center gap-x-2 gap-y-1 py-0.5" onClick={() => !editing && onToggle(node.id, !node.done)}>
             {editing ? (
@@ -373,34 +447,30 @@ export function DenseTaskNode({
                 defaultValue={node.title}
                 onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
                 onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
-                className={`min-w-0 w-full flex-1 bg-transparent border-b border-indigo-400 outline-none py-0.5 text-zinc-900 dark:text-zinc-100 ${emphasizedTaskUI ? 'text-sm' : 'text-xs'}`}
+                className="min-w-0 w-full flex-1 bg-transparent border-b border-indigo-400 outline-none py-0.5 text-xs text-zinc-900 dark:text-zinc-100"
               />
             ) : (
               <span
-                className={`block w-full min-w-0 break-words [overflow-wrap:anywhere] ${emphasizedTaskUI ? 'text-sm leading-snug font-semibold' : 'text-xs leading-relaxed font-medium'} ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-800 dark:text-zinc-100'}`}
+                className="block w-full min-w-0 text-xs leading-relaxed font-medium break-words [overflow-wrap:anywhere] text-zinc-700 dark:text-zinc-300"
                 title={node.title}
               >
                 {node.title}
               </span>
             )}
-            {wb && !editing && (
+            {showWorkingByBadge && wb && !editing && (
               <span
-                className={`shrink-0 rounded-lg border font-bold tabular-nums ${
-                  wb === 'anas'
-                    ? 'border-sky-200/80 bg-sky-50 text-sky-800 dark:border-sky-500/40 dark:bg-sky-500/20 dark:text-sky-200'
-                    : 'border-violet-200/80 bg-violet-50 text-violet-800 dark:border-violet-500/40 dark:bg-violet-500/20 dark:text-violet-200'
-                } ${emphasizedTaskUI ? 'px-2 py-1 text-[11px]' : 'px-1.5 py-0.5 text-[9px]'}`}
+                className={`shrink-0 rounded-lg border px-1.5 py-0.5 text-[9px] font-bold tabular-nums ${workingByTone}`}
               >
-                {collabDisplayName(wb)}
+                {workingByLabel}
               </span>
             )}
             {node.deadline && !editing && (
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
-                className={`shrink-0 rounded-lg font-semibold tabular-nums border border-transparent hover:border-current transition-colors ${getDeadlineColorClass(node.deadline, node.done)} ${emphasizedTaskUI ? 'px-2.5 py-1 text-[11px]' : 'px-1.5 py-0.5 text-[9px]'}`}
+                className={`shrink-0 rounded-lg font-semibold tabular-nums border border-transparent hover:border-current transition-colors ${getDeadlineColorClass(node.deadline, node.done)} px-1.5 py-0.5 text-[9px]`}
               >
-                {emphasizedTaskUI ? formatDeadlineDisplay(node.deadline) : formatDeadline(node.deadline)}
+                {formatDeadline(node.deadline)}
               </button>
             )}
           </div>
@@ -427,6 +497,8 @@ export function DenseTaskNode({
           })}
         </div>
         </div>
+        </>
+        )}
 
         {/* Inline Deadline Editor */}
         {showDeadline && (
@@ -464,6 +536,7 @@ export function DenseTaskNode({
               hideTop3Button={hideTop3Button}
               emphasizedTaskUI={emphasizedTaskUI}
               onWorking={onWorkingProp}
+              showWorkingByBadge={showWorkingByBadge}
               targetIndex={cIdx}
               targetParentId={node.id}
             />

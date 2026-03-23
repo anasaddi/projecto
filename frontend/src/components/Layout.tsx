@@ -67,7 +67,7 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
 
   return (
     <div
-      className={`min-h-screen text-zinc-900 dark:text-zinc-100 transition-colors bg-white dark:bg-[#0b0e14] ${isWorkspace ? 'flex flex-col' : ''}`}
+      className={`min-h-screen text-zinc-900 dark:text-zinc-100 transition-colors ${isSharedProject ? 'bg-transparent' : 'bg-white dark:bg-[#0b0e14]'} ${isWorkspace ? 'flex flex-col' : ''}`}
     >
       {(isAdmin || !isSharedProject) && (
         <header className="sticky top-4 z-50 mx-4 mt-4 flex shrink-0 items-center gap-6 rounded-[26px] border border-zinc-200/70 bg-white/[0.88] px-5 py-3 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.28)] backdrop-blur-2xl transition-colors dark:border-white/[0.08] dark:bg-[#11161f]/[0.86] dark:shadow-[0_26px_60px_-34px_rgba(0,0,0,0.65)]">
@@ -118,7 +118,7 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
           </span>
         )}
         <div className="flex items-center gap-3 ml-auto">
-          {(isDashboard || isSharedProject) && (
+          {isSharedProject && (
             <div
               className="hidden sm:flex items-center gap-0.5 rounded-2xl border border-zinc-200/70 bg-zinc-50/80 p-0.5 dark:border-white/[0.06] dark:bg-white/[0.03]"
               title="Chi sei su questo dispositivo (task «in lavorazione» e badge nome)"
@@ -167,7 +167,7 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
       <main
         className={
           isWorkspace
-            ? `flex w-full px-4 md:px-6 pt-2 flex-col flex-1 min-h-0 overflow-hidden overflow-y-auto custom-scrollbar`
+            ? `flex w-full pt-2 flex-col flex-1 min-h-0 overflow-hidden overflow-y-auto custom-scrollbar ${isSharedProject ? 'px-0' : 'px-4 md:px-6'}`
             : 'w-full p-4 md:p-6'
         }
       >
