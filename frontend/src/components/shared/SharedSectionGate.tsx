@@ -9,7 +9,7 @@ const SECTION_LABELS: Record<string, string> = {
 
 async function hashPassword(pw: string): Promise<string> {
   const enc = new TextEncoder();
-  const buf = await crypto.subtle.digest('SHA-256', enc.encode(pw));
+  const buf = await crypto.subtle.digest('SHA-256', enc.encode(`km-shared:${pw}`));
   return Array.from(new Uint8Array(buf))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');

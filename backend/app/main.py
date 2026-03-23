@@ -79,6 +79,19 @@ async def lifespan(app: FastAPI):
     except Exception:
         logger.info("Redis not available, running without cache")
 
+    # Security: warn loudly if default secret keys are still in use
+    _INSECURE_DEFAULTS = {"change-me-in-env", "your-secret-key-for-jwt", ""}
+    if settings.admin_access_key in _INSECURE_DEFAULTS:
+        logger.critical(
+            "SECURITY WARNING: admin_access_key is set to the default insecure value. "
+            "Set ADMIN_ACCESS_KEY in your .env file before exposing this service."
+        )
+    if settings.secret_key in _INSECURE_DEFAULTS:
+        logger.critical(
+            "SECURITY WARNING: secret_key is set to the default insecure value. "
+            "Set SECRET_KEY in your .env file before exposing this service."
+        )
+
     logger.info("App started successfully")
     yield
 

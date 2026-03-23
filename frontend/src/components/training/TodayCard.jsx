@@ -446,7 +446,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-[10px] font-black text-indigo-500/80 dark:text-indigo-400 uppercase tracking-[0.3em] leading-none">Session Dashboard</span>
+              <span className="text-[10px] font-black text-indigo-500/80 dark:text-indigo-400 uppercase tracking-[0.3em] leading-none">Sessione Odierna</span>
               <div className="h-[1px] w-8 bg-indigo-500/20" />
             </div>
             <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-50 capitalize tracking-tight">{dateLabel}</h1>
@@ -456,7 +456,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
         <div className="flex items-center gap-8 pb-1">
           <div className="flex flex-col items-end gap-2">
             <div className="flex items-center gap-3">
-              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Global Progress</span>
+              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Progresso</span>
               <span className="text-sm font-black text-zinc-900 dark:text-zinc-50 tabular-nums">{progressPercent}%</span>
             </div>
             <div className="relative w-36 h-2 bg-zinc-100 dark:bg-white/[0.04] rounded-full overflow-hidden border border-zinc-200/50 dark:border-white/[0.06] shadow-inner">
@@ -501,8 +501,8 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
                 }) : (
                   <div className="flex-1 flex flex-col items-center justify-center p-12 opacity-30 grayscale gap-2">
                     <Zap size={24} className="text-zinc-300" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] italic">Active Rest</span>
-                  </div>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
+              </div>
                 )}
               </div>
             </div>
@@ -527,7 +527,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
                 }) : (
                   <div className="flex-1 flex flex-col items-center justify-center p-12 opacity-30 grayscale gap-2">
                     <Target size={24} className="text-zinc-300" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] italic">Active Rest</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
                   </div>
                 )}
               </div>
@@ -555,7 +555,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
                 }) : (
                   <div className="flex-1 flex flex-col items-center justify-center p-12 opacity-30 grayscale gap-2">
                     <Dumbbell size={24} className="text-zinc-300" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] italic">Active Rest</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
                   </div>
                 )}
               </div>
@@ -566,9 +566,9 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
           <div className="bg-zinc-50/50 dark:bg-black/40 px-8 py-5 border-t border-zinc-100 dark:border-white/[0.06] flex items-center justify-between">
             <div className="flex items-center gap-10">
               {[
-                { dot: 'bg-indigo-500', label: 'Velocity' },
-                { dot: 'bg-amber-500', label: 'Technical' },
-                { dot: 'bg-emerald-500', label: 'Hypertrophic' }
+                { dot: 'bg-indigo-500', label: 'Forza' },
+                { dot: 'bg-amber-500', label: 'AW' },
+                { dot: 'bg-emerald-500', label: 'Ipertrofia' }
               ].map(item => (
                 <div key={item.label} className="flex items-center gap-2.5">
                   <div className={`w-1.5 h-1.5 rounded-full ${item.dot} shadow-[0_0_8px_rgba(0,0,0,0.1)]`} />
@@ -576,9 +576,9 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
                 </div>
               ))}
             </div>
-            <div className="flex items-center gap-2 text-[9px] font-black text-zinc-400/30 tracking-[0.4em] uppercase">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/40 animate-pulse" />
-              Engine Core V6.0
+            <div className="flex items-center gap-2 text-[9px] font-medium text-zinc-400/40 tracking-[0.2em] uppercase">
+              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500/30 animate-pulse" />
+              PROJECTO
             </div>
           </div>
         </div>

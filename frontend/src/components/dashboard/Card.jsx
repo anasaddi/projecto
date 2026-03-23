@@ -12,7 +12,7 @@ const baseClasses = `
   border border-zinc-200/70 dark:border-white/[0.08]
   bg-white/[0.9] dark:bg-[#131820]/90
   backdrop-blur-2xl
-  shadow-[0_24px_60px_-36px_rgba(15,23,42,0.25)] dark:shadow-[0_28px_60px_-36px_rgba(0,0,0,0.55)]
+  shadow-[0_2px_4px_rgba(15,23,42,0.04),0_12px_40px_-18px_rgba(15,23,42,0.18),0_32px_64px_-36px_rgba(15,23,42,0.14)] dark:shadow-[0_2px_4px_rgba(0,0,0,0.2),0_16px_48px_-20px_rgba(0,0,0,0.5),0_36px_70px_-36px_rgba(0,0,0,0.4)]
   before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/70 before:to-transparent dark:before:via-white/[0.06]
   transition-all duration-300 ease-out
 `;
@@ -28,8 +28,8 @@ export function Card({
     <div
       className={`
         ${baseClasses}
-        ${hover ? 'hover:-translate-y-0.5 hover:border-zinc-300/80 hover:shadow-[0_28px_80px_-42px_rgba(79,70,229,0.28)] dark:hover:border-white/[0.12] dark:hover:shadow-[0_30px_80px_-40px_rgba(0,0,0,0.7)]' : ''}
-        ${glow ? 'ring-1 ring-indigo-500/20 shadow-[0_28px_70px_-40px_rgba(99,102,241,0.35)] dark:ring-indigo-400/20' : ''}
+        ${hover ? 'hover:-translate-y-0.5 hover:border-zinc-300/80 hover:shadow-[0_2px_4px_rgba(15,23,42,0.06),0_16px_48px_-20px_rgba(79,70,229,0.22),0_36px_80px_-40px_rgba(79,70,229,0.16)] dark:hover:border-white/[0.12] dark:hover:shadow-[0_2px_6px_rgba(0,0,0,0.3),0_20px_56px_-24px_rgba(0,0,0,0.6),0_40px_80px_-40px_rgba(0,0,0,0.5)]' : ''}
+        ${glow ? 'ring-1 ring-indigo-500/20 shadow-[0_2px_4px_rgba(15,23,42,0.06),0_16px_48px_-20px_rgba(99,102,241,0.28),0_36px_70px_-36px_rgba(99,102,241,0.2)] dark:ring-indigo-400/20' : ''}
         ${className}
       `}
       {...props}

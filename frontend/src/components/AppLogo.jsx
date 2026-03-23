@@ -27,7 +27,7 @@ export function AppLogo({ size = 'md', className = '' }) {
 
   return (
     <div
-      className={`flex items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-indigo-600 text-white shrink-0 shadow-[0_0_20px_rgba(99,102,241,0.3)] ring-1 ring-white/20 ${s} ${className}`}
+      className={`flex items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-indigo-600 text-white shrink-0 shadow-[0_2px_8px_rgba(99,102,241,0.35),0_0_20px_rgba(99,102,241,0.25)] ring-1 ring-white/20 ${s} ${className}`}
       tabIndex={0}
     >
       <TargetIcon className={`${is} drop-shadow-md`} />
