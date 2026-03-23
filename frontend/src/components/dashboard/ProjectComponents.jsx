@@ -83,7 +83,11 @@ export function StandardProjectCard({
           onToggleExpand?.(next);
         }}
       >
-        <div className={`${sharedWorkspaceChrome ? 'h-11 w-1.5' : 'h-12 w-1.5'} shrink-0 self-center rounded-full bg-gradient-to-b ${accentColor.bar} shadow-sm ${sharedWorkspaceChrome ? accentColor.glow : ''}`} />
+        {sharedWorkspaceChrome ? (
+          <div className={`h-3 w-3 shrink-0 rounded-full bg-gradient-to-br ${accentColor.bar} ${accentColor.glow}`} />
+        ) : (
+          <div className={`h-12 w-1.5 shrink-0 self-center rounded-full bg-gradient-to-b ${accentColor.bar} shadow-sm`} />
+        )}
 
         <div className="min-w-0 flex-1 flex items-center justify-between gap-3">
           <div className={`min-w-0 flex-1 ${sharedWorkspaceChrome ? 'flex flex-col gap-2' : 'flex flex-wrap items-center gap-2'}`}>

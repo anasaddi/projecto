@@ -32,6 +32,8 @@ const Icons = {
   Lock: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>,
   Settings: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3" /><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M19.78 4.22l-1.42 1.42M5.64 18.36l-1.42 1.42" /></svg>,
   FileText: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>,
+  Pencil: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>,
+  Check: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12" /></svg>,
 };
 
 /**
@@ -167,22 +169,47 @@ function normalizeSharedNotes(notes) {
 }
 
 /**
- * NoteCard — stato collapse locale, immune a WS sync
+ * NoteCard — view/edit mode esplicito, immune a WS sync durante editing
  */
 function NoteCard({ note, onUpdate, onDelete }) {
   const [open, setOpen] = useState(true);
+  const [editing, setEditing] = useState(false);
   const [titleDraft, setTitleDraft] = useState(note.title);
-  const titleFocused = useRef(false);
+  const [contentDraft, setContentDraft] = useState(note.content);
 
+  // Sincronizza da WS solo se non stiamo editando
   useEffect(() => {
-    if (!titleFocused.current) setTitleDraft(note.title);
-  }, [note.title]);
+    if (!editing) {
+      setTitleDraft(note.title);
+      setContentDraft(note.content);
+    }
+  }, [note.title, note.content, editing]);
+
+  const handleSave = () => {
+    const title = titleDraft.trim() || deriveNoteTitle(contentDraft);
+    const content = normalizeNoteContent(contentDraft);
+    onUpdate({ ...note, title, content, updatedAt: Date.now() });
+    setEditing(false);
+  };
+
+  const handleDiscard = () => {
+    setTitleDraft(note.title);
+    setContentDraft(note.content);
+    setEditing(false);
+  };
+
+  const startEditing = (e) => {
+    e.stopPropagation();
+    setEditing(true);
+    if (!open) setOpen(true);
+  };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-zinc-200/60 bg-white/95 dark:border-white/[0.07] dark:bg-[#141b26]/95">
+    <div className={`overflow-hidden rounded-2xl border bg-white/95 transition-shadow dark:bg-[#141b26]/95 ${editing ? 'border-indigo-300/70 shadow-[0_0_0_3px_rgba(99,102,241,0.08)] dark:border-indigo-500/40' : 'border-zinc-200/60 dark:border-white/[0.07]'}`}>
+      {/* Header */}
       <div
         className="group/hd flex cursor-pointer items-center gap-2.5 px-4 py-3 select-none"
-        onClick={() => setOpen(v => !v)}
+        onClick={() => !editing && setOpen(v => !v)}
       >
         <motion.div
           animate={{ rotate: open ? 90 : 0 }}
@@ -191,24 +218,39 @@ function NoteCard({ note, onUpdate, onDelete }) {
         >
           <Icons.ChevronRight className="h-3.5 w-3.5" />
         </motion.div>
-        <input
-          value={titleDraft}
-          onChange={(e) => { e.stopPropagation(); setTitleDraft(e.target.value); }}
-          onClick={(e) => e.stopPropagation()}
-          onFocus={(e) => { e.stopPropagation(); titleFocused.current = true; }}
-          onBlur={() => {
-            titleFocused.current = false;
-            const v = titleDraft.trim() || deriveNoteTitle(note.content);
-            onUpdate({ ...note, title: v, updatedAt: Date.now() });
-          }}
-          placeholder="Titolo nota"
-          className="min-w-0 flex-1 bg-transparent text-[13px] font-semibold tracking-tight text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100"
-        />
-        {note.updatedAt ? (
+
+        {editing ? (
+          <input
+            autoFocus
+            value={titleDraft}
+            onChange={(e) => setTitleDraft(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            placeholder="Titolo nota"
+            className="min-w-0 flex-1 rounded-lg bg-zinc-50 px-2 py-0.5 text-[13px] font-semibold tracking-tight text-zinc-900 outline-none ring-1 ring-zinc-200 dark:bg-white/[0.06] dark:text-zinc-100 dark:ring-white/[0.1]"
+          />
+        ) : (
+          <span className="min-w-0 flex-1 truncate text-[13px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+            {note.title || 'Nota senza titolo'}
+          </span>
+        )}
+
+        {!editing && note.updatedAt && (
           <span className="shrink-0 text-[10px] text-zinc-400 dark:text-zinc-500">
             {new Date(note.updatedAt).toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
           </span>
-        ) : null}
+        )}
+
+        {!editing && (
+          <button
+            type="button"
+            onClick={startEditing}
+            className="shrink-0 rounded-lg p-1.5 text-zinc-300 opacity-0 transition-all hover:bg-indigo-50 hover:text-indigo-500 group-hover/hd:opacity-100 dark:text-zinc-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-400"
+            aria-label="Modifica"
+          >
+            <Icons.Pencil className="h-3.5 w-3.5" />
+          </button>
+        )}
+
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onDelete(note.id); }}
@@ -219,6 +261,7 @@ function NoteCard({ note, onUpdate, onDelete }) {
         </button>
       </div>
 
+      {/* Content */}
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
@@ -230,22 +273,39 @@ function NoteCard({ note, onUpdate, onDelete }) {
             className="overflow-hidden"
           >
             <div className="border-t border-zinc-100 px-4 pb-4 pt-3 dark:border-white/[0.05]">
-              <textarea
-                value={note.content}
-                onChange={(e) => onUpdate({ ...note, content: e.target.value })}
-                onBlur={(e) => {
-                  const normalized = normalizeNoteContent(e.target.value);
-                  onUpdate({
-                    ...note,
-                    content: normalized,
-                    title: note.title?.trim() || deriveNoteTitle(normalized),
-                    updatedAt: Date.now(),
-                  });
-                }}
-                placeholder="Scrivi la nota, roadmap, snippet o checklist..."
-                spellCheck={false}
-                className="min-h-[10rem] w-full resize-none bg-transparent font-mono text-[12.5px] leading-[1.8] text-zinc-700 outline-none placeholder:text-zinc-400 dark:text-zinc-300 dark:placeholder:text-zinc-600"
-              />
+              {editing ? (
+                <>
+                  <textarea
+                    value={contentDraft}
+                    onChange={(e) => setContentDraft(e.target.value)}
+                    placeholder="Scrivi la nota, roadmap, snippet o checklist..."
+                    spellCheck={false}
+                    autoFocus={false}
+                    className="min-h-[10rem] w-full resize-none rounded-lg bg-zinc-50/80 px-3 py-3 font-mono text-[12.5px] leading-[1.8] text-zinc-700 outline-none ring-1 ring-zinc-200 dark:bg-white/[0.04] dark:text-zinc-300 dark:ring-white/[0.08]"
+                  />
+                  <div className="mt-2.5 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={handleDiscard}
+                      className="rounded-xl px-3 py-1.5 text-[11px] font-semibold text-zinc-500 transition-colors hover:bg-zinc-100 dark:hover:bg-white/[0.05]"
+                    >
+                      Annulla
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSave}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-500 px-3.5 py-1.5 text-[11px] font-semibold text-white shadow-sm shadow-indigo-500/30 transition-all hover:bg-indigo-600"
+                    >
+                      <Icons.Check className="h-3 w-3" />
+                      Salva
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <pre className="min-h-[2rem] whitespace-pre-wrap font-mono text-[12.5px] leading-[1.8] text-zinc-600 dark:text-zinc-400">
+                  {note.content || <span className="text-zinc-400 dark:text-zinc-600 italic">Nessun contenuto — clicca ✏️ per modificare</span>}
+                </pre>
+              )}
             </div>
           </motion.div>
         )}
@@ -1139,8 +1199,8 @@ export default function SharedProjects() {
           </header>
 
           <section className="overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.82] shadow-[0_24px_60px_-40px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:bg-[linear-gradient(180deg,rgba(18,23,31,0.96),rgba(12,16,23,0.98))] dark:shadow-[0_30px_70px_-42px_rgba(0,0,0,0.62)]">
-            <div className="flex items-start justify-between gap-4 border-b border-zinc-200/60 px-5 py-5 dark:border-white/[0.06] md:px-6">
-              <div className="flex min-w-0 items-start gap-3">
+            <div className="flex items-center justify-between gap-4 border-b border-zinc-200/60 px-5 py-4 dark:border-white/[0.06] md:px-6">
+              <div className="flex min-w-0 items-center gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-indigo-200/70 bg-indigo-500/10 text-indigo-600 shadow-sm dark:border-indigo-500/25 dark:bg-indigo-500/12 dark:text-indigo-300">
                   <Icons.FileText className="h-5 w-5" />
                 </div>
