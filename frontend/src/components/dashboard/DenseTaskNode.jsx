@@ -280,7 +280,7 @@ export function DenseTaskNode({
       className: 'text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20',
     },
     { icon: <Icons.Calendar className="h-3 w-3" />, onClick: (e) => { e.stopPropagation(); setShowDeadline(true); }, title: 'Scadenza', className: 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5' },
-    { icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3 w-3"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>, onClick: (e) => { e.stopPropagation(); setEditing(true); }, title: 'Rinomina', className: 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5' },
+    { icon: <Icons.Edit2 className="h-3 w-3" />, onClick: (e) => { e.stopPropagation(); setEditing(true); }, title: 'Rinomina', className: 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5' },
     { icon: <Icons.X className="h-3.5 w-3.5" />, onClick: (e) => { e.stopPropagation(); onDelete(node.id); }, title: 'Elimina', className: 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20' },
   ].filter(Boolean);
 
