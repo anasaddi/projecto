@@ -157,7 +157,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
 
   return (
     <div className="relative z-10 mt-2 shrink-0 px-6 pb-6">
-      <div className="flex flex-col overflow-hidden rounded-[32px] border border-zinc-200/70 bg-white shadow-sm backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#0b0e14]/70 dark:shadow-none">
+      <Card className="flex flex-col overflow-hidden rounded-[32px]">
         
         {/* HEADER (Sticky & Glass) */}
         <button
@@ -380,7 +380,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </Card>
     </div>
   );
 }

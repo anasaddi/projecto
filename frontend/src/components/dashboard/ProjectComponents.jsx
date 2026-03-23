@@ -110,7 +110,7 @@ export function StandardProjectCard({
               </Link>
             )}
             <div onClick={(e) => e.stopPropagation()}>
-              <KebabMenu items={menuItems} onOpenChange={setIsMenuOpen} alwaysVisible />
+              <KebabMenu items={menuItems} onOpenChange={setIsMenuOpen} />
             </div>
             <motion.div
               animate={{ rotate: expanded ? 180 : 0 }}

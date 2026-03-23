@@ -12,7 +12,7 @@ export function PrayersCountdowns({
   focusStreak = 0
 }) {
   return (
-    <Card className="flex flex-col min-h-0 bg-white/80 dark:bg-[#0b0e14]/80 backdrop-blur-xl border-zinc-200/50 dark:border-white/[0.06] shadow-sm dark:shadow-black/50">
+    <Card className="flex flex-col min-h-0">
       <CardBody padding="normal" className="flex items-center gap-8 py-4">
         {/* Section 1: Progress Score (Expanded) */}
         <div className="flex flex-col flex-1 gap-2">

@@ -56,7 +56,7 @@ export function ThisWeekWidget({ dailyTaskLogs, activeHabits, now }) {
   const quote = QUOTES[Math.floor(now.getDate() % QUOTES.length)];
 
   return (
-    <div className="mt-1 pt-3 border-t border-zinc-100 dark:border-white/[0.04] shrink-0">
+    <div className="mt-1 pt-3 border-t border-zinc-100 dark:border-white/[0.04] shrink-0 px-[15px] pb-[15px]">
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-[9px] font-bold text-sky-500 dark:text-sky-400 uppercase tracking-wider">This week</span>
         <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400 tabular-nums">{weekPct}%</span>

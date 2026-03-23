@@ -42,7 +42,7 @@ export function LifeGoalTierRow({ tier, onToggleCollapse, onDrop, children }) {
               <div className="w-16 h-0.5 rounded-full bg-zinc-100 dark:bg-white/5 overflow-hidden">
                 <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} />
               </div>
-              <span className="text-[9px] font-bold text-zinc-400 tabular-nums">
+              <span className="text-[9px] font-bold text-zinc-400 tabular-nums leading-none flex items-center">
                 {completedCount}/{totalCount}
               </span>
             </div>

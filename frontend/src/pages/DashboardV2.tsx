@@ -169,16 +169,18 @@ export default function DashboardV2(): React.ReactElement {
     <div className="min-h-full w-full flex flex-col overflow-y-auto overflow-x-hidden font-sans font-normal select-none selection:bg-indigo-500/30 antialiased bg-white dark:bg-[#0b0e14]">
       {/* Redundant header removed - items moved to Layout and PrayersCountdowns */}
 
-      <PrayersCountdowns 
-        todayPrayerLog={todayPrayerLog} 
-        togglePrayer={togglePrayer} 
-        PRAYERS={PRAYERS} 
-        countdowns={countdowns} 
-        todayFocusScore={todayFocusScore}
-        focusStreak={focusStreak}
-        onReset={() => setConfirmState({ id: 'reset' })}
-        now={now}
-      />
+      <div className="px-6 pt-3">
+        <PrayersCountdowns 
+          todayPrayerLog={todayPrayerLog} 
+          togglePrayer={togglePrayer} 
+          PRAYERS={PRAYERS} 
+          countdowns={countdowns} 
+          todayFocusScore={todayFocusScore}
+          focusStreak={focusStreak}
+          onReset={() => setConfirmState({ id: 'reset' })}
+          now={now}
+        />
+      </div>
 
       <DailyTimelineWidget2 PRAYERS={PRAYERS} todayKey={todayKey} todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} />
 
