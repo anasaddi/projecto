@@ -386,29 +386,27 @@ export function DenseTaskNode({
                 />
               ) : (
                 <p
-                  className={`w-full min-w-0 text-[15px] font-semibold leading-6 text-left [overflow-wrap:anywhere] break-words hyphens-auto ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-900 dark:text-zinc-50'}`}
+                  className={`w-full min-w-0 text-base font-medium leading-5 text-left [overflow-wrap:normal] break-words ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-900 dark:text-zinc-50'}`}
                   title={node.title}
                 >
                   {node.title}
                 </p>
               )}
               {!editing && ((showWorkingByBadge && wb) || node.deadline) && (
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2.5 mt-1">
                   {showWorkingByBadge && wb && (
-                    <span className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-[11px] font-semibold shadow-sm ${workingByTone}`}>
-                      <Icons.User className="h-3.5 w-3.5" />
-                      <span className="uppercase tracking-[0.14em] opacity-70">Owner</span>
-                      <span className="text-[11px] font-bold normal-case tracking-normal opacity-100">{workingByLabel}</span>
+                    <span className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-medium ${workingByTone}`}>
+                      <Icons.User className="h-3 w-3" />
+                      {workingByLabel}
                     </span>
                   )}
                   {node.deadline && (
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
-                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-[11px] font-semibold tabular-nums shadow-sm transition-colors hover:border-current ${getDeadlineColorClass(node.deadline, node.done)}`}
+                      className={`inline-flex shrink-0 items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium tabular-nums transition-colors hover:border-current ${getDeadlineColorClass(node.deadline, node.done)}`}
                     >
-                      <Icons.Calendar className="h-3.5 w-3.5" />
-                      <span className="uppercase tracking-[0.14em] opacity-70">Due</span>
+                      <Icons.Calendar className="h-3 w-3" />
                       {formatDeadlineDisplay(node.deadline)}
                     </button>
                   )}
@@ -447,11 +445,11 @@ export function DenseTaskNode({
                 defaultValue={node.title}
                 onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
                 onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
-                className="min-w-0 w-full flex-1 bg-transparent border-b border-indigo-400 outline-none py-0.5 text-xs text-zinc-900 dark:text-zinc-100"
+                className="min-w-0 w-full flex-1 bg-transparent border-b border-indigo-400 outline-none py-0.5 text-sm text-zinc-900 dark:text-zinc-100"
               />
             ) : (
               <span
-                className="block w-full min-w-0 text-xs leading-relaxed font-medium break-words [overflow-wrap:anywhere] text-zinc-700 dark:text-zinc-300"
+                className="block w-full min-w-0 text-sm leading-5 font-medium [overflow-wrap:normal] break-words text-zinc-700 dark:text-zinc-300"
                 title={node.title}
               >
                 {node.title}
@@ -459,7 +457,7 @@ export function DenseTaskNode({
             )}
             {showWorkingByBadge && wb && !editing && (
               <span
-                className={`shrink-0 rounded-lg border px-1.5 py-0.5 text-[9px] font-bold tabular-nums ${workingByTone}`}
+                className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-medium tabular-nums ${workingByTone}`}
               >
                 {workingByLabel}
               </span>
@@ -468,7 +466,7 @@ export function DenseTaskNode({
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
-                className={`shrink-0 rounded-lg font-semibold tabular-nums border border-transparent hover:border-current transition-colors ${getDeadlineColorClass(node.deadline, node.done)} px-1.5 py-0.5 text-[9px]`}
+                className={`shrink-0 rounded-md font-medium tabular-nums border border-transparent hover:border-current transition-colors ${getDeadlineColorClass(node.deadline, node.done)} px-1.5 py-0.5 text-[10px]`}
               >
                 {formatDeadline(node.deadline)}
               </button>

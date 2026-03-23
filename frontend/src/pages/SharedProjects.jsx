@@ -851,7 +851,7 @@ export default function SharedProjects() {
     'bg-[radial-gradient(ellipse_100%_80%_at_50%_0%,rgba(99,102,241,0.14),transparent_55%),radial-gradient(ellipse_90%_60%_at_100%_40%,rgba(56,189,248,0.1),transparent_50%),radial-gradient(ellipse_90%_60%_at_0%_40%,rgba(99,102,241,0.08),transparent_50%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)]';
   const sharedBgDark =
     'dark:bg-[radial-gradient(ellipse_100%_80%_at_50%_0%,rgba(99,102,241,0.22),transparent_55%),radial-gradient(ellipse_90%_60%_at_100%_40%,rgba(56,189,248,0.14),transparent_50%),radial-gradient(ellipse_90%_60%_at_0%_40%,rgba(99,102,241,0.12),transparent_50%),linear-gradient(180deg,#0b0e14_0%,#0d1117_100%)]';
-  const SHARED_CONTENT_CLASS = 'w-full max-w-[84rem] mx-auto px-4 md:px-6';
+  const SHARED_CONTENT_CLASS = 'w-full mx-auto px-4 md:px-8 lg:px-12';
 
   return (
     <div className={`min-h-screen overflow-x-hidden bg-fixed font-sans antialiased text-gray-900 select-none [&_input]:select-text [&_textarea]:select-text dark:text-gray-100 ${sharedBgLight} ${sharedBgDark}`}>
@@ -865,10 +865,10 @@ export default function SharedProjects() {
         onConfirm={() => updateLocal({ chat: [] })}
         onCancel={() => setConfirmResetChat(false)}
       />
-      <div className={`${SHARED_CONTENT_CLASS} flex flex-col gap-5 py-5 pb-12 xl:flex-row xl:items-start xl:py-8`}>
+      <div className={`${SHARED_CONTENT_CLASS} flex flex-col gap-6 py-6 pb-12 2xl:flex-row 2xl:items-start`}>
 
         {/* MAIN CONTENT: PROJECTS */}
-        <div className="order-2 min-w-0 flex-1 space-y-6 xl:order-1">
+        <div className="order-2 min-w-0 flex-[2] space-y-6 2xl:order-1">
           <header className="mb-6 rounded-[32px] border border-zinc-200/70 bg-white/[0.88] p-5 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#141922]/85 dark:shadow-[0_30px_70px_-42px_rgba(0,0,0,0.62)] md:p-6">
             <div className="mb-5 flex flex-col justify-between gap-5 md:flex-row md:items-end">
               <div className="space-y-2">
@@ -957,7 +957,7 @@ export default function SharedProjects() {
             )}
           </header>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
             {dashboard.projects.map((proj, pIdx) => {
               const dragPayload = { type: 'project', fromIndex: pIdx };
               const stats = countTreeStatsUtil(proj.tasks);
@@ -1090,7 +1090,7 @@ export default function SharedProjects() {
         </div>
 
         {/* SIDEBAR: QUICK TASKS + CHAT */}
-        <aside className="order-1 w-full shrink-0 space-y-5 pt-0 xl:sticky xl:top-24 xl:order-2 xl:w-[20rem]">
+        <aside className="order-1 w-full shrink-0 space-y-4 pt-0 2xl:sticky 2xl:top-24 2xl:order-2 2xl:w-[18rem]">
           {/* QUICK TASKS */}
           <div className="flex min-h-[340px] flex-col rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-6 shadow-[0_22px_50px_-38px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-[0_30px_60px_-40px_rgba(0,0,0,0.6)]">
             <div className="flex items-center gap-2 mb-4">
