@@ -107,6 +107,65 @@ function isUnlocked(shareId, passwordHash) {
   }
 }
 
+function createSharedNote(overrides = {}) {
+  return {
+    id: uid('note'),
+    title: 'Nuova nota',
+    content: '',
+    collapsed: false,
+    updatedAt: Date.now(),
+    ...overrides,
+  };
+}
+
+function deriveNoteTitle(content) {
+  const firstMeaningfulLine = String(content || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .find(Boolean);
+  if (!firstMeaningfulLine) return 'Nuova nota';
+  return firstMeaningfulLine.replace(/^[-#*\d.\s:>]+/, '').slice(0, 72) || 'Nuova nota';
+}
+
+function normalizeNoteContent(value) {
+  const raw = String(value || '').replace(/\r\n?/g, '\n').replace(/\t/g, '  ');
+  const lines = raw.split('\n').map((line) => line.replace(/[ \t]+$/g, ''));
+  const meaningful = lines.filter((line) => line.trim());
+  if (!meaningful.length) return '';
+
+  const indents = meaningful
+    .filter((line) => !/^\s*([-*]|\d+\.)\s/.test(line))
+    .map((line) => {
+      const match = line.match(/^ */);
+      return match ? match[0].length : 0;
+    });
+  const minIndent = indents.length ? Math.min(...indents) : 0;
+
+  return lines
+    .map((line) => {
+      const match = line.match(/^ */);
+      const currentIndent = match ? match[0].length : 0;
+      return line.slice(Math.min(currentIndent, minIndent));
+    })
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function normalizeSharedNotes(notes) {
+  if (!Array.isArray(notes)) return [];
+  return notes.map((note, index) => {
+    const content = typeof note?.content === 'string' ? note.content : '';
+    return createSharedNote({
+      id: note?.id || uid(`note-${index}`),
+      title: typeof note?.title === 'string' && note.title.trim() ? note.title.trim() : deriveNoteTitle(content),
+      content,
+      collapsed: !!note?.collapsed,
+      updatedAt: note?.updatedAt || Date.now(),
+    });
+  });
+}
+
 /**
  * ----------------------------------------------------------------------
  * COMPONENTS
@@ -360,6 +419,7 @@ export default function SharedProjects() {
   const [dashboard, setDashboard] = useState({
     projects: [],
     quickTasks: [],
+    notes: [],
     chat: [],
     bonifici: [],
     title: "Progetti Condivisi",
@@ -391,6 +451,7 @@ export default function SharedProjects() {
   const [chatDraft, setChatDraft] = useState("");
   const chatScrollRef = useRef(null);
   const chatInputRef = useRef(null);
+  const [notesPanelCollapsed, setNotesPanelCollapsed] = useState(false);
 
   useEffect(() => {
     if (chatScrollRef.current && dashboard.chat.length > 0) {
@@ -422,6 +483,7 @@ export default function SharedProjects() {
     const dataPayload = msg.data || msg;
     const serverProjects = Array.isArray(dataPayload.projects) ? dataPayload.projects : [];
     const serverQuickTasks = Array.isArray(dataPayload.quickTasks) ? dataPayload.quickTasks : [];
+    const serverNotes = normalizeSharedNotes(dataPayload.notes);
     const serverChat = Array.isArray(dataPayload.chat) ? dataPayload.chat : [];
     const serverBonifici = Array.isArray(dataPayload.bonifici) ? dataPayload.bonifici : [];
     const serverTitle = msg.title || "Progetti Condivisi";
@@ -429,6 +491,7 @@ export default function SharedProjects() {
       ...prev,
       projects: serverProjects,
       quickTasks: serverQuickTasks,
+      notes: serverNotes,
       chat: serverChat,
       bonifici: serverBonifici,
       title: serverTitle,
@@ -506,12 +569,14 @@ export default function SharedProjects() {
         const payload = data?.data || data;
         const projects = Array.isArray(payload?.projects) ? payload.projects : [];
         const quickTasks = Array.isArray(payload?.quickTasks) ? payload.quickTasks : [];
+        const notes = normalizeSharedNotes(payload?.notes);
         const chat = Array.isArray(payload?.chat) ? payload.chat : [];
         const bonifici = Array.isArray(payload?.bonifici) ? payload.bonifici : [];
         setDashboard(prev => ({
           ...prev,
           projects,
           quickTasks,
+          notes,
           chat,
           bonifici,
           title: data?.title || prev.title,
@@ -576,12 +641,14 @@ export default function SharedProjects() {
         }
         const projects = Array.isArray(payload?.projects) ? payload.projects : [];
         const quickTasks = Array.isArray(payload?.quickTasks) ? payload.quickTasks : [];
+        const notes = normalizeSharedNotes(payload?.notes);
         const chat = Array.isArray(payload?.chat) ? payload.chat : [];
         const bonifici = Array.isArray(payload?.bonifici) ? payload.bonifici : [];
         setDashboard(prev => ({
           ...prev,
           projects,
           quickTasks,
+          notes,
           chat,
           bonifici,
           title: data?.title || prev.title,
@@ -627,6 +694,7 @@ export default function SharedProjects() {
       projects: Array.isArray(newState.projects) ? newState.projects : [],
       projectOrder: Array.isArray(newState.projects) ? newState.projects.map(p => p.id) : [],
       quickTasks: Array.isArray(newState.quickTasks) ? newState.quickTasks : [],
+      notes: normalizeSharedNotes(newState.notes),
       chat: Array.isArray(newState.chat) ? newState.chat : [],
       bonifici: Array.isArray(newState.bonifici) ? newState.bonifici : [],
     };
@@ -673,6 +741,31 @@ export default function SharedProjects() {
   const deleteQuickTask = (id) => {
     updateLocal(prev => ({
       quickTasks: (prev.quickTasks || []).filter(t => t.id !== id)
+    }));
+  };
+
+  const addNote = () => {
+    updateLocal(prev => ({
+      notes: [
+        createSharedNote({
+          title: `Nota ${((prev.notes || []).length || 0) + 1}`,
+          content: '',
+        }),
+        ...(prev.notes || []),
+      ]
+    }));
+    setNotesPanelCollapsed(false);
+  };
+
+  const updateNote = (noteId, updater) => {
+    updateLocal(prev => ({
+      notes: normalizeSharedNotes(prev.notes).map((note) => (note.id === noteId ? updater(note) : note))
+    }));
+  };
+
+  const deleteNote = (noteId) => {
+    updateLocal(prev => ({
+      notes: normalizeSharedNotes(prev.notes).filter((note) => note.id !== noteId)
     }));
   };
 
@@ -957,6 +1050,162 @@ export default function SharedProjects() {
             )}
           </header>
 
+          <section className="overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.82] shadow-[0_24px_60px_-40px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:bg-[#141922]/88 dark:shadow-[0_30px_70px_-42px_rgba(0,0,0,0.62)]">
+            <div className="flex items-start justify-between gap-4 border-b border-zinc-200/60 px-5 py-5 dark:border-white/[0.06] md:px-6">
+              <div className="flex min-w-0 items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-indigo-200/70 bg-indigo-500/10 text-indigo-600 shadow-sm dark:border-indigo-500/25 dark:bg-indigo-500/12 dark:text-indigo-300">
+                  <Icons.FileText className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-[16px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">Note Workspace</h2>
+                  <p className="mt-1 text-[12px] font-medium text-zinc-500 dark:text-zinc-400">
+                    Note ampie, leggibili e condivise in tempo reale. Supportano testo tecnico, checklist e snippet.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={addNote}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-indigo-200/70 bg-indigo-500/10 px-3 py-2 text-xs font-semibold text-indigo-600 transition-colors hover:bg-indigo-500/15 dark:border-indigo-500/25 dark:bg-indigo-500/12 dark:text-indigo-300"
+                >
+                  <Icons.Plus className="h-3.5 w-3.5" />
+                  Nuova nota
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNotesPanelCollapsed((prev) => !prev)}
+                  className="rounded-2xl p-2 text-zinc-400 transition-colors hover:bg-zinc-100/80 hover:text-zinc-600 dark:hover:bg-white/[0.05] dark:hover:text-zinc-200"
+                  aria-label={notesPanelCollapsed ? 'Apri note' : 'Chiudi note'}
+                >
+                  <motion.div
+                    animate={{ rotate: notesPanelCollapsed ? -90 : 0 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    <Icons.ChevronDown className="h-4 w-4" />
+                  </motion.div>
+                </button>
+              </div>
+            </div>
+
+            <AnimatePresence initial={false}>
+              {!notesPanelCollapsed && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.24, ease: [0.32, 0.72, 0, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-4 px-5 py-5 md:px-6">
+                    {normalizeSharedNotes(dashboard.notes).length === 0 ? (
+                      <div className="rounded-[24px] border border-dashed border-zinc-200/70 bg-zinc-50/60 px-6 py-10 text-center dark:border-white/[0.08] dark:bg-white/[0.02]">
+                        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Nessuna nota ancora.</p>
+                        <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+                          Crea una nota lunga per roadmap, piani di deploy, snippet o specifiche tecniche.
+                        </p>
+                      </div>
+                    ) : (
+                      normalizeSharedNotes(dashboard.notes).map((note) => (
+                        <motion.article
+                          key={note.id}
+                          layout
+                          className="overflow-hidden rounded-[26px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.78),rgba(248,250,252,0.86))] shadow-[0_18px_50px_-38px_rgba(15,23,42,0.22)] dark:bg-[linear-gradient(180deg,rgba(24,30,41,0.96),rgba(17,22,31,0.96))] dark:shadow-[0_24px_60px_-40px_rgba(0,0,0,0.5)]"
+                        >
+                          <div className="flex items-start justify-between gap-3 border-b border-zinc-200/60 px-4 py-3.5 dark:border-white/[0.06]">
+                            <div className="min-w-0 flex-1">
+                              <input
+                                value={note.title}
+                                onChange={(e) => updateNote(note.id, (current) => ({ ...current, title: e.target.value }))}
+                                onBlur={(e) => updateNote(note.id, (current) => ({ ...current, title: e.target.value.trim() || deriveNoteTitle(current.content), updatedAt: Date.now() }))}
+                                placeholder="Titolo nota"
+                                className="w-full bg-transparent text-[15px] font-semibold tracking-tight text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-50"
+                              />
+                              <p className="mt-1 text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
+                                {note.updatedAt ? `Aggiornata ${new Date(note.updatedAt).toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}` : 'Nota nuova'}
+                              </p>
+                            </div>
+
+                            <div className="flex shrink-0 items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => updateNote(note.id, (current) => ({ ...current, collapsed: !current.collapsed }))}
+                                className="rounded-xl p-2 text-zinc-400 transition-colors hover:bg-zinc-100/80 hover:text-zinc-600 dark:hover:bg-white/[0.05] dark:hover:text-zinc-200"
+                                aria-label={note.collapsed ? 'Apri nota' : 'Chiudi nota'}
+                              >
+                                <motion.div animate={{ rotate: note.collapsed ? -90 : 0 }} transition={{ duration: 0.18 }}>
+                                  <Icons.ChevronDown className="h-4 w-4" />
+                                </motion.div>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => deleteNote(note.id)}
+                                className="rounded-xl p-2 text-zinc-400 transition-colors hover:bg-rose-500/10 hover:text-rose-500 dark:hover:bg-rose-500/12"
+                                aria-label="Elimina nota"
+                              >
+                                <Icons.Trash className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <AnimatePresence initial={false}>
+                            {!note.collapsed && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="grid gap-4 px-4 py-4 xl:grid-cols-[minmax(0,1fr)_minmax(260px,320px)]">
+                                  <div className="overflow-hidden rounded-[22px] border border-zinc-200/70 bg-white/70 shadow-inner dark:border-white/[0.06] dark:bg-black/10">
+                                    <div className="flex items-center justify-between gap-3 border-b border-zinc-200/70 px-4 py-3 dark:border-white/[0.06]">
+                                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">Editor</span>
+                                      <span className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500">Auto normalize on blur</span>
+                                    </div>
+                                    <textarea
+                                      value={note.content}
+                                      onChange={(e) => updateNote(note.id, (current) => ({ ...current, content: e.target.value }))}
+                                      onBlur={(e) => {
+                                        const normalized = normalizeNoteContent(e.target.value);
+                                        updateNote(note.id, (current) => ({
+                                          ...current,
+                                          content: normalized,
+                                          title: current.title?.trim() || deriveNoteTitle(normalized),
+                                          updatedAt: Date.now(),
+                                        }));
+                                      }}
+                                      placeholder="Scrivi una nota lunga, roadmap, piano di rilascio, snippet o checklist..."
+                                      spellCheck={false}
+                                      className="min-h-[20rem] w-full resize-y bg-transparent px-4 py-4 font-mono text-[13px] leading-7 text-zinc-800 outline-none placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                                    />
+                                  </div>
+
+                                  <div className="overflow-hidden rounded-[22px] border border-white/10 bg-zinc-950 text-zinc-100 shadow-[0_20px_50px_-36px_rgba(15,23,42,0.7)]">
+                                    <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+                                      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-400">Preview</span>
+                                      <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-medium text-zinc-400">
+                                        Plain text / markdown / snippets
+                                      </span>
+                                    </div>
+                                    <pre className="min-h-[20rem] overflow-auto whitespace-pre-wrap break-words px-4 py-4 font-mono text-[13px] leading-7 text-zinc-100">
+{note.content || 'La preview apparira qui mentre scrivi la nota.'}
+                                    </pre>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.article>
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </section>
+
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
             {dashboard.projects.map((proj, pIdx) => {
               const dragPayload = { type: 'project', fromIndex: pIdx };
@@ -1059,23 +1308,25 @@ export default function SharedProjects() {
                             })}
                           />
                         ))}
-                        <div className="pt-1 pl-1">
-                          <input
-                            value={projectTaskDrafts[proj.id] ?? ''}
-                            onChange={(e) => setProjectTaskDrafts(prev => ({ ...prev, [proj.id]: e.target.value }))}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                const title = (projectTaskDrafts[proj.id] ?? '').trim();
-                                if (title) {
-                                  updateProject(proj.id, p => ({ ...p, tasks: [...(p.tasks || []), { id: uid('task'), title, done: false }] }));
-                                  setProjectTaskDrafts(prev => ({ ...prev, [proj.id]: '' }));
+                        <div className="pt-1">
+                          <div className="rounded-2xl border border-transparent bg-white/[0.03] px-3 py-2 transition-all duration-200 focus-within:border-violet-500/30 focus-within:bg-white/[0.05] focus-within:ring-2 focus-within:ring-violet-500/20">
+                            <input
+                              value={projectTaskDrafts[proj.id] ?? ''}
+                              onChange={(e) => setProjectTaskDrafts(prev => ({ ...prev, [proj.id]: e.target.value }))}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  const title = (projectTaskDrafts[proj.id] ?? '').trim();
+                                  if (title) {
+                                    updateProject(proj.id, p => ({ ...p, tasks: [...(p.tasks || []), { id: uid('task'), title, done: false }] }));
+                                    setProjectTaskDrafts(prev => ({ ...prev, [proj.id]: '' }));
+                                  }
                                 }
-                              }
-                            }}
-                            placeholder="Add task... (Enter)"
-                            className="w-full bg-transparent text-sm text-zinc-500 dark:text-zinc-400 outline-none placeholder:text-zinc-400"
-                          />
+                              }}
+                              placeholder="Add task... (Enter)"
+                              className="w-full bg-transparent text-sm text-zinc-400 outline-none placeholder:text-zinc-500 dark:text-zinc-300 dark:placeholder:text-zinc-500"
+                            />
+                          </div>
                         </div>
                       </>
                     )}

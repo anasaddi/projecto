@@ -418,7 +418,7 @@ export function DenseTaskNode({
         {...zoneProps}
         className={`group/row relative flex w-full min-w-0 cursor-grab text-[13px] transition-all duration-200 active:cursor-grabbing sm:text-sm ${
           sharedWorkspaceTaskUI
-            ? 'items-start gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 backdrop-blur-sm hover:bg-white/[0.05] dark:border-white/[0.05] dark:bg-white/[0.02] dark:hover:bg-white/[0.04]'
+            ? `items-start gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 backdrop-blur-sm hover:bg-white/[0.05] dark:border-white/[0.05] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] ${node.done ? 'opacity-45' : ''}`
             : emphasizedTaskUI
               ? 'min-h-[44px] items-start gap-3 rounded-xl border border-zinc-200/70 bg-white/80 px-3 py-2.5 shadow-sm hover:border-zinc-300/60 hover:bg-white dark:border-white/[0.05] dark:bg-white/[0.03] dark:hover:bg-white/[0.05]'
               : 'min-h-[36px] items-center gap-2 rounded-lg px-2 py-1 hover:bg-zinc-100/80 dark:hover:bg-white/[0.04]'
@@ -433,7 +433,13 @@ export function DenseTaskNode({
               </button>
             ) : <span className="h-3 w-3" />}
           </div>
-          <div className="shrink-0"><TaskCheckbox done={node.done} onClick={() => onToggle(node.id, !node.done)} /></div>
+          <div className="shrink-0">
+            <TaskCheckbox
+              done={node.done}
+              onClick={() => onToggle(node.id, !node.done)}
+              className={sharedWorkspaceTaskUI && node.done ? 'border-zinc-500 bg-zinc-500 dark:border-zinc-600 dark:bg-zinc-600' : ''}
+            />
+          </div>
         </div>
 
         {sharedWorkspaceTaskUI ? (
@@ -449,7 +455,7 @@ export function DenseTaskNode({
                 />
               ) : (
                 <p
-                  className={`line-clamp-1 w-full min-w-0 text-left text-[13px] font-medium leading-snug text-zinc-100 ${node.done ? 'text-zinc-500 line-through' : ''}`}
+                  className={`line-clamp-1 w-full min-w-0 text-left text-[13px] font-medium leading-snug text-zinc-100 ${node.done ? 'text-zinc-500' : ''}`}
                   title={node.title}
                 >
                   {node.title}
@@ -474,9 +480,11 @@ export function DenseTaskNode({
                       className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium transition-opacity hover:opacity-80 ${
                         node.done
                           ? 'border-zinc-600/50 bg-zinc-800/50 text-zinc-400'
-                          : new Date(node.deadline) < new Date()
+                          : getDeadlineColorClass(node.deadline, node.done).includes('red')
                             ? 'border-rose-500/30 bg-rose-500/10 text-rose-400'
-                            : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                            : getDeadlineColorClass(node.deadline, node.done).includes('amber')
+                              ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
+                              : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
                       }`}
                     >
                       <Icons.Calendar className="h-3 w-3" />
@@ -488,7 +496,7 @@ export function DenseTaskNode({
             </div>
             <div
               ref={barRef}
-              className={`flex shrink-0 flex-row items-center gap-0.5 transition-opacity duration-200 touch-manipulation ${longPressActive || (!hideTop3Button && isTop3) ? 'opacity-100' : 'opacity-100 sm:opacity-90 sm:group-hover/row:opacity-100'}`}
+              className={`flex shrink-0 flex-row items-center gap-2.5 transition-opacity duration-200 touch-manipulation ${longPressActive || (!hideTop3Button && isTop3) ? 'opacity-100' : 'opacity-100 sm:pointer-events-none sm:opacity-0 sm:group-hover/row:pointer-events-auto sm:group-hover/row:opacity-100'}`}
             >
               {taskActions.map((act, i) => {
                 const ap = getActionProps(i);
