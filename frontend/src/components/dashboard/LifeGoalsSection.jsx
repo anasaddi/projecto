@@ -190,7 +190,7 @@ export function LifeGoalsSection() {
                                             }
                                           }}
                                           placeholder="+ Aggiungi task..."
-                                          className="w-full border-b border-transparent bg-transparent py-1 text-sm text-zinc-600 outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-300 dark:text-zinc-400 dark:placeholder:text-zinc-600 dark:focus:border-white/10"
+                                          className="w-full border-b border-transparent bg-transparent py-1 text-sm text-zinc-600 outline-none placeholder:text-zinc-400 dark:text-zinc-400 dark:placeholder:text-zinc-600"
                                         />
                                       </div>
                                     </>

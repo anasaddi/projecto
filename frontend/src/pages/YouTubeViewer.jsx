@@ -1252,11 +1252,11 @@ export default function YouTubeViewer() {
                 </button>
               </div>
               <label className="flex items-center gap-2 ml-2 cursor-pointer" title="Rigenera ignorando la cache">
-                <input type="checkbox" checked={forceRefresh} onChange={(e) => setForceRefresh(e.target.checked)} className="rounded border-gray-300 dark:border-gray-600 text-rose-500 focus:ring-rose-500" />
+                <input type="checkbox" checked={forceRefresh} onChange={(e) => setForceRefresh(e.target.checked)} className="rounded border-gray-300 text-rose-500 dark:border-gray-600" />
                 <span className="text-xs text-gray-600 dark:text-gray-400">Rigenera</span>
               </label>
               <label className="flex items-center gap-2 ml-1 cursor-pointer" title="Usa AssemblyAI per trascrizione completa (include le ultime frasi, più lento)">
-                <input type="checkbox" checked={useAssembly} onChange={(e) => setUseAssembly(e.target.checked)} className="rounded border-gray-300 dark:border-gray-600 text-sky-500 focus:ring-sky-500" />
+                <input type="checkbox" checked={useAssembly} onChange={(e) => setUseAssembly(e.target.checked)} className="rounded border-gray-300 text-sky-500 dark:border-gray-600" />
                 <span className="text-xs text-gray-600 dark:text-gray-400">Trascrizione completa</span>
               </label>
             </div>
@@ -1270,7 +1270,7 @@ export default function YouTubeViewer() {
                 }}
                 placeholder={DEFAULT_URL}
                 className={[
-                  'w-full rounded-xl border bg-gray-50/50 dark:bg-[#0B0F19]/50 pl-5 pr-32 py-4 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all',
+                  'w-full rounded-xl border bg-gray-50/50 pl-5 pr-32 py-4 text-sm text-gray-800 transition-colors placeholder-gray-400 dark:bg-[#0B0F19]/50 dark:text-gray-200 dark:placeholder-gray-500',
                   urlError ? 'border-red-400 dark:border-red-500' : 'border-gray-200 dark:border-gray-700/50',
                 ].join(' ')}
                 autoFocus
@@ -1322,16 +1322,16 @@ export default function YouTubeViewer() {
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit(e)}
             placeholder={DEFAULT_URL}
             className={[
-              'flex-1 min-w-0 max-w-xl rounded-lg border bg-gray-50 dark:bg-white/5 px-3 py-2 text-xs text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-rose-400 dark:focus:border-rose-500 transition-colors',
+              'flex-1 min-w-0 max-w-xl rounded-lg border bg-gray-50 px-3 py-2 text-xs text-gray-800 transition-colors placeholder-gray-400 dark:bg-white/5 dark:text-gray-200 dark:placeholder-gray-500',
               urlError ? 'border-red-400 dark:border-red-500' : 'border-gray-200 dark:border-gray-700/50',
             ].join(' ')}
           />
           <label className="flex items-center gap-1.5 shrink-0 cursor-pointer" title="Rigenera (ignora cache)">
-            <input type="checkbox" checked={forceRefresh} onChange={(e) => setForceRefresh(e.target.checked)} className="rounded border-gray-300 dark:border-gray-600 text-rose-500 focus:ring-rose-500 w-3.5 h-3.5" />
+            <input type="checkbox" checked={forceRefresh} onChange={(e) => setForceRefresh(e.target.checked)} className="h-3.5 w-3.5 rounded border-gray-300 text-rose-500 dark:border-gray-600" />
             <span className="text-[10px] text-gray-500 dark:text-gray-400">Rigenera</span>
           </label>
           <label className="flex items-center gap-1.5 shrink-0 cursor-pointer" title="Trascrizione completa (AssemblyAI)">
-            <input type="checkbox" checked={useAssembly} onChange={(e) => setUseAssembly(e.target.checked)} className="rounded border-gray-300 dark:border-gray-600 text-sky-500 focus:ring-sky-500 w-3.5 h-3.5" />
+            <input type="checkbox" checked={useAssembly} onChange={(e) => setUseAssembly(e.target.checked)} className="h-3.5 w-3.5 rounded border-gray-300 text-sky-500 dark:border-gray-600" />
             <span className="text-[10px] text-gray-500 dark:text-gray-400">Completa</span>
           </label>
           <button

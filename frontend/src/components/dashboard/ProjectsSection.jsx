@@ -104,7 +104,7 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                                 }
                               }}
                               placeholder="Aggiungi task..."
-                              className="w-full bg-transparent text-sm text-zinc-600 dark:text-zinc-400 outline-none placeholder:text-zinc-300 dark:placeholder:text-zinc-600 py-1 border-b border-transparent focus:border-zinc-300 dark:focus:border-white/10 transition-colors"
+                              className="w-full border-b border-transparent bg-transparent py-1 text-sm text-zinc-600 outline-none placeholder:text-zinc-300 dark:text-zinc-400 dark:placeholder:text-zinc-600"
                             />
                           </div>
                         </>
@@ -199,7 +199,7 @@ export function ProjectsSection({ PROJECT_ACCENTS }) {
                                       }
                                     }}
                                     placeholder="Aggiungi task..."
-                                    className="w-full bg-transparent text-sm text-zinc-600 dark:text-zinc-400 outline-none placeholder:text-zinc-300 dark:placeholder:text-zinc-600 py-1 border-b border-transparent focus:border-zinc-300 dark:focus:border-white/10 transition-colors"
+                                    className="w-full border-b border-transparent bg-transparent py-1 text-sm text-zinc-600 outline-none placeholder:text-zinc-300 dark:text-zinc-400 dark:placeholder:text-zinc-600"
                                   />
                                 </div>
                               </>

@@ -186,7 +186,7 @@ function Tick({ checked, onChange, accentBg }) {
   );
 }
 
-function KgInput({ value, onChange, ring, placeholder = "00" }) {
+function KgInput({ value, onChange, placeholder = "00" }) {
   return (
     <div className="relative group shrink-0">
       <input
@@ -195,11 +195,7 @@ function KgInput({ value, onChange, ring, placeholder = "00" }) {
         value={value ?? ''}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className={`w-12 h-8 text-[12px] font-black text-center text-zinc-900 dark:text-zinc-50
-          bg-zinc-100/50 dark:bg-white/[0.04] border border-zinc-200/50 dark:border-white/[0.08]
-          rounded-lg outline-none transition-all duration-300
-          focus:ring-2 ${ring} focus:bg-white dark:focus:bg-zinc-900 focus:border-transparent
-          placeholder:text-zinc-300 dark:placeholder:text-zinc-700 tabular-nums shadow-sm group-hover:border-zinc-300 dark:group-hover:border-white/20`}
+        className="h-8 w-12 rounded-lg border border-zinc-200/50 bg-zinc-100/50 text-center text-[12px] font-black text-zinc-900 shadow-sm outline-none transition-colors duration-300 placeholder:text-zinc-300 tabular-nums group-hover:border-zinc-300 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-zinc-50 dark:placeholder:text-zinc-700 dark:group-hover:border-white/20"
       />
       <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-indigo-500 rounded-full scale-x-0 transition-transform duration-300 group-focus-within:scale-x-100 opacity-50" />
     </div>
@@ -247,15 +243,15 @@ function ExRow({ exerciseId, exerciseName, badge, badgeBg, anasC, flavioC, anasW
       <div className="flex items-center gap-8 shrink-0">
         {/* Anas Column */}
         <div className="flex items-center gap-1.5 min-w-[70px] justify-center">
-          <KgInput value={anasW} onChange={v => onWeight('anas', v)} ring="focus:ring-indigo-500/30" />
-          {onReps && <KgInput value={anasR} onChange={v => onReps('anas', v)} ring="focus:ring-indigo-500/30" placeholder="rep" />}
+          <KgInput value={anasW} onChange={v => onWeight('anas', v)} />
+          {onReps && <KgInput value={anasR} onChange={v => onReps('anas', v)} placeholder="rep" />}
           <Tick checked={anasC} onChange={() => onToggle('anas')} accentBg="bg-indigo-500" />
         </div>
 
         {/* Flavio Column */}
         <div className="flex items-center gap-1.5 min-w-[70px] justify-center">
-          <KgInput value={flavioW} onChange={v => onWeight('flavio', v)} ring="focus:ring-violet-500/30" />
-          {onReps && <KgInput value={flavioR} onChange={v => onReps('flavio', v)} ring="focus:ring-violet-500/30" placeholder="rep" />}
+          <KgInput value={flavioW} onChange={v => onWeight('flavio', v)} />
+          {onReps && <KgInput value={flavioR} onChange={v => onReps('flavio', v)} placeholder="rep" />}
           <Tick checked={flavioC} onChange={() => onToggle('flavio')} accentBg="bg-violet-500" />
         </div>
       </div>

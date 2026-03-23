@@ -162,7 +162,7 @@ function BonificoTableRow({ b, onUpdateNetto, onRemove, disabled }) {
             onBlur={handleAnasBlur}
             disabled={disabled}
             placeholder={fmtNum(calc.nettoAnas)}
-            className="w-full bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200/70 dark:border-white/[0.08] rounded-xl px-2 py-1.5 text-xs font-medium tabular-nums outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+            className="w-full rounded-xl border border-zinc-200/70 bg-zinc-50 px-2 py-1.5 text-xs font-medium tabular-nums text-zinc-900 outline-none dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-zinc-100"
           />
         </div>
         <div>
@@ -175,7 +175,7 @@ function BonificoTableRow({ b, onUpdateNetto, onRemove, disabled }) {
             onBlur={handleOthmanBlur}
             disabled={disabled}
             placeholder={fmtNum(calc.nettoOthman)}
-            className="w-full bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200/70 dark:border-white/[0.08] rounded-xl px-2 py-1.5 text-xs font-medium tabular-nums outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
+            className="w-full rounded-xl border border-zinc-200/70 bg-zinc-50 px-2 py-1.5 text-xs font-medium tabular-nums text-zinc-900 outline-none dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-zinc-100"
           />
         </div>
       </div>
@@ -276,7 +276,7 @@ export default function FinanzeSection({ bonifici = [], onUpdate, disabled, defa
                     value={dateInput}
                     onChange={(e) => setDateInput(e.target.value)}
                     disabled={disabled}
-                    className="w-full bg-white dark:bg-white/[0.04] border border-zinc-200/70 dark:border-white/[0.08] rounded-xl px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:ring-emerald-500/20"
+                    className="w-full rounded-xl border border-zinc-200/70 bg-white px-2.5 py-1.5 text-xs text-zinc-900 outline-none dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-zinc-100"
                   />
                 </div>
                 <div className="flex-1 min-w-[80px]">
@@ -289,7 +289,7 @@ export default function FinanzeSection({ bonifici = [], onUpdate, disabled, defa
                     onKeyDown={(e) => e.key === 'Enter' && addBonifico()}
                     disabled={disabled}
                     placeholder="15000"
-                    className="w-full bg-white dark:bg-white/[0.04] border border-zinc-200/70 dark:border-white/[0.08] rounded-xl px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 dark:focus:ring-emerald-500/20"
+                    className="w-full rounded-xl border border-zinc-200/70 bg-white px-2.5 py-1.5 text-xs text-zinc-900 outline-none dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-zinc-100"
                   />
                 </div>
                 <button

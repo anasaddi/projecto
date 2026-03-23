@@ -42,7 +42,7 @@ export const ModernInput = ({ value, onChange, placeholder, type = 'text', step,
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className={`w-full bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/80 dark:border-white/10 rounded-lg h-8 text-[12px] text-center font-bold text-zinc-900 dark:text-zinc-100 focus:bg-white focus:dark:bg-zinc-900 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all placeholder:text-zinc-300 dark:placeholder:text-zinc-600 ${className}`}
+      className={`h-8 w-full rounded-lg border border-zinc-200/80 bg-zinc-50 text-center text-[12px] font-bold text-zinc-900 outline-none transition-colors placeholder:text-zinc-300 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-100 dark:placeholder:text-zinc-600 ${className}`}
     />
   );
 };

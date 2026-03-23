@@ -38,6 +38,8 @@ export function StandardProjectCard({
   showExplicitProjectDelete = false,
   /** Classi aggiuntive per l’area lista task (es. shared più compatta) */
   taskListClassName,
+  /** Header / barra più compatta e card leggermente più “tight” (workspace /shared) */
+  sharedWorkspaceChrome = false,
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -70,18 +72,18 @@ export function StandardProjectCard({
 
   return (
     <Card 
-      className={`flex flex-col ${isMenuOpen ? 'z-50' : 'z-auto'} ${expanded ? 'ring-1 ring-zinc-200/80 dark:ring-white/[0.08]' : ''}`}
+      className={`flex flex-col ${sharedWorkspaceChrome ? 'rounded-[24px]' : ''} ${isMenuOpen ? 'z-50' : 'z-auto'} ${expanded ? 'ring-1 ring-zinc-200/80 dark:ring-white/[0.08]' : ''}`}
       glow={expanded}
     >
       <div
-        className="group/header flex cursor-pointer items-center gap-3 p-5"
+        className={`group/header flex cursor-pointer items-center gap-3 ${sharedWorkspaceChrome ? 'p-4 sm:p-4' : 'p-5'}`}
         onClick={() => {
           const next = !expanded;
           setExpanded(next);
           onToggleExpand?.(next);
         }}
       >
-        <div className={`h-12 w-1.5 shrink-0 self-center rounded-full bg-gradient-to-b ${accentColor.bar} shadow-sm`} />
+        <div className={`${sharedWorkspaceChrome ? 'h-10 w-1' : 'h-12 w-1.5'} shrink-0 self-center rounded-full bg-gradient-to-b ${accentColor.bar} shadow-sm`} />
 
         <div className="min-w-0 flex-1 flex items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2 min-w-0 flex-1">
@@ -105,7 +107,7 @@ export function StandardProjectCard({
               }}
               onClick={(e) => e.stopPropagation()}
               rows={1}
-              className="min-h-[1.5rem] w-full min-w-[80px] resize-none overflow-visible bg-transparent py-0.5 text-[15px] font-semibold leading-snug tracking-tight text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100"
+              className={`min-h-[1.5rem] w-full min-w-[80px] resize-none overflow-visible bg-transparent py-0.5 font-semibold leading-snug tracking-tight text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100 ${sharedWorkspaceChrome ? 'text-[14px]' : 'text-[15px]'}`}
             />
             {project.deadline && projectDeadlineEditing !== project.id && (
               <Badge variant={isPastDeadline ? 'danger' : 'warning'} size="sm">
@@ -114,7 +116,7 @@ export function StandardProjectCard({
                 {isPastDeadline && <span className="ml-0.5">!</span>}
               </Badge>
             )}
-            <div className="min-w-[100px] flex-1 sm:max-w-[180px]">
+            <div className={`min-w-[100px] flex-1 ${sharedWorkspaceChrome ? 'sm:max-w-[200px]' : 'sm:max-w-[180px]'}`}>
               <ProgressBar value={percentage} max={100} size="sm" showLabel color={accent} />
             </div>
           </div>
@@ -172,7 +174,7 @@ export function StandardProjectCard({
               }}
               autoFocus
               onClick={(e) => e.stopPropagation()}
-              className="w-28 py-1 px-2 text-xs rounded-lg bg-zinc-100 dark:bg-white/[0.06] border border-zinc-200 dark:border-white/[0.08] outline-none focus:ring-2 focus:ring-indigo-500/30"
+              className="w-28 rounded-lg border border-zinc-200 bg-zinc-100 px-2 py-1 text-xs text-zinc-900 outline-none dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-zinc-100"
             />
           )}
         </div>
@@ -211,28 +213,34 @@ export function CompactProjectCard({
   onClick
 }) {
   const accentColor = ACCENT_COLORS[accent] || ACCENT_COLORS.indigo;
+  const pct = Math.min(100, Math.max(0, Math.round(percentage)));
   
   return (
     <motion.button
       type="button"
       onClick={onClick}
-      whileHover={{ scale: 1.02, y: -2 }}
-      whileTap={{ scale: 0.98 }}
-      className="w-full rounded-2xl border border-zinc-200/70 bg-white/[0.88] p-3.5 text-left shadow-sm shadow-zinc-200/40 transition-all hover:border-zinc-300 hover:shadow-md dark:border-white/[0.08] dark:bg-[#141922]/80"
+      whileHover={{ scale: 1.01, y: -1 }}
+      whileTap={{ scale: 0.99 }}
+      className="group w-full rounded-[22px] border border-zinc-200/65 bg-white/[0.92] p-3.5 text-left shadow-[0_14px_40px_-28px_rgba(15,23,42,0.2)] backdrop-blur-xl transition-all duration-300 hover:border-zinc-300/80 hover:shadow-[0_20px_48px_-32px_rgba(99,102,241,0.18)] dark:border-white/[0.07] dark:bg-[#141922]/92 dark:shadow-[0_20px_50px_-36px_rgba(0,0,0,0.55)] dark:hover:border-white/[0.12] dark:hover:shadow-[0_24px_56px_-36px_rgba(99,102,241,0.12)]"
     >
-      <div className="flex items-center gap-3">
-        <div className={`h-9 w-1 rounded-full bg-gradient-to-b ${accentColor.bar}`} />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold leading-snug text-zinc-900 break-words [overflow-wrap:anywhere] dark:text-zinc-100">{project.title}</p>
-          <div className="mt-2 flex items-center gap-2">
-            <div className="flex-1 h-1.5 rounded-full bg-zinc-100 dark:bg-white/[0.06] overflow-hidden">
-              <div 
-                className={`h-full rounded-full bg-gradient-to-r ${accentColor.bar}`}
-                style={{ width: `${percentage}%` }}
+      <div className="flex items-start gap-3">
+        <div className={`mt-0.5 h-11 w-1 shrink-0 rounded-full bg-gradient-to-b ${accentColor.bar} shadow-[0_0_12px_-2px_rgba(99,102,241,0.35)] dark:shadow-[0_0_14px_-2px_rgba(129,140,248,0.25)]`} />
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] font-semibold leading-snug tracking-tight text-zinc-900 [overflow-wrap:anywhere] break-words dark:text-zinc-100">
+            {project.title}
+          </p>
+          <div className="mt-2.5 flex items-center gap-2.5">
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-zinc-100/90 ring-1 ring-zinc-200/40 dark:bg-white/[0.06] dark:ring-white/[0.05]">
+              <div
+                className={`h-full rounded-full bg-gradient-to-r ${accentColor.bar} transition-[width] duration-500 ease-out`}
+                style={{ width: `${pct}%` }}
               />
             </div>
-            <span className="text-[10px] font-bold tabular-nums text-zinc-500">{percentage}%</span>
+            <span className={`shrink-0 text-[11px] font-bold tabular-nums ${accentColor.text}`}>{pct}%</span>
           </div>
+          <p className="mt-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500">
+            Avanzamento progetto
+          </p>
         </div>
       </div>
     </motion.button>

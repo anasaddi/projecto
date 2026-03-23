@@ -79,7 +79,7 @@ export function QuickTasksSection() {
               onChange={(e) => setQuickTaskDraft(e.target.value)}
               onKeyDown={addQuickTask}
               placeholder="Aggiungi task veloce..."
-              className="w-full rounded-2xl border border-zinc-200/70 bg-zinc-100/85 px-4 py-3 pr-9 text-sm outline-none transition-all placeholder:text-zinc-400 focus:border-rose-400/50 focus:ring-2 focus:ring-rose-500/20 dark:border-white/[0.06] dark:bg-white/[0.04] dark:placeholder:text-zinc-500"
+              className="w-full rounded-2xl border border-zinc-200/70 bg-zinc-100/85 px-4 py-3 pr-9 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-zinc-100 dark:placeholder:text-zinc-500"
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-zinc-400 hidden sm:block">
               ↵

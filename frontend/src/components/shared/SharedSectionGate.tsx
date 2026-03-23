@@ -105,7 +105,7 @@ export default function SharedSectionGate({ section, children }: SharedSectionGa
             onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(null); }}
             onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
             placeholder="Password"
-            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 mb-4"
+            className="mb-4 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             autoFocus
           />
           {passwordError && <p className="text-sm text-red-500 mb-4">{passwordError}</p>}

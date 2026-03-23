@@ -76,7 +76,7 @@ export function HabitsSection() {
                 }
               }}
               placeholder="Nuova abitudine..."
-              className="w-full rounded-2xl border border-zinc-200/70 bg-zinc-100/85 px-4 py-3 pr-9 text-sm outline-none transition-all placeholder:text-zinc-400 focus:border-sky-400/50 focus:ring-2 focus:ring-sky-500/20 dark:border-white/[0.06] dark:bg-white/[0.04] dark:placeholder:text-zinc-500"
+              className="w-full rounded-2xl border border-zinc-200/70 bg-zinc-100/85 px-4 py-3 pr-9 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-zinc-100 dark:placeholder:text-zinc-500"
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-zinc-400 hidden sm:block">
               ↵
@@ -175,7 +175,7 @@ export function HabitsSection() {
                             if (e.key === 'Escape') setHabitEditingId(null); 
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          className="flex-1 py-1 px-2 text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/[0.08] outline-none focus:ring-2 focus:ring-sky-500/30"
+                          className="flex-1 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-sm text-zinc-900 outline-none dark:border-white/[0.08] dark:bg-zinc-800 dark:text-zinc-100"
                         />
                       ) : (
                         <span

@@ -42,6 +42,65 @@ function getDeadlineColorClass(deadlineKey, isDone) {
   return 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-900/20';
 }
 
+/** Pill “premium” meta — workspace shared / emphasized */
+function assigneeMetaStyles(wb) {
+  if (wb === 'anas') {
+    return {
+      shell:
+        'border-sky-200/75 bg-gradient-to-br from-sky-500/[0.16] via-white/50 to-sky-500/[0.04] dark:border-sky-500/40 dark:from-sky-500/[0.22] dark:via-[#151c28]/90 dark:to-sky-950/20',
+      icon: 'bg-sky-500/25 text-sky-800 shadow-sm dark:bg-sky-400/20 dark:text-sky-100',
+      label: 'text-[9px] font-bold uppercase tracking-[0.14em] text-sky-600/80 dark:text-sky-300/90',
+      name: 'text-[11px] font-semibold tracking-tight text-sky-950 dark:text-sky-50',
+    };
+  }
+  return {
+    shell:
+      'border-violet-200/75 bg-gradient-to-br from-violet-500/[0.16] via-white/50 to-fuchsia-500/[0.05] dark:border-violet-500/40 dark:from-violet-500/[0.22] dark:via-[#181522]/90 dark:to-violet-950/20',
+    icon: 'bg-violet-500/25 text-violet-900 shadow-sm dark:bg-violet-400/20 dark:text-violet-100',
+    label: 'text-[9px] font-bold uppercase tracking-[0.14em] text-violet-600/80 dark:text-violet-300/90',
+    name: 'text-[11px] font-semibold tracking-tight text-violet-950 dark:text-violet-50',
+  };
+}
+
+function deadlineMetaStyles(deadlineKey, isDone) {
+  if (!deadlineKey || isDone) {
+    return {
+      shell: 'border-zinc-200/75 bg-zinc-100/90 dark:border-white/[0.08] dark:bg-zinc-800/85',
+      icon: 'bg-zinc-200/90 text-zinc-600 dark:bg-zinc-700/90 dark:text-zinc-300',
+      label: 'text-[9px] font-bold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400',
+      primary: 'text-[11px] font-semibold tabular-nums text-zinc-600 dark:text-zinc-300',
+    };
+  }
+  const today = startOfDay(new Date());
+  const dead = fromDateKey(deadlineKey);
+  if (!dead) {
+    return {
+      shell:
+        'border-amber-200/85 bg-gradient-to-br from-amber-400/18 to-amber-600/8 dark:border-amber-500/35 dark:from-amber-500/20 dark:to-amber-950/15',
+      icon: 'bg-amber-500/25 text-amber-900 dark:bg-amber-400/22 dark:text-amber-100',
+      label: 'text-[9px] font-bold uppercase tracking-[0.14em] text-amber-700/85 dark:text-amber-300/90',
+      primary: 'text-[11px] font-semibold tabular-nums text-amber-950 dark:text-amber-50',
+    };
+  }
+  const daysUntil = Math.round((dead - today) / 86400000);
+  if (daysUntil < 0) {
+    return {
+      shell:
+        'border-rose-200/85 bg-gradient-to-br from-rose-400/18 to-rose-700/8 dark:border-rose-500/38 dark:from-rose-500/20 dark:to-rose-950/15',
+      icon: 'bg-rose-500/28 text-rose-900 dark:bg-rose-400/25 dark:text-rose-100',
+      label: 'text-[9px] font-bold uppercase tracking-[0.14em] text-rose-700/85 dark:text-rose-300/90',
+      primary: 'text-[11px] font-semibold tabular-nums text-rose-950 dark:text-rose-50',
+    };
+  }
+  return {
+    shell:
+      'border-emerald-200/85 bg-gradient-to-br from-emerald-400/16 to-emerald-600/8 dark:border-emerald-500/32 dark:from-emerald-500/18 dark:to-emerald-950/12',
+    icon: 'bg-emerald-500/25 text-emerald-900 dark:bg-emerald-400/22 dark:text-emerald-100',
+    label: 'text-[9px] font-bold uppercase tracking-[0.14em] text-emerald-700/85 dark:text-emerald-300/90',
+    primary: 'text-[11px] font-semibold tabular-nums text-emerald-950 dark:text-emerald-50',
+  };
+}
+
 export function DenseTaskNode({
   node,
   depth,
@@ -359,7 +418,7 @@ export function DenseTaskNode({
         {...zoneProps}
         className={`group/row relative flex w-full min-w-0 cursor-grab text-[13px] transition-all duration-200 active:cursor-grabbing sm:text-sm ${
           sharedWorkspaceTaskUI
-            ? 'items-center gap-2 rounded-lg border border-zinc-200/70 bg-white/85 px-2 py-1.5 shadow-sm hover:border-zinc-300/70 hover:bg-white dark:border-white/[0.08] dark:bg-[#161b24]/95 dark:hover:border-white/[0.12] dark:hover:bg-[#1a202c]'
+            ? 'items-center gap-2 rounded-xl border border-zinc-200/60 bg-white/[0.92] px-2.5 py-1.5 shadow-[0_1px_0_rgba(255,255,255,0.55)_inset,0_8px_24px_-16px_rgba(15,23,42,0.12)] hover:border-zinc-300/65 hover:bg-white dark:border-white/[0.07] dark:bg-[#151a22]/98 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_12px_32px_-20px_rgba(0,0,0,0.45)] dark:hover:border-white/[0.11] dark:hover:bg-[#191f29]'
             : emphasizedTaskUI
               ? 'min-h-[44px] items-start gap-3 rounded-xl border border-zinc-200/70 bg-white/80 px-3 py-2.5 shadow-sm hover:border-zinc-300/60 hover:bg-white dark:border-white/[0.05] dark:bg-white/[0.03] dark:hover:bg-white/[0.05]'
               : 'min-h-[36px] items-center gap-2 rounded-lg px-2 py-1 hover:bg-zinc-100/80 dark:hover:bg-white/[0.04]'
@@ -397,23 +456,41 @@ export function DenseTaskNode({
                 </p>
               )}
               {!editing && ((showWorkingByBadge && wb) || node.deadline) && (
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {showWorkingByBadge && wb && (
-                    <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${workingByTone}`}>
-                      <Icons.User className="h-3 w-3 shrink-0" />
-                      {workingByLabel}
-                    </span>
-                  )}
-                  {node.deadline && (
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
-                      className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium tabular-nums transition-colors hover:border-current ${getDeadlineColorClass(node.deadline, node.done)}`}
-                    >
-                      <Icons.Calendar className="h-3 w-3 shrink-0" />
-                      {formatDeadlineDisplay(node.deadline)}
-                    </button>
-                  )}
+                <div className="mt-0.5 flex flex-wrap items-stretch gap-2">
+                  {showWorkingByBadge && wb && (() => {
+                    const am = assigneeMetaStyles(wb);
+                    return (
+                      <span
+                        className={`inline-flex max-w-full items-center gap-2 rounded-full border px-1 py-1 pr-2.5 shadow-sm backdrop-blur-[2px] ${am.shell}`}
+                      >
+                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${am.icon}`}>
+                          <Icons.User className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="min-w-0 py-0.5 text-left">
+                          <span className={`block leading-none ${am.label}`}>In lavorazione</span>
+                          <span className={`mt-0.5 block truncate leading-tight ${am.name}`}>{workingByLabel}</span>
+                        </span>
+                      </span>
+                    );
+                  })()}
+                  {node.deadline && (() => {
+                    const dm = deadlineMetaStyles(node.deadline, node.done);
+                    return (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
+                        className={`inline-flex max-w-full items-center gap-2 rounded-full border px-1 py-1 pr-2.5 text-left shadow-sm backdrop-blur-[2px] transition-[transform,opacity] hover:opacity-95 active:scale-[0.99] ${dm.shell}`}
+                      >
+                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${dm.icon}`}>
+                          <Icons.Calendar className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="min-w-0 py-0.5">
+                          <span className={`block leading-none ${dm.label}`}>Scadenza</span>
+                          <span className={`mt-0.5 block leading-tight ${dm.primary}`}>{formatDeadlineDisplay(node.deadline)}</span>
+                        </span>
+                      </button>
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -459,23 +536,39 @@ export function DenseTaskNode({
                 </p>
               )}
               {!editing && ((showWorkingByBadge && wb) || node.deadline) && (
-                <div className="flex flex-wrap items-center gap-2">
-                  {showWorkingByBadge && wb && (
-                    <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${workingByTone}`}>
-                      <Icons.User className="h-3 w-3" />
-                      {workingByLabel}
-                    </span>
-                  )}
-                  {node.deadline && (
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
-                      className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium tabular-nums transition-colors hover:border-current ${getDeadlineColorClass(node.deadline, node.done)}`}
-                    >
-                      <Icons.Calendar className="h-3 w-3" />
-                      {formatDeadlineDisplay(node.deadline)}
-                    </button>
-                  )}
+                <div className="mt-0.5 flex flex-wrap items-stretch gap-2">
+                  {showWorkingByBadge && wb && (() => {
+                    const am = assigneeMetaStyles(wb);
+                    return (
+                      <span className={`inline-flex max-w-full items-center gap-2 rounded-full border px-1 py-1 pr-2.5 shadow-sm backdrop-blur-[2px] ${am.shell}`}>
+                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${am.icon}`}>
+                          <Icons.User className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="min-w-0 py-0.5 text-left">
+                          <span className={`block leading-none ${am.label}`}>In lavorazione</span>
+                          <span className={`mt-0.5 block truncate leading-tight ${am.name}`}>{workingByLabel}</span>
+                        </span>
+                      </span>
+                    );
+                  })()}
+                  {node.deadline && (() => {
+                    const dm = deadlineMetaStyles(node.deadline, node.done);
+                    return (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setShowDeadline(true); }}
+                        className={`inline-flex max-w-full items-center gap-2 rounded-full border px-1 py-1 pr-2.5 text-left shadow-sm backdrop-blur-[2px] transition-[transform,opacity] hover:opacity-95 active:scale-[0.99] ${dm.shell}`}
+                      >
+                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${dm.icon}`}>
+                          <Icons.Calendar className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="min-w-0 py-0.5">
+                          <span className={`block leading-none ${dm.label}`}>Scadenza</span>
+                          <span className={`mt-0.5 block leading-tight ${dm.primary}`}>{formatDeadlineDisplay(node.deadline)}</span>
+                        </span>
+                      </button>
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -575,7 +668,7 @@ export function DenseTaskNode({
               type="date"
               value={deadlineInput}
               onChange={(e) => setDeadlineInput(e.target.value)}
-              className="w-full bg-zinc-50 dark:bg-black/20 border border-zinc-200 dark:border-white/5 rounded-lg p-2 text-xs mb-3 outline-none focus:border-indigo-500"
+              className="w-full rounded-lg border border-zinc-200 bg-zinc-50 p-2 text-xs text-zinc-900 outline-none dark:border-white/10 dark:bg-black/20 dark:text-zinc-100 mb-3"
             />
             <div className="flex gap-2">
               <button onClick={() => { setDeadlineInput(''); onDeadline?.(node.id, null); setShowDeadline(false); }} className="flex-1 py-1.5 text-[10px] font-bold text-zinc-500 hover:bg-zinc-50 dark:hover:bg-white/5 rounded-lg border border-zinc-100 dark:border-white/5 transition-colors">Rimuovi</button>

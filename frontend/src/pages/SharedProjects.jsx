@@ -244,7 +244,7 @@ function SharedListDashboard() {
                     value={pwdInput}
                     onChange={(e) => { setPwdInput(e.target.value); setPwdError(null); }}
                     placeholder={settingsSd?.data?.passwordHash ? '•••••••• (inserisci nuova per cambiare)' : 'Inserisci password'}
-                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                   />
                 </div>
               </div>
@@ -827,7 +827,7 @@ export default function SharedProjects() {
             onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(null); }}
             onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
             placeholder="Password"
-            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 mb-4"
+            className="mb-4 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             autoFocus
           />
           {passwordError && <p className="text-sm text-red-500 mb-4">{passwordError}</p>}
@@ -876,7 +876,7 @@ export default function SharedProjects() {
                   <input
                     value={dashboard.title}
                     onChange={(e) => updateLocal({ title: e.target.value })}
-                    className="w-full rounded-2xl border border-transparent bg-transparent px-2 py-1 text-2xl font-semibold tracking-tight text-gray-900 outline-none transition-all focus:border-zinc-200 focus:bg-white/60 focus:ring-2 focus:ring-indigo-500/20 dark:text-white dark:focus:border-white/[0.08] dark:focus:bg-white/[0.03] sm:w-auto md:text-3xl"
+                    className="w-full rounded-2xl border border-transparent bg-transparent px-2 py-1 text-2xl font-semibold tracking-tight text-gray-900 outline-none transition-colors dark:text-white sm:w-auto md:text-3xl"
                   />
                   <span className="rounded-full border border-indigo-200/80 bg-indigo-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/20 dark:text-indigo-300">
                     Shared
@@ -1008,7 +1008,8 @@ export default function SharedProjects() {
                     accent={accent}
                     isShared={false}
                     showExplicitProjectDelete
-                    taskListClassName="border-t border-zinc-100/80 px-3 pb-3 pt-2 space-y-1.5 dark:border-zinc-700/40"
+                    sharedWorkspaceChrome
+                    taskListClassName="border-t border-zinc-100/70 px-3 pb-3 pt-2 space-y-1.5 dark:border-zinc-700/35"
                     onTitleChange={(val) => updateProject(proj.id, p => ({ ...p, title: val }))}
                     onDelete={() => deleteProject(proj.id)}
                     onDeadlineClick={(val) => {
@@ -1111,7 +1112,7 @@ export default function SharedProjects() {
                   value={quickTaskDraft}
                   onChange={(e) => setQuickTaskDraft(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addQuickTask(quickTaskDraft)}
-                  className="w-full rounded-2xl border border-zinc-200/70 bg-zinc-100/80 py-3 pl-4 pr-10 text-sm outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20 dark:border-white/[0.06] dark:bg-white/[0.04]"
+                  className="w-full rounded-2xl border border-zinc-200/70 bg-zinc-100/80 py-3 pl-4 pr-10 text-sm text-zinc-900 outline-none transition-colors dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-zinc-100"
                   placeholder="Nuova task veloce..."
                 />
                 <button
@@ -1244,7 +1245,7 @@ export default function SharedProjects() {
                 value={chatDraft}
                 onChange={(e) => setChatDraft(e.target.value)}
                 placeholder="Scrivi un messaggio..."
-                className="w-full rounded-2xl border border-zinc-200/70 bg-zinc-100/80 py-3 pl-4 pr-12 text-sm outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-white/[0.06] dark:bg-white/[0.04]"
+                className="w-full rounded-2xl border border-zinc-200/70 bg-zinc-100/80 py-3 pl-4 pr-12 text-sm text-zinc-900 outline-none transition-colors duration-200 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-zinc-100"
               />
               <button
                 type="submit"

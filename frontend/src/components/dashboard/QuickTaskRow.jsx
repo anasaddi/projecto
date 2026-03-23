@@ -107,7 +107,7 @@ export function QuickTaskRow({
               if (e.key === 'Escape') setQuickTaskEditingId(null);
             }}
             onClick={(e) => e.stopPropagation()}
-            className="flex-1 py-1 px-2 text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/[0.08] outline-none focus:ring-2 focus:ring-rose-500/30"
+            className="flex-1 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-sm text-zinc-900 outline-none dark:border-white/[0.08] dark:bg-zinc-800 dark:text-zinc-100"
           />
         ) : (
           <span
@@ -152,7 +152,7 @@ export function QuickTaskRow({
               if (e.key === 'Escape') setQuickTaskDeadlineEditing(null);
             }}
             onClick={(e) => e.stopPropagation()}
-            className="w-28 py-1 px-2 text-xs rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/[0.08] outline-none focus:ring-2 focus:ring-rose-500/30"
+            className="w-28 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-900 outline-none dark:border-white/[0.08] dark:bg-zinc-800 dark:text-zinc-100"
           />
         )}
       </div>

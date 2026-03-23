@@ -255,9 +255,9 @@ input[type=number] {
     @apply inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-all shadow-sm hover:bg-zinc-800 active:scale-95 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:text-white dark:shadow-indigo-500/20;
   }
 
-  /* Input */
+  /* Input — niente ring/bordo al focus (coerente con policy app) */
   .dashboard-input {
-    @apply rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none transition-all shadow-sm placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-zinc-100 dark:shadow-none dark:placeholder:text-zinc-600 dark:focus:border-indigo-500/50 dark:focus:bg-white/[0.06] dark:focus:ring-indigo-500/20;
+    @apply rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none transition-all shadow-sm placeholder:text-zinc-400 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-zinc-100 dark:shadow-none dark:placeholder:text-zinc-600;
   }
 
   /* Seamless editing */
@@ -279,14 +279,24 @@ input[type=number] {
     @apply border-indigo-500 bg-indigo-500 text-white dark:border-indigo-500 dark:bg-indigo-500;
   }
 
-  /* Focus visible: outline chiaro per accessibilità (solo tastiera) */
+  /* Focus visibile: tastiera su controlli interattivi (non campi testo/date) */
   .focus-ring:focus-visible,
   button:focus-visible,
   [role="button"]:focus-visible,
-  a:focus-visible,
-  input:focus-visible,
-  textarea:focus-visible {
+  a:focus-visible {
     @apply outline-none ring-2 ring-indigo-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900;
+  }
+
+  /* Campi form: nessun outline / ring / box-shadow da focus (dashboard + shared) */
+  input:not([type='checkbox']):not([type='radio']):focus,
+  input:not([type='checkbox']):not([type='radio']):focus-visible,
+  textarea:focus,
+  textarea:focus-visible,
+  select:focus,
+  select:focus-visible {
+    outline: none !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    --tw-ring-offset-shadow: 0 0 #0000 !important;
   }
 
   /* Touch target minimo 44px per tap su mobile */

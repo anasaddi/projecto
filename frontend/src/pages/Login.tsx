@@ -51,7 +51,7 @@ export default function Login(): React.ReactElement {
                 value={key}
                 onChange={(e) => setKey(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full h-14 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 rounded-2xl px-5 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                className="h-14 w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-5 text-zinc-900 outline-none transition-colors dark:border-zinc-700/50 dark:bg-zinc-800/50 dark:text-white"
                 autoComplete="off"
                 data-lpignore="true"
                 data-form-type="other"

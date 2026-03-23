@@ -64,7 +64,7 @@ function TinyInput({ value, onChange, placeholder, accentFocus }) {
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      className={`w-full h-8 px-2 text-[12px] font-semibold text-center text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-950/70 border border-zinc-200 dark:border-zinc-700/70 rounded-lg outline-none transition-all ${accentFocus}`}
+      className={`h-8 w-full rounded-lg border border-zinc-200 bg-white px-2 text-center text-[12px] font-semibold text-zinc-900 outline-none transition-colors dark:border-zinc-700/70 dark:bg-zinc-950/70 dark:text-zinc-100 ${accentFocus}`}
     />
   );
 }
@@ -183,11 +183,11 @@ function ExerciseRow({ exercise, index, onRowsChange, onProgressionChange, initi
         </div>
         {/* A kg */}
         <div className="flex items-center justify-center">
-          <TinyInput value={data.anas.w}   onChange={v => upd('anas', 'w', v)} placeholder="kg" accentFocus="focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30" />
+          <TinyInput value={data.anas.w}   onChange={v => upd('anas', 'w', v)} placeholder="kg" accentFocus="" />
         </div>
         {/* A rep */}
         <div className="flex items-center justify-center">
-          <TinyInput value={data.anas.r}   onChange={v => upd('anas', 'r', v)} placeholder="r" accentFocus="focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30" />
+          <TinyInput value={data.anas.r}   onChange={v => upd('anas', 'r', v)} placeholder="r" accentFocus="" />
         </div>
         {/* A check */}
         <div className="flex items-center justify-center">
@@ -200,11 +200,11 @@ function ExerciseRow({ exercise, index, onRowsChange, onProgressionChange, initi
         </div>
         {/* F kg */}
         <div className="flex items-center justify-center">
-          <TinyInput value={data.flavio.w} onChange={v => upd('flavio', 'w', v)} placeholder="kg" accentFocus="focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30" />
+          <TinyInput value={data.flavio.w} onChange={v => upd('flavio', 'w', v)} placeholder="kg" accentFocus="" />
         </div>
         {/* F rep */}
         <div className="flex items-center justify-center">
-          <TinyInput value={data.flavio.r} onChange={v => upd('flavio', 'r', v)} placeholder="r" accentFocus="focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30" />
+          <TinyInput value={data.flavio.r} onChange={v => upd('flavio', 'r', v)} placeholder="r" accentFocus="" />
         </div>
         {/* F check */}
         <div className="flex items-center justify-center">
