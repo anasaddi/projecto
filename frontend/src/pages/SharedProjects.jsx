@@ -847,7 +847,7 @@ export default function SharedProjects() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.06),transparent_18%),linear-gradient(180deg,#f8fafc_0%,#f3f6fb_100%)] p-0 pb-[60px] font-sans antialiased text-gray-900 select-none [&_input]:select-text [&_textarea]:select-text dark:bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.16),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.08),transparent_18%),linear-gradient(180deg,#0b0f18_0%,#0e131b_100%)] dark:text-gray-100">
+    <div className="relative min-h-screen overflow-x-hidden bg-fixed bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(99,102,241,0.2),transparent),radial-gradient(ellipse_80%_50%_at_100%_50%,rgba(56,189,248,0.12),transparent),radial-gradient(ellipse_80%_50%_at_0%_50%,rgba(99,102,241,0.1),transparent),linear-gradient(180deg,#f8fafc_0%,#f3f6fb_50%,#f1f5f9_100%)] p-0 pb-[60px] font-sans antialiased text-gray-900 select-none [&_input]:select-text [&_textarea]:select-text dark:bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(99,102,241,0.25),transparent),radial-gradient(ellipse_80%_50%_at_100%_50%,rgba(56,189,248,0.15),transparent),radial-gradient(ellipse_80%_50%_at_0%_50%,rgba(99,102,241,0.12),transparent),linear-gradient(180deg,#0b0e14_0%,#0d1117_50%,#0c0f14_100%)] dark:text-gray-100">
       <ConfirmModal
         open={confirmResetChat}
         title="Cancella cronologia chat"
@@ -950,7 +950,7 @@ export default function SharedProjects() {
             )}
           </header>
 
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
             {dashboard.projects.map((proj, pIdx) => {
               const dragPayload = { type: 'project', fromIndex: pIdx };
               const stats = countTreeStatsUtil(proj.tasks);

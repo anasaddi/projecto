@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Icons } from './Icons';
@@ -38,29 +38,11 @@ export function StandardProjectCard({
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [titleDraft, setTitleDraft] = useState(project.title);
-  const titleDebounceRef = useRef(null);
   const titleFocusedRef = useRef(false);
-  const flushTitle = useCallback(
-    (v) => {
-      if (titleDebounceRef.current) {
-        clearTimeout(titleDebounceRef.current);
-        titleDebounceRef.current = null;
-      }
-      onTitleChange(v);
-    },
-    [onTitleChange]
-  );
 
   useEffect(() => {
     if (!titleFocusedRef.current) setTitleDraft(project.title);
   }, [project.id, project.title]);
-
-  useEffect(
-    () => () => {
-      if (titleDebounceRef.current) clearTimeout(titleDebounceRef.current);
-    },
-    []
-  );
 
   const accentColor = ACCENT_COLORS[accent] || ACCENT_COLORS.indigo;
   const totalTasks = stats?.total ?? 0;
@@ -106,14 +88,12 @@ export function StandardProjectCard({
               onFocus={() => { titleFocusedRef.current = true; }}
               onBlur={() => {
                 titleFocusedRef.current = false;
-                flushTitle(titleDraft);
+                const v = titleDraft.trim();
+                if (v !== project.title) onTitleChange(v);
               }}
               onChange={(e) => {
                 e.stopPropagation();
-                const v = e.target.value;
-                setTitleDraft(v);
-                if (titleDebounceRef.current) clearTimeout(titleDebounceRef.current);
-                titleDebounceRef.current = setTimeout(() => onTitleChange(v), 450);
+                setTitleDraft(e.target.value);
               }}
               onClick={(e) => e.stopPropagation()}
               rows={1}

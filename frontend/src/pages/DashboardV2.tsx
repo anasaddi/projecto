@@ -169,7 +169,7 @@ export default function DashboardV2(): React.ReactElement {
     <div className="min-h-full w-full flex flex-col overflow-y-auto overflow-x-hidden font-sans font-normal select-none selection:bg-indigo-500/30 antialiased bg-white dark:bg-[#0b0e14]">
       {/* Redundant header removed - items moved to Layout and PrayersCountdowns */}
 
-      <div className="px-6 pt-4">
+      <div className="px-6 pt-4 mb-5">
         <PrayersCountdowns 
           todayPrayerLog={todayPrayerLog} 
           togglePrayer={togglePrayer} 
