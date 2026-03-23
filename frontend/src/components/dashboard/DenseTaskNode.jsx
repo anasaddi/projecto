@@ -685,7 +685,7 @@ export function DenseTaskNode({
 
       {/* Children rendering */}
       {expanded && hasChildren && (
-        <div className={`ml-2.5 mt-2 pl-2.5 border-l border-zinc-100 dark:border-white/[0.04] flex flex-col w-full ${sharedWorkspaceTaskUI ? 'space-y-2' : 'space-y-0.5'}`}>
+        <div className={`ml-2.5 mt-2 pl-2.5 border-l border-zinc-100 dark:border-white/[0.04] flex flex-col w-full max-w-full min-w-0 overflow-hidden ${sharedWorkspaceTaskUI ? 'space-y-2' : 'space-y-0.5'}`}>
           {node.children.map((child, cIdx) => (
             <DenseTaskNode
               key={child.id}

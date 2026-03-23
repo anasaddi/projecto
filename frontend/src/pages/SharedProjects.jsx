@@ -452,6 +452,7 @@ export default function SharedProjects() {
   const chatScrollRef = useRef(null);
   const chatInputRef = useRef(null);
   const [notesPanelCollapsed, setNotesPanelCollapsed] = useState(false);
+  const [noteCollapsedMap, setNoteCollapsedMap] = useState(() => new Map());
 
   useEffect(() => {
     if (chatScrollRef.current && dashboard.chat.length > 0) {
@@ -1104,7 +1105,11 @@ export default function SharedProjects() {
                         </p>
                       </div>
                     ) : (
-                      normalizeSharedNotes(dashboard.notes).map((note) => (
+                      normalizeSharedNotes(dashboard.notes).map((note) => {
+                        const isCollapsed = noteCollapsedMap.has(note.id)
+                          ? noteCollapsedMap.get(note.id)
+                          : note.collapsed;
+                        return (
                         <motion.article
                           key={note.id}
                           layout
@@ -1120,18 +1125,22 @@ export default function SharedProjects() {
                                 className="w-full bg-transparent text-[15px] font-semibold tracking-tight text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-50"
                               />
                               <p className="mt-1 text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
-                                {note.updatedAt ? `Aggiornata ${new Date(note.updatedAt).toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}` : 'Nota nuova'}
+                                {note.updatedAt ? `Aggiornata ${new Date(note.updatedAt).toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} • Salvataggio automatico` : 'Nota nuova • Salvataggio automatico'}
                               </p>
                             </div>
 
                             <div className="flex shrink-0 items-center gap-1">
                               <button
                                 type="button"
-                                onClick={() => updateNote(note.id, (current) => ({ ...current, collapsed: !current.collapsed }))}
+                                onClick={() => {
+                                  const next = !isCollapsed;
+                                  setNoteCollapsedMap((m) => new Map(m).set(note.id, next));
+                                  updateNote(note.id, (current) => ({ ...current, collapsed: next }));
+                                }}
                                 className="rounded-xl p-2 text-zinc-400 transition-colors hover:bg-zinc-100/80 hover:text-zinc-600 dark:hover:bg-white/[0.05] dark:hover:text-zinc-200"
-                                aria-label={note.collapsed ? 'Apri nota' : 'Chiudi nota'}
+                                aria-label={isCollapsed ? 'Apri nota' : 'Chiudi nota'}
                               >
-                                <motion.div animate={{ rotate: note.collapsed ? -90 : 0 }} transition={{ duration: 0.18 }}>
+                                <motion.div animate={{ rotate: isCollapsed ? -90 : 0 }} transition={{ duration: 0.18 }}>
                                   <Icons.ChevronDown className="h-4 w-4" />
                                 </motion.div>
                               </button>
@@ -1147,7 +1156,7 @@ export default function SharedProjects() {
                           </div>
 
                           <AnimatePresence initial={false}>
-                            {!note.collapsed && (
+                            {!isCollapsed && (
                               <motion.div
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
@@ -1171,7 +1180,7 @@ export default function SharedProjects() {
                                       }}
                                       placeholder="Scrivi una nota lunga, roadmap, piano di rilascio, snippet o checklist..."
                                       spellCheck={false}
-                                      className="min-h-[20rem] w-full resize-y bg-transparent px-4 py-4 font-mono text-[13px] leading-7 text-zinc-800 outline-none placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                                      className="min-h-[20rem] w-full resize-none bg-transparent px-4 py-4 font-mono text-[13px] leading-7 text-zinc-800 outline-none placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-500"
                                     />
                                   </div>
                                 </div>
@@ -1179,7 +1188,7 @@ export default function SharedProjects() {
                             )}
                           </AnimatePresence>
                         </motion.article>
-                      ))
+                      ); })
                     )}
                   </div>
                 </motion.div>
@@ -1239,7 +1248,7 @@ export default function SharedProjects() {
                     isShared={false}
                     showExplicitProjectDelete
                     sharedWorkspaceChrome
-                    taskListClassName="border-t border-white/[0.04] px-2.5 pb-3 pt-2 space-y-2 dark:border-white/[0.03]"
+                    taskListClassName="border-t border-white/[0.04] px-2.5 pb-3 pt-2 space-y-2 dark:border-white/[0.03] max-w-full min-w-0 overflow-hidden"
                     onTitleChange={(val) => updateProject(proj.id, p => ({ ...p, title: val }))}
                     onDelete={() => deleteProject(proj.id)}
                     onDeadlineClick={(val) => {
@@ -1363,7 +1372,6 @@ export default function SharedProjects() {
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
-                      whileHover={{ scale: 1.02 }}
                       onClick={() => toggleQuickTask(task.id)}
                       className="group flex cursor-pointer items-center gap-3 rounded-2xl border border-transparent p-3 transition-all duration-200 hover:border-zinc-200/80 hover:bg-zinc-50 dark:hover:border-white/[0.06] dark:hover:bg-white/[0.04]"
                     >

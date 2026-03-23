@@ -76,7 +76,7 @@ export function StandardProjectCard({
       glow={expanded}
     >
       <div
-        className={`group/header flex cursor-pointer items-center gap-3 ${sharedWorkspaceChrome ? 'p-4 sm:p-4' : 'p-5'}`}
+        className={`group/header flex cursor-pointer items-center gap-3 ${sharedWorkspaceChrome ? 'p-4 sm:p-4 pt-[26px]' : 'p-5'}`}
         onClick={() => {
           const next = !expanded;
           setExpanded(next);
