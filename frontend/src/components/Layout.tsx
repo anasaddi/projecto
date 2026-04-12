@@ -5,6 +5,8 @@ import { AppLogo } from './AppLogo';
 import { motion } from 'framer-motion';
 import { useDashboardStore } from '../store/dashboardStore';
 import { Icons } from './dashboard/Icons';
+import { cn } from '../lib/utils';
+import { Button } from './ui/Button';
 import { getCollabIdentity, setCollabIdentity, type CollabIdentity } from '../utils/collabIdentity';
 
 interface LayoutProps {
@@ -18,8 +20,9 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
   const isTraining = pathname === '/training';
   const isShared = pathname.startsWith('/shared');
   const isSharedProject = pathname.startsWith('/shared/') && pathname !== '/shared';
+  const isNextcode = pathname.startsWith('/shared/nextcode');
   const isWorkspace = isYouTube || isDashboard || isTraining || isShared;
-  const { stats } = useDashboardStats();
+  const { stats } = useDashboardStats() || { stats: { doneFocusItems: 0, totalFocusItems: 0 } };
 
   const lastSavedAt = useDashboardStore((s) => s.lastSavedAt);
   const setLastSavedAt = useDashboardStore((s) => s.setLastSavedAt);
@@ -45,14 +48,14 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
     return (
       <div className="min-h-screen text-zinc-900 dark:text-zinc-100 transition-colors flex flex-col">
         <main className="flex-1 overflow-auto">{children}</main>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           onClick={() => setIsDark((d) => !d)}
-          className="fixed bottom-4 right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white/80 dark:bg-white/[0.04] backdrop-blur-md border border-zinc-200 dark:border-white/[0.08] shadow-lg text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100 transition-all hover:scale-105 active:scale-95"
-          aria-label={isDark ? 'Tema chiaro' : 'Tema scuro'}
+          className="fixed bottom-4 right-4 z-50 h-10 w-10 p-0 rounded-full bg-white/80 dark:bg-zinc-800 shadow-lg"
+          aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
         >
           {isDark ? '☀️' : '🌙'}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -67,44 +70,55 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
 
   return (
     <div
-      className={`min-h-screen text-zinc-900 dark:text-zinc-100 transition-colors ${isSharedProject ? 'bg-transparent' : 'bg-white dark:bg-[#0b0e14]'} ${isWorkspace ? 'flex flex-col' : ''}`}
+      className={cn(
+        'min-h-screen text-zinc-900 dark:text-zinc-100 transition-colors',
+        isSharedProject ? 'bg-transparent' : 'bg-white dark:bg-zinc-900',
+        isWorkspace && 'flex flex-col'
+      )}
     >
       {(isAdmin || !isSharedProject) && (
-        <header className="sticky top-4 z-50 mx-4 mt-4 flex shrink-0 items-center gap-3 md:gap-6 rounded-[26px] border border-zinc-200/70 bg-white/[0.88] px-5 py-3 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.32)] backdrop-blur-2xl transition-colors dark:border-white/[0.08] dark:bg-[#11161f]/[0.86] dark:shadow-[0_26px_60px_-34px_rgba(0,0,0,0.72)]">
-        <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
+        <header className={cn(
+          'sticky top-4 z-50 mx-4 mt-4 flex shrink-0 items-center gap-3 md:gap-6',
+          'rounded-3xl border border-zinc-200 dark:border-zinc-700',
+          'bg-white/90 dark:bg-zinc-800/90 backdrop-blur-xl shadow-lg',
+          'px-5 py-3'
+        )}>
+        <Link to="/" className="flex items-center gap-2 shrink-0 group">
           <div className="group-hover:shadow-indigo-500/40 group-active:scale-95 transition-all">
             <AppLogo size="xs" />
           </div>
-          <span className="font-semibold tracking-tight text-zinc-800 transition-colors group-hover:text-indigo-600 dark:text-zinc-100 dark:group-hover:text-indigo-400">
+          <span className="font-semibold tracking-tight text-zinc-800 group-hover:text-indigo-600 dark:text-zinc-100 dark:group-hover:text-indigo-400">
             PROJECTO
           </span>
         </Link>
-        <nav className="hidden items-center gap-1.5 rounded-2xl border border-zinc-200/70 bg-zinc-50/80 p-1 dark:border-white/[0.06] dark:bg-white/[0.03] md:flex">
+        <nav className="hidden md:flex items-center gap-1 rounded-xl bg-zinc-50 dark:bg-zinc-700/50 p-1">
           {navLinks.map(({ to, label, active }) => (
             <Link
               key={to}
               to={to}
-              className={`rounded-xl px-3.5 py-2 text-[13px] font-medium transition-all duration-200 ${
+              className={cn(
+                'px-3 py-2 text-sm font-medium rounded-lg',
                 active
-                  ? 'bg-zinc-900 text-white shadow-sm dark:bg-white/[0.1] dark:text-white'
-                  : 'text-zinc-500 hover:bg-white hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-200'
-              }`}
+                  ? 'bg-zinc-900 dark:bg-zinc-600 text-white'
+                  : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+              )}
             >
               {label}
             </Link>
           ))}
         </nav>
 
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth md:hidden">
+        <div className="flex md:hidden items-center gap-1 overflow-x-auto">
           {navLinks.map(({ to, label, active }) => (
             <Link
               key={to}
               to={to}
-              className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-[12px] font-medium transition-all duration-200 ${
+              className={cn(
+                'px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap',
                 active
-                  ? 'bg-zinc-900 text-white shadow-sm dark:bg-white/[0.08] dark:text-white'
-                  : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-white/[0.04] dark:hover:text-zinc-200'
-              }`}
+                  ? 'bg-zinc-900 dark:bg-zinc-600 text-white'
+                  : 'text-zinc-500 dark:text-zinc-400'
+              )}
             >
               {label}
             </Link>
@@ -112,64 +126,59 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
         </div>
 
         {isDashboard && stats && (
-          <span className="ml-auto rounded-full border border-zinc-200/70 bg-white/90 px-3.5 py-1.5 text-xs font-semibold tabular-nums text-zinc-600 shadow-sm dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-zinc-300 md:ml-0">
-            {stats.doneFocusItems} <span className="text-zinc-400 dark:text-zinc-500">/</span>{' '}
-            {stats.totalFocusItems}
+          <span className="hidden md:flex items-center rounded-full bg-zinc-100 dark:bg-zinc-700 px-3 py-1 text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+            {stats.doneFocusItems} / {stats.totalFocusItems}
           </span>
         )}
         <div className="flex items-center gap-3 ml-auto">
-          {isSharedProject && (
+          {isSharedProject && isNextcode && (
             <div
-              className="hidden sm:flex items-center gap-0.5 rounded-2xl border border-zinc-200/70 bg-zinc-50/80 p-0.5 dark:border-white/[0.06] dark:bg-white/[0.03]"
-              title="Chi sei su questo dispositivo (task «in lavorazione» e badge nome)"
+              className="hidden sm:flex items-center gap-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-700 p-0.5"
+              title="Chi sei su questo dispositivo"
             >
               {(['anas', 'othmane'] as const).map((id) => (
-                <button
+                <Button
                   key={id}
-                  type="button"
+                  size="sm"
+                  variant={collabWho === id ? 'primary' : 'ghost'}
                   onClick={() => {
                     setCollabIdentity(id);
                     setCollabWho(id);
                   }}
-                  className={`rounded-xl px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide transition-colors ${
-                    collabWho === id
-                      ? 'bg-indigo-600 text-white shadow-sm dark:bg-indigo-500'
-                      : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
-                  }`}
+                  className="text-xs"
                 >
                   {id === 'anas' ? 'Anas' : 'Othmane'}
-                </button>
+                </Button>
               ))}
             </div>
           )}
           {lastSavedAt && (
-            <motion.span 
+            <motion.span
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400"
+              className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
             >
               <Icons.Check className="h-3.5 w-3.5" />
               Salvato
             </motion.span>
           )}
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             onClick={() => setIsDark((d) => !d)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-zinc-200/70 text-zinc-400 transition-all hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-700 active:scale-95 dark:border-white/[0.06] dark:text-zinc-500 dark:hover:border-white/[0.08] dark:hover:bg-white/[0.06] dark:hover:text-zinc-200"
-            aria-label={isDark ? 'Tema chiaro' : 'Tema scuro'}
-            title={isDark ? 'Tema chiaro' : 'Tema scuro'}
+            className="h-10 w-10 p-0 rounded-xl"
+            aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
           >
             {isDark ? '☀️' : '🌙'}
-          </button>
+          </Button>
         </div>
       </header>
       )}
       <main
-        className={
+        className={cn(
           isWorkspace
-            ? `flex w-full pt-2 flex-col flex-1 min-h-0 overflow-hidden overflow-y-auto custom-scrollbar ${isSharedProject ? 'px-0' : 'px-4 md:px-6'}`
+            ? cn('flex w-full pt-2 flex-col flex-1 min-h-0 overflow-y-auto', isSharedProject ? 'px-0' : 'px-4 md:px-6')
             : 'w-full p-4 md:p-6'
-        }
+        )}
       >
         {children}
       </main>
