@@ -71,15 +71,27 @@ export function KebabMenu({ items, onOpenChange, alwaysVisible = false }) {
       {items.map((item, i) =>
         item === 'divider' ? (
           <div key={i} className="my-1 border-t border-zinc-100 dark:border-white/5" />
+        ) : item.isHeader ? (
+          <div
+            key={i}
+            className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs font-semibold text-zinc-400 dark:text-zinc-500"
+          >
+            {item.icon && <span className="h-3.5 w-3.5 shrink-0">{item.icon}</span>}
+            {item.label}
+          </div>
         ) : (
           <button
             key={i}
             type="button"
-            onClick={(e) => { e.stopPropagation(); setOpen(false); item.onClick(e); }}
-            className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors ${item.danger
-              ? 'text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'
-              : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-white/[0.06]'
-              }`}
+            disabled={item.disabled}
+            onClick={(e) => { e.stopPropagation(); setOpen(false); item.onClick?.(e); }}
+            className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors ${
+              item.danger
+                ? 'text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30'
+                : item.disabled
+                  ? 'text-zinc-400 cursor-not-allowed dark:text-zinc-600'
+                  : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-white/[0.06]'
+            }`}
           >
             {item.icon && <span className="h-3.5 w-3.5 shrink-0">{item.icon}</span>}
             {item.label}

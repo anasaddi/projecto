@@ -1,19 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Icons } from './Icons';
 import { KebabMenu } from './DashboardComponents';
 import { getDeadlinePastLabel } from './DashboardUtils';
 import { Card, ProgressBar, Badge } from './Card';
-
-const ACCENT_COLORS = {
-  indigo: { bar: 'from-indigo-500 to-violet-500', text: 'text-indigo-600 dark:text-indigo-400', glow: 'shadow-[0_0_14px_rgba(99,102,241,0.35)] dark:shadow-[0_0_18px_rgba(129,140,248,0.32)]' },
-  sky: { bar: 'from-sky-500 to-cyan-500', text: 'text-sky-600 dark:text-sky-400', glow: 'shadow-[0_0_14px_rgba(14,165,233,0.32)] dark:shadow-[0_0_18px_rgba(56,189,248,0.28)]' },
-  violet: { bar: 'from-violet-500 to-purple-500', text: 'text-violet-600 dark:text-violet-400', glow: 'shadow-[0_0_14px_rgba(168,85,247,0.34)] dark:shadow-[0_0_18px_rgba(192,132,252,0.3)]' },
-  emerald: { bar: 'from-emerald-500 to-teal-500', text: 'text-emerald-600 dark:text-emerald-400', glow: 'shadow-[0_0_14px_rgba(16,185,129,0.3)] dark:shadow-[0_0_18px_rgba(52,211,153,0.26)]' },
-  amber: { bar: 'from-amber-500 to-orange-500', text: 'text-amber-600 dark:text-amber-400', glow: 'shadow-[0_0_14px_rgba(245,158,11,0.28)] dark:shadow-[0_0_18px_rgba(251,191,36,0.24)]' },
-  rose: { bar: 'from-rose-500 to-pink-500', text: 'text-rose-600 dark:text-rose-400', glow: 'shadow-[0_0_14px_rgba(244,63,94,0.28)] dark:shadow-[0_0_18px_rgba(251,113,133,0.24)]' }
-};
+import { PROJECT_CARD_STYLES, getAccentColor } from './ProjectCardStyles';
 
 export function StandardProjectCard({
   project,
@@ -36,10 +28,14 @@ export function StandardProjectCard({
   onToggleExpand,
   /** Workspace shared: pulsante elimina progetto visibile (non solo nel kebab) */
   showExplicitProjectDelete = false,
-  /** Classi aggiuntive per l’area lista task (es. shared più compatta) */
+  /** Classi aggiuntive per l'area lista task (es. shared più compatta) */
   taskListClassName,
-  /** Header / barra più compatta e card leggermente più “tight” (workspace /shared) */
+  /** Header / barra più compatta e card leggermente più "tight" (workspace /shared) */
   sharedWorkspaceChrome = false,
+  /** Additional menu items to add to the kebab menu */
+  extraMenuItems = [],
+  /** Source project ID if this is a synced copy */
+  sourceProjectId,
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -50,7 +46,7 @@ export function StandardProjectCard({
     if (!titleFocusedRef.current) setTitleDraft(project.title);
   }, [project.id, project.title]);
 
-  const accentColor = ACCENT_COLORS[accent] || ACCENT_COLORS.indigo;
+  const accentColor = getAccentColor(accent);
   const totalTasks = stats?.total ?? 0;
   const completedTasks = stats?.done ?? 0;
 
@@ -66,6 +62,7 @@ export function StandardProjectCard({
           'divider',
           { label: 'Elimina progetto', icon: <Icons.X className="h-3.5 w-3.5" />, danger: true, onClick: () => onDelete(project.id) }
         ]),
+    ...extraMenuItems,
   ];
 
   const isPastDeadline = getDeadlinePastLabel(project.deadline);
@@ -113,7 +110,7 @@ export function StandardProjectCard({
                   }}
                   onClick={(e) => e.stopPropagation()}
                   rows={1}
-                  className={`min-h-[1.5rem] w-full min-w-[80px] resize-none overflow-visible bg-transparent ${sharedWorkspaceChrome ? 'py-1 text-[13px]' : 'py-0.5 text-[15px]'} font-semibold leading-snug tracking-tight text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100`}
+                  className={`min-h-[1.5rem] w-full min-w-[80px] resize-none overflow-visible bg-transparent ${sharedWorkspaceChrome ? 'py-1 text-sm' : 'py-0.5 text-sm'} font-semibold leading-snug tracking-tight text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100`}
                 />
               </div>
             </div>
@@ -127,18 +124,32 @@ export function StandardProjectCard({
                     {isPastDeadline && <span className="ml-0.5">!</span>}
                   </Badge>
                 )}
-                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">
+                {sourceProjectId && (
+                  <Badge variant="success" size="sm">
+                    <Icons.Share2 className="h-3 w-3" />
+                    <span>Sincronizzato</span>
+                  </Badge>
+                )}
+                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">
                   {completedTasks}/{totalTasks || 0} task fatte
                 </span>
               </div>
             ) : (
-              project.deadline && projectDeadlineEditing !== project.id && (
-                <Badge variant={isPastDeadline ? 'danger' : 'warning'} size="sm">
-                  <Icons.Calendar className="h-3 w-3" />
-                  <span>{formatDeadline(project.deadline)}</span>
-                  {isPastDeadline && <span className="ml-0.5">!</span>}
-                </Badge>
-              )
+              <div className="flex flex-wrap items-center gap-2">
+                {project.deadline && projectDeadlineEditing !== project.id && (
+                  <Badge variant={isPastDeadline ? 'danger' : 'warning'} size="sm">
+                    <Icons.Calendar className="h-3 w-3" />
+                    <span>{formatDeadline(project.deadline)}</span>
+                    {isPastDeadline && <span className="ml-0.5">!</span>}
+                  </Badge>
+                )}
+                {sourceProjectId && (
+                  <Badge variant="success" size="sm">
+                    <Icons.Share2 className="h-3 w-3" />
+                    <span>Sincronizzato</span>
+                  </Badge>
+                )}
+              </div>
             )}
 
             {sharedWorkspaceChrome ? (
@@ -151,7 +162,7 @@ export function StandardProjectCard({
                     transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
                   />
                 </div>
-                <span className={`shrink-0 text-[11px] font-bold tabular-nums ${accentColor.text}`}>
+                <span className={`shrink-0 text-xs font-bold tabular-nums ${accentColor.text}`}>
                   {percentage}%
                 </span>
               </div>
@@ -253,7 +264,7 @@ export function CompactProjectCard({
   accent = 'indigo',
   onClick
 }) {
-  const accentColor = ACCENT_COLORS[accent] || ACCENT_COLORS.indigo;
+  const accentColor = getAccentColor(accent);
   const pct = Math.min(100, Math.max(0, Math.round(percentage)));
   
   return (
@@ -262,12 +273,12 @@ export function CompactProjectCard({
       onClick={onClick}
       whileHover={{ scale: 1.01, y: -1 }}
       whileTap={{ scale: 0.99 }}
-      className="group w-full rounded-[22px] border border-zinc-200/65 bg-white/[0.92] p-3.5 text-left shadow-[0_14px_40px_-28px_rgba(15,23,42,0.2)] backdrop-blur-xl transition-all duration-300 hover:border-zinc-300/80 hover:shadow-[0_20px_48px_-32px_rgba(99,102,241,0.18)] dark:border-white/[0.07] dark:bg-[#141922]/92 dark:shadow-[0_20px_50px_-36px_rgba(0,0,0,0.55)] dark:hover:border-white/[0.12] dark:hover:shadow-[0_24px_56px_-36px_rgba(99,102,241,0.12)]"
+      className="group w-full rounded-2xl border border-zinc-200/65 bg-white/[0.92] p-3 text-left shadow-[0_14px_40px_-28px_rgba(15,23,42,0.2)] backdrop-blur-xl transition-all duration-300 hover:border-zinc-300/80 hover:shadow-[0_20px_48px_-32px_rgba(99,102,241,0.18)] dark:border-white/[0.07] dark:bg-[#141922]/92 dark:shadow-[0_20px_50px_-36px_rgba(0,0,0,0.55)] dark:hover:border-white/[0.12] dark:hover:shadow-[0_24px_56px_-36px_rgba(99,102,241,0.12)]"
     >
       <div className="flex items-start gap-3">
         <div className={`mt-0.5 h-11 w-1 shrink-0 rounded-full bg-gradient-to-b ${accentColor.bar} shadow-[0_0_12px_-2px_rgba(99,102,241,0.35)] dark:shadow-[0_0_14px_-2px_rgba(129,140,248,0.25)]`} />
         <div className="min-w-0 flex-1">
-          <p className="text-[13px] font-semibold leading-snug tracking-tight text-zinc-900 [overflow-wrap:anywhere] break-words dark:text-zinc-100">
+          <p className="text-sm font-semibold leading-snug tracking-tight text-zinc-900 [overflow-wrap:anywhere] break-words dark:text-zinc-100">
             {project.title}
           </p>
           <div className="mt-2.5 flex items-center gap-2.5">
@@ -277,9 +288,9 @@ export function CompactProjectCard({
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <span className={`shrink-0 text-[11px] font-bold tabular-nums ${accentColor.text}`}>{pct}%</span>
+            <span className={`shrink-0 text-xs font-bold tabular-nums ${accentColor.text}`}>{pct}%</span>
           </div>
-          <p className="mt-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500">
+          <p className="mt-1.5 text-xs font-medium uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500">
             Avanzamento progetto
           </p>
         </div>
@@ -305,10 +316,10 @@ export function CreateProjectCard({ onClick, className = '' }) {
       </div>
       
       <div className="relative text-left flex flex-col justify-center">
-        <p className="text-[12px] font-bold tracking-tight text-zinc-700 transition-colors group-hover:text-indigo-600 dark:text-zinc-200 dark:group-hover:text-indigo-400 leading-tight">
+        <p className="text-xs font-bold tracking-tight text-zinc-700 transition-colors group-hover:text-indigo-600 dark:text-zinc-200 dark:group-hover:text-indigo-400 leading-tight">
           Nuovo Progetto
         </p>
-        <p className="text-[9px] font-medium text-zinc-400 dark:text-zinc-500 leading-tight mt-0.5">
+        <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500 leading-tight mt-0.5">
           Crea un'unità di lavoro
         </p>
       </div>

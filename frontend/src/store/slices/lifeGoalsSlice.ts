@@ -1,8 +1,8 @@
-import type { LifeGoal, LifeGoalsState, Project } from '../../types/dashboard';
+import type { LifeGoal, LifeGoalsState, Project, QuickTask } from '../../types/dashboard';
 import { uid } from '../../components/dashboard/DashboardUtils';
 
 export type LifeGoalsSet = (fn: (s: unknown) => void) => void;
-export type LifeGoalsGet = () => { projects: Project[]; quickTasks: { id: string; lifeGoalId?: string; parentId?: string; ordinal?: number }[]; lifeGoals: LifeGoalsState; top3Manual: (unknown)[] };
+export type LifeGoalsGet = () => { projects: Project[]; quickTasks: QuickTask[]; lifeGoals: LifeGoalsState; top3Manual: (unknown)[] };
 
 export function createLifeGoalsSlice(set: LifeGoalsSet, get: LifeGoalsGet) {
   return {
@@ -41,11 +41,30 @@ export function createLifeGoalsSlice(set: LifeGoalsSet, get: LifeGoalsGet) {
 
     updateGoal: (goalId: string, updater: (g: LifeGoal) => Partial<LifeGoal>) =>
       set((s: unknown) => {
-        const state = s as { lifeGoals: LifeGoalsState };
+        const state = s as { 
+          lifeGoals: LifeGoalsState;
+          projects: Project[];
+          quickTasks: QuickTask[];
+        };
         for (const t of state.lifeGoals?.tiers ?? []) {
           const goal = t.goals.find((g) => g.id === goalId);
           if (goal) {
             Object.assign(goal, updater(goal));
+            
+            // SYNC: Update linked project if exists
+            const linkedProject = state.projects.find((p) => p.lifeGoalId === goalId);
+            if (linkedProject) {
+              const updates = updater(linkedProject as any);
+              Object.assign(linkedProject, updates);
+            }
+            
+            // SYNC: Update linked quick task if exists
+            const linkedQuickTask = state.quickTasks.find((t) => t.lifeGoalId === goalId && !t.parentId);
+            if (linkedQuickTask) {
+              const updates = updater(linkedQuickTask as any);
+              Object.assign(linkedQuickTask, updates);
+            }
+            
             break;
           }
         }
@@ -53,9 +72,37 @@ export function createLifeGoalsSlice(set: LifeGoalsSet, get: LifeGoalsGet) {
 
     deleteGoal: (goalId: string) =>
       set((s: unknown) => {
-        const state = s as { lifeGoals: LifeGoalsState };
+        const state = s as { 
+          lifeGoals: LifeGoalsState;
+          projects: Project[];
+          quickTasks: QuickTask[];
+          top3Manual: (unknown)[];
+        };
         for (const t of state.lifeGoals?.tiers ?? []) {
           t.goals = (t.goals || []).filter((g) => g.id !== goalId);
+        }
+        
+        // SYNC: Remove linked project if exists
+        const linkedProject = state.projects.find((p) => p.lifeGoalId === goalId);
+        if (linkedProject) {
+          state.top3Manual = state.top3Manual.map((slot) =>
+            slot && (slot as { projectId?: string }).projectId === linkedProject.id ? null : slot
+          );
+          state.projects = state.projects.filter((p) => p.id !== linkedProject.id);
+          state.projects.forEach((p, i) => (p.ordinal = i));
+        }
+        
+        // SYNC: Remove linked quick tasks if exist
+        const linkedQuickTasks = state.quickTasks.filter((t) => t.lifeGoalId === goalId);
+        if (linkedQuickTasks.length > 0) {
+          state.top3Manual = state.top3Manual.map((slot) =>
+            slot && (slot as { quickTaskId?: string }).quickTaskId && 
+            linkedQuickTasks.some((qt) => qt.id === (slot as { quickTaskId?: string }).quickTaskId)
+              ? null
+              : slot
+          );
+          state.quickTasks = state.quickTasks.filter((t) => t.lifeGoalId !== goalId);
+          state.quickTasks.forEach((q, i) => (q.ordinal = i));
         }
       }),
 
@@ -118,7 +165,7 @@ export function createLifeGoalsSlice(set: LifeGoalsSet, get: LifeGoalsGet) {
     promoteGoalToQuickTasks: (goalId: string) =>
       set((s: unknown) => {
         const state = s as {
-          quickTasks: { id: string; lifeGoalId?: string; ordinal?: number }[];
+          quickTasks: QuickTask[];
           lifeGoals: LifeGoalsState;
           top3Manual: (unknown)[];
         };
