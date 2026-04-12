@@ -258,8 +258,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                   })}
                 </div>
 
-                {/* Slot cards row — normal flow, same widths as prayer nodes */}
-                <div className="mt-4 flex items-start gap-3">
+                {/* Slot cards row — wraps on smaller screens */}
+                <div className="mt-4 flex flex-wrap items-start gap-3 justify-center">
                   {PRAYERS.map((prayer, i) => {
                     const slotKey = PRAYER_SLOTS[i];
                     const hasSlotCard = !!slotKey;
@@ -275,7 +275,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                     return (
                       <React.Fragment key={prayer}>
                         {/* Card for this slot */}
-                        <div className={`w-[220px] shrink-0 transition-all duration-500 md:w-[248px] ${hasSlotCard ? '' : 'invisible'} ${
+                        <div className={`flex-1 min-w-[200px] max-w-[248px] transition-all duration-500 ${hasSlotCard ? '' : 'invisible'} ${
                           isCurrentSlot ? 'opacity-100 z-30' : isPastSlot ? 'opacity-60 hover:opacity-100' : 'opacity-40 hover:opacity-100'
                         }`}>
                           {hasSlotCard && (
@@ -363,8 +363,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                           )}
                         </div>
 
-                        {/* spacer between cards matching the connecting line width */}
-                        {hasSlotLine && <div className="min-w-[12px] w-6 shrink-0 flex-1" />}
+                        {/* spacer between cards matching the connecting line width — hidden on wrap */}
+                        {hasSlotLine && <div className="hidden" />}
                       </React.Fragment>
                     );
                   })}
