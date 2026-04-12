@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Dumbbell, History as HistoryIcon, ChevronUp } from 'lucide-react';
 import { api } from '../../api/client';
@@ -64,7 +64,7 @@ function TinyInput({ value, onChange, placeholder, accentFocus }) {
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      className={`h-8 w-full rounded-lg border border-zinc-200 bg-white px-2 text-center text-[12px] font-semibold text-zinc-900 outline-none transition-colors dark:border-zinc-700/70 dark:bg-zinc-950/70 dark:text-zinc-100 ${accentFocus}`}
+      className={`h-8 w-full rounded-lg border border-zinc-200 bg-white px-2 text-center text-xs font-semibold text-zinc-900 outline-none transition-colors dark:border-zinc-700/70 dark:bg-zinc-950/70 dark:text-zinc-100 ${accentFocus}`}
     />
   );
 }
@@ -168,18 +168,18 @@ function ExerciseRow({ exercise, index, onRowsChange, onProgressionChange, initi
       `}>
         {/* Index */}
         <div className="flex items-center justify-center">
-          <span className="text-[10px] font-black text-zinc-400 tabular-nums">{String(index + 1).padStart(2, '0')}</span>
+          <span className="text-xs font-black text-zinc-400 tabular-nums">{String(index + 1).padStart(2, '0')}</span>
         </div>
 
         {/* Nome */}
         <div className="min-w-0 flex flex-col items-center justify-center text-center">
-          <div className="text-[13px] font-bold text-zinc-900 dark:text-zinc-100 truncate w-full leading-tight">{shortenName(exercise_name)}</div>
-          <div className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 mt-0.5 uppercase tracking-widest leading-none">{schemaLabel}</div>
+          <div className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate w-full leading-tight">{shortenName(exercise_name)}</div>
+          <div className="text-xs font-black text-emerald-600 dark:text-emerald-400 mt-0.5 uppercase tracking-widest leading-none">{schemaLabel}</div>
         </div>
 
         {/* A label */}
         <div className="flex items-center justify-center">
-          <div className={`w-10 h-7 rounded-lg flex items-center justify-center text-[9px] font-black shadow-sm transition-all ${doneA ? 'bg-blue-500 text-white scale-110' : 'bg-blue-100/50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-500/20'}`}>ANAS</div>
+          <div className={`w-10 h-7 rounded-lg flex items-center justify-center text-xs font-black shadow-sm transition-all ${doneA ? 'bg-blue-500 text-white scale-110' : 'bg-blue-100/50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-500/20'}`}>ANAS</div>
         </div>
         {/* A kg */}
         <div className="flex items-center justify-center">
@@ -196,7 +196,7 @@ function ExerciseRow({ exercise, index, onRowsChange, onProgressionChange, initi
 
         {/* F label */}
         <div className="flex items-center justify-center">
-          <div className={`w-10 h-7 rounded-lg flex items-center justify-center text-[9px] font-black shadow-sm transition-all ${doneF ? 'bg-emerald-500 text-white scale-110' : 'bg-emerald-100/50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'}`}>FLAVIO</div>
+          <div className={`w-10 h-7 rounded-lg flex items-center justify-center text-xs font-black shadow-sm transition-all ${doneF ? 'bg-emerald-500 text-white scale-110' : 'bg-emerald-100/50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'}`}>FLAVIO</div>
         </div>
         {/* F kg */}
         <div className="flex items-center justify-center">
@@ -236,11 +236,11 @@ function ExerciseRow({ exercise, index, onRowsChange, onProgressionChange, initi
               {histLoading ? (
                 <div className="py-3 flex justify-center"><div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" /></div>
               ) : history.length === 0 ? (
-                <p className="text-[11px] text-zinc-400 py-2">Nessuno storico</p>
+                <p className="text-xs text-zinc-400 py-2">Nessuno storico</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {history.map((e, i) => (
-                    <span key={i} className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1">
+                    <span key={i} className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1">
                       {formatDate(e.date)} — {e.weight_kg ?? '-'}kg × {e.reps ?? '-'}r
                     </span>
                   ))}
@@ -264,11 +264,11 @@ export default function HypertrophySection({ exercises, onRowsChange, onProgress
         <div className="flex flex-col items-center justify-center px-4 py-3 border-b border-gray-100 dark:border-zinc-800/80 bg-gradient-to-b from-emerald-50/50 to-transparent dark:from-emerald-500/10 dark:to-transparent">
           <div className="flex flex-col items-center gap-1">
             <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-widest">Ipertrofia & Accessori</h3>
-            <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100/50 dark:bg-emerald-500/20 px-1.5 py-0.5 rounded">Isolamento e volume</p>
+            <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100/50 dark:bg-emerald-500/20 px-1.5 py-0.5 rounded">Isolamento e volume</p>
           </div>
         </div>
         {/* Righe header */}
-        <div className="hidden md:grid items-center gap-x-3 text-[9px] font-black uppercase tracking-[0.15em] text-zinc-400
+        <div className="hidden md:grid items-center gap-x-3 text-xs font-black uppercase tracking-[0.15em] text-zinc-400
           grid-cols-[1.5rem_minmax(0,1fr)_3.5rem_4.2rem_4.2rem_1.75rem_4.2rem_4.2rem_1.75rem_1.75rem]
           px-4 py-2 border-b border-gray-100 dark:border-zinc-800/60 bg-zinc-50/50 dark:bg-white/[0.01]"
         >

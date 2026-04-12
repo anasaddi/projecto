@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { Icons } from './Icons';
 import { POMODORO_DURATION, POMODORO_STORAGE, toDateKey } from './DashboardUtils';
 import { Card, CardHeader, CardBody } from './Card';
@@ -52,13 +52,13 @@ export function PomodoroCompact() {
       <CardBody padding="normal" className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-0.5">Focus</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-0.5">Focus</span>
             <div className="text-3xl sm:text-4xl font-semibold tracking-tighter tabular-nums text-zinc-900 dark:text-zinc-50 leading-none">
               {timeLeft}
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-             <div className="text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/20 mr-1">
+             <div className="text-xs font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/20 mr-1">
               {sessionsToday} sess
             </div>
             <button

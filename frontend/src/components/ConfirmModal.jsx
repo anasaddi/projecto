@@ -1,4 +1,6 @@
 import React from 'react';
+import { cn } from '../lib/utils';
+import { Button } from './ui/Button';
 
 /**
  * Modal di conferma (sostituisce window.confirm).
@@ -33,7 +35,7 @@ export function ConfirmModal({
       aria-labelledby="confirm-modal-title"
       onClick={(e) => e.target === e.currentTarget && onCancel?.()}
     >
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-700 max-w-md w-full p-6">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-700 max-w-md w-full p-4 sm:p-6">
         <h2 id="confirm-modal-title" className="text-lg font-bold text-zinc-900 dark:text-white mb-2">
           {title}
         </h2>
@@ -41,24 +43,15 @@ export function ConfirmModal({
           {message}
         </p>
         <div className="flex gap-3 justify-end">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="focus-ring px-4 py-2 rounded-xl text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors min-h-[44px]"
-          >
+          <Button variant="ghost" onClick={onCancel}>
             {cancelLabel}
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant={isDanger ? 'danger' : 'primary'}
             onClick={() => { onConfirm?.(); onCancel?.(); }}
-            className={`focus-ring px-4 py-2 rounded-xl text-sm font-medium text-white transition-colors min-h-[44px] ${
-              isDanger
-                ? 'bg-red-500 hover:bg-red-600'
-                : 'bg-zinc-900 dark:bg-indigo-500 hover:bg-zinc-800 dark:hover:bg-indigo-600'
-            }`}
           >
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Icons } from './Icons';
 import { Badge, ProgressBar, ActionButton } from './Card';
 import { useLongPressActions } from '../../hooks/useLongPressActions';
+import { PROJECT_CARD_STYLES, getAccentColor } from './ProjectCardStyles';
 
 export function LifeGoalCard({
   goal, accent, stats, percentage,
@@ -12,22 +13,13 @@ export function LifeGoalCard({
   onPromoteProject, onPromoteQuick, isLinkedToProject, isLinkedToQuick,
   compact = false,
 }) {
-  const accentBar = { emerald: 'bg-emerald-500', sky: 'bg-sky-500', violet: 'bg-indigo-500', amber: 'bg-amber-500', rose: 'bg-rose-500' }[accent] || 'bg-indigo-500';
-  const accentGradient = {
-    emerald: 'from-emerald-500 to-teal-500',
-    sky: 'from-sky-500 to-cyan-500',
-    violet: 'from-violet-500 to-purple-500',
-    amber: 'from-amber-500 to-orange-500',
-    rose: 'from-rose-500 to-pink-500',
-  }[accent] || 'from-indigo-500 to-violet-500';
-  const accentText = {
-    emerald: 'text-emerald-600 dark:text-emerald-400',
-    sky: 'text-sky-600 dark:text-sky-400',
-    violet: 'text-violet-600 dark:text-violet-400',
-    amber: 'text-amber-600 dark:text-amber-400',
-    rose: 'text-rose-600 dark:text-rose-400',
-  }[accent] || 'text-indigo-600 dark:text-indigo-400';
+  const accentColor = getAccentColor(accent);
+  const accentBar = accentColor.bar.replace('from-', 'bg-').split(' ')[0];
+  const accentGradient = accentColor.bar;
+  const accentText = accentColor.text;
   const [showTasks, setShowTasks] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isEditingExpanded, setIsEditingExpanded] = useState(false);
   const isProject = goal.type === 'project';
 
   if (compact && !isProject) {
@@ -63,17 +55,29 @@ export function LifeGoalCard({
           <Icons.CheckCircle className="h-3 w-3" />
         </button>
 
-        <textarea
-          ref={titleRef}
-          value={goal.title}
-          onChange={(e) => onRename(goal.id, e.target.value)}
-          rows={1}
-          className={`min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-0 text-[13px] font-semibold leading-relaxed outline-none ${goal.done ? 'text-zinc-400 line-through' : 'text-zinc-800 dark:text-zinc-200'}`}
-          onInput={(e) => { const t = e.target; t.style.height = 'auto'; t.style.height = `${Math.min(t.scrollHeight, 120)}px`; }}
-        />
+        {isEditing ? (
+          <textarea
+            ref={titleRef}
+            defaultValue={goal.title}
+            rows={1}
+            autoFocus
+            onBlur={(e) => { onRename(goal.id, e.target.value); setIsEditing(false); }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onRename(goal.id, e.currentTarget.value); setIsEditing(false); } if (e.key === 'Escape') setIsEditing(false); }}
+            className={`min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-0 text-sm font-semibold leading-relaxed outline-none break-words ${goal.done ? 'text-zinc-400 line-through' : 'text-zinc-800 dark:text-zinc-200'}`}
+            onInput={(e) => { const t = e.target; t.style.height = 'auto'; t.style.height = `${Math.min(t.scrollHeight, 80)}px`; }}
+          />
+        ) : (
+          <div
+            className={`min-w-0 flex-1 text-sm font-semibold leading-relaxed cursor-pointer overflow-hidden text-ellipsis ${goal.done ? 'text-zinc-400 line-through' : 'text-zinc-800 dark:text-zinc-200'}`}
+            title={goal.title}
+            onDoubleClick={() => setIsEditing(true)}
+          >
+            {goal.title}
+          </div>
+        )}
 
         {goal.deadline && (
-          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold ${getDeadlineColorClass(goal.deadline, goal.done)}`}>{formatDeadline(goal.deadline)}</span>
+          <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${getDeadlineColorClass(goal.deadline, goal.done)}`}>{formatDeadline(goal.deadline)}</span>
         )}
 
         <div ref={lgBarRef} className={`flex shrink-0 items-center gap-0.5 transition-opacity touch-manipulation ${lgActive ? 'opacity-100' : 'opacity-0 group-hover/goal:opacity-100'}`}>
@@ -89,7 +93,7 @@ export function LifeGoalCard({
 
         {deadlineEditing === goal.id && (
           <div className="absolute inset-x-0 bottom-0 z-20 bg-white dark:bg-zinc-800 p-2 border-t shadow-lg dark:border-white/10 animate-in slide-in-from-bottom-1">
-            <input type="date" value={deadlineInput} onChange={(e) => setDeadlineInput(e.target.value)} onBlur={() => onDeadlineClick(goal.id, deadlineInput)} onKeyDown={(e) => { if (e.key === 'Enter') onDeadlineClick(goal.id, deadlineInput); if (e.key === 'Escape') setDeadlineEditing(null); }} autoFocus className="w-full bg-zinc-50 dark:bg-black/20 border border-zinc-200 dark:border-white/10 rounded px-2 py-1 text-[11px] outline-none" />
+            <input type="date" value={deadlineInput} onChange={(e) => setDeadlineInput(e.target.value)} onBlur={() => onDeadlineClick(goal.id, deadlineInput)} onKeyDown={(e) => { if (e.key === 'Enter') onDeadlineClick(goal.id, deadlineInput); if (e.key === 'Escape') setDeadlineEditing(null); }} autoFocus className="w-full bg-zinc-50 dark:bg-black/20 border border-zinc-200 dark:border-white/10 rounded px-2 py-1 text-xs outline-none" />
           </div>
         )}
       </div>
@@ -103,23 +107,37 @@ export function LifeGoalCard({
         e.dataTransfer.setData('application/json', JSON.stringify({ type: 'lifeGoal', goalId: goal.id }));
         e.dataTransfer.effectAllowed = 'move';
       }}
-      className={`group/goal relative flex flex-col overflow-hidden rounded-[28px] border border-zinc-200/70 bg-white shadow-sm transition-all hover:border-zinc-300 hover:shadow-[0_26px_60px_-36px_rgba(79,70,229,0.22)] dark:border-white/[0.08] dark:bg-[#0b0e14]/70 dark:shadow-none ${deadlineEditing === goal.id ? 'z-30' : 'z-auto'}`}
+      className={`group/goal relative flex flex-col overflow-hidden rounded-3xl border border-zinc-200/70 bg-white shadow-sm transition-all hover:border-zinc-300 hover:shadow-[0_26px_60px_-36px_rgba(79,70,229,0.22)] dark:border-white/[0.08] dark:bg-[#0b0e14]/70 dark:shadow-none ${deadlineEditing === goal.id ? 'z-30' : 'z-auto'}`}
     >
-      <div className="flex items-start gap-3 p-5">
+      <div className="flex items-start gap-3 p-4">
         <div className={`mt-0.5 h-12 w-1.5 shrink-0 rounded-full bg-gradient-to-b ${accentGradient}`} />
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
-            <textarea
-              value={goal.title}
-              onChange={(e) => onRename(goal.id, e.target.value)}
-              rows={1}
-              className={`min-h-[1.5rem] w-full resize-none overflow-hidden bg-transparent py-0.5 text-[15px] font-semibold leading-snug tracking-tight outline-none ${
-                goal.done ? 'text-zinc-400 line-through' : 'text-zinc-900 dark:text-zinc-50'
-              }`}
-              style={{ minHeight: '1.5rem' }}
-              onInput={(e) => { const t = e.target; t.style.height = 'auto'; t.style.height = `${Math.min(t.scrollHeight, 96)}px`; }}
-            />
+            {isEditingExpanded ? (
+              <textarea
+                defaultValue={goal.title}
+                rows={1}
+                autoFocus
+                onBlur={(e) => { onRename(goal.id, e.target.value); setIsEditingExpanded(false); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onRename(goal.id, e.currentTarget.value); setIsEditingExpanded(false); } if (e.key === 'Escape') setIsEditingExpanded(false); }}
+                className={`min-h-[1.5rem] w-full resize-none overflow-hidden bg-transparent py-0.5 text-sm font-semibold leading-snug tracking-tight outline-none break-words ${
+                  goal.done ? 'text-zinc-400 line-through' : 'text-zinc-900 dark:text-zinc-50'
+                }`}
+                style={{ minHeight: '1.5rem' }}
+                onInput={(e) => { const t = e.target; t.style.height = 'auto'; t.style.height = `${Math.min(t.scrollHeight, 96)}px`; }}
+              />
+            ) : (
+              <div
+                className={`min-h-[1.5rem] w-full text-sm font-semibold leading-snug tracking-tight cursor-pointer overflow-hidden text-ellipsis ${
+                  goal.done ? 'text-zinc-400 line-through' : 'text-zinc-900 dark:text-zinc-50'
+                }`}
+                title={goal.title}
+                onDoubleClick={() => setIsEditingExpanded(true)}
+              >
+                {goal.title}
+              </div>
+            )}
 
             <div className="flex shrink-0 items-center gap-1 pl-2">
               <ActionButton size="sm" onClick={() => onPromoteProject(goal.id)} className={isLinkedToProject ? 'text-indigo-500 bg-indigo-50 dark:text-indigo-300 dark:bg-indigo-500/30 dark:ring-1 dark:ring-indigo-400/50' : ''} title={isLinkedToProject ? 'Rimuovi da Progetti' : 'Sincronizza con Progetti'}>
@@ -159,7 +177,7 @@ export function LifeGoalCard({
 
       {deadlineEditing === goal.id && (
         <div className="absolute inset-x-0 bottom-0 z-20 rounded-b-[28px] border-t bg-white p-3 shadow-xl dark:border-white/10 dark:bg-zinc-800">
-          <input type="date" value={deadlineInput} onChange={(e) => setDeadlineInput(e.target.value)} onBlur={() => onDeadlineClick(goal.id, deadlineInput)} onKeyDown={(e) => { if (e.key === 'Enter') onDeadlineClick(goal.id, deadlineInput); if (e.key === 'Escape') setDeadlineEditing(null); }} autoFocus className="w-full bg-zinc-50 dark:bg-black/20 border border-zinc-200 dark:border-white/10 rounded px-2 py-1 text-[11px] outline-none" />
+          <input type="date" value={deadlineInput} onChange={(e) => setDeadlineInput(e.target.value)} onBlur={() => onDeadlineClick(goal.id, deadlineInput)} onKeyDown={(e) => { if (e.key === 'Enter') onDeadlineClick(goal.id, deadlineInput); if (e.key === 'Escape') setDeadlineEditing(null); }} autoFocus className="w-full bg-zinc-50 dark:bg-black/20 border border-zinc-200 dark:border-white/10 rounded px-2 py-1 text-xs outline-none" />
         </div>
       )}
 

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+﻿import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from './Icons';
@@ -86,7 +86,7 @@ function HabitSelector({ activeHabits, onSelect, onClose, triggerRef }) {
       className="fixed w-[260px] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border border-zinc-200/80 dark:border-zinc-700/80 rounded-2xl z-[9999] p-2 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.2)] dark:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] overflow-hidden"
       style={{ position: 'fixed', bottom: position.bottom, left: position.left }}
     >
-      <div className="text-[10px] font-extrabold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest px-3 py-2 mb-1">
+      <div className="text-xs font-extrabold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest px-3 py-2 mb-1">
         Aggiungi Micro-Vittoria
       </div>
       <div className="max-h-[220px] overflow-y-auto custom-scrollbar flex flex-col gap-1 pr-1">
@@ -102,7 +102,7 @@ function HabitSelector({ activeHabits, onSelect, onClose, triggerRef }) {
               onClick={() => { onSelect(h.id); onClose(); }}
               className="group flex items-center justify-between w-full px-3 py-2.5 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all duration-200 active:scale-[0.98]"
             >
-              <span className="text-[13px] font-semibold text-zinc-700 dark:text-zinc-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 truncate pr-2">
+              <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 truncate pr-2">
                 {h.title}
               </span>
               <Icons.Plus className="w-4 h-4 text-zinc-300 dark:text-zinc-600 group-hover:text-indigo-500 shrink-0 transition-colors" />
@@ -158,7 +158,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
 
   return (
     <div className="relative z-10 w-full min-w-0">
-      <Card className="flex flex-col overflow-hidden rounded-[32px]">
+      <Card className="flex flex-col overflow-hidden rounded-3xl">
         
         {/* HEADER (Sticky & Glass) */}
         <button
@@ -171,21 +171,13 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
               <AppLogo size="md" />
             </motion.div>
             <div className="flex flex-col justify-center">
-              <h2 className="mb-1.5 flex items-center gap-2 text-[18px] font-semibold leading-none tracking-tight text-zinc-900 dark:text-white">
-                Flow & Timeline
-                {locationName && <span className="rounded-full border border-zinc-200/80 bg-zinc-100/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-zinc-400">{locationName}</span>}
-              </h2>
-              <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                {progress.doneSteps} di {progress.totalSteps} micro-step completati
-              </p>
+              {locationName && (
+                <span className="rounded-full border border-zinc-200/80 bg-zinc-100/90 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-zinc-400 w-fit">{locationName}</span>
+              )}
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-6">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <div className="hidden md:flex items-center gap-4">
               <span className="text-xs font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">
                 {Math.round(progress.pct * 100)}%
@@ -219,9 +211,9 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               className="border-t border-zinc-100/80 bg-zinc-50/40 dark:border-zinc-800/60 dark:bg-white/[0.02]"
             >
-              <div className="overflow-x-auto px-5 py-5 custom-scrollbar no-select-calendar md:px-6">
+              <div className="px-3 py-4 no-select-calendar sm:px-5 sm:py-5 md:px-6">
                 {/* Prayer nodes row + connecting lines */}
-                <div className="relative flex items-start gap-3">
+                <div className="relative flex items-start gap-2 sm:gap-3">
                   {PRAYERS.map((prayer, i) => {
                     const isDone = todayPrayerLog[prayer];
                     const slotKey = PRAYER_SLOTS[i];
@@ -231,7 +223,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                     return (
                       <React.Fragment key={prayer}>
                         {/* Prayer node */}
-                        <div className="flex w-[220px] shrink-0 flex-col items-center md:w-[248px]">
+                        <div className="flex flex-1 min-w-0 flex-col items-center">
                           <motion.button
                             onClick={() => togglePrayer?.(prayer, !isDone)}
                             whileHover={{ scale: 1.08 }}
@@ -245,8 +237,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                             {isDone ? <Icons.Check className="w-5 h-5" /> : <div className="w-2.5 h-2.5 rounded-full bg-current opacity-40" />}
                           </motion.button>
                           <div className="mt-2 flex flex-col items-center">
-                            <span className={`text-[11px] font-black uppercase tracking-widest ${isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400'}`}>{prayer}</span>
-                            <span className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 font-mono mt-0.5">{PRAYER_TIMES[prayer]}</span>
+                            <span className={`text-xs font-black uppercase tracking-widest ${isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400'}`}>{prayer}</span>
+                            <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 font-mono mt-0.5">{PRAYER_TIMES[prayer]}</span>
                           </div>
                         </div>
 
@@ -294,12 +286,12 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                             }`}>
                               {/* Slot Header */}
                               <div className={`px-3 py-2 flex items-center justify-between border-b ${isCurrentSlot ? 'bg-indigo-50/50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20' : 'bg-zinc-50 dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800'}`}>
-                                <span className={`text-[10px] font-black uppercase tracking-[0.12em] flex items-center gap-1.5 ${isCurrentSlot ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-500'}`}>
+                                <span className={`text-xs font-black uppercase tracking-[0.12em] flex items-center gap-1.5 ${isCurrentSlot ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-500'}`}>
                                   {isCurrentSlot && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />}
                                   {getSlotLabel(slotKey)}
                                 </span>
                                 {slotTotal > 0 && (
-                                  <span className="text-[10px] font-bold text-zinc-400 bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded shadow-sm">{slotDone}/{slotTotal}</span>
+                                  <span className="text-xs font-bold text-zinc-400 bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded shadow-sm">{slotDone}/{slotTotal}</span>
                                 )}
                               </div>
 
@@ -315,7 +307,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                                       className="group/task flex items-center gap-2 p-1.5 rounded-xl hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors relative"
                                     >
                                       <TaskCheckbox done={r.done} onClick={() => toggleTimelineRoutine(todayKey, slotKey, r.id, !r.done)} />
-                                      <span className={`text-[11px] font-semibold truncate transition-colors ${r.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}>
+                                      <span className={`text-xs font-semibold truncate transition-colors ${r.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}>
                                         {habit ? habit.title : 'Rimosso'}
                                       </span>
                                       <button
@@ -334,7 +326,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                                   <button
                                     ref={selectorOpenSlot === slotKey ? (el) => { winTriggerRef.current = el; } : undefined}
                                     onClick={() => setSelectorOpenSlot(selectorOpenSlot === slotKey ? null : slotKey)}
-                                    className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700/80 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-indigo-500 hover:border-indigo-300 hover:bg-indigo-50/50 dark:hover:bg-indigo-500/10 transition-all"
+                                    className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700/80 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-indigo-500 hover:border-indigo-300 hover:bg-indigo-50/50 dark:hover:bg-indigo-500/10 transition-all"
                                   >
                                     <Icons.Plus className="w-3 h-3" /> Win
                                   </button>
@@ -353,14 +345,14 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
 
                               {events.length > 0 && (
                                 <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-2.5">
-                                  <div className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600/80 dark:text-emerald-400/80 mb-1.5">Completati</div>
+                                  <div className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600/80 dark:text-emerald-400/80 mb-1.5">Completati</div>
                                   <div className="flex flex-col gap-1">
                                     {events.map((e, ei) => (
                                       <div key={ei} className="flex items-start gap-1.5 bg-white dark:bg-zinc-800 p-1.5 rounded-lg border border-emerald-100 dark:border-emerald-900/30 shadow-sm">
                                         <Icons.CheckCircle className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />
                                         <div className="flex flex-col flex-1 min-w-0">
-                                          <span className="text-[10px] font-bold text-zinc-800 dark:text-zinc-200 leading-tight truncate">{e.title}</span>
-                                          <span className="text-[9px] text-zinc-400 font-mono">{new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                          <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 leading-tight truncate">{e.title}</span>
+                                          <span className="text-xs text-zinc-400 font-mono">{new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
                                       </div>
                                     ))}

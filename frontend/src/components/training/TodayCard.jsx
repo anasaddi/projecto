@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useRef } from 'react';
+﻿import React, { useMemo, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Target, Dumbbell } from 'lucide-react';
 
@@ -195,7 +195,7 @@ function KgInput({ value, onChange, placeholder = "00" }) {
         value={value ?? ''}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="h-8 w-12 rounded-lg border border-zinc-200/50 bg-zinc-100/50 text-center text-[12px] font-black text-zinc-900 shadow-sm outline-none transition-colors duration-300 placeholder:text-zinc-300 tabular-nums group-hover:border-zinc-300 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-zinc-50 dark:placeholder:text-zinc-700 dark:group-hover:border-white/20"
+        className="h-8 w-12 rounded-lg border border-zinc-200/50 bg-zinc-100/50 text-center text-xs font-black text-zinc-900 shadow-sm outline-none transition-colors duration-300 placeholder:text-zinc-300 tabular-nums group-hover:border-zinc-300 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-zinc-50 dark:placeholder:text-zinc-700 dark:group-hover:border-white/20"
       />
       <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-indigo-500 rounded-full scale-x-0 transition-transform duration-300 group-focus-within:scale-x-100 opacity-50" />
     </div>
@@ -224,23 +224,23 @@ function ExRow({ exerciseId, exerciseName, badge, badgeBg, anasC, flavioC, anasW
       <MuscDot exerciseId={exerciseId} remoteMap={remoteMap} configMap={configMap} />
 
       <div className="flex-1 min-w-0 pr-2">
-        <div className={`text-[12.5px] font-bold leading-tight tracking-tight capitalize truncate transition-all duration-500 ${bothDone ? 'text-zinc-400 dark:text-zinc-600' : 'text-zinc-900 dark:text-zinc-100'}`}>
+        <div className={`text-sm font-bold leading-tight tracking-tight capitalize truncate transition-all duration-500 ${bothDone ? 'text-zinc-400 dark:text-zinc-600' : 'text-zinc-900 dark:text-zinc-100'}`}>
           {exerciseName}
         </div>
         <div className="flex items-center gap-2 mt-1.5 overflow-hidden">
-          <span className={`text-[8px] font-black tracking-[0.15em] text-white px-1.5 py-0.5 rounded-md uppercase shadow-sm ${badgeBg} opacity-90 shrink-0`}>
+          <span className={`text-xs scale-90 font-black tracking-[0.15em] text-white px-1.5 py-0.5 rounded-md uppercase shadow-sm ${badgeBg} opacity-90 shrink-0`}>
             {badge}
           </span>
           {bothDone && (
             <div className="flex items-center gap-1 animate-in fade-in slide-in-from-left-2 duration-700 shrink-0">
               <div className="w-1 h-1 rounded-full bg-emerald-500" />
-              <span className="text-[8px] font-black text-emerald-500/80 uppercase tracking-widest">Perfetto</span>
+              <span className="text-xs scale-90 font-black text-emerald-500/80 uppercase tracking-widest">Perfetto</span>
             </div>
           )}
         </div>
       </div>
 
-      <div className="flex items-center gap-8 shrink-0">
+      <div className="flex items-center gap-4 sm:gap-8 shrink-0">
         {/* Anas Column */}
         <div className="flex items-center gap-1.5 min-w-[70px] justify-center">
           <KgInput value={anasW} onChange={v => onWeight('anas', v)} />
@@ -271,24 +271,24 @@ function SectionHeader({ icon: Icon, color, label, showRepsLabels }) {
           <div className={`p-2 rounded-xl shadow-inner ${color.replace('text-', 'bg-').replace('-500', '-500/10')}`}>
             <Icon size={14} className={`${color} drop-shadow-sm`} />
           </div>
-          <span className="text-[11px] font-black uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500">{label}</span>
+          <span className="text-xs font-black uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500">{label}</span>
         </div>
-        <div className="flex items-center gap-8 shrink-0">
-          <span className="text-[10px] font-black text-indigo-500/60 tracking-[0.2em] uppercase w-[70px] text-center">Anas</span>
-          <span className="text-[10px] font-black text-violet-500/60 tracking-[0.2em] uppercase w-[70px] text-center">Flavio</span>
+        <div className="flex items-center gap-4 sm:gap-8 shrink-0">
+          <span className="text-xs font-black text-indigo-500/60 tracking-[0.2em] uppercase w-[70px] text-center">Anas</span>
+          <span className="text-xs font-black text-violet-500/60 tracking-[0.2em] uppercase w-[70px] text-center">Flavio</span>
         </div>
       </div>
       {showRepsLabels && (
         <div className="flex items-center justify-end px-5 py-1.5 bg-black/[0.02] dark:bg-white/[0.01] border-t border-zinc-100/50 dark:border-white/[0.02]">
-          <div className="flex items-center gap-8 shrink-0">
+          <div className="flex items-center gap-4 sm:gap-8 shrink-0">
             <div className="flex items-center gap-1.5 w-[70px] justify-center">
-              <span className="text-[7px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">KG</span>
-              <span className="text-[7px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">REP</span>
+              <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">KG</span>
+              <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">REP</span>
               <div className="w-6 shrink-0" />
             </div>
             <div className="flex items-center gap-1.5 w-[70px] justify-center">
-              <span className="text-[7px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">KG</span>
-              <span className="text-[7px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">REP</span>
+              <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">KG</span>
+              <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">REP</span>
               <div className="w-6 shrink-0" />
             </div>
           </div>
@@ -436,27 +436,27 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
     : selectedDay?.day_name || '';
 
   return (
-    <div className="flex flex-col gap-8 animate-in fade-in zoom-in-95 duration-500">
+    <div className="flex flex-col gap-4 sm:gap-6 lg:gap-8 animate-in fade-in zoom-in-95 duration-500">
       {/* ── Header ───────────────────────────────────────────────────────────── */}
       <div className="flex items-end justify-between px-4">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 sm:gap-6">
           <div className="relative group">
             <div className="h-14 w-1.5 bg-indigo-600 rounded-full dark:shadow-[0_0_20px_-5px_rgba(79,70,229,0.8)] transition-all group-hover:h-16" />
             <div className="absolute inset-0 w-1.5 h-14 bg-indigo-400 blur-md opacity-30" />
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-[10px] font-black text-indigo-500/80 dark:text-indigo-400 uppercase tracking-[0.3em] leading-none">Sessione Odierna</span>
+              <span className="text-xs font-black text-indigo-500/80 dark:text-indigo-400 uppercase tracking-[0.3em] leading-none">Sessione Odierna</span>
               <div className="h-[1px] w-8 bg-indigo-500/20" />
             </div>
             <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-50 capitalize tracking-tight">{dateLabel}</h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-8 pb-1">
+        <div className="flex items-center gap-4 sm:gap-6 pb-1">
           <div className="flex flex-col items-end gap-2">
             <div className="flex items-center gap-3">
-              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Progresso</span>
+              <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">Progresso</span>
               <span className="text-sm font-black text-zinc-900 dark:text-zinc-50 tabular-nums">{progressPercent}%</span>
             </div>
             <div className="relative w-36 h-2 bg-zinc-100 dark:bg-white/[0.04] rounded-full overflow-hidden border border-zinc-200/50 dark:border-white/[0.06] shadow-inner">
@@ -499,9 +499,9 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
                     />
                   );
                 }) : (
-                  <div className="flex-1 flex flex-col items-center justify-center p-12 opacity-30 grayscale gap-2">
+                  <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
                     <Zap size={24} className="text-zinc-300" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
+              <span className="text-xs font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
               </div>
                 )}
               </div>
@@ -525,9 +525,9 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
                     />
                   );
                 }) : (
-                  <div className="flex-1 flex flex-col items-center justify-center p-12 opacity-30 grayscale gap-2">
+                  <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
                     <Target size={24} className="text-zinc-300" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
+                    <span className="text-xs font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
                   </div>
                 )}
               </div>
@@ -553,9 +553,9 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
                     />
                   );
                 }) : (
-                  <div className="flex-1 flex flex-col items-center justify-center p-12 opacity-30 grayscale gap-2">
+                  <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
                     <Dumbbell size={24} className="text-zinc-300" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
+                    <span className="text-xs font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
                   </div>
                 )}
               </div>
@@ -564,7 +564,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
 
           {/* Card Footer Info */}
           <div className="bg-zinc-50/50 dark:bg-black/40 px-8 py-5 border-t border-zinc-100 dark:border-white/[0.06] flex items-center justify-between">
-            <div className="flex items-center gap-10">
+            <div className="flex items-center gap-6 sm:gap-8 lg:gap-10">
               {[
                 { dot: 'bg-indigo-500', label: 'Forza' },
                 { dot: 'bg-amber-500', label: 'AW' },
@@ -572,11 +572,11 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
               ].map(item => (
                 <div key={item.label} className="flex items-center gap-2.5">
                   <div className={`w-1.5 h-1.5 rounded-full ${item.dot} shadow-[0_0_8px_rgba(0,0,0,0.1)]`} />
-                  <span className="text-[9px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{item.label}</span>
+                  <span className="text-xs font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{item.label}</span>
                 </div>
               ))}
             </div>
-            <div className="flex items-center gap-2 text-[9px] font-medium text-zinc-400/40 tracking-[0.2em] uppercase">
+            <div className="flex items-center gap-2 text-xs font-medium text-zinc-400/40 tracking-[0.2em] uppercase">
               <div className="w-1.5 h-1.5 rounded-full bg-indigo-500/30 animate-pulse" />
               PROJECTO
             </div>

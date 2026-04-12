@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { motion } from 'framer-motion';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
@@ -121,7 +121,7 @@ export function QuickTaskRow({
           >
             {task.title}
             {isShared && task.sharedTitle && (
-              <span className="ml-1.5 text-[10px] text-zinc-400 bg-zinc-100 dark:bg-white/[0.06] px-1.5 py-0.5 rounded">{task.sharedTitle}</span>
+              <span className="ml-1.5 text-xs text-zinc-400 bg-zinc-100 dark:bg-white/[0.06] px-1.5 py-0.5 rounded">{task.sharedTitle}</span>
             )}
           </span>
         )}
@@ -129,7 +129,7 @@ export function QuickTaskRow({
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setQuickTaskDeadlineInput(task.deadline || ''); setQuickTaskDeadlineEditing(taskId); }}
-            className={`shrink-0 px-2 py-0.5 rounded-lg text-[10px] font-semibold border ${getDeadlineColorClass(task.deadline, task.done)}`}
+            className={`shrink-0 px-2 py-0.5 rounded-lg text-xs font-semibold border ${getDeadlineColorClass(task.deadline, task.done)}`}
           >
             {formatDeadline(task.deadline)}
           </button>

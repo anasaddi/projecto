@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown, Target, Link2 } from 'lucide-react';
 import StrengthTable2 from '../StrengthTable2';
@@ -56,12 +56,12 @@ const FocusMode = ({
   const renderCard = (exercise, index) => {
     if (!exercise) return null;
     return (
-      <div key={`focus-${exercise.exercise_id || index}`} className="w-full bg-zinc-900/50 border border-zinc-800 rounded-[2rem] p-6 sm:p-8 relative overflow-hidden mb-8 last:mb-0">
+      <div key={`focus-${exercise.exercise_id || index}`} className="w-full bg-zinc-900/50 border border-zinc-800 rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 lg:p-8 relative overflow-hidden mb-4 sm:mb-6 lg:mb-8 last:mb-0">
         <div className="absolute top-4 right-4 z-20">
           {index < flatExercises.length - 1 && (
             <button
               onClick={() => setIsSuperSetLinked(prev => ({ ...prev, [index]: !prev[index] }))}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold border transition-colors ${isSuperSetLinked[index]
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${isSuperSetLinked[index]
                 ? 'bg-purple-500/20 text-purple-400 border-purple-500/30'
                 : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:text-white'
                 }`}
@@ -76,7 +76,7 @@ const FocusMode = ({
           {exercise.exercise_name}
         </h2>
 
-        <div className="relative z-10 scale-[1.02] sm:scale-105 origin-top mb-4 custom-scrollbar overflow-x-auto">
+        <div className="relative z-10 scale-[1.02] sm:scale-105 origin-top mb-4">
           {exercise.category === 'STRENGTH' ? (
             <div className="bg-zinc-950 p-2 rounded-2xl w-full mx-auto max-w-3xl">
               <StrengthTable2 

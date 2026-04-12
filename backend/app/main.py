@@ -122,9 +122,9 @@ def create_app() -> FastAPI:
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request, exc):
-        # GET dashboard-state: never 500 — return empty state so frontend can use local data
-        if request.method == "GET" and "/api/training/dashboard-state" in request.url.path and "at" not in request.url.path:
-            logger.warning("dashboard-state GET failed, returning empty state: %s", exc)
+        # GET/PUT dashboard-state: never 500 — return empty state so frontend can use local data
+        if "/api/training/dashboard-state" in str(request.url.path) and "at" not in str(request.url.path):
+            logger.warning("dashboard-state %s failed, returning empty state: %s", request.method, exc)
             from datetime import datetime, timezone
             return JSONResponse(status_code=200, content={
                 "key": "default",
@@ -139,6 +139,13 @@ def create_app() -> FastAPI:
                     "lifeGoals": {"collapsed": False, "tiers": []},
                 },
                 "updated_at": datetime.now(timezone.utc).isoformat(),
+            })
+        # GET config/constants: return minimal config
+        if "/api/config/constants" in str(request.url.path):
+            logger.warning("config/constants GET failed, returning defaults: %s", exc)
+            return JSONResponse(status_code=200, content={
+                "PRAYERS": ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"],
+                "PROJECT_ACCENTS": {},
             })
         logger.error(f"Unhandled exception: {exc}", exc_info=True)
         content = {"detail": str(exc)}

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from './Icons';
 import { useDashboardStore } from '../../store/dashboardStore';
@@ -69,7 +69,7 @@ export function QuickTasksSection() {
         }
       />
       
-      <div className="p-5 pt-4 flex flex-col gap-3">
+      <div className="p-4 pt-3 flex flex-col gap-3">
         {/* Input */}
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -81,7 +81,7 @@ export function QuickTasksSection() {
               placeholder="Aggiungi task veloce..."
               className="w-full rounded-2xl border border-zinc-200/70 bg-zinc-100/85 px-4 py-3 pr-9 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-zinc-100 dark:placeholder:text-zinc-500"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-zinc-400 hidden sm:block">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400 hidden sm:block">
               ↵
             </span>
           </div>
@@ -148,7 +148,7 @@ export function QuickTasksSection() {
               </div>
               <div className="text-center">
                 <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Nessuna quick task</p>
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">Aggiungi task veloci sopra</p>
+                <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Aggiungi task veloci sopra</p>
               </div>
             </motion.div>
           )}

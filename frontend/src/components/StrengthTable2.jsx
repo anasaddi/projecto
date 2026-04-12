@@ -339,8 +339,8 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
       {/* Header */}
       <div className="px-3 py-2 flex items-center justify-between bg-zinc-50/50 dark:bg-white/[0.02] border-b border-zinc-100 dark:border-white/[0.06]">
         <div className="flex flex-col">
-          <h3 className="text-[12px] font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">{exercise_name}</h3>
-          <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-tighter">Mese {currentMonth}</span>
+          <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">{exercise_name}</h3>
+          <span className="text-xs font-bold text-indigo-500 uppercase tracking-tighter">Mese {currentMonth}</span>
         </div>
 
         {/* TM Input - centered below title if needed, or keeping them in a row */}
@@ -348,7 +348,7 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
           {currentMonth === 1 ? (
             <>
               <div className="flex items-center gap-1.5">
-                <span className="text-[9px] font-bold text-blue-500 uppercase">A</span>
+                <span className="text-xs font-bold text-blue-500 uppercase">A</span>
                 <ModernInput
                   type="number"
                   step="0.5"
@@ -360,7 +360,7 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
                 />
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[9px] font-bold text-emerald-500 uppercase">F</span>
+                <span className="text-xs font-bold text-emerald-500 uppercase">F</span>
                 <ModernInput
                   type="number"
                   step="0.5"
@@ -375,7 +375,7 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
           ) : (
             <>
               <div className="flex items-center gap-1.5">
-                <span className="text-[9px] font-bold text-blue-500 uppercase">A</span>
+                <span className="text-xs font-bold text-blue-500 uppercase">A</span>
                 <ModernInput
                   type="number"
                   step="0.5"
@@ -399,7 +399,7 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
                 />
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[9px] font-bold text-emerald-500 uppercase">F</span>
+                <span className="text-xs font-bold text-emerald-500 uppercase">F</span>
                 <ModernInput
                   type="number"
                   step="0.5"
@@ -434,7 +434,7 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
             <button
               key={m}
               onClick={() => setCurrentMonth(m)}
-              className={`flex-1 h-6 rounded text-[10px] font-bold transition-all ${currentMonth === m
+              className={`flex-1 h-6 rounded text-xs font-bold transition-all ${currentMonth === m
                 ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600'
                 : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'
                 }`}
@@ -448,47 +448,47 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
       {/* Main Table */}
       <div className="p-3">
         <div className="rounded-2xl overflow-hidden border border-zinc-200/60 dark:border-white/10 shadow-lg shadow-black/[0.02]">
-          <table className="w-full text-[11px] border-collapse">
+          <table className="w-full text-xs border-collapse">
             <thead>
               <tr className="bg-zinc-50/80 dark:bg-white/[0.02] border-b border-zinc-200/60 dark:border-white/10">
                 <th className="py-2 px-1 w-6 text-center">
-                  <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">W</span>
+                  <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">W</span>
                 </th>
                 <th className="py-2 px-1 w-12 text-center">
-                  <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">SCH</span>
+                  <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">SCH</span>
                 </th>
                 <th className="py-2 px-1 w-8 text-center">
-                  <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">%</span>
+                  <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">%</span>
                 </th>
                 <th className="py-2 px-1 text-center font-black">
                   <div className="flex flex-col items-center">
-                    <span className="text-[7px] text-zinc-400 uppercase tracking-widest mb-0.5">Anas</span>
-                    <span className="text-[8px] text-indigo-500 font-black">KG</span>
+                    <span className="text-xs scale-75 text-zinc-400 uppercase tracking-widest mb-0.5">Anas</span>
+                    <span className="text-xs scale-90 text-indigo-500 font-black">KG</span>
                   </div>
                 </th>
                 <th className="py-2 px-1 text-center font-black">
                   <div className="flex flex-col items-center">
-                    <span className="text-[7px] text-zinc-400 uppercase tracking-widest mb-0.5">Anas</span>
-                    <span className="text-[8px] text-indigo-500 font-black">1RM</span>
-                  </div>
-                </th>
-                <th className="py-2 px-1 w-8 text-center">
-                  <span className="text-[9px] font-black text-indigo-400/50">✓</span>
-                </th>
-                <th className="py-2 px-1 text-center font-black">
-                  <div className="flex flex-col items-center">
-                    <span className="text-[7px] text-zinc-400 uppercase tracking-widest mb-0.5">Flavio</span>
-                    <span className="text-[8px] text-indigo-500 font-black">KG</span>
-                  </div>
-                </th>
-                <th className="py-2 px-1 text-center font-black">
-                  <div className="flex flex-col items-center">
-                    <span className="text-[7px] text-zinc-400 uppercase tracking-widest mb-0.5">Flavio</span>
-                    <span className="text-[8px] text-indigo-500 font-black">1RM</span>
+                    <span className="text-xs scale-75 text-zinc-400 uppercase tracking-widest mb-0.5">Anas</span>
+                    <span className="text-xs scale-90 text-indigo-500 font-black">1RM</span>
                   </div>
                 </th>
                 <th className="py-2 px-1 w-8 text-center">
-                  <span className="text-[9px] font-black text-indigo-400/50">✓</span>
+                  <span className="text-xs font-black text-indigo-400/50">✓</span>
+                </th>
+                <th className="py-2 px-1 text-center font-black">
+                  <div className="flex flex-col items-center">
+                    <span className="text-xs scale-75 text-zinc-400 uppercase tracking-widest mb-0.5">Flavio</span>
+                    <span className="text-xs scale-90 text-indigo-500 font-black">KG</span>
+                  </div>
+                </th>
+                <th className="py-2 px-1 text-center font-black">
+                  <div className="flex flex-col items-center">
+                    <span className="text-xs scale-75 text-zinc-400 uppercase tracking-widest mb-0.5">Flavio</span>
+                    <span className="text-xs scale-90 text-indigo-500 font-black">1RM</span>
+                  </div>
+                </th>
+                <th className="py-2 px-1 w-8 text-center">
+                  <span className="text-xs font-black text-indigo-400/50">✓</span>
                 </th>
               </tr>
             </thead>
@@ -520,10 +520,10 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
                     className="border-t border-gray-100 dark:border-zinc-700/50 transition-colors"
                   >
                     <td className="py-1.5 px-1 text-center">
-                      <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300">{r.week}</span>
+                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{r.week}</span>
                     </td>
                     <td className="py-1.5 px-1 text-center">
-                      <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold ${isAmrap
+                      <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-bold ${isAmrap
                         ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700'
                         : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600'
                         }`}>
@@ -531,7 +531,7 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
                       </span>
                     </td>
                     <td className="py-1.5 px-1 text-center">
-                      <span className="text-[10px] text-gray-500">{cfg.intensity}</span>
+                      <span className="text-xs text-gray-500">{cfg.intensity}</span>
                     </td>
 
                     {/* Anas kg */}
@@ -554,20 +554,20 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
                             type="number"
                             value={r.anas.reps}
                             onChange={e => updateAthlete(currentMonth - 1, idx, 'anas', 'reps', e.target.value)}
-                            className={`w-10 border rounded text-center text-[11px] py-1 font-semibold transition-all mx-auto block ${r.anas.reps
+                            className={`w-10 border rounded text-center text-xs py-1 font-semibold transition-all mx-auto block ${r.anas.reps
                               ? 'bg-amber-100 dark:bg-amber-900/60 border-amber-400 dark:border-amber-600'
                               : 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40'
                               }`}
                             placeholder="r"
                           />
                           {r.anas.reps && rmA !== '-' && (
-                            <span className="text-[8px] font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1 rounded">
+                            <span className="text-xs scale-90 font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1 rounded">
                               {rmA}
                             </span>
                           )}
                         </div>
                       ) : (
-                        <span className={`inline-block w-10 py-1 rounded text-[10px] font-bold ${rmA !== '-'
+                        <span className={`inline-block w-10 py-1 rounded text-xs font-bold ${rmA !== '-'
                           ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700'
                           : 'bg-gray-50 dark:bg-zinc-800/40 text-gray-400 dark:text-zinc-600 border border-transparent dark:border-zinc-800/20'
                           }`}>
@@ -593,7 +593,7 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
                             placeholder="RPE"
                             value={r.anas.rpe || ''}
                             onChange={e => updateAthlete(currentMonth - 1, idx, 'anas', 'rpe', e.target.value)}
-                            className="w-8 text-[8px] text-center bg-gray-100 dark:bg-zinc-800 rounded outline-none text-gray-500 font-medium"
+                            className="w-8 text-xs scale-90 text-center bg-gray-100 dark:bg-zinc-800 rounded outline-none text-gray-500 font-medium"
                           />
                         )}
                       </div>
@@ -619,20 +619,20 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
                             type="number"
                             value={r.flavio.reps}
                             onChange={e => updateAthlete(currentMonth - 1, idx, 'flavio', 'reps', e.target.value)}
-                            className={`w-10 border rounded text-center text-[11px] py-1 font-semibold transition-all mx-auto block ${r.flavio.reps
+                            className={`w-10 border rounded text-center text-xs py-1 font-semibold transition-all mx-auto block ${r.flavio.reps
                               ? 'bg-amber-100 dark:bg-amber-900/60 border-amber-400 dark:border-amber-600'
                               : 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40'
                               }`}
                             placeholder="r"
                           />
                           {r.flavio.reps && rmF !== '-' && (
-                            <span className="text-[8px] font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1 rounded">
+                            <span className="text-xs scale-90 font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1 rounded">
                               {rmF}
                             </span>
                           )}
                         </div>
                       ) : (
-                        <span className={`inline-block w-10 py-1 rounded text-[10px] font-bold ${rmF !== '-'
+                        <span className={`inline-block w-10 py-1 rounded text-xs font-bold ${rmF !== '-'
                           ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700'
                           : 'bg-gray-50 dark:bg-zinc-800/40 text-gray-400 dark:text-zinc-600 border border-transparent dark:border-zinc-800/20'
                           }`}>
@@ -658,7 +658,7 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
                             placeholder="RPE"
                             value={r.flavio.rpe || ''}
                             onChange={e => updateAthlete(currentMonth - 1, idx, 'flavio', 'rpe', e.target.value)}
-                            className="w-8 text-[8px] text-center bg-gray-100 dark:bg-zinc-800 rounded outline-none text-gray-500 font-medium"
+                            className="w-8 text-xs scale-90 text-center bg-gray-100 dark:bg-zinc-800 rounded outline-none text-gray-500 font-medium"
                           />
                         )}
                       </div>
@@ -674,19 +674,19 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
       {/* Footer - Volume Summary */}
       <div className="px-3 py-2 bg-gradient-to-r from-gray-50 via-gray-100/50 to-gray-50 dark:from-zinc-800/80 dark:via-zinc-800/60 dark:to-zinc-800/80 border-t border-gray-100 dark:border-zinc-700/50">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             Volume M{currentMonth}
           </span>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-blue-500" />
-              <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400">
+              <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
                 A: {totalVolumeA.toFixed(0)} kg
               </span>
             </div>
             <div className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
                 F: {totalVolumeF.toFixed(0)} kg
               </span>
             </div>

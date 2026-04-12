@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Card, SectionHeader } from './TrainingUI';
 import { Target } from 'lucide-react';
 
@@ -24,7 +24,7 @@ export const MuscleVolumeLegend = ({ totalVolume }) => {
           return (
             <div key={id} className="p-3 bg-gray-50/50 dark:bg-zinc-800/30 rounded-2xl border border-gray-100 dark:border-white/5">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{label}</span>
+                <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{label}</span>
                 <span className="text-xs font-black text-gray-900 dark:text-white">{volume}</span>
               </div>
               <div className="h-1.5 w-full bg-gray-200 dark:bg-zinc-700/50 rounded-full overflow-hidden">
@@ -43,7 +43,7 @@ export const ExerciseMuscleMatrix = ({ exercises, activeMuscles }) => {
     <div className="flex flex-wrap gap-2">
       {exercises.map(ex => (
         <div key={ex.exercise_id} className="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl flex items-center gap-2">
-          <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300">{ex.exercise_name}</span>
+          <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{ex.exercise_name}</span>
           <div className="flex gap-1">
             {(ex.primary_muscles || []).map(m => (
               <div key={m} className={`w-2 h-2 rounded-full ${activeMuscles.includes(m) ? 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]' : 'bg-gray-300 dark:bg-zinc-700'}`} title={m} />

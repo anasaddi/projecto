@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp, History as HistoryIcon } from 'lucide-react';
 import { api } from '../../api/client';
@@ -47,8 +47,8 @@ const ExerciseTable = ({ exercise, onRowsChange, expandedOverride = false, initi
         className="px-3 py-2 flex flex-col items-center justify-center cursor-pointer bg-zinc-50/50 dark:bg-white/[0.02] border-b border-zinc-100 dark:border-white/[0.06]"
       >
         <div className="flex flex-col items-center">
-          <h3 className="text-[12px] font-bold text-zinc-900 dark:text-gray-100 tracking-tight text-center">{exercise_name}</h3>
-          <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-tighter mt-0.5">
+          <h3 className="text-xs font-bold text-zinc-900 dark:text-gray-100 tracking-tight text-center">{exercise_name}</h3>
+          <span className="text-xs font-bold text-indigo-500 uppercase tracking-tighter mt-0.5">
             {base_sets} Serie {base_reps ? `× ${base_reps}` : ''}
           </span>
         </div>
@@ -61,7 +61,7 @@ const ExerciseTable = ({ exercise, onRowsChange, expandedOverride = false, initi
               <div className="flex flex-wrap gap-3 items-center justify-between">
                 <div className="flex items-center gap-0.5 bg-zinc-100/50 dark:bg-white/[0.04] p-0.5 rounded-lg">
                   {rows.map(r => (
-                    <button key={r.id} onClick={() => setCurrentSet(r.set)} className={`w-6 h-6 rounded text-[10px] font-bold transition-all ${currentSet === r.set ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>
+                    <button key={r.id} onClick={() => setCurrentSet(r.set)} className={`w-6 h-6 rounded text-xs font-bold transition-all ${currentSet === r.set ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>
                       {r.set}
                     </button>
                   ))}
@@ -73,11 +73,11 @@ const ExerciseTable = ({ exercise, onRowsChange, expandedOverride = false, initi
                     <AthleteAvatar initial="A" colorClass="bg-blue-500" />
                     <div className="flex flex-col items-center">
                       <ColHeader label="kg" />
-                      <ModernInput type="number" step="0.5" value={currentRow.anas.weight} onChange={e => updateRow(currentRow.id, 'anas', 'weight', e.target.value)} className="w-12 h-6 text-[11px]" placeholder="kg" />
+                      <ModernInput type="number" step="0.5" value={currentRow.anas.weight} onChange={e => updateRow(currentRow.id, 'anas', 'weight', e.target.value)} className="w-12 h-6 text-xs" placeholder="kg" />
                     </div>
                     <div className="flex flex-col items-center">
                       <ColHeader label="r" />
-                      <ModernInput type="number" value={currentRow.anas.reps} onChange={e => updateRow(currentRow.id, 'anas', 'reps', e.target.value)} className="w-10 h-6 text-[11px]" placeholder="r" />
+                      <ModernInput type="number" value={currentRow.anas.reps} onChange={e => updateRow(currentRow.id, 'anas', 'reps', e.target.value)} className="w-10 h-6 text-xs" placeholder="r" />
                     </div>
                     <ModernCheckbox checked={currentRow.anas.checked} onChange={() => toggleCheck(currentRow.id, 'anas')} colorClass="accent-indigo-500" />
                   </div>
@@ -86,11 +86,11 @@ const ExerciseTable = ({ exercise, onRowsChange, expandedOverride = false, initi
                     <AthleteAvatar initial="F" colorClass="bg-emerald-500" />
                     <div className="flex flex-col items-center">
                       <ColHeader label="kg" />
-                      <ModernInput type="number" step="0.5" value={currentRow.flavio.weight} onChange={e => updateRow(currentRow.id, 'flavio', 'weight', e.target.value)} className="w-12 h-6 text-[11px]" placeholder="kg" />
+                      <ModernInput type="number" step="0.5" value={currentRow.flavio.weight} onChange={e => updateRow(currentRow.id, 'flavio', 'weight', e.target.value)} className="w-12 h-6 text-xs" placeholder="kg" />
                     </div>
                     <div className="flex flex-col items-center">
                       <ColHeader label="r" />
-                      <ModernInput type="number" value={currentRow.flavio.reps} onChange={e => updateRow(currentRow.id, 'flavio', 'reps', e.target.value)} className="w-10 h-6 text-[11px]" placeholder="r" />
+                      <ModernInput type="number" value={currentRow.flavio.reps} onChange={e => updateRow(currentRow.id, 'flavio', 'reps', e.target.value)} className="w-10 h-6 text-xs" placeholder="r" />
                     </div>
                     <ModernCheckbox checked={currentRow.flavio.checked} onChange={() => toggleCheck(currentRow.id, 'flavio')} colorClass="accent-indigo-500" />
                   </div>
@@ -101,7 +101,7 @@ const ExerciseTable = ({ exercise, onRowsChange, expandedOverride = false, initi
         ) : (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-gray-100 dark:border-zinc-800/80">
             <div className="p-2 space-y-1">
-              <div className="grid grid-cols-[2rem_3.5rem_auto_auto] gap-4 px-2 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider justify-between">
+              <div className="grid grid-cols-[2rem_3.5rem_auto_auto] gap-4 px-2 py-1.5 text-xs font-bold text-gray-400 uppercase tracking-wider justify-between">
                 <div className="text-center">Set</div>
                 <div className="text-center">S</div>
                 <div className="w-[160px] text-center text-blue-500">Anas</div>
@@ -122,7 +122,7 @@ const ExerciseTable = ({ exercise, onRowsChange, expandedOverride = false, initi
                       <ModernInput type="number" value={r.anas.reps} onChange={e => updateRow(r.id, 'anas', 'reps', e.target.value)} className="w-10 py-1" />
                     </div>
                     <ModernCheckbox checked={r.anas.checked} onChange={() => toggleCheck(r.id, 'anas')} colorClass="accent-amber-500" />
-                    <span className="w-8 text-[9px] font-bold text-gray-400 text-right">{format1RM(r.anas.weight, r.anas.reps)}</span>
+                    <span className="w-8 text-xs font-bold text-gray-400 text-right">{format1RM(r.anas.weight, r.anas.reps)}</span>
                   </div>
 
                   <div className="w-[160px] flex gap-1.5 justify-center items-center">
@@ -135,7 +135,7 @@ const ExerciseTable = ({ exercise, onRowsChange, expandedOverride = false, initi
                       <ModernInput type="number" value={r.flavio.reps} onChange={e => updateRow(r.id, 'flavio', 'reps', e.target.value)} className="w-10 py-1" />
                     </div>
                     <ModernCheckbox checked={r.flavio.checked} onChange={() => toggleCheck(r.id, 'flavio')} colorClass="accent-amber-500" />
-                    <span className="w-8 text-[9px] font-bold text-gray-400 text-right">{format1RM(r.flavio.weight, r.flavio.reps)}</span>
+                    <span className="w-8 text-xs font-bold text-gray-400 text-right">{format1RM(r.flavio.weight, r.flavio.reps)}</span>
                   </div>
                 </div>
               ))}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../api/client';
 import { Card, ModernInput, ModernCheckbox } from './TrainingUI';
 
@@ -57,28 +57,28 @@ function VolumeInputRow({ exerciseId, week, set, totalSets, targetStr, isFirst, 
     setData(prev => ({ ...prev, [athlete]: { ...prev[athlete], completed: !prev[athlete].completed } }));
 
   return (
-    <tr className="hover:bg-amber-50/20 dark:hover:bg-amber-900/10 transition-colors text-[10px]">
+    <tr className="hover:bg-amber-50/20 dark:hover:bg-amber-900/10 transition-colors text-xs">
       {isFirst && (
         <td rowSpan={totalSets} className="py-2 px-1 text-center border-r border-gray-100 dark:border-zinc-800/50 align-middle">
-          <span className="text-[9px] font-black text-gray-400">{set > 1 ? '' : 'Set'}</span>
+          <span className="text-xs font-black text-gray-400">{set > 1 ? '' : 'Set'}</span>
         </td>
       )}
       <td className="py-1 px-1 text-center border-r border-gray-100 dark:border-zinc-800/50">
-        <span className="text-[10px] font-black text-gray-400">{set}</span>
+        <span className="text-xs font-black text-gray-400">{set}</span>
       </td>
       {/* Anas */}
       <td className="py-1.5 px-2 border-r border-gray-100 dark:border-zinc-800/50">
         <div className="flex items-center gap-0.5 justify-center">
-          <ModernInput type="text" value={data.anas.weight} onChange={v => upd('anas', 'weight', v)} className="w-10 py-1 text-[9px]" placeholder="kg" />
-          <ModernInput type="text" value={data.anas.reps}   onChange={v => upd('anas', 'reps', v)}   className="w-8 py-1 text-[9px]" placeholder="r" />
+          <ModernInput type="text" value={data.anas.weight} onChange={v => upd('anas', 'weight', v)} className="w-10 py-1 text-xs" placeholder="kg" />
+          <ModernInput type="text" value={data.anas.reps}   onChange={v => upd('anas', 'reps', v)}   className="w-8 py-1 text-xs" placeholder="r" />
           <ModernCheckbox checked={data.anas.completed} onChange={() => tog('anas')} colorClass="accent-blue-500" />
         </div>
       </td>
       {/* Flavio */}
       <td className="py-1.5 px-2">
         <div className="flex items-center gap-0.5 justify-center">
-          <ModernInput type="text" value={data.flavio.weight} onChange={v => upd('flavio', 'weight', v)} className="w-10 py-1 text-[9px]" placeholder="kg" />
-          <ModernInput type="text" value={data.flavio.reps}   onChange={v => upd('flavio', 'reps', v)}   className="w-8 py-1 text-[9px]" placeholder="r" />
+          <ModernInput type="text" value={data.flavio.weight} onChange={v => upd('flavio', 'weight', v)} className="w-10 py-1 text-xs" placeholder="kg" />
+          <ModernInput type="text" value={data.flavio.reps}   onChange={v => upd('flavio', 'reps', v)}   className="w-8 py-1 text-xs" placeholder="r" />
           <ModernCheckbox checked={data.flavio.completed} onChange={() => tog('flavio')} colorClass="accent-emerald-500" />
         </div>
       </td>
@@ -101,7 +101,7 @@ const AWVolumeTableGroup = ({ title, exercises, onRowsChange, progressions, init
           <div className="w-1.5 h-8 bg-amber-500 rounded-full" />
           <div>
             <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider">{title}</h3>
-            <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-500/20 px-1.5 py-0.5 rounded">
+            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-500/20 px-1.5 py-0.5 rounded">
               Settimana {currentWeek}
             </span>
           </div>
@@ -127,7 +127,7 @@ const AWVolumeTableGroup = ({ title, exercises, onRowsChange, progressions, init
       <div className="overflow-x-auto custom-scrollbar border-b border-gray-100 dark:border-zinc-800/60">
         <table className="w-full text-left border-collapse">
           <thead className="bg-gray-50/80 dark:bg-zinc-800/60">
-            <tr className="text-[9px] font-bold uppercase tracking-tighter text-gray-400 border-b border-gray-100 dark:border-zinc-800">
+            <tr className="text-xs font-bold uppercase tracking-tighter text-gray-400 border-b border-gray-100 dark:border-zinc-800">
               <th className="py-2 px-3">Esercizio</th>
               <th className="py-2 px-2 text-center w-14">Peso</th>
               {[1, 2, 3, 4, 5].map(w => (
@@ -142,15 +142,15 @@ const AWVolumeTableGroup = ({ title, exercises, onRowsChange, progressions, init
               const cfg = AW_VOL_CONFIG[ex.exercise_id] || { label: ex.exercise_name, weight: '—', pattern: 'std' };
               const targets = cfg.pattern === 'alt' ? AW_ALT : AW_STD;
               return (
-                <tr key={ex.exercise_id} className="hover:bg-amber-50/10 dark:hover:bg-amber-900/5 text-[10px]">
-                  <td className="py-2 px-3 font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight text-[9px] text-center">
+                <tr key={ex.exercise_id} className="hover:bg-amber-50/10 dark:hover:bg-amber-900/5 text-xs">
+                  <td className="py-2 px-3 font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight text-xs text-center">
                     {cfg.label}
                   </td>
-                  <td className="py-2 px-2 text-center font-bold text-amber-600 dark:text-amber-400 text-[9px]">
+                  <td className="py-2 px-2 text-center font-bold text-amber-600 dark:text-amber-400 text-xs">
                     {cfg.weight}kg
                   </td>
                   {targets.map((t, i) => (
-                    <td key={i} className={`py-2 px-2 text-center text-[9px] font-semibold ${
+                    <td key={i} className={`py-2 px-2 text-center text-xs font-semibold ${
                       currentWeek === i + 1
                         ? 'text-amber-700 dark:text-amber-300 font-black bg-amber-50/60 dark:bg-amber-900/20'
                         : 'text-gray-400'
@@ -169,7 +169,7 @@ const AWVolumeTableGroup = ({ title, exercises, onRowsChange, progressions, init
       <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full text-left border-collapse">
           <thead className="bg-gray-50/60 dark:bg-zinc-800/40">
-            <tr className="text-[9px] font-bold uppercase tracking-tighter text-gray-400 border-b border-gray-100 dark:border-zinc-800">
+            <tr className="text-xs font-bold uppercase tracking-tighter text-gray-400 border-b border-gray-100 dark:border-zinc-800">
               <th className="py-2 px-3">Esercizio</th>
               <th className="py-2 px-1 w-8 text-center" />
               <th className="py-2 px-1 w-8 text-center" />
@@ -185,21 +185,21 @@ const AWVolumeTableGroup = ({ title, exercises, onRowsChange, progressions, init
               const sets = parseInt(targetStr.split('×')[0]) || 1;
 
               return Array.from({ length: sets }).map((_, s) => (
-                <tr key={`${ex.exercise_id}-${s}`} className="hover:bg-amber-50/20 dark:hover:bg-amber-900/10 transition-colors text-[10px]">
+                <tr key={`${ex.exercise_id}-${s}`} className="hover:bg-amber-50/20 dark:hover:bg-amber-900/10 transition-colors text-xs">
                   {s === 0 && (
-                    <td rowSpan={sets} className="py-2 px-3 border-r border-gray-100 dark:border-zinc-800/50 align-middle font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight text-[9px] text-center">
+                    <td rowSpan={sets} className="py-2 px-3 border-r border-gray-100 dark:border-zinc-800/50 align-middle font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight text-xs text-center">
                       {cfg.label}
                     </td>
                   )}
                   <td className="py-1 px-1 text-center border-r border-gray-100 dark:border-zinc-800/50 w-14">
                     {s === 0 && (
-                      <span className="text-[8px] font-black px-1 py-0.5 rounded bg-amber-100/60 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
+                      <span className="text-xs scale-90 font-black px-1 py-0.5 rounded bg-amber-100/60 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
                         {targetStr}
                       </span>
                     )}
                   </td>
                   <td className="py-1 px-1 text-center border-r border-gray-100 dark:border-zinc-800/50">
-                    <span className="text-[10px] font-black text-gray-400">{s + 1}</span>
+                    <span className="text-xs font-black text-gray-400">{s + 1}</span>
                   </td>
                   <td className="py-1.5 px-2 border-r border-gray-100 dark:border-zinc-800/50">
                     <div className="flex items-center gap-0.5 justify-center">
@@ -272,8 +272,8 @@ function VolumeInputCell({ exerciseId, week, set, athlete, targetStr, defaultWei
 
   return (
     <>
-      <ModernInput type="text" value={weight} onChange={v => setWeight(v)} className="w-10 py-1 text-[9px]" placeholder="kg" />
-      <ModernInput type="text" value={reps}   onChange={v => setReps(v)}   className="w-8 py-1 text-[9px]"  placeholder="r" />
+      <ModernInput type="text" value={weight} onChange={v => setWeight(v)} className="w-10 py-1 text-xs" placeholder="kg" />
+      <ModernInput type="text" value={reps}   onChange={v => setReps(v)}   className="w-8 py-1 text-xs"  placeholder="r" />
       <ModernCheckbox checked={done} onChange={() => setDone(p => !p)} colorClass={colorClass} />
     </>
   );

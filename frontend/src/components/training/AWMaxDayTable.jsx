@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../api/client';
 import { Card, ModernInput, ModernCheckbox } from './TrainingUI';
 
@@ -80,9 +80,9 @@ function MaxDayRow({ week, slot, exName, refAnas, refFlavio, exerciseId, savedDa
   const cell = 'py-1.5 px-1 border-r border-gray-100 dark:border-zinc-800/50';
 
   return (
-    <tr className="hover:bg-amber-50/20 dark:hover:bg-amber-900/10 transition-colors text-[10px]">
+    <tr className="hover:bg-amber-50/20 dark:hover:bg-amber-900/10 transition-colors text-xs">
       {/* Name */}
-      <td className={`${cell} py-2 font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight text-[9px] leading-tight max-w-[90px] text-center`}>
+      <td className={`${cell} py-2 font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight text-xs leading-tight max-w-[90px] text-center`}>
         {exName}
       </td>
 
@@ -92,7 +92,7 @@ function MaxDayRow({ week, slot, exName, refAnas, refFlavio, exerciseId, savedDa
           type="text"
           value={data.anas_sx}
           onChange={val => upd('anas_sx', val)}
-          className="w-10 py-1 text-[9px]"
+          className="w-10 py-1 text-xs"
           placeholder="sx"
         />
       </td>
@@ -103,7 +103,7 @@ function MaxDayRow({ week, slot, exName, refAnas, refFlavio, exerciseId, savedDa
           type="text"
           value={data.anas_dx}
           onChange={val => upd('anas_dx', val)}
-          className="w-10 py-1 text-[9px]"
+          className="w-10 py-1 text-xs"
           placeholder="dx"
         />
       </td>
@@ -114,7 +114,7 @@ function MaxDayRow({ week, slot, exName, refAnas, refFlavio, exerciseId, savedDa
           type="text"
           value={data.flavio_sx}
           onChange={val => upd('flavio_sx', val)}
-          className="w-10 py-1 text-[9px]"
+          className="w-10 py-1 text-xs"
           placeholder="sx"
         />
       </td>
@@ -125,7 +125,7 @@ function MaxDayRow({ week, slot, exName, refAnas, refFlavio, exerciseId, savedDa
           type="text"
           value={data.flavio_dx}
           onChange={val => upd('flavio_dx', val)}
-          className="w-10 py-1 text-[9px]"
+          className="w-10 py-1 text-xs"
           placeholder="dx"
         />
       </td>
@@ -177,7 +177,7 @@ const AWMaxDayTable = ({ exercise, programData, progressions, initialWeek, reset
         <div className="flex flex-col items-center justify-center mb-3">
           <div className="flex flex-col items-center gap-1">
             <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-widest text-center">{exercise.exercise_name || 'Max Day'}</h3>
-            <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-500/20 px-1.5 py-0.5 rounded text-center">
+            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-500/20 px-1.5 py-0.5 rounded text-center">
               30-36 Rep · W{currentWeek} · C{cycleOf(currentWeek) + 1} (rot. {protoWeek(currentWeek)}/5)
             </span>
           </div>
@@ -192,7 +192,7 @@ const AWMaxDayTable = ({ exercise, programData, progressions, initialWeek, reset
               )}
               <button
                 onClick={() => setCurrentWeek(w)}
-                className={`w-6 h-6 rounded-md text-[10px] font-bold transition-all shrink-0 ${
+                className={`w-6 h-6 rounded-md text-xs font-bold transition-all shrink-0 ${
                   currentWeek === w
                     ? CYCLE_ACTIVE[cycleOf(w)]
                     : 'text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300'
@@ -209,7 +209,7 @@ const AWMaxDayTable = ({ exercise, programData, progressions, initialWeek, reset
       <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full text-left border-collapse">
           <thead className="bg-gray-50/95 dark:bg-zinc-800/95">
-            <tr className="text-[9px] font-bold uppercase tracking-tighter border-b border-gray-100 dark:border-zinc-800">
+            <tr className="text-xs font-bold uppercase tracking-tighter border-b border-gray-100 dark:border-zinc-800">
               <th className="py-2 px-2 text-gray-400">Esercizio</th>
               <th className="py-2 px-1 text-center text-blue-500 w-14">A SX</th>
               <th className="py-2 px-1 text-center text-blue-500 w-14">A DX</th>
@@ -222,7 +222,7 @@ const AWMaxDayTable = ({ exercise, programData, progressions, initialWeek, reset
           <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/30">
             {weekExercises.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-6 text-center text-[10px] text-gray-400">
+                <td colSpan={7} className="py-6 text-center text-xs text-gray-400">
                   Nessun esercizio per la settimana {currentWeek}
                 </td>
               </tr>

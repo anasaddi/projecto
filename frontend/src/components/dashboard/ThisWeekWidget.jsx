@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 
 function toDateKey(date = new Date()) {
   const y = date.getFullYear();
@@ -58,8 +58,8 @@ export function ThisWeekWidget({ dailyTaskLogs, activeHabits, now }) {
   return (
     <div className="mt-1 pt-3 border-t border-zinc-100 dark:border-white/[0.04] shrink-0 px-[15px] pb-[15px]">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[9px] font-bold text-sky-500 dark:text-sky-400 uppercase tracking-wider">This week</span>
-        <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400 tabular-nums">{weekPct}%</span>
+        <span className="text-xs font-bold text-sky-500 dark:text-sky-400 uppercase tracking-wider">This week</span>
+        <span className="text-xs font-bold text-sky-600 dark:text-sky-400 tabular-nums">{weekPct}%</span>
       </div>
       <div className="flex gap-0.5 mb-1.5">
         {weekDays.map(({ key, label, pct, isToday }) => (
@@ -67,11 +67,11 @@ export function ThisWeekWidget({ dailyTaskLogs, activeHabits, now }) {
             <div className="w-full h-4 bg-zinc-100 dark:bg-zinc-800/80 rounded-[2px] overflow-hidden" title={`${Math.round(pct * 100)}%`}>
               <div className={`h-full transition-all ${pct >= 0.8 ? 'bg-emerald-500' : pct >= 0.5 ? 'bg-sky-500' : pct > 0 ? 'bg-amber-400' : 'bg-transparent'}`} style={{ width: `${pct * 100}%` }} />
             </div>
-            <span className={`text-[8px] font-medium ${isToday ? 'text-sky-500 dark:text-sky-400 font-bold' : 'text-zinc-400'}`}>{label}</span>
+            <span className={`text-xs scale-90 font-medium ${isToday ? 'text-sky-500 dark:text-sky-400 font-bold' : 'text-zinc-400'}`}>{label}</span>
           </div>
         ))}
       </div>
-      <p className="text-[9px] text-zinc-400 italic">{quote}</p>
+      <p className="text-xs text-zinc-400 italic">{quote}</p>
     </div>
   );
 }

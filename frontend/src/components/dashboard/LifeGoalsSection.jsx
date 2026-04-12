@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+﻿import React, { useCallback } from 'react';
 import { Icons } from './Icons';
 import { LifeGoalCard } from './LifeGoalComponents';
 import { DenseTaskNode } from './DenseTaskNode';
@@ -7,6 +7,7 @@ import { createTaskNode, updateNodeInTree, removeNodeFromTree, countTreeStats, g
 import { useDashboardStore } from '../../store/dashboardStore';
 import { useToast } from '../../context/ToastContext';
 import { Card, CardHeader, CardBody } from './Card';
+import { AddItemInputBar } from './AddItemInputBar';
 
 export function LifeGoalsSection() {
   const store = useDashboardStore();
@@ -94,14 +95,14 @@ export function LifeGoalsSection() {
               >
                 {tier.goals.length === 0 && (
                         <div className="relative flex min-h-[3rem] items-center justify-center overflow-hidden rounded-xl border border-dashed border-zinc-200/80 dark:border-white/[0.1] bg-zinc-50/40 dark:bg-white/[0.02] transition-all group/empty hover:border-indigo-400/40 dark:hover:border-indigo-500/30">
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 transition-colors group-hover/empty:text-indigo-500 dark:group-hover/empty:text-indigo-400">Trascina o aggiungi obiettivi</span>
+                          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 transition-colors group-hover/empty:text-indigo-500 dark:group-hover/empty:text-indigo-400">Trascina o aggiungi obiettivi</span>
                         </div>
                       )}
 
                       {tier.goals.some(g => g.type === 'quick') && (
                         <div className="space-y-2">
-                          <h4 className="px-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Micro movements</h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1.5">
+                          <h4 className="px-0.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Micro movements</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 auto-cols-fr">
                             {tier.goals.filter(g => g.type === 'quick').map((goal) => (
                               <LifeGoalCard
                                 key={goal.id} goal={goal} compact
@@ -135,8 +136,8 @@ export function LifeGoalsSection() {
 
                       {tier.goals.some(g => g.type === 'project') && (
                         <div className="space-y-2">
-                          <h4 className="px-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Macro progetti</h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                          <h4 className="px-0.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Macro progetti</h4>
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 auto-cols-fr">
                             {tier.goals.filter(g => g.type === 'project').map((goal) => {
                               const stats = countTreeStats(goal.tasks);
                               const percentage = Math.round(stats.ratio * 100);
@@ -176,21 +177,18 @@ export function LifeGoalsSection() {
                                         />
                                       ))}
                                       <div className="pt-2">
-                                        <input
+                                        <AddItemInputBar
                                           value={goalTaskDrafts[goal.id] ?? ''}
-                                          onChange={(e) => setGoalTaskDrafts(prev => ({ ...prev, [goal.id]: e.target.value }))}
-                                          onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                              e.preventDefault();
-                                              const title = (goalTaskDrafts[goal.id] ?? '').trim();
-                                              if (title) {
-                                                updateGoal(goal.id, g => ({ ...g, tasks: [...(g.tasks || []), createTaskNode(title)] }));
-                                                setGoalTaskDrafts(prev => ({ ...prev, [goal.id]: '' }));
-                                              }
+                                          onChange={(val) => setGoalTaskDrafts(prev => ({ ...prev, [goal.id]: val }))}
+                                          onSubmit={() => {
+                                            const title = (goalTaskDrafts[goal.id] ?? '').trim();
+                                            if (title) {
+                                              updateGoal(goal.id, g => ({ ...g, tasks: [...(g.tasks || []), createTaskNode(title)] }));
+                                              setGoalTaskDrafts(prev => ({ ...prev, [goal.id]: '' }));
                                             }
                                           }}
-                                          placeholder="+ Aggiungi task..."
-                                          className="w-full border-b border-transparent bg-transparent py-1 text-sm text-zinc-600 outline-none placeholder:text-zinc-400 dark:text-zinc-400 dark:placeholder:text-zinc-600"
+                                          placeholder="Aggiungi task..."
+                                          buttonColor="violet"
                                         />
                                       </div>
                                     </>
@@ -206,14 +204,14 @@ export function LifeGoalsSection() {
                   <button
                     type="button"
                     onClick={() => { const title = window.prompt("Quick goal:"); if (title) addGoalToTier(tier.id, title, 'General', 'quick'); }}
-                    className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-600 transition-all hover:bg-zinc-200 dark:bg-white/[0.05] dark:text-zinc-400 dark:hover:bg-white/[0.08]"
+                    className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-600 transition-all hover:bg-zinc-200 dark:bg-white/[0.05] dark:text-zinc-400 dark:hover:bg-white/[0.08]"
                   >
                     <Icons.Plus className="h-3 w-3" /> Quick
                   </button>
                   <button
                     type="button"
                     onClick={() => { const title = window.prompt("Progetto:"); if (title) addGoalToTier(tier.id, title, 'General', 'project'); }}
-                    className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-white shadow-md shadow-indigo-500/25 transition-all hover:shadow-lg hover:shadow-indigo-500/30 dark:from-indigo-500/90 dark:to-violet-600/90"
+                    className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white shadow-md shadow-indigo-500/25 transition-all hover:shadow-lg hover:shadow-indigo-500/30 dark:from-indigo-500/90 dark:to-violet-600/90"
                   >
                     <Icons.Plus className="h-3 w-3" /> Project
                   </button>

@@ -1,8 +1,18 @@
-import React from 'react';
+﻿import React from 'react';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
 import { Card, CardBody, ProgressBar } from './Card';
 
+/**
+ * @param {{
+ *   todayPrayerLog: Record<string, boolean>;
+ *   togglePrayer: (name: string, val: boolean) => void;
+ *   PRAYERS: string[];
+ *   countdowns?: Array<{ label: string; remaining: string; pct: number }>;
+ *   todayFocusScore?: number;
+ *   focusStreak?: number;
+ * }} props
+ */
 export function PrayersCountdowns({
   todayPrayerLog,
   togglePrayer,
@@ -13,12 +23,12 @@ export function PrayersCountdowns({
 }) {
   return (
     <Card className="flex flex-col min-h-0">
-      <CardBody padding="normal" className="flex items-center gap-8 py-4">
+      <CardBody padding="normal" className="flex items-center gap-4 sm:gap-6 py-3 sm:py-4">
         {/* Section 1: Progress Score (Expanded) */}
         <div className="flex flex-col flex-1 gap-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Focus Score</span>
-            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 tabular-nums">{Math.round(todayFocusScore * 100)}%</span>
+            <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Focus Score</span>
+            <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 tabular-nums">{Math.round(todayFocusScore * 100)}%</span>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex-1">
@@ -36,10 +46,10 @@ export function PrayersCountdowns({
         <div className="h-10 w-px bg-zinc-100 dark:bg-white/[0.04] shrink-0" />
 
         {/* Section 2: Periodic Countdowns (Expanded) */}
-        <div className="flex items-center gap-8 shrink-0">
+        <div className="flex items-center gap-3 sm:gap-4 lg:gap-6 shrink-0">
           {Array.isArray(countdowns) && countdowns.map((c) => (
             <div key={c.label} className="flex flex-col items-center min-w-[80px]">
-              <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1">
+              <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1">
                 {c.label}
               </span>
               <span className="text-base font-bold tabular-nums text-zinc-900 dark:text-zinc-50 tracking-tight">

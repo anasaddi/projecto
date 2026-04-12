@@ -65,7 +65,7 @@ export default function Welcome() {
           transition={{ delay: 0.6, duration: 0.6 }}
           className="mt-12 pt-8 border-t border-zinc-200/50 dark:border-white/[0.06]"
         >
-          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white dark:bg-white/[0.03] border border-zinc-200/50 dark:border-white/[0.06] shadow-sm text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
+          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white dark:bg-white/[0.03] border border-zinc-200/50 dark:border-white/[0.06] shadow-sm text-xs font-bold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
@@ -92,7 +92,7 @@ export default function Welcome() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2 }}
-        className="fixed bottom-8 left-1/2 -translate-x-1/2 text-[10px] text-zinc-400 dark:text-zinc-600 font-medium tracking-tight uppercase"
+        className="fixed bottom-8 left-1/2 -translate-x-1/2 text-xs text-zinc-400 dark:text-zinc-600 font-medium tracking-tight uppercase"
       >
         v0.1.0 • PROJECTO
       </motion.div>

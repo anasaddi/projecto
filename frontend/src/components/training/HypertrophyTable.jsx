@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronUp, History as HistoryIcon } from 'lucide-react';
 import { api } from '../../api/client';
@@ -106,13 +106,13 @@ const HypertrophyTable = ({ exercise, onRowsChange, onProgressionChange, initial
       >
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-1.5 h-6 bg-emerald-500/20 rounded-full group-hover:bg-emerald-500/40 transition-colors" />
-          <span className="text-[13px] font-black tracking-tight text-zinc-900 dark:text-zinc-100 uppercase truncate">{exercise_name}</span>
+          <span className="text-sm font-black tracking-tight text-zinc-900 dark:text-zinc-100 uppercase truncate">{exercise_name}</span>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
           <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-100 dark:border-emerald-500/10">
-            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">2 Sets</span>
-            <span className="text-[9px] font-bold text-emerald-600/60 dark:text-emerald-400/60 uppercase tracking-tighter">{base_reps || 'VAR'} Reps</span>
+            <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">2 Sets</span>
+            <span className="text-xs font-bold text-emerald-600/60 dark:text-emerald-400/60 uppercase tracking-tighter">{base_reps || 'VAR'} Reps</span>
           </div>
           <ChevronUp size={14} className={`transform transition-transform duration-300 ${expanded ? '' : 'rotate-180'} text-zinc-400`} />
         </div>
@@ -124,7 +124,7 @@ const HypertrophyTable = ({ exercise, onRowsChange, onProgressionChange, initial
             {/* Anas */}
             <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all 
                 ${data.anas.completed ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-transparent border-transparent'}`}>
-              <span className="text-[10px] font-black text-zinc-400 w-4 text-center">A</span>
+              <span className="text-xs font-black text-zinc-400 w-4 text-center">A</span>
               <div className="flex gap-1 flex-1">
                 <ModernInput type="number" step="0.5" value={data.anas.w} onChange={v => upd('anas', 'w', v)} placeholder="kg" className="bg-transparent border-0 h-6" />
                 <ModernInput type="number" value={data.anas.r} onChange={v => upd('anas', 'r', v)} placeholder="r" className="bg-transparent border-0 h-6" />
@@ -135,7 +135,7 @@ const HypertrophyTable = ({ exercise, onRowsChange, onProgressionChange, initial
             {/* Flavio */}
             <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all 
                 ${data.flavio.completed ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-transparent border-transparent'}`}>
-              <span className="text-[10px] font-black text-zinc-400 w-4 text-center">F</span>
+              <span className="text-xs font-black text-zinc-400 w-4 text-center">F</span>
               <div className="flex gap-1 flex-1">
                 <ModernInput type="number" step="0.5" value={data.flavio.w} onChange={v => upd('flavio', 'w', v)} placeholder="kg" className="bg-transparent border-0 h-6" />
                 <ModernInput type="number" value={data.flavio.r} onChange={v => upd('flavio', 'r', v)} placeholder="r" className="bg-transparent border-0 h-6" />
@@ -148,7 +148,7 @@ const HypertrophyTable = ({ exercise, onRowsChange, onProgressionChange, initial
             {/* Extended Inputs */}
             <div className="grid grid-cols-2 gap-4 px-2 py-4 border-b border-zinc-100 dark:border-white/5 mb-4">
               <div className="space-y-3">
-                <div className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest px-1">Anas Performance</div>
+                <div className="text-xs font-bold text-zinc-400 uppercase tracking-widest px-1">Anas Performance</div>
                 <div className="flex items-center gap-2">
                   <ModernInput type="number" step="0.5" value={data.anas.w} onChange={v => upd('anas', 'w', v)} placeholder="Weight" />
                   <ModernInput type="number" value={data.anas.r} onChange={v => upd('anas', 'r', v)} placeholder="Reps" />
@@ -156,7 +156,7 @@ const HypertrophyTable = ({ exercise, onRowsChange, onProgressionChange, initial
                 </div>
               </div>
               <div className="space-y-3">
-                <div className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest px-1">Flavio Performance</div>
+                <div className="text-xs font-bold text-zinc-400 uppercase tracking-widest px-1">Flavio Performance</div>
                 <div className="flex items-center gap-2">
                   <ModernInput type="number" step="0.5" value={data.flavio.w} onChange={v => upd('flavio', 'w', v)} placeholder="Weight" />
                   <ModernInput type="number" value={data.flavio.r} onChange={v => upd('flavio', 'r', v)} placeholder="Reps" />
@@ -170,13 +170,13 @@ const HypertrophyTable = ({ exercise, onRowsChange, onProgressionChange, initial
                 <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
               </div>
             ) : history.length === 0 ? (
-              <div className="py-8 text-center text-[10px] text-zinc-400 uppercase tracking-widest">No training history available</div>
+              <div className="py-8 text-center text-xs text-zinc-400 uppercase tracking-widest">No training history available</div>
             ) : (
               <div className="space-y-3 px-2 pb-2">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-[10px] font-black text-zinc-900 dark:text-white uppercase tracking-[0.15em]">Analytics History</span>
+                  <span className="text-xs font-black text-zinc-900 dark:text-white uppercase tracking-[0.15em]">Analytics History</span>
                   <div className="flex gap-4">
-                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">W/R Ratio</span>
+                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">W/R Ratio</span>
                   </div>
                 </div>
 
@@ -212,10 +212,10 @@ const HypertrophyTable = ({ exercise, onRowsChange, onProgressionChange, initial
                 <div className="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar pr-1">
                   {history.map((e, i) => (
                     <div key={i} className="flex items-center justify-between px-3 py-2 bg-zinc-50 dark:bg-white/[0.02] rounded-xl border border-zinc-100 dark:border-white/5">
-                      <span className="text-[10px] font-black text-zinc-400 uppercase tracking-tighter">{formatDate(e.date)}</span>
+                      <span className="text-xs font-black text-zinc-400 uppercase tracking-tighter">{formatDate(e.date)}</span>
                       <div className="flex gap-3">
-                        <span className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100">{e.weight_kg ?? '-'} <span className="text-zinc-400">kg</span></span>
-                        <span className="text-[10px] font-bold text-zinc-900 dark:text-zinc-100">{e.reps ?? '-'} <span className="text-zinc-400">r</span></span>
+                        <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{e.weight_kg ?? '-'} <span className="text-zinc-400">kg</span></span>
+                        <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{e.reps ?? '-'} <span className="text-zinc-400">r</span></span>
                       </div>
                     </div>
                   ))}

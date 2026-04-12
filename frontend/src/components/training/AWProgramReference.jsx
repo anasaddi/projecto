@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Card } from './TrainingUI';
 
 export const AW_PROGRAM_FALLBACK = {
@@ -53,7 +53,7 @@ const AWProgramReference = ({ awProgram }) => {
   return (
     <div className="space-y-4 mt-6">
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500">Protocollo Riferimento</span>
+        <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500">Protocollo Riferimento</span>
         <div className="h-px flex-1 bg-gradient-to-r from-amber-200 to-transparent" />
       </div>
 
@@ -63,7 +63,7 @@ const AWProgramReference = ({ awProgram }) => {
             <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{awProgram.max_day.title}</h3>
           </div>
           <div className="p-3 overflow-x-auto custom-scrollbar">
-            <table className="w-full text-[10px] border-collapse">
+            <table className="w-full text-xs border-collapse">
               <thead>
                 <tr className="border-b border-amber-100 dark:border-amber-800/50">
                   <th className="py-2 px-2 text-left font-bold text-amber-600 dark:text-amber-400">W</th>
@@ -93,7 +93,7 @@ const AWProgramReference = ({ awProgram }) => {
             <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{awProgram.light.title}</h3>
           </div>
           <div className="p-3 overflow-x-auto custom-scrollbar">
-            <table className="w-full text-[10px] border-collapse">
+            <table className="w-full text-xs border-collapse">
               <thead>
                 <tr className="border-b border-amber-100 dark:border-amber-800/50">
                   <th className="py-2 px-2 text-left font-bold text-gray-600 dark:text-gray-400">Esercizio</th>
@@ -127,7 +127,7 @@ const AWProgramReference = ({ awProgram }) => {
             <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{awProgram.heavy.title}</h3>
           </div>
           <div className="p-3 overflow-x-auto custom-scrollbar">
-            <table className="w-full text-[10px] border-collapse">
+            <table className="w-full text-xs border-collapse">
               <thead>
                 <tr className="border-b border-amber-100 dark:border-amber-800/50">
                   <th className="py-2 px-2 text-left font-bold text-gray-600 dark:text-gray-400">Esercizio</th>
@@ -161,7 +161,7 @@ const AWProgramReference = ({ awProgram }) => {
             <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{awProgram.speed.title}</h3>
           </div>
           <div className="p-3 overflow-x-auto custom-scrollbar">
-            <table className="w-full text-[10px] border-collapse">
+            <table className="w-full text-xs border-collapse">
               <thead>
                 <tr className="border-b border-amber-100 dark:border-amber-800/50">
                   <th className="py-2 px-2 text-left font-bold text-gray-600 dark:text-gray-400">Esercizio</th>

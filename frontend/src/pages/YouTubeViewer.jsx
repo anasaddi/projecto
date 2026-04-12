@@ -396,14 +396,14 @@ function TranscriptConversation({
                     : 'hover:bg-gray-50/60 dark:hover:bg-white/[0.04] border-l-2 border-transparent pl-5',
                 ].join(' ')}
               >
-                <span className="font-mono text-[11px] text-gray-400 dark:text-gray-500 tabular-nums select-none mr-2">
+                <span className="font-mono text-xs text-gray-400 dark:text-gray-500 tabular-nums select-none mr-2">
                   [{formatTime(seg.timeSeconds)}]
                 </span>
-                <span className={`whitespace-pre-wrap break-words text-[15px] leading-[1.7] text-gray-800 dark:text-gray-200 select-text ${isActive ? 'font-medium' : ''}`}>
+                <span className={`whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-800 dark:text-gray-200 select-text ${isActive ? 'font-medium' : ''}`}>
                   {renderHighlightedText(seg.text, segmentHighlights)}
                 </span>
                 {isActive && (
-                  <span className="inline-flex items-center gap-1 ml-2 text-[10px] text-sky-500 font-medium">
+                  <span className="inline-flex items-center gap-1 ml-2 text-xs text-sky-500 font-medium">
                     <span className="h-1 w-1 rounded-full bg-sky-500 animate-pulse" />
                     in riproduzione
                   </span>
@@ -457,18 +457,18 @@ function TranscriptConversation({
               ].join(' ')}
             >
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <span className="font-mono text-[10px] text-gray-500 dark:text-gray-400 tabular-nums">{formatTime(seg.timeSeconds)}</span>
-                <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium ${style.pill}`}>
+                <span className="font-mono text-xs text-gray-500 dark:text-gray-400 tabular-nums">{formatTime(seg.timeSeconds)}</span>
+                <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium ${style.pill}`}>
                   {seg.speakerLabel}
                 </span>
                 {isActive && (
-                  <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                  <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
                     <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
                     live
                   </span>
                 )}
               </div>
-              <p className={`whitespace-pre-wrap break-words text-[14px] leading-[1.65] text-gray-800 dark:text-gray-200 select-text ${isActive ? 'font-medium' : ''}`}>
+              <p className={`whitespace-pre-wrap break-words text-sm leading-[1.65] text-gray-800 dark:text-gray-200 select-text ${isActive ? 'font-medium' : ''}`}>
                 {renderHighlightedText(seg.text, segmentHighlights)}
               </p>
             </div>
@@ -538,22 +538,22 @@ function LlmDebateMap({ result, onSeekTo }) {
     <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_6px_24px_rgba(15,23,42,0.08)]">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div>
-          <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
             Mappa dibattito • {result?.label || result?.model || 'LLM'}
           </h3>
-          <p className="text-[10px] text-slate-400">
+          <p className="text-xs text-slate-400">
             Stessi dati del confronto: topic, speaker, claim per modello. parse: {result?.parse_mode || 'n/a'} • topics {data.topics.length} • links {data.links.length}
           </p>
         </div>
         <span className={[
-          'rounded-full border px-2 py-0.5 text-[10px] font-medium',
+          'rounded-full border px-2 py-0.5 text-xs font-medium',
           result?.ok ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700',
         ].join(' ')}>
           {result?.ok ? 'PASS' : 'FAIL'}
         </span>
       </div>
 
-      <div className="mb-2 flex flex-wrap gap-1.5 text-[10px] text-slate-600">
+      <div className="mb-2 flex flex-wrap gap-1.5 text-xs text-slate-600">
         <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5">topics {data.topics.length}</span>
         <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5">speakers {data.speakers.length}</span>
         <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5">claims {claims.length}</span>
@@ -573,13 +573,13 @@ function LlmDebateMap({ result, onSeekTo }) {
                   <p className="text-sm font-semibold text-slate-800 truncate">
                     {idx + 1}. {row.label}
                   </p>
-                  <p className="text-[11px] text-slate-500">mentions: {row.mentions}</p>
+                  <p className="text-xs text-slate-500">mentions: {row.mentions}</p>
                 </div>
                 {row.firstTime != null ? (
                   <button
                     type="button"
                     onClick={() => onSeekTo?.(row.firstTime)}
-                    className="rounded-md border border-sky-200 bg-white px-2 py-1 text-[11px] text-sky-700 hover:bg-sky-50"
+                    className="rounded-md border border-sky-200 bg-white px-2 py-1 text-xs text-sky-700 hover:bg-sky-50"
                   >
                     vai {formatTime(row.firstTime)}
                   </button>
@@ -591,7 +591,7 @@ function LlmDebateMap({ result, onSeekTo }) {
                   <span
                     key={`cell-${row.id}-${cell.speaker}`}
                     className={[
-                      'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px]',
+                      'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs',
                       stancePill(cell.stance),
                     ].join(' ')}
                   >
@@ -605,7 +605,7 @@ function LlmDebateMap({ result, onSeekTo }) {
               {row.sampleClaims.length > 0 ? (
                 <div className="space-y-1">
                   {row.sampleClaims.map((c, ci) => (
-                    <div key={`claim-${row.id}-${ci}`} className="rounded-md bg-white px-2 py-1 text-[11px] text-slate-700">
+                    <div key={`claim-${row.id}-${ci}`} className="rounded-md bg-white px-2 py-1 text-xs text-slate-700">
                       <span className="font-mono text-slate-500">{formatTime(c.timestamp_s)}</span>
                       <span className="mx-1">•</span>
                       <span className="font-medium">{c.speaker}</span>
@@ -623,10 +623,10 @@ function LlmDebateMap({ result, onSeekTo }) {
 
       {topDisagreements.length > 0 ? (
         <div className="mt-2 rounded-lg border border-violet-100 bg-violet-50/35 p-2">
-          <p className="mb-1 text-[10px] uppercase tracking-wide text-violet-700">Top disaccordi</p>
+          <p className="mb-1 text-xs uppercase tracking-wide text-violet-700">Top disaccordi</p>
           <div className="space-y-1">
             {topDisagreements.map((d, i) => (
-              <div key={`dg-${i}`} className="text-[11px] text-violet-800">
+              <div key={`dg-${i}`} className="text-xs text-violet-800">
                 {d.a} vs {d.b} su <strong>{d.topic}</strong>
               </div>
             ))}
@@ -655,7 +655,7 @@ function LlmDebateMaps({ compareData, loading, onSeekTo }) {
   }
   return (
     <div className="space-y-3">
-      <p className="text-[11px] text-slate-500 mb-1">Una mappa per ciascuno dei 3 modelli (topic, speaker, claim).</p>
+      <p className="text-xs text-slate-500 mb-1">Una mappa per ciascuno dei 3 modelli (topic, speaker, claim).</p>
       {results.map((r) => (
         <LlmDebateMap key={r.model || r.label} result={r} onSeekTo={onSeekTo} />
       ))}
@@ -685,7 +685,7 @@ function ModelComparisonPanel({ loading, error, data, onRetry, strictBenchmark }
         <button
           type="button"
           onClick={onRetry}
-          className="mt-2 rounded-md border border-red-200 bg-white px-2.5 py-1 text-[11px] text-red-700 hover:bg-red-50"
+          className="mt-2 rounded-md border border-red-200 bg-white px-2.5 py-1 text-xs text-red-700 hover:bg-red-50"
         >
           Riprova
         </button>
@@ -712,28 +712,28 @@ function ModelComparisonPanel({ loading, error, data, onRetry, strictBenchmark }
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
             Quale modello è il migliore?
           </p>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-xs text-slate-400">
             Confronto tra i 3 Gemini Flash Lite sull’analisi del dibattito (topic, claim, disaccordi). Estratto: {data.excerpt_chars} chars • grounding min: {formatPercent(data.grounding_min_ratio)} • mode: {data.strict_benchmark ? 'strict benchmark' : 'standard'}
           </p>
         </div>
         <div className="flex items-center gap-1.5">
           <span className={[
-            'rounded-full px-2 py-1 text-[11px] font-medium border',
+            'rounded-full px-2 py-1 text-xs font-medium border',
             data.from_cache ? 'bg-sky-50 text-sky-700 border-sky-200' : 'bg-slate-50 text-slate-700 border-slate-200',
           ].join(' ')}>
             {data.from_cache ? 'LLM cache' : 'LLM fresh'}
           </span>
           {data.strict_benchmark ? (
-            <span className="rounded-full bg-violet-50 px-2 py-1 text-[11px] font-medium text-violet-700 border border-violet-200">
+            <span className="rounded-full bg-violet-50 px-2 py-1 text-xs font-medium text-violet-700 border border-violet-200">
               strict
             </span>
           ) : null}
           {data.winner_label ? (
-            <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 border border-emerald-200">
+            <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 border border-emerald-200">
               Winner: {data.winner_label}
             </span>
           ) : (
-            <span className="rounded-full bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-700 border border-amber-200">
+            <span className="rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 border border-amber-200">
               Nessun winner (hard fail)
             </span>
           )}
@@ -754,20 +754,20 @@ function ModelComparisonPanel({ loading, error, data, onRetry, strictBenchmark }
               <div className="mb-2 flex items-start justify-between gap-2">
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{r.label || r.model}</p>
-                  <p className="text-[11px] text-slate-500">{r.model}</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500">{r.model}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">
                     parse: {r.parse_mode || 'n/a'}
                   </p>
                 </div>
                 <span className={[
-                  'rounded-full border px-2 py-0.5 text-[11px] font-medium',
+                  'rounded-full border px-2 py-0.5 text-xs font-medium',
                   r.ok ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700',
                 ].join(' ')}>
                   {r.ok ? 'PASS' : 'FAIL'}
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-slate-600 mb-2">
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-slate-600 mb-2">
                 <span>score: <strong className="text-slate-800">{r.metrics?.score ?? 0}</strong></span>
                 <span>cost: <strong className="text-slate-800">{formatUsd(r.usage?.total_cost_usd ?? r.usage?.cost_usd)}</strong></span>
                 <span>claims: <strong className="text-slate-800">{r.metrics?.claims_count ?? 0}</strong></span>
@@ -776,17 +776,17 @@ function ModelComparisonPanel({ loading, error, data, onRetry, strictBenchmark }
                 <span>grounding: <strong className="text-slate-800">{formatPercent(r.metrics?.quote_grounding_ratio)}</strong></span>
               </div>
               {Number(r.usage?.repair_cost_usd || 0) > 0 ? (
-                <p className="mb-2 text-[10px] text-amber-700">
+                <p className="mb-2 text-xs text-amber-700">
                   repair cost: {formatUsd(r.usage?.repair_cost_usd)}
                 </p>
               ) : null}
 
               {!r.ok && r.error ? (
-                <p className="mb-2 rounded-md bg-rose-50 px-2 py-1 text-[11px] text-rose-700">{r.error}</p>
+                <p className="mb-2 rounded-md bg-rose-50 px-2 py-1 text-xs text-rose-700">{r.error}</p>
               ) : null}
 
-              <p className="mb-1 text-[11px] uppercase tracking-wide text-slate-400">Output JSON</p>
-              <pre className="max-h-56 overflow-auto rounded-md bg-slate-950 p-2 text-[10px] leading-relaxed text-slate-100">
+              <p className="mb-1 text-xs uppercase tracking-wide text-slate-400">Output JSON</p>
+              <pre className="max-h-56 overflow-auto rounded-md bg-slate-950 p-2 text-xs leading-relaxed text-slate-100">
                 {JSON.stringify(r.output || {}, null, 2)}
               </pre>
             </div>
@@ -800,7 +800,7 @@ function ModelComparisonPanel({ loading, error, data, onRetry, strictBenchmark }
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-indigo-700">
               Diff claim-by-claim
             </p>
-            <p className="text-[11px] text-indigo-500">
+            <p className="text-xs text-indigo-500">
               {claimDiff.left?.label} vs {claimDiff.right?.label}
             </p>
           </div>
@@ -808,7 +808,7 @@ function ModelComparisonPanel({ loading, error, data, onRetry, strictBenchmark }
           <div className="max-h-[26rem] overflow-auto space-y-2 pr-1">
             {claimDiff.rows.slice(0, 20).map((row, i) => (
               <article key={`diff-row-${i}`} className="rounded-lg border border-slate-200 bg-slate-50/40 p-2.5">
-                <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[10px]">
+                <div className="mb-2 flex flex-wrap items-center gap-1.5 text-xs">
                   <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-slate-600">
                     #{i + 1}
                   </span>
@@ -843,40 +843,40 @@ function ModelComparisonPanel({ loading, error, data, onRetry, strictBenchmark }
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div className="rounded-md border border-indigo-100 bg-indigo-50/40 p-2">
-                    <p className="text-[11px] font-medium text-indigo-700 mb-1">{claimDiff.left?.label}</p>
+                    <p className="text-xs font-medium text-indigo-700 mb-1">{claimDiff.left?.label}</p>
                     {row.left ? (
                       <>
-                        <p className="text-[10px] text-slate-500 mb-1">
+                        <p className="text-xs text-slate-500 mb-1">
                           {formatTime(row.left.timestamp_s)} • {row.left.speaker} • {row.left.topic} • {row.left.stance}
                         </p>
-                        <p className="text-[11px] text-slate-800 leading-relaxed mb-1">
+                        <p className="text-xs text-slate-800 leading-relaxed mb-1">
                           {toShort(row.left.claim)}
                         </p>
-                        <p className="text-[10px] text-slate-500 italic">
+                        <p className="text-xs text-slate-500 italic">
                           "{toShort(row.left.evidence_quote, 120)}"
                         </p>
                       </>
                     ) : (
-                      <p className="text-[11px] text-slate-400">Nessun claim allineato</p>
+                      <p className="text-xs text-slate-400">Nessun claim allineato</p>
                     )}
                   </div>
 
                   <div className="rounded-md border border-fuchsia-100 bg-fuchsia-50/35 p-2">
-                    <p className="text-[11px] font-medium text-fuchsia-700 mb-1">{claimDiff.right?.label}</p>
+                    <p className="text-xs font-medium text-fuchsia-700 mb-1">{claimDiff.right?.label}</p>
                     {row.right ? (
                       <>
-                        <p className="text-[10px] text-slate-500 mb-1">
+                        <p className="text-xs text-slate-500 mb-1">
                           {formatTime(row.right.timestamp_s)} • {row.right.speaker} • {row.right.topic} • {row.right.stance}
                         </p>
-                        <p className="text-[11px] text-slate-800 leading-relaxed mb-1">
+                        <p className="text-xs text-slate-800 leading-relaxed mb-1">
                           {toShort(row.right.claim)}
                         </p>
-                        <p className="text-[10px] text-slate-500 italic">
+                        <p className="text-xs text-slate-500 italic">
                           "{toShort(row.right.evidence_quote, 120)}"
                         </p>
                       </>
                     ) : (
-                      <p className="text-[11px] text-slate-400">Nessun claim allineato</p>
+                      <p className="text-xs text-slate-400">Nessun claim allineato</p>
                     )}
                   </div>
                 </div>
@@ -1285,7 +1285,7 @@ export default function YouTubeViewer() {
             </div>
             {urlError && <p className="text-xs font-medium text-red-600 dark:text-red-400 ml-2">{urlError}</p>}
           </form>
-          <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 flex justify-center gap-6 text-[11px] text-gray-400 dark:text-gray-500 font-medium uppercase tracking-widest">
+          <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 flex justify-center gap-6 text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-widest">
             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Sincronizzato</span>
             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-sky-500" /> Interattivo</span>
             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Export AI</span>
@@ -1301,16 +1301,16 @@ export default function YouTubeViewer() {
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <h1 className="text-lg font-extrabold tracking-tight text-gray-800 dark:text-gray-100 shrink-0 flex items-center gap-2">
             YouTube
-            <span className="text-[10px] font-bold px-2 py-0.5 bg-rose-100 dark:bg-rose-500/25 text-rose-600 dark:text-rose-300 rounded-md uppercase tracking-widest">Transcript</span>
+            <span className="text-xs font-bold px-2 py-0.5 bg-rose-100 dark:bg-rose-500/25 text-rose-600 dark:text-rose-300 rounded-md uppercase tracking-widest">Transcript</span>
           </h1>
           <div className="flex rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden shrink-0">
-            <button type="button" onClick={() => setSpeakers(1)} className={`px-2.5 py-1.5 text-[10px] font-medium ${speakers === 1 ? 'bg-gray-800 dark:bg-gray-700 text-white' : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'}`} title="Monologo">1</button>
-            <button type="button" onClick={() => setSpeakers(2)} className={`px-2.5 py-1.5 text-[10px] font-medium border-l border-gray-200 dark:border-gray-700 ${speakers === 2 ? 'bg-gray-800 dark:bg-gray-700 text-white' : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'}`} title="Dialogo">2</button>
+            <button type="button" onClick={() => setSpeakers(1)} className={`px-2.5 py-1.5 text-xs font-medium ${speakers === 1 ? 'bg-gray-800 dark:bg-gray-700 text-white' : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'}`} title="Monologo">1</button>
+            <button type="button" onClick={() => setSpeakers(2)} className={`px-2.5 py-1.5 text-xs font-medium border-l border-gray-200 dark:border-gray-700 ${speakers === 2 ? 'bg-gray-800 dark:bg-gray-700 text-white' : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'}`} title="Dialogo">2</button>
           </div>
           <div className="flex rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden shrink-0" title="Lingua trascrizione">
-            <button type="button" onClick={() => setLanguage('it')} className={`px-2 py-1.5 text-[10px] font-medium ${language === 'it' ? 'bg-gray-800 dark:bg-gray-700 text-white' : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'}`}>IT</button>
-            <button type="button" onClick={() => setLanguage('en')} className={`px-2 py-1.5 text-[10px] font-medium border-l border-gray-200 dark:border-gray-700 ${language === 'en' ? 'bg-gray-800 dark:bg-gray-700 text-white' : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'}`}>EN</button>
-            <button type="button" onClick={() => setLanguage('auto')} className={`px-2 py-1.5 text-[10px] font-medium border-l border-gray-200 dark:border-gray-700 ${language === 'auto' ? 'bg-gray-800 dark:bg-gray-700 text-white' : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'}`}>Auto</button>
+            <button type="button" onClick={() => setLanguage('it')} className={`px-2 py-1.5 text-xs font-medium ${language === 'it' ? 'bg-gray-800 dark:bg-gray-700 text-white' : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'}`}>IT</button>
+            <button type="button" onClick={() => setLanguage('en')} className={`px-2 py-1.5 text-xs font-medium border-l border-gray-200 dark:border-gray-700 ${language === 'en' ? 'bg-gray-800 dark:bg-gray-700 text-white' : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'}`}>EN</button>
+            <button type="button" onClick={() => setLanguage('auto')} className={`px-2 py-1.5 text-xs font-medium border-l border-gray-200 dark:border-gray-700 ${language === 'auto' ? 'bg-gray-800 dark:bg-gray-700 text-white' : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'}`}>Auto</button>
           </div>
           <input
             type="url"
@@ -1328,11 +1328,11 @@ export default function YouTubeViewer() {
           />
           <label className="flex items-center gap-1.5 shrink-0 cursor-pointer" title="Rigenera (ignora cache)">
             <input type="checkbox" checked={forceRefresh} onChange={(e) => setForceRefresh(e.target.checked)} className="h-3.5 w-3.5 rounded border-gray-300 text-rose-500 dark:border-gray-600" />
-            <span className="text-[10px] text-gray-500 dark:text-gray-400">Rigenera</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">Rigenera</span>
           </label>
           <label className="flex items-center gap-1.5 shrink-0 cursor-pointer" title="Trascrizione completa (AssemblyAI)">
             <input type="checkbox" checked={useAssembly} onChange={(e) => setUseAssembly(e.target.checked)} className="h-3.5 w-3.5 rounded border-gray-300 text-sky-500 dark:border-gray-600" />
-            <span className="text-[10px] text-gray-500 dark:text-gray-400">Completa</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">Completa</span>
           </label>
           <button
             type="button"
@@ -1346,13 +1346,13 @@ export default function YouTubeViewer() {
             Cambia video
           </button>
         </div>
-        {urlError ? <p className="ml-2 text-[10px] text-red-600 dark:text-red-400">{urlError}</p> : null}
+        {urlError ? <p className="ml-2 text-xs text-red-600 dark:text-red-400">{urlError}</p> : null}
       </div>
 
       <div className="flex-1 min-h-0 p-5 flex gap-5 overflow-hidden">
         <aside className="w-full lg:w-[40%] xl:w-[36%] rounded-xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-[#1a1d24] shadow-sm overflow-y-auto custom-scrollbar shrink-0">
           <div className="p-4 space-y-4">
-            <div className="mb-3 flex items-center justify-between text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+            <div className="mb-3 flex items-center justify-between text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-widest">
               <span className="inline-flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 sincronizzato
@@ -1362,7 +1362,7 @@ export default function YouTubeViewer() {
             <div className="aspect-video w-full rounded-xl overflow-hidden bg-black shadow-md shadow-black/10 dark:shadow-black/40 ring-1 ring-gray-200 dark:ring-white/10">
               <div id="yt-player-container" className="w-full h-full relative z-10" />
             </div>
-            <div className="rounded-lg border border-gray-200/80 dark:border-gray-700/80 bg-gray-50 dark:bg-white/5 px-3 py-2 text-[11px] text-gray-600 dark:text-gray-400">
+            <div className="rounded-lg border border-gray-200/80 dark:border-gray-700/80 bg-gray-50 dark:bg-white/5 px-3 py-2 text-xs text-gray-600 dark:text-gray-400">
               Clicca un blocco della trascrizione per fare seek al timestamp.
             </div>
           </div>
@@ -1371,29 +1371,29 @@ export default function YouTubeViewer() {
         <section className="relative flex-1 flex flex-col min-w-0 min-h-0 rounded-xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-[#1a1d24] shadow-sm overflow-hidden">
           <div className="flex-shrink-0 px-5 py-3 border-b border-gray-200/80 dark:border-gray-700/80 bg-gray-50/80 dark:bg-white/5 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Trascrizione</span>
-              {fromCache && <span className="rounded-md bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">cache</span>}
+              <span className="text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400">Trascrizione</span>
+              {fromCache && <span className="rounded-md bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">cache</span>}
               {transcriptLoading ? (
-                <span className="rounded-md border border-sky-200 dark:border-sky-500/50 bg-sky-50 dark:bg-sky-500/10 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:text-sky-300">
+                <span className="rounded-md border border-sky-200 dark:border-sky-500/50 bg-sky-50 dark:bg-sky-500/10 px-2 py-0.5 text-xs font-medium text-sky-700 dark:text-sky-300">
                   in corso: {activeStageLabel}
                 </span>
               ) : null}
             </div>
             <div className="flex items-center gap-2">
               {activeSegment && (
-                <span className="hidden sm:inline text-[10px] text-gray-500 dark:text-gray-400">
+                <span className="hidden sm:inline text-xs text-gray-500 dark:text-gray-400">
                   focus: <span className="font-mono">{formatTime(activeSegment.timeSeconds)}</span>
                 </span>
               )}
               <button
                 type="button"
                 onClick={() => setShowHighlightsPanel((s) => !s)}
-                className="rounded-lg border border-rose-200 dark:border-rose-500/50 bg-rose-50 dark:bg-rose-500/10 px-2 py-1 text-[10px] font-medium text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-colors"
+                className="rounded-lg border border-rose-200 dark:border-rose-500/50 bg-rose-50 dark:bg-rose-500/10 px-2 py-1 text-xs font-medium text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-500/20 transition-colors"
               >
                 Evidenziati {highlights.length}
               </button>
               {transcript ? (
-                <button type="button" onClick={handleCopy} className="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-white/5 px-2 py-1 text-[10px] font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
+                <button type="button" onClick={handleCopy} className="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-white/5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
                   {copyOk ? 'Copiato' : 'Copia'}
                 </button>
               ) : null}
@@ -1409,7 +1409,7 @@ export default function YouTubeViewer() {
           {showHighlightsPanel && (
             <div className="border-b border-rose-200/50 dark:border-rose-500/20 bg-rose-50/50 dark:bg-rose-500/5 px-4 py-2.5">
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-rose-800 dark:text-rose-300">
+                <p className="text-xs font-bold uppercase tracking-widest text-rose-800 dark:text-rose-300">
                   Raccolta evidenziati ({highlights.length})
                 </p>
                 <div className="flex items-center gap-2">
@@ -1417,7 +1417,7 @@ export default function YouTubeViewer() {
                     type="button"
                     onClick={copyHighlights}
                     disabled={!highlights.length}
-                    className="text-[10px] font-medium text-rose-700 dark:text-rose-400 hover:underline disabled:opacity-40"
+                    className="text-xs font-medium text-rose-700 dark:text-rose-400 hover:underline disabled:opacity-40"
                   >
                     Copia raccolta
                   </button>
@@ -1425,14 +1425,14 @@ export default function YouTubeViewer() {
                     type="button"
                     onClick={clearHighlights}
                     disabled={!highlights.length}
-                    className="text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-40"
+                    className="text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-40"
                   >
                     Svuota
                   </button>
                 </div>
               </div>
               {highlights.length === 0 ? (
-                <p className="text-[11px] text-rose-700/90 dark:text-rose-400/90">
+                <p className="text-xs text-rose-700/90 dark:text-rose-400/90">
                   Seleziona testo nella trascrizione e clicca "Evidenzia selezione".
                 </p>
               ) : (
@@ -1443,19 +1443,19 @@ export default function YouTubeViewer() {
                         <button
                           type="button"
                           onClick={() => handleSeekTo(h.timeSeconds)}
-                          className="font-mono text-[10px] text-sky-600 dark:text-sky-400 hover:underline"
+                          className="font-mono text-xs text-sky-600 dark:text-sky-400 hover:underline"
                         >
                           {formatTime(h.timeSeconds)}
                         </button>
                         <button
                           type="button"
                           onClick={() => removeHighlight(h.id)}
-                          className="text-[11px] text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+                          className="text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400"
                         >
                           rimuovi
                         </button>
                       </div>
-                      {speakers !== 1 && <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">{h.speakerLabel}</p>}
+                      {speakers !== 1 && <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{h.speakerLabel}</p>}
                       <p className="text-xs text-gray-800 dark:text-gray-200 leading-relaxed">"{h.text}"</p>
                     </div>
                   ))}
@@ -1520,7 +1520,7 @@ export default function YouTubeViewer() {
                                   {done ? '✓' : i + 1}
                                 </span>
                                 <span className={current ? 'font-medium text-sky-700 dark:text-sky-300' : ''}>{s.label}</span>
-                                {current ? <span className="ml-auto text-[9px] font-bold text-sky-500 uppercase tracking-widest animate-pulse">Live</span> : null}
+                                {current ? <span className="ml-auto text-xs font-bold text-sky-500 uppercase tracking-widest animate-pulse">Live</span> : null}
                               </div>
                             )
                           })}
@@ -1556,7 +1556,7 @@ export default function YouTubeViewer() {
 
           {pendingSelection && (
             <div className="fixed bottom-6 right-6 z-[100] w-[min(30rem,calc(100vw-3rem))] rounded-xl border border-rose-200/80 dark:border-rose-500/40 bg-white dark:bg-[#1a1d24] shadow-xl p-3">
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                 {speakers === 1 ? formatTime(pendingSelection.timeSeconds) : `${pendingSelection.speakerLabel} • ${formatTime(pendingSelection.timeSeconds)}`}
               </p>
               <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed max-h-16 overflow-hidden mb-3">

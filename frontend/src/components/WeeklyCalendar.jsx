@@ -44,8 +44,8 @@ function AwMiniCard({ type, title, week, awProgram }) {
         <div className={`w-4 h-4 rounded ${cycle.badge} shadow-sm flex items-center justify-center shrink-0`}>
           <Target size={9} className="text-white" />
         </div>
-        <span className={`text-[10px] font-bold uppercase tracking-tight text-center px-1 line-clamp-1 leading-tight ${cycle.label}`}>{title}</span>
-        <span className={`text-[8px] font-bold px-1 py-0.5 rounded bg-white/20 dark:bg-black/20 ${cycle.label} shrink-0 whitespace-nowrap`}>W{week}</span>
+        <span className={`text-xs font-bold uppercase tracking-tight text-center px-1 line-clamp-1 leading-tight ${cycle.label}`}>{title}</span>
+        <span className={`text-xs scale-90 font-bold px-1 py-0.5 rounded bg-white/20 dark:bg-black/20 ${cycle.label} shrink-0 whitespace-nowrap`}>W{week}</span>
       </div>
 
       {type === 'max' && (
@@ -53,9 +53,9 @@ function AwMiniCard({ type, title, week, awProgram }) {
           {maxExercises?.length > 0 ? maxExercises.map((name, i) => (
             <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[8px] bg-white/80 dark:bg-zinc-900/60 border border-amber-200/60 dark:border-amber-700/30 shadow-sm">
               <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${cycle.dot}`} />
-              <span className="text-[8px] font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-tighter leading-tight">{name}</span>
+              <span className="text-xs scale-90 font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-tighter leading-tight">{name}</span>
             </span>
-          )) : <span className="text-[10px] text-zinc-400 font-medium mt-1">—</span>}
+          )) : <span className="text-xs text-zinc-400 font-medium mt-1">—</span>}
         </div>
       )}
     </div>
@@ -204,10 +204,10 @@ function WeeklyCalendar({ onSelectDay, progressions, schedule, loading, onEditAc
                             : 'bg-white border-zinc-200/60 dark:bg-white/[0.02] dark:border-white/[0.06] hover:border-zinc-300 dark:hover:border-white/[0.12]'
                         }`}
                     >
-                      <span className={`text-[8px] font-black uppercase tracking-widest ${isSelected ? 'text-zinc-400 dark:text-zinc-500' :
+                      <span className={`text-xs scale-90 font-black uppercase tracking-widest ${isSelected ? 'text-zinc-400 dark:text-zinc-500' :
                         isToday ? 'text-indigo-500' : 'text-zinc-400'
                         }`}>{dayName}</span>
-                      <span className={`text-[15px] font-black leading-none tabular-nums ${isSelected ? 'text-white dark:text-zinc-950' :
+                      <span className={`text-sm font-black leading-none tabular-nums ${isSelected ? 'text-white dark:text-zinc-950' :
                         isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-800 dark:text-zinc-100'
                         }`}>{dateObj.getDate()}</span>
 
@@ -231,7 +231,7 @@ function WeeklyCalendar({ onSelectDay, progressions, schedule, loading, onEditAc
                 <div className={`px-2 py-2 z-10 flex flex-col gap-1 transition-all border-x border-transparent ${isSelected ? 'bg-indigo-500/[0.02] dark:bg-indigo-500/[0.04] border-indigo-500/10' : ''} ${isToday ? 'scale-[1.01]' : ''}`} style={{ gridColumn: col, gridRow: 2 }}>
                   <div className="flex items-center gap-1 px-1 opacity-40">
                     <Zap size={9} className="text-blue-500" />
-                    <span className="text-[7px] font-bold tracking-widest text-zinc-500 uppercase">FORZA</span>
+                    <span className="text-xs scale-75 font-bold tracking-widest text-zinc-500 uppercase">FORZA</span>
                   </div>
                   <div className="flex flex-col gap-2.5 h-full">
                     {getExercises('strength').map((ex, eIdx) => (
@@ -239,7 +239,7 @@ function WeeklyCalendar({ onSelectDay, progressions, schedule, loading, onEditAc
                     ))}
                     {getExercises('strength').length === 0 && (
                       <div className="flex-1 min-h-[80px] rounded-[1.25rem] border border-dashed border-zinc-200 dark:border-zinc-800/60 flex items-center justify-center opacity-40">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Rest</span>
+                        <span className="text-xs font-black uppercase tracking-widest text-zinc-400">Rest</span>
                       </div>
                     )}
                   </div>
@@ -249,7 +249,7 @@ function WeeklyCalendar({ onSelectDay, progressions, schedule, loading, onEditAc
                 <div className={`px-2 py-2 z-10 flex flex-col gap-1 transition-all border-x border-transparent ${isSelected ? 'bg-indigo-500/[0.02] dark:bg-indigo-500/[0.04] border-indigo-500/10' : ''} ${isToday ? 'scale-[1.01]' : ''}`} style={{ gridColumn: col, gridRow: 3 }}>
                   <div className="flex items-center gap-1 px-1 opacity-40">
                     <Target size={9} className="text-amber-500" />
-                    <span className="text-[7px] font-bold tracking-widest text-zinc-500 uppercase">AW</span>
+                    <span className="text-xs scale-75 font-bold tracking-widest text-zinc-500 uppercase">AW</span>
                   </div>
                   <div className="flex flex-col gap-2.5 h-full">
                     {!isEditMode ? getExercises('aw').map((ex, eIdx) => {
@@ -260,7 +260,7 @@ function WeeklyCalendar({ onSelectDay, progressions, schedule, loading, onEditAc
                     ))}
                     {getExercises('aw').length === 0 && (
                       <div className="flex-1 min-h-[80px] rounded-[1.25rem] border border-dashed border-zinc-200 dark:border-zinc-800/60 flex items-center justify-center opacity-40">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Rest</span>
+                        <span className="text-xs font-black uppercase tracking-widest text-zinc-400">Rest</span>
                       </div>
                     )}
                   </div>
@@ -270,7 +270,7 @@ function WeeklyCalendar({ onSelectDay, progressions, schedule, loading, onEditAc
                 <div className={`px-2 pt-2 pb-4 z-10 flex flex-col gap-1 transition-all border-x border-transparent rounded-b-2xl ${isSelected ? 'bg-indigo-500/[0.02] dark:bg-indigo-500/[0.04] border-indigo-500/10' : ''} ${isToday ? 'scale-[1.01]' : ''}`} style={{ gridColumn: col, gridRow: 4 }}>
                   <div className="flex items-center gap-1 px-1 opacity-40">
                     <Dumbbell size={9} className="text-emerald-500" />
-                    <span className="text-[7px] font-bold tracking-widest text-zinc-500 uppercase">IPER</span>
+                    <span className="text-xs scale-75 font-bold tracking-widest text-zinc-500 uppercase">IPER</span>
                   </div>
                   <div className="flex flex-col gap-2.5 h-full">
                     {getExercises('hyper').map((ex, eIdx) => (
@@ -278,7 +278,7 @@ function WeeklyCalendar({ onSelectDay, progressions, schedule, loading, onEditAc
                     ))}
                     {getExercises('hyper').length === 0 && (
                       <div className="flex-1 min-h-[80px] rounded-[1.25rem] border border-dashed border-zinc-200 dark:border-zinc-800/60 flex items-center justify-center opacity-40">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Rest</span>
+                        <span className="text-xs font-black uppercase tracking-widest text-zinc-400">Rest</span>
                       </div>
                     )}
                   </div>

@@ -1,8 +1,8 @@
-import React from 'react';
+﻿import React from 'react';
 
 // Piccole intestazioni per kg, r, s
 export const ColHeader = ({ label, className = '' }) => (
-  <span className={`text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.15em] text-center w-full block ${className}`}>{label}</span>
+  <span className={`text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.15em] text-center w-full block ${className}`}>{label}</span>
 );
 
 // Shared UI Components
@@ -18,14 +18,14 @@ export const SectionHeader = ({ icon: Icon, title, subtitle, colorClass }) => (
       <Icon size={18} className="text-white" />
     </div>
     <div>
-      <h3 className="text-[14px] font-bold text-zinc-900 dark:text-zinc-100 leading-tight tracking-tight">{title}</h3>
-      <p className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">{subtitle}</p>
+      <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-tight tracking-tight">{title}</h3>
+      <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500">{subtitle}</p>
     </div>
   </div>
 );
 
 export const AthleteAvatar = ({ initial, colorClass }) => (
-  <div className={`rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm p-[6px] w-6 h-6 ${colorClass}`}>
+  <div className={`rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm p-[6px] w-6 h-6 ${colorClass}`}>
     {initial}
   </div>
 );
@@ -42,7 +42,7 @@ export const ModernInput = ({ value, onChange, placeholder, type = 'text', step,
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className={`h-8 w-full rounded-lg border border-zinc-200/80 bg-zinc-50 text-center text-[12px] font-bold text-zinc-900 outline-none transition-colors placeholder:text-zinc-300 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-100 dark:placeholder:text-zinc-600 ${className}`}
+      className={`h-8 w-full rounded-lg border border-zinc-200/80 bg-zinc-50 text-center text-xs font-bold text-zinc-900 outline-none transition-colors placeholder:text-zinc-300 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-100 dark:placeholder:text-zinc-600 ${className}`}
     />
   );
 };

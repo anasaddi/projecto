@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { motion } from 'framer-motion';
 
 /**
@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 
 const baseClasses = `
   relative overflow-hidden
-  rounded-[28px]
+  rounded-3xl
   border border-zinc-200/70 dark:border-white/[0.08]
   bg-white/[0.9] dark:bg-[#131820]/90
   backdrop-blur-2xl
@@ -57,8 +57,8 @@ export function CardHeader({
           </div>
         )}
         <div className="min-w-0">
-          {title && <h3 className="text-[15px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{title}</h3>}
-          {subtitle && <p className="mt-0.5 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">{subtitle}</p>}
+          {title && <h3 className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{title}</h3>}
+          {subtitle && <p className="mt-0.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">{subtitle}</p>}
           {children && !title && children}
         </div>
       </div>
@@ -149,7 +149,7 @@ export function ProgressBar({
         />
       </div>
       {showLabel && (
-        <span className="text-[10px] font-bold tabular-nums text-zinc-500 dark:text-zinc-400 w-8 text-right">
+        <span className="text-xs font-bold tabular-nums text-zinc-500 dark:text-zinc-400 w-8 text-right">
           {Math.round(percentage)}%
         </span>
       )}
@@ -175,8 +175,8 @@ export function Badge({
   };
   
   const sizeClasses = {
-    xs: 'px-1.5 py-0.5 text-[9px]',
-    sm: 'px-2 py-0.5 text-[10px]',
+    xs: 'px-1.5 py-0.5 text-xs',
+    sm: 'px-2 py-0.5 text-xs',
     md: 'px-2.5 py-1 text-xs'
   };
   

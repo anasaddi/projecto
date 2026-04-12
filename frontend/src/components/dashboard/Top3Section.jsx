@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
@@ -80,7 +80,7 @@ export function Top3Section() {
         }
       />
       
-      <div className="p-5 pt-4 flex flex-col gap-3">
+      <div className="p-4 pt-3 flex flex-col gap-3">
         {[0, 1, 2].map((idx) => {
           const slot = top3Resolved[idx];
           const filled = slot && !slot.missing;
@@ -118,7 +118,7 @@ export function Top3Section() {
                 backgroundColor: isDragOver ? 'rgba(251, 191, 36, 0.15)' : filled ? 'rgba(0, 0, 0, 0)' : 'rgba(0, 0, 0, 0)',
               }}
               className={`
-                relative overflow-hidden min-h-[3.5rem] rounded-[24px] border transition-all duration-200
+                relative overflow-hidden min-h-[3.5rem] rounded-2xl border transition-all duration-200
                 ${isDragOver 
                   ? 'border-amber-400/80 dark:border-amber-500/50 bg-amber-50/80 dark:bg-amber-900/20 ring-1 ring-amber-400/25' 
                   : filled 
@@ -157,7 +157,7 @@ export function Top3Section() {
                     {slot.projectTitle && (
                       <span 
                         title={slot.projectTitle} 
-                        className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mt-0.5"
+                        className="text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mt-0.5"
                       >
                         {slot.projectTitle}
                       </span>

@@ -348,38 +348,42 @@ export default function Training2() {
 
         {/* Top Navigation Bar */}
         <header className="sticky top-0 z-40 border-b border-zinc-200/50 dark:border-white/[0.06] bg-white/70 dark:bg-[#0b0e14]/70 backdrop-blur-xl shrink-0 transition-colors">
-          <div className="max-w-[1600px] mx-auto px-5 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-3.5">
+          <div className="max-w-[1600px] mx-auto px-4 sm:px-5 h-14 sm:h-16 flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-3.5">
               <div className="transition-transform active:scale-95 shrink-0">
                 <AppLogo size="sm" />
               </div>
-              <div>
-                <h1 className="text-[15px] font-bold text-zinc-900 dark:text-white leading-tight tracking-tight">Training Protocol</h1>
-                <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.1em]">
+              <div className="min-w-0">
+                <h1 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white leading-tight tracking-tight truncate">Training Protocol</h1>
+                <p className="text-[10px] sm:text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.1em] truncate">
                   {new Date().toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })} · PROJECTO
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               {isSaving && (
-                <div className="flex items-center gap-2 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
+                <div className="hidden sm:flex items-center gap-2 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
                   <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                  <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Syncing</span>
+                  <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Syncing</span>
                 </div>
               )}
 
               <button
                 onClick={handleSkipToday}
-                className="hidden sm:flex items-center justify-center h-9 px-4 rounded-[10px] bg-zinc-100 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400 text-[11px] font-bold uppercase tracking-widest hover:bg-amber-500/10 hover:text-amber-600 active:scale-95 transition-all border border-transparent hover:border-amber-500/20"
+                className="flex items-center justify-center h-8 sm:h-9 px-3 sm:px-4 rounded-lg sm:rounded-[10px] bg-zinc-100 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest hover:bg-amber-500/10 hover:text-amber-600 active:scale-95 transition-all border border-transparent hover:border-amber-500/20"
+                title="Salta Oggi"
               >
-                <SkipForward size={14} className="mr-2" /> Salta Oggi
+                <SkipForward size={14} className="sm:mr-2" />
+                <span className="hidden sm:inline">Salta Oggi</span>
               </button>
               <button
                 onClick={() => setIsFocusMode(true)}
-                className="hidden sm:flex items-center justify-center h-9 px-4 rounded-[10px] bg-zinc-900 dark:bg-indigo-500 text-white dark:text-white text-[11px] font-bold uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all shadow-sm dark:shadow-indigo-500/20"
+                className="flex items-center justify-center h-8 sm:h-9 px-3 sm:px-4 rounded-lg sm:rounded-[10px] bg-zinc-900 dark:bg-indigo-500 text-white dark:text-white text-[10px] sm:text-xs font-bold uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all shadow-sm dark:shadow-indigo-500/20"
+                title="Focus Mode"
               >
-                <Target size={14} className="mr-2" /> Focus Mode
+                <Target size={14} className="sm:mr-2" />
+                <span className="hidden sm:inline">Focus Mode</span>
               </button>
             </div>
           </div>
@@ -397,7 +401,7 @@ export default function Training2() {
                 <div className="w-16 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
                   <div className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
                 </div>
-                <span className="text-[10px] font-black text-zinc-500">{progressPercent}%</span>
+                <span className="text-xs font-black text-zinc-500">{progressPercent}%</span>
               </div>
             </div>
             <div className="flex items-center gap-1">

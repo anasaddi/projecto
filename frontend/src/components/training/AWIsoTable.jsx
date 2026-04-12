@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../api/client';
 import { Card, ModernInput, ModernCheckbox } from './TrainingUI';
 
@@ -86,8 +86,8 @@ function IsoInputCell({ exerciseId, week, set, athlete, defaultWeight, defaultSe
 
   return (
     <>
-      <ModernInput type="text" value={weight} onChange={v => setWeight(v)} className="w-12 py-1 text-[10px]" placeholder="kg" />
-      <ModernInput type="text" value={secs}   onChange={v => setSecs(v)}   className="w-10 py-1 text-[10px]"  placeholder="sec" />
+      <ModernInput type="text" value={weight} onChange={v => setWeight(v)} className="w-12 py-1 text-xs" placeholder="kg" />
+      <ModernInput type="text" value={secs}   onChange={v => setSecs(v)}   className="w-10 py-1 text-xs"  placeholder="sec" />
       <div className="flex items-center justify-center w-8">
         <ModernCheckbox checked={done} onChange={() => setDone(p => !p)} colorClass={colorClass} />
       </div>
@@ -127,7 +127,7 @@ const AWIsoTableGroup = ({ title, exercises, onRowsChange, programData, progress
             <div className="w-1.5 h-8 bg-amber-500 rounded-full" />
             <div>
               <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider">{title}</h3>
-              <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-500/20 px-1.5 py-0.5 rounded">
+              <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-500/20 px-1.5 py-0.5 rounded">
                 {isHeavy ? '85% 1RM · 2×5s' : '60% 1RM · 2×15s'} · Settimana {currentWeek}
               </span>
             </div>
@@ -156,7 +156,7 @@ const AWIsoTableGroup = ({ title, exercises, onRowsChange, programData, progress
       <div className="overflow-x-auto custom-scrollbar border-b border-gray-100 dark:border-zinc-800/60">
         <table className="w-full text-left border-collapse">
           <thead className="bg-gray-50/80 dark:bg-zinc-800/60">
-            <tr className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 border-b border-gray-100 dark:border-zinc-800">
+            <tr className="text-xs font-bold uppercase tracking-widest text-zinc-400 border-b border-gray-100 dark:border-zinc-800">
               <th className="py-2 px-3">Esercizio</th>
               <th className="py-2 px-2 text-center w-14">Peso</th>
               {[1, 2, 3, 4, 5].map(w => (
@@ -171,15 +171,15 @@ const AWIsoTableGroup = ({ title, exercises, onRowsChange, programData, progress
               const cfg = getCfg(ex.exercise_id, ex.exercise_name, isHeavy, i);
               const target = cfg.target.split('×')[1] || cfg.target; // "15s" or "5s"
               return (
-                <tr key={ex.exercise_id} className="hover:bg-amber-50/10 dark:hover:bg-amber-900/5 text-[10px]">
-                  <td className="py-2 px-3 font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight text-[9px]">
+                <tr key={ex.exercise_id} className="hover:bg-amber-50/10 dark:hover:bg-amber-900/5 text-xs">
+                  <td className="py-2 px-3 font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight text-xs">
                     {cfg.label}
                   </td>
-                  <td className="py-2 px-2 text-center font-bold text-amber-600 dark:text-amber-400 text-[9px]">
+                  <td className="py-2 px-2 text-center font-bold text-amber-600 dark:text-amber-400 text-xs">
                     {cfg.weight}kg
                   </td>
                   {[1, 2, 3, 4, 5].map(w => (
-                    <td key={w} className={`py-2 px-2 text-center text-[9px] font-semibold ${
+                    <td key={w} className={`py-2 px-2 text-center text-xs font-semibold ${
                       currentWeek === w
                         ? 'text-amber-700 dark:text-amber-300 font-black bg-amber-50/60 dark:bg-amber-900/20'
                         : 'text-gray-400'
@@ -198,7 +198,7 @@ const AWIsoTableGroup = ({ title, exercises, onRowsChange, programData, progress
       <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full text-left border-collapse">
           <thead className="bg-gray-50/60 dark:bg-zinc-800/40">
-            <tr className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 border-b border-gray-100 dark:border-zinc-800">
+            <tr className="text-xs font-bold uppercase tracking-widest text-zinc-400 border-b border-gray-100 dark:border-zinc-800">
               <th className="py-2 px-3">Esercizio</th>
               <th className="py-2 px-1 w-8 text-center" />
               <th className="py-2 px-2 text-center">
@@ -220,14 +220,14 @@ const AWIsoTableGroup = ({ title, exercises, onRowsChange, programData, progress
               const defaultSecs = cfg.target.split('×')[1]?.replace('s', '') || '';
 
               return Array.from({ length: sets }).map((_, s) => (
-                <tr key={`${ex.exercise_id}-${s}`} className="hover:bg-amber-50/20 dark:hover:bg-amber-900/10 transition-colors text-[10px]">
+                <tr key={`${ex.exercise_id}-${s}`} className="hover:bg-amber-50/20 dark:hover:bg-amber-900/10 transition-colors text-xs">
                   {s === 0 && (
-                    <td rowSpan={sets} className="py-2 px-3 border-r border-gray-100 dark:border-zinc-800/50 align-middle font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight text-[9px] text-center">
+                    <td rowSpan={sets} className="py-2 px-3 border-r border-gray-100 dark:border-zinc-800/50 align-middle font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight text-xs text-center">
                       {cfg.label}
                     </td>
                   )}
                   <td className="py-1 px-1 text-center border-r border-gray-100 dark:border-zinc-800/50">
-                    <span className="text-[10px] font-black text-gray-400">{s + 1}</span>
+                    <span className="text-xs font-black text-gray-400">{s + 1}</span>
                   </td>
                   <td className="py-1.5 px-2 border-r border-gray-100 dark:border-zinc-800/50">
                     <div className="flex items-center gap-1.5 justify-center">

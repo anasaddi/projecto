@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { motion } from 'framer-motion';
 import { Target, Eye, EyeOff, ArrowUp, ArrowDown, Edit2, Trash2, CheckCircle2, History as HistoryIcon, Zap, Dumbbell } from 'lucide-react';
 import { useGlobalConfig } from '../../context/GlobalConfigContext';
@@ -181,11 +181,11 @@ export function CompactExerciseCard({ exercise, showMuscleNames, progressions, d
         <div className={`w-5 h-5 rounded-md ${isActive && getDominantGroup(muscles, MUSCLE_GROUP_MAP) ? GROUP_ACCENT_DOT[getDominantGroup(muscles, MUSCLE_GROUP_MAP)] : cardStyle.badge} shadow-sm flex items-center justify-center shrink-0`}>
           <Icon size={10} className="text-white" />
         </div>
-        <span className={`text-[10px] font-black uppercase tracking-tight leading-tight text-center px-1 line-clamp-2 ${cardStyle.label}`}>
+        <span className={`text-xs font-black uppercase tracking-tight leading-tight text-center px-1 line-clamp-2 ${cardStyle.label}`}>
           {shortenName(exercise.exercise_name || exercise.name)}
         </span>
         {details && category !== 'HYPERTROPHY' && (
-          <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md ${isActive && getDominantGroup(muscles, MUSCLE_GROUP_MAP) ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' : cardStyle.badge + ' text-white'} shadow-sm shrink-0 whitespace-nowrap`}>
+          <span className={`text-xs scale-90 font-black px-1.5 py-0.5 rounded-md ${isActive && getDominantGroup(muscles, MUSCLE_GROUP_MAP) ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300' : cardStyle.badge + ' text-white'} shadow-sm shrink-0 whitespace-nowrap`}>
             {details.label}
           </span>
         )}
@@ -194,10 +194,10 @@ export function CompactExerciseCard({ exercise, showMuscleNames, progressions, d
       {details && isActive && category !== 'AW' && category !== 'HYPERTROPHY' && (
         <div className="flex gap-1 mt-2 w-full">
           <div className={`flex-1 flex justify-center items-center py-0.5 rounded-md ${cardStyle.anasPillBg}`}>
-            <span className="text-[9px] font-bold tracking-tighter">A: {details.anas}</span>
+            <span className="text-xs font-bold tracking-tighter">A: {details.anas}</span>
           </div>
           <div className={`flex-1 flex justify-center items-center py-0.5 rounded-md ${cardStyle.flavioPillBg}`}>
-            <span className="text-[9px] font-bold tracking-tighter">F: {details.flavio}</span>
+            <span className="text-xs font-bold tracking-tighter">F: {details.flavio}</span>
           </div>
         </div>
       )}
@@ -220,7 +220,7 @@ export function CompactExerciseCard({ exercise, showMuscleNames, progressions, d
             const group = MUSCLE_GROUP_MAP[m] || 'unknown';
             const style = MUSCLE_BADGE_STYLE[group] || MUSCLE_BADGE_STYLE.unknown;
             return (
-              <span key={idx} className={`text-[8px] font-bold uppercase tracking-tighter px-2 py-0.5 rounded-[8px] border bg-white/80 dark:bg-zinc-900/60 ${style}`}>
+              <span key={idx} className={`text-xs scale-90 font-bold uppercase tracking-tighter px-2 py-0.5 rounded-[8px] border bg-white/80 dark:bg-zinc-900/60 ${style}`}>
                 {MUSCLE_DISPLAY_NAME[m] || m}
               </span>
             );
@@ -237,7 +237,7 @@ export function SkipTodayModal({ onClose, onConfirm }) {
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full max-w-xs bg-white dark:bg-zinc-900 rounded-[2.5rem] p-6 shadow-2xl border border-zinc-200 dark:border-zinc-800"
+        className="w-full max-w-xs bg-white dark:bg-zinc-900 rounded-2xl sm:rounded-[2.5rem] p-4 sm:p-6 shadow-2xl border border-zinc-200 dark:border-zinc-800"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex flex-col items-center text-center gap-4">

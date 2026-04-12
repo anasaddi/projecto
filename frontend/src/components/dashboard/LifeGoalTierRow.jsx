@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Icons } from './Icons';
 
 /**
@@ -34,15 +34,15 @@ export function LifeGoalTierRow({ tier, onToggleCollapse, onDrop, children }) {
           <div className="w-8 h-8 flex items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/5 text-base shadow-inner group-hover/tier:scale-105 transition-transform shrink-0">
             {tier.emoji}
           </div>
-          <div className="flex flex-col gap-0.5 min-w-0">
-            <span className="break-words text-sm font-semibold leading-snug tracking-tight text-zinc-800 dark:text-zinc-100">
+          <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+            <span className="overflow-hidden text-ellipsis text-sm font-semibold leading-snug tracking-tight text-zinc-800 dark:text-zinc-100" title={tier.name}>
               {tier.name}
             </span>
             <div className="flex items-center gap-2">
               <div className="w-16 h-0.5 rounded-full bg-zinc-100 dark:bg-white/5 overflow-hidden">
                 <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} />
               </div>
-              <span className="text-[9px] font-bold text-zinc-400 tabular-nums leading-none flex items-center">
+              <span className="text-xs font-bold text-zinc-400 tabular-nums leading-none flex items-center">
                 {completedCount}/{totalCount}
               </span>
             </div>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+﻿import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from './Icons';
 import { AppLogo } from '../AppLogo';
@@ -100,12 +100,12 @@ function HabitSelector({ activeHabits, onSelect, onClose }) {
       transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
       className="absolute bottom-full left-0 mb-2 w-[240px] bg-white dark:bg-zinc-800/98 backdrop-blur-xl border border-zinc-200/90 dark:border-white/10 rounded-xl z-50 p-2 shadow-2xl shadow-zinc-300/30 dark:shadow-black/50 ring-1 ring-zinc-200/50 dark:ring-white/5"
     >
-      <div className="text-[9px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.2em] px-2.5 py-1.5 mb-1.5 border-b border-zinc-100 dark:border-white/5">
+      <div className="text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.2em] px-2.5 py-1.5 mb-1.5 border-b border-zinc-100 dark:border-white/5">
         Scegli abitudine
       </div>
       <div className="max-h-[180px] overflow-y-auto custom-scrollbar flex flex-col gap-0.5">
         {activeHabits.length === 0 ? (
-          <div className="px-2.5 py-3 text-[11px] text-zinc-500 dark:text-zinc-400 italic">Nessuna abitudine attiva</div>
+          <div className="px-2.5 py-3 text-xs text-zinc-500 dark:text-zinc-400 italic">Nessuna abitudine attiva</div>
         ) : (
           activeHabits.map((h, i) => (
             <motion.button
@@ -114,7 +114,7 @@ function HabitSelector({ activeHabits, onSelect, onClose }) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.02 }}
               onClick={() => { onSelect(h.id); onClose(); }}
-              className="flex items-center gap-2.5 w-full text-left px-3 py-2.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-[11px] font-semibold text-zinc-700 dark:text-zinc-200 transition-colors border border-transparent hover:border-indigo-200/60 dark:hover:border-indigo-500/20"
+              className="flex items-center gap-2.5 w-full text-left px-3 py-2.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-xs font-semibold text-zinc-700 dark:text-zinc-200 transition-colors border border-transparent hover:border-indigo-200/60 dark:hover:border-indigo-500/20"
             >
               <Icons.Plus className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
               <span className="truncate">{h.title}</span>
@@ -180,10 +180,10 @@ export function DailyTimelineWidget({ PRAYERS, todayKey, todayPrayerLog, toggleP
               <AppLogo size="xs" />
             </motion.div>
             <div>
-              <h2 className="text-[15px] font-black text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight mb-0.5">
+              <h2 className="text-sm font-black text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight mb-0.5">
                 Daily Flow {locationName && <span className="text-zinc-400">• {locationName}</span>}
               </h2>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                 {progress.doneSteps}/{progress.totalSteps} completati • Orari aggiornati per la tua posizione
               </p>
             </div>
@@ -191,7 +191,7 @@ export function DailyTimelineWidget({ PRAYERS, todayKey, todayPrayerLog, toggleP
           
           <div className="flex items-center gap-4 shrink-0">
             <div className="hidden sm:flex items-center gap-3">
-              <span className="text-[11px] font-black text-zinc-600 dark:text-zinc-300 tabular-nums">
+              <span className="text-xs font-black text-zinc-600 dark:text-zinc-300 tabular-nums">
                 {progress.doneSteps}<span className="text-zinc-300 dark:text-zinc-600 mx-0.5 font-normal">/</span>{progress.totalSteps}
               </span>
               <div className="h-2 w-24 overflow-hidden rounded-full timeline-track">
@@ -275,12 +275,12 @@ export function DailyTimelineWidget({ PRAYERS, todayKey, todayPrayerLog, toggleP
 
                         {/* 2. RIGA TESTI: NOME E ORARIO */}
                         <div className="absolute top-[34px] left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none">
-                          <span className={`text-[9px] font-black uppercase tracking-wider transition-colors whitespace-nowrap ${
+                          <span className={`text-xs font-black uppercase tracking-wider transition-colors whitespace-nowrap ${
                             isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400'
                           }`}>
                             {prayer}
                           </span>
-                          <span className="text-[8px] font-mono font-semibold text-zinc-400 dark:text-zinc-500 tabular-nums">
+                          <span className="text-xs scale-90 font-mono font-semibold text-zinc-400 dark:text-zinc-500 tabular-nums">
                             {PRAYER_TIMES[prayer]}
                           </span>
                         </div>
@@ -301,7 +301,7 @@ export function DailyTimelineWidget({ PRAYERS, todayKey, todayPrayerLog, toggleP
                               
                               {/* Intestazione Card */}
                               <div className="px-4 pt-4 pb-2 shrink-0">
-                                <span className="text-[12px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2 truncate min-w-0">
+                                <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-2 truncate min-w-0">
                                   {isCurrentSlot && (
                                     <span className="flex h-2 w-2 shrink-0">
                                       <span className="absolute inline-flex h-2 w-2 rounded-full bg-indigo-500 opacity-75 animate-ping" />
@@ -329,7 +329,7 @@ export function DailyTimelineWidget({ PRAYERS, todayKey, todayPrayerLog, toggleP
                                         done={r.done} 
                                         onClick={() => toggleTimelineRoutine(todayKey, slotKey, r.id, !r.done)} 
                                       />
-                                      <span className={`text-[13px] font-medium tracking-tight flex-1 min-w-0 truncate transition-colors leading-snug ${r.done ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-700 dark:text-zinc-200'}`}>
+                                      <span className={`text-sm font-medium tracking-tight flex-1 min-w-0 truncate transition-colors leading-snug ${r.done ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-700 dark:text-zinc-200'}`}>
                                         {displayTitle}
                                       </span>
                                       <button
@@ -353,7 +353,7 @@ export function DailyTimelineWidget({ PRAYERS, todayKey, todayPrayerLog, toggleP
                                     className="flex items-center gap-2.5 w-full py-2.5 px-3 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50/80 dark:hover:bg-indigo-500/10 transition-all group/btn border border-dashed border-zinc-200 dark:border-white/10 hover:border-indigo-300 dark:hover:border-indigo-500/30"
                                   >
                                     <Icons.Plus className="w-4 h-4 shrink-0" />
-                                    <span className="text-[11px] font-bold uppercase tracking-wider">+ Win</span>
+                                    <span className="text-xs font-bold uppercase tracking-wider">+ Win</span>
                                   </button>
                                   
                                   <AnimatePresence>
@@ -372,10 +372,10 @@ export function DailyTimelineWidget({ PRAYERS, todayKey, todayPrayerLog, toggleP
                               {events.length > 0 && (
                                 <div className="mt-2 pt-3 mx-4 pb-4 border-t border-zinc-200/60 dark:border-white/[0.06] shrink-0">
                                   <div className="flex items-center justify-between mb-2.5">
-                                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                                       Completati
                                     </span>
-                                    <span className="text-[12px] font-semibold text-zinc-500 dark:text-zinc-400 tabular-nums bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-200/50 dark:border-emerald-500/20">
+                                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 tabular-nums bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-200/50 dark:border-emerald-500/20">
                                       {events.length}
                                     </span>
                                   </div>
@@ -383,8 +383,8 @@ export function DailyTimelineWidget({ PRAYERS, todayKey, todayPrayerLog, toggleP
                                     {events.map(e => (
                                       <div key={e.id} className="flex items-center gap-2.5 py-2 px-3 rounded-lg bg-emerald-50/50 dark:bg-emerald-500/5 min-w-0">
                                         <Icons.Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                                        <span className="text-[13px] font-medium text-zinc-700 dark:text-zinc-200 truncate min-w-0 flex-1 tracking-tight leading-snug" title={e.title}>{e.title}</span>
-                                        <span className="text-[12px] font-mono font-medium text-zinc-500 dark:text-zinc-400 tabular-nums shrink-0">
+                                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200 truncate min-w-0 flex-1 tracking-tight leading-snug" title={e.title}>{e.title}</span>
+                                        <span className="text-xs font-mono font-medium text-zinc-500 dark:text-zinc-400 tabular-nums shrink-0">
                                           {new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                       </div>
