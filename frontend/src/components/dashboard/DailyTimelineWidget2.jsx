@@ -16,7 +16,7 @@ const DEFAULT_PRAYER_TIMES = {
 // Hook orari preghiere (Mantenuto per la logica perfetta)
 function usePrayerTimes() {
   const [times, setTimes] = useState(DEFAULT_PRAYER_TIMES);
-  const[locationName, setLocationName] = useState('');
+  const [locationName, setLocationName] = useState('');
   
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -24,7 +24,11 @@ function usePrayerTimes() {
       const { latitude, longitude } = position.coords;
       try {
         const date = new Date();
-        const dateStr = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+        // Format: DD-MM-YYYY with zero padding
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const dateStr = `${day}-${month}-${year}`;
         const response = await fetch(
           `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${latitude}&longitude=${longitude}&method=3&school=1`
         );
@@ -46,7 +50,7 @@ function usePrayerTimes() {
         }
       } catch (err) {}
     }, () => {});
-  },[]);
+  }, []);
   
   return { times, locationName };
 }
@@ -134,6 +138,55 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
   const winTriggerRef = useRef(null);
   const { times: PRAYER_TIMES, locationName } = usePrayerTimes();
   
+  // Calculate timeline progress based on actual prayer times
+  const timelineProgress = useMemo(() => {
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    
+    // Convert prayer times to minutes
+    const toMinutes = (timeStr) => {
+      const [h, m] = timeStr.split(':').map(Number);
+      return h * 60 + m;
+    };
+    
+    const prayerMinutes = [
+      toMinutes(PRAYER_TIMES.Fajr),
+      toMinutes(PRAYER_TIMES.Dhuhr),
+      toMinutes(PRAYER_TIMES.Asr),
+      toMinutes(PRAYER_TIMES.Maghrib),
+      toMinutes(PRAYER_TIMES.Isha),
+      toMinutes(PRAYER_TIMES.Fajr) + 24 * 60 // Next day Fajr
+    ];
+    
+    // Find current position in the day cycle
+    let progress = 0;
+    const totalDayMinutes = 24 * 60;
+    
+    for (let i = 0; i < prayerMinutes.length - 1; i++) {
+      const start = prayerMinutes[i];
+      const end = prayerMinutes[i + 1];
+      const slotDuration = end - start;
+      
+      if (currentMinutes >= start && currentMinutes < end) {
+        // Current time is within this slot
+        const elapsed = currentMinutes - start;
+        const slotProgress = elapsed / slotDuration;
+        // Progress = (completed slots + current slot progress) / total slots
+        progress = (i + slotProgress) / (PRAYERS.length - 1);
+        break;
+      } else if (currentMinutes < start && i === 0) {
+        // Before Fajr (late night, in Isha-Fajr slot)
+        const elapsed = currentMinutes + (24 * 60 - prayerMinutes[4]);
+        const slotDuration = prayerMinutes[5] - prayerMinutes[4];
+        const slotProgress = elapsed / slotDuration;
+        progress = (4 + slotProgress) / (PRAYERS.length - 1);
+        break;
+      }
+    }
+    
+    return Math.min(1, Math.max(0, progress));
+  }, [PRAYER_TIMES]);
+  
   const activeHabits = useMemo(() => dailyTaskTemplates.filter(t => !t.locked), [dailyTaskTemplates]);
   const eventsToday = useMemo(() => dailyCompletionLog[todayKey]?.events || [], [dailyCompletionLog, todayKey]);
   const slotsForDay = useMemo(() => timelineRoutines[todayKey] || {}, [timelineRoutines, todayKey]);
@@ -219,7 +272,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                     <motion.div
                       className="absolute inset-y-0 left-0 h-full bg-gradient-to-r from-emerald-500 to-indigo-500 rounded-full"
                       initial={false}
-                      animate={{ width: `${(PRAYER_SLOTS.indexOf(currentSlotKey) / (PRAYERS.length - 1)) * 100}%` }}
+                      animate={{ width: `${timelineProgress * 100}%` }}
                       transition={{ duration: 0.8, ease: "easeInOut" }}
                     />
                   </div>
