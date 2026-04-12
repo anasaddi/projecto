@@ -10,7 +10,7 @@ export const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
 export const WS_HOST = isLocalHost()
   ? 'localhost:8000'
-  : (import.meta.env.VITE_WS_HOST || 'projecto-production-feda.up.railway.app');
+  : (import.meta.env.VITE_WS_HOST || 'projecto-backend-7we9.onrender.com');
 
 export function getSharedDashboardWsUrl(shareId) {
   const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
