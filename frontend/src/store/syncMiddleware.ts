@@ -4,6 +4,18 @@ import { saveLocalState, addToSyncQueue, getSyncQueue, clearSyncQueue } from '..
 
 let syncTimeout: ReturnType<typeof setTimeout> | null = null;
 let isApplyingFromBC = false;
+let isApplyingFromBCQueue: unknown[] = [];  // Buffer BC updates while applying
+let bc: BroadcastChannel | null = null;
+
+function getBroadcastChannel(): BroadcastChannel | null {
+  if (bc) return bc;
+  try {
+    bc = new BroadcastChannel(BC_CHANNEL);
+    return bc;
+  } catch {
+    return null;
+  }
+}
 
 // Handle reconnection
 if (typeof window !== 'undefined') {
@@ -52,7 +64,7 @@ type GetState = () => SyncStateSlice & Record<string, unknown>;
  * 3. REST API or Sync Queue (debounced 500ms)
  */
 export function syncMiddleware<T>(config: (set: SetState, get: GetState, api_store: unknown) => T): (set: SetState, get: GetState, api_store: unknown) => T {
-  const bc = new BroadcastChannel(BC_CHANNEL);
+  const channel = getBroadcastChannel();
 
   return (set: SetState, get: GetState, api_store: unknown) => {
     const wrappedSet: SetState = (args) => {
@@ -81,7 +93,7 @@ export function syncMiddleware<T>(config: (set: SetState, get: GetState, api_sto
       saveLocalState(fullState);
 
       try {
-        bc.postMessage(fullState);
+        if (channel) channel.postMessage(fullState);
       } catch (_) {}
 
       if (syncTimeout) clearTimeout(syncTimeout);
@@ -89,11 +101,19 @@ export function syncMiddleware<T>(config: (set: SetState, get: GetState, api_sto
         if (navigator.onLine) {
           try {
             await api.training.updateDashboardState(fullState, { timeout: 30_000 });
+            // Use queueing microtask to reliably sequence the flag reset after state propagation
             isApplyingFromBC = true;
             set((s: unknown) => ({ ...(s as object), lastSavedAt: Date.now() }));
-            setTimeout(() => {
+            queueMicrotask(() => {
               isApplyingFromBC = false;
-            }, 0);
+              // Flush any buffered BC updates that arrived during the sync
+              if (isApplyingFromBCQueue.length > 0 && channel) {
+                const queued = isApplyingFromBCQueue.splice(0);
+                for (const data of queued) {
+                  set((_: unknown) => data);
+                }
+              }
+            });
           } catch (err) {
             const { logError, showErrorToast } = await import('../utils/errorLog');
             logError({ action: 'sync', api: 'dashboard-state' }, err as Error, { offline: !navigator.onLine });
@@ -106,15 +126,22 @@ export function syncMiddleware<T>(config: (set: SetState, get: GetState, api_sto
       }, 500);
     };
 
-    bc.onmessage = (e: MessageEvent) => {
-      const s = e?.data;
-      if (!s || isApplyingFromBC) return;
-      isApplyingFromBC = true;
-      wrappedSet(s);
-      setTimeout(() => {
-        isApplyingFromBC = false;
-      }, 0);
-    };
+    if (channel) {
+      channel.onmessage = (e: MessageEvent) => {
+        const s = e?.data;
+        if (!s) return;
+        if (isApplyingFromBC) {
+          // Buffer incoming BC updates instead of dropping them
+          isApplyingFromBCQueue.push(s);
+          return;
+        }
+        isApplyingFromBC = true;
+        wrappedSet(s);
+        queueMicrotask(() => {
+          isApplyingFromBC = false;
+        });
+      };
+    }
 
     return config(wrappedSet, get, api_store);
   };

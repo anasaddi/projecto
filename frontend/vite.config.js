@@ -46,7 +46,7 @@ export default defineConfig({
               cacheName: 'api-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 // <== 24 hours
+                maxAgeSeconds: 60 * 5 // <== 5 minutes (dashboard data changes frequently)
               },
               networkTimeoutSeconds: 10
             }
@@ -74,8 +74,9 @@ export default defineConfig({
     port: 3000,
     host: true, // ascolta su 0.0.0.0 (utile se accedi da altro dispositivo in LAN)
     proxy: {
-      '/api': { target: 'http://127.0.0.1:8001', changeOrigin: true },
-      '/health': { target: 'http://127.0.0.1:8001', changeOrigin: true },
+      '/api': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/health': { target: 'http://127.0.0.1:8000', changeOrigin: true },
     },
   },
+
 })

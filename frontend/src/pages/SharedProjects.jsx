@@ -7,35 +7,9 @@ import { StandardProjectCard, CreateProjectCard } from '../components/dashboard/
 import { DenseTaskNode } from '../components/dashboard/DenseTaskNode';
 import { countTreeStats as countTreeStatsUtil } from '../components/dashboard/DashboardUtils';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { Icons } from '../components/dashboard/Icons';
 import FinanzeSection from '../components/shared/FinanzeSection';
 import { DASHBOARD_CONTENT_CLASS } from '../constants/layout';
-/**
- * ----------------------------------------------------------------------
- * ICONS (Lucide-inspired)
- * ----------------------------------------------------------------------
- */
-const Icons = {
-  CheckCircle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>,
-  Circle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10" /></svg>,
-  Plus: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>,
-  X: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>,
-  Target: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>,
-  ChevronDown: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="6 9 12 15 18 9" /></svg>,
-  ChevronRight: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6" /></svg>,
-  Calendar: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>,
-  Zap: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>,
-  Trash: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>,
-  MessageCircle: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>,
-  Send: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>,
-  ExternalLink: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 22 3 22 9" /><line x1="10" y1="14" x2="22" y2="3" /></svg>,
-  Copy: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>,
-  Lock: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>,
-  Settings: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="3" /><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M19.78 4.22l-1.42 1.42M5.64 18.36l-1.42 1.42" /></svg>,
-  FileText: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>,
-  Pencil: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>,
-  Check: ({ className }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12" /></svg>,
-};
-
 /**
  * ----------------------------------------------------------------------
  * UTILS
@@ -227,16 +201,16 @@ function NoteCard({ note, onUpdate, onDelete }) {
             onChange={(e) => setTitleDraft(e.target.value)}
             onClick={(e) => e.stopPropagation()}
             placeholder="Titolo nota"
-            className="min-w-0 flex-1 rounded-lg bg-zinc-50 px-2 py-0.5 text-[13px] font-semibold tracking-tight text-zinc-900 outline-none ring-1 ring-zinc-200 dark:bg-white/[0.06] dark:text-zinc-100 dark:ring-white/[0.1]"
+            className="min-w-0 flex-1 rounded-lg bg-zinc-50 px-2 py-0.5 text-sm font-semibold tracking-tight text-zinc-900 outline-none ring-1 ring-zinc-200 dark:bg-white/[0.06] dark:text-zinc-100 dark:ring-white/[0.1]"
           />
         ) : (
-          <span className="min-w-0 flex-1 truncate text-[13px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+          <span className="min-w-0 flex-1 truncate text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
             {note.title || 'Nota senza titolo'}
           </span>
         )}
 
         {!editing && note.updatedAt && (
-          <span className="shrink-0 text-[10px] text-zinc-400 dark:text-zinc-500">
+          <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">
             {new Date(note.updatedAt).toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
           </span>
         )}
@@ -282,20 +256,20 @@ function NoteCard({ note, onUpdate, onDelete }) {
                     placeholder="Scrivi la nota, roadmap, snippet o checklist..."
                     spellCheck={false}
                     autoFocus={false}
-                    className="min-h-[10rem] w-full resize-none rounded-lg bg-zinc-50/80 px-3 py-3 font-mono text-[12.5px] leading-[1.8] text-zinc-700 outline-none ring-1 ring-zinc-200 dark:bg-white/[0.04] dark:text-zinc-300 dark:ring-white/[0.08]"
+                    className="min-h-[10rem] w-full resize-none rounded-lg bg-zinc-50/80 px-3 py-3 font-mono text-sm leading-[1.8] text-zinc-700 outline-none ring-1 ring-zinc-200 dark:bg-white/[0.04] dark:text-zinc-300 dark:ring-white/[0.08]"
                   />
                   <div className="mt-2.5 flex items-center justify-end gap-2">
                     <button
                       type="button"
                       onClick={handleDiscard}
-                      className="rounded-xl px-3 py-1.5 text-[11px] font-semibold text-zinc-500 transition-colors hover:bg-zinc-100 dark:hover:bg-white/[0.05]"
+                      className="rounded-xl px-3 py-1.5 text-xs font-semibold text-zinc-500 transition-colors hover:bg-zinc-100 dark:hover:bg-white/[0.05]"
                     >
                       Annulla
                     </button>
                     <button
                       type="button"
                       onClick={handleSave}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-500 px-3.5 py-1.5 text-[11px] font-semibold text-white shadow-sm shadow-indigo-500/30 transition-all hover:bg-indigo-600"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-500 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm shadow-indigo-500/30 transition-all hover:bg-indigo-600"
                     >
                       <Icons.Check className="h-3 w-3" />
                       Salva
@@ -303,7 +277,7 @@ function NoteCard({ note, onUpdate, onDelete }) {
                   </div>
                 </>
               ) : (
-                <pre className="min-h-[2rem] whitespace-pre-wrap font-mono text-[12.5px] leading-[1.8] text-zinc-600 dark:text-zinc-400">
+                <pre className="min-h-[2rem] whitespace-pre-wrap font-mono text-sm leading-[1.8] text-zinc-600 dark:text-zinc-400">
                   {note.content || <span className="text-zinc-400 dark:text-zinc-600 italic">Nessun contenuto — clicca ✏️ per modificare</span>}
                 </pre>
               )}
@@ -404,25 +378,25 @@ function SharedListDashboard() {
   const settingsSd = settingsModalFor ? list.find(sd => (sd.share_id || sd.shareId) === settingsModalFor) : null;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.06),transparent_18%),linear-gradient(180deg,#f8fafc_0%,#f3f6fb_100%)] p-6 text-gray-900 select-none [&_input]:select-text [&_textarea]:select-text dark:bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.16),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.08),transparent_18%),linear-gradient(180deg,#0b0f18_0%,#0e131b_100%)] dark:text-gray-100 sm:p-10">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.06),transparent_18%),linear-gradient(180deg,#f8fafc_0%,#f3f6fb_100%)] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 text-gray-900 select-none [&_input]:select-text [&_textarea]:select-text dark:bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.16),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.08),transparent_18%),linear-gradient(180deg,#0b0f18_0%,#0e131b_100%)] dark:text-gray-100">
       <div className="max-w-4xl mx-auto">
-        <header className="mb-8 rounded-[32px] border border-zinc-200/70 bg-white/[0.88] p-7 shadow-[0_26px_60px_-40px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-[0_30px_70px_-42px_rgba(0,0,0,0.62)]">
-          <div className="flex flex-wrap items-center gap-3 mb-3">
-            <span className="inline-flex rounded-full border border-indigo-200/80 bg-indigo-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/20 dark:text-indigo-300">
+        <header className="mb-6 sm:mb-8 rounded-2xl sm:rounded-[32px] border border-zinc-200/70 bg-white/[0.88] p-4 sm:p-7 shadow-lg backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-2xl">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+            <span className="inline-flex rounded-full border border-indigo-200/80 bg-indigo-500/10 px-2 sm:px-3 py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/20 dark:text-indigo-300">
               Shared workspace
             </span>
           </div>
-          <h1 className="mb-2 text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">I miei Condivisi</h1>
+          <h1 className="mb-2 text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">I miei Condivisi</h1>
           <p className="max-w-2xl text-sm font-medium text-gray-500 dark:text-gray-400">Dashboard condivise collegate alla tua area, con accesso rapido, avanzamento e strumenti collaborativi.</p>
         </header>
 
         {/* Pannello di controllo: gestione password per sezione */}
-        <div className="mb-10 rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-6 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.22)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/85 dark:shadow-[0_30px_60px_-40px_rgba(0,0,0,0.6)]">
+        <div className="mb-6 sm:mb-10 rounded-2xl sm:rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-4 sm:p-6 shadow-lg backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/85 dark:shadow-2xl">
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-zinc-700 dark:text-zinc-200">Pannello di controllo</h2>
           <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
             Clicca <strong>Password</strong> su ogni card per impostare la password di accesso principale.
           </p>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">Dove impostare</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">Dove impostare</p>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
             Pulsante <strong>Password</strong> su ogni shared ↓
           </p>
@@ -445,7 +419,7 @@ function SharedListDashboard() {
 
               <div className="space-y-4 mb-6">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1.5">Accesso principale (intero shared)</label>
+                  <label className="block text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1.5">Accesso principale (intero shared)</label>
                   <input
                     type="password"
                     autoComplete="new-password"
@@ -486,7 +460,7 @@ function SharedListDashboard() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {list.map((sd) => {
               const sid = sd.share_id || sd.shareId;
               const title = sd.title || 'Senza titolo';
@@ -503,7 +477,7 @@ function SharedListDashboard() {
                   className="group block rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-5 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.2)] backdrop-blur-2xl transition-all hover:-translate-y-0.5 hover:border-indigo-300/80 hover:shadow-[0_24px_60px_-38px_rgba(99,102,241,0.18)] dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:hover:border-indigo-500/35 dark:hover:shadow-[0_28px_60px_-38px_rgba(0,0,0,0.62)]"
                 >
                   <div className="flex items-start justify-between gap-4 mb-3">
-                    <h3 className="flex-1 truncate text-[15px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">{title}</h3>
+                    <h3 className="flex-1 truncate text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">{title}</h3>
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"
@@ -512,14 +486,14 @@ function SharedListDashboard() {
                         title={(sd.data?.passwordHash) ? 'Password impostata (clicca per modificare)' : 'Imposta password per questo shared'}
                       >
                         <Icons.Lock className="w-3.5 h-3.5" />
-                        <span className="text-[10px] font-semibold hidden sm:inline">{(sd.data?.passwordHash) ? 'Modifica' : 'Password'}</span>
+                        <span className="text-xs font-semibold hidden sm:inline">{(sd.data?.passwordHash) ? 'Modifica' : 'Password'}</span>
                       </button>
-                      <span className="rounded-full border border-indigo-200/80 bg-indigo-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/20 dark:text-indigo-300">
+                      <span className="rounded-full border border-indigo-200/80 bg-indigo-500/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/20 dark:text-indigo-300">
                         Shared
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 mb-4">
+                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-4">
                     <span>{projects.length} progetti</span>
                     <span>·</span>
                     <span>{quickTasks.length} quick tasks</span>
@@ -530,7 +504,7 @@ function SharedListDashboard() {
                     </div>
                   )}
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500 truncate">/shared/{sid}</span>
+                    <span className="text-xs font-mono text-gray-400 dark:text-gray-500 truncate">/shared/{sid}</span>
                     <button
                       type="button"
                       onClick={(e) => { e.preventDefault(); copyLink(sid); }}
@@ -538,7 +512,7 @@ function SharedListDashboard() {
                       title="Copia link"
                     >
                       {copiedId === sid ? (
-                        <span className="text-[10px] font-medium text-emerald-500">Copiato!</span>
+                        <span className="text-xs font-medium text-emerald-500">Copiato!</span>
                       ) : (
                         <Icons.Copy className="w-3.5 h-3.5" />
                       )}
@@ -1120,12 +1094,12 @@ export default function SharedProjects() {
                     onChange={(e) => updateLocal({ title: e.target.value })}
                     className="w-full rounded-2xl border border-transparent bg-transparent px-2 py-1 text-2xl font-semibold tracking-tight text-gray-900 outline-none transition-colors dark:text-white sm:w-auto md:text-3xl"
                   />
-                  <span className="rounded-full border border-indigo-200/80 bg-indigo-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/20 dark:text-indigo-300">
+                  <span className="rounded-full border border-indigo-200/80 bg-indigo-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/20 dark:text-indigo-300">
                     Shared
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="rounded-full bg-zinc-100/80 px-2.5 py-1 font-mono text-[11px] text-zinc-500 dark:bg-white/[0.05] dark:text-zinc-400">/shared/{id}</span>
+                  <span className="rounded-full bg-zinc-100/80 px-2.5 py-1 font-mono text-xs text-zinc-500 dark:bg-white/[0.05] dark:text-zinc-400">/shared/{id}</span>
                   <button
                     type="button"
                     onClick={copyShareLink}
@@ -1144,7 +1118,7 @@ export default function SharedProjects() {
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="flex items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300"
+                        className="flex items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300"
                       >
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                         LIVE
@@ -1153,7 +1127,7 @@ export default function SharedProjects() {
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="flex items-center gap-2 rounded-full border border-slate-200/80 bg-slate-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:border-slate-500/20 dark:bg-slate-500/10 dark:text-slate-300"
+                        className="flex items-center gap-2 rounded-full border border-slate-200/80 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:border-slate-500/20 dark:bg-slate-500/10 dark:text-slate-300"
                       >
                         <div className="w-1.5 h-1.5 rounded-full bg-slate-500" />
                         Sincronizzazione manuale
@@ -1177,8 +1151,8 @@ export default function SharedProjects() {
                       <Icons.Target className="w-5 h-5" />
                     </div>
                     <div>
-                      <h2 className="text-[14px] font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">Avanzamento Globale</h2>
-                      <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-widest">{globalStats.completed} di {globalStats.total} task completate</p>
+                      <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">Avanzamento Globale</h2>
+                      <p className="text-xs text-zinc-400 font-semibold uppercase tracking-widest">{globalStats.completed} di {globalStats.total} task completate</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -1206,7 +1180,7 @@ export default function SharedProjects() {
                   <Icons.FileText className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-[16px] font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">Note Workspace</h2>
+                  <h2 className="text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">Note Workspace</h2>
                 </div>
               </div>
 
@@ -1266,7 +1240,7 @@ export default function SharedProjects() {
             </AnimatePresence>
           </section>
 
-          <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+          <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
             {dashboard.projects.map((proj, pIdx) => {
               const dragPayload = { type: 'project', fromIndex: pIdx };
               const stats = countTreeStatsUtil(proj.tasks);
@@ -1406,14 +1380,14 @@ export default function SharedProjects() {
         {/* SIDEBAR: QUICK TASKS + CHAT */}
         <aside className="order-1 w-full shrink-0 space-y-4 2xl:sticky 2xl:top-6 2xl:order-2 2xl:w-[16rem] 2xl:self-start">
           {/* QUICK TASKS */}
-          <div className="flex min-h-[340px] flex-col rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-6 shadow-[0_22px_50px_-38px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-[0_30px_60px_-40px_rgba(0,0,0,0.6)]">
+          <div className="flex min-h-[340px] flex-col rounded-2xl sm:rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-4 sm:p-6 shadow-lg backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-2xl">
             <div className="flex items-center gap-2 mb-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
                 <Icons.Zap className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-[15px] font-semibold tracking-tight text-gray-900 dark:text-zinc-100">Quick Tasks</h2>
-                <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">Task leggere condivise</p>
+                <h2 className="text-sm font-semibold tracking-tight text-gray-900 dark:text-zinc-100">Quick Tasks</h2>
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Task leggere condivise</p>
               </div>
             </div>
 
@@ -1480,15 +1454,15 @@ export default function SharedProjects() {
           </div>
 
           {/* CHAT BOX */}
-          <div className="flex min-h-[420px] flex-col rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-6 shadow-[0_22px_50px_-38px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-[0_30px_60px_-40px_rgba(0,0,0,0.6)]">
+          <div className="flex min-h-[420px] flex-col rounded-2xl sm:rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-4 sm:p-6 shadow-lg backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-2xl">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
                   <Icons.MessageCircle className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-[15px] font-semibold tracking-tight text-gray-900 dark:text-zinc-100">Chat</h2>
-                  <p className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">Conversazione del workspace</p>
+                  <h2 className="text-sm font-semibold tracking-tight text-gray-900 dark:text-zinc-100">Chat</h2>
+                  <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Conversazione del workspace</p>
                 </div>
               </div>
               {dashboard.chat.length > 0 && (
@@ -1523,13 +1497,13 @@ export default function SharedProjects() {
                         }`}
                     >
                       {!isMe && (
-                        <span className="block text-[9px] font-bold mb-0.5 opacity-80" style={{ color: senderColor }}>
+                        <span className="block text-xs font-bold mb-0.5 opacity-80" style={{ color: senderColor }}>
                           Utente ·{msg.senderId.slice(-4)}
                         </span>
                       )}
                       <p className="leading-relaxed">{msg.text}</p>
                     </div>
-                    <span className="text-[10px] text-gray-400 mt-1 px-1 font-medium">
+                    <span className="text-xs text-gray-400 mt-1 px-1 font-medium">
                       {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </motion.div>

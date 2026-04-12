@@ -37,17 +37,17 @@ export default class AppErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-gray-50/50 dark:bg-zinc-950 flex flex-col items-center justify-center p-6 text-center">
+        <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 flex flex-col items-center justify-center p-4 sm:p-6 text-center">
           <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
             <span className="text-red-600 text-3xl leading-none">!</span>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Si è verificato un errore</h2>
-          <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md break-words">
+          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">Si è verificato un errore</h2>
+          <p className="text-zinc-500 dark:text-zinc-400 mb-6 max-w-md break-words">
             {this.state.errorMessage}
           </p>
           <button
             onClick={this.handleReset}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all"
+            className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all"
           >
             Ricarica
           </button>

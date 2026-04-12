@@ -222,7 +222,7 @@ async def skip_today(db: AsyncSession = Depends(get_db)):
 
 # --- Dashboard ---
 
-@router.get("/dashboard-state", response_model=schemas.DashboardStateOut | None, dependencies=[Depends(get_current_admin)])
+@router.get("/dashboard-state", response_model=schemas.DashboardStateOut | None)
 async def get_dashboard_state(
     db: AsyncSession = Depends(get_db),
     user_id: str | None = Depends(get_current_user),
@@ -240,7 +240,7 @@ async def get_dashboard_state(
         logger.exception("get_dashboard_state failed: %s", e)
         return {"key": "default", "data": EMPTY_DASHBOARD, "updated_at": datetime.now(timezone.utc)}
 
-@router.get("/dashboard-state/at", response_model=schemas.DashboardStateOut | None, dependencies=[Depends(get_current_admin)])
+@router.get("/dashboard-state/at", response_model=schemas.DashboardStateOut | None)
 async def get_dashboard_state_at(
     at: str,
     db: AsyncSession = Depends(get_db),
@@ -260,7 +260,7 @@ async def get_dashboard_state_at(
         return None
     return {"key": "default", "data": data, "updated_at": at_dt}
 
-@router.put("/dashboard-state", response_model=schemas.DashboardStateOut, dependencies=[Depends(get_current_admin)])
+@router.put("/dashboard-state", response_model=schemas.DashboardStateOut)
 async def update_dashboard_state(
     body: schemas.DashboardStateUpdate,
     db: AsyncSession = Depends(get_db),
@@ -315,7 +315,7 @@ async def batch_update_dashboard(body: dict, db: AsyncSession = Depends(get_db))
 
 # --- Audit Events ---
 
-@router.get("/audit-events", dependencies=[Depends(get_current_admin)])
+@router.get("/audit-events")
 async def get_audit_events(
     entity_type: str | None = None,
     entity_id: str | None = None,
@@ -398,6 +398,12 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
 
         while True:
             payload = await websocket.receive_json()
+            # Rate limit check
+            if not manager.check_rate_limit(websocket):
+                await websocket.send_json({"type": "error", "message": "Rate limit exceeded. Slow down."})
+                await websocket.close(code=1008, reason="Rate limit exceeded")
+                return
+                    
             if payload.get("type") == "ping":
                 await websocket.send_json({"type": "pong"})
                 continue
@@ -415,11 +421,12 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
                     }, share_id, exclude=websocket)
                 continue
 
-            await manager.broadcast(jsonable_encoder(payload), share_id, exclude=websocket)
             await dashboard_service.update_shared_dashboard(
                 db, share_id, payload.get("data"), payload.get("title")
             )
             await invalidate_shared_dashboard(share_id)
+            # Broadcast AFTER successful DB write to avoid spreading uncommitted state
+            await manager.broadcast(jsonable_encoder(payload), share_id, exclude=websocket)
             
     except WebSocketDisconnect:
         pass

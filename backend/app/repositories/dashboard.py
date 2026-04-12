@@ -453,9 +453,107 @@ async def get_shared_dashboard_aggregated(db: AsyncSession, share_id: str):
     }
 
 async def get_all_shared_dashboards_aggregated(db: AsyncSession):
+    """Batch-load all shared dashboards with 3 queries instead of N*4."""
+    # 1. All shared dashboards
     res = await db.execute(select(SharedDashboard).order_by(SharedDashboard.updated_at.desc()))
-    share_ids = [sd.share_id for sd in res.scalars().all()]
-    return [await get_shared_dashboard_aggregated(db, sid) for sid in share_ids]
+    all_shared = res.scalars().all()
+    if not all_shared:
+        return []
+
+    share_ids = [sd.share_id for sd in all_shared]
+    shared_by_id = {sd.share_id: sd for sd in all_shared}
+
+    # 2. All projects for all shared dashboards in one query
+    projs_res = await db.execute(
+        select(Project).filter(Project.share_id.in_(share_ids)).order_by(Project.created_at.desc())
+    )
+    all_projs = projs_res.scalars().all()
+    proj_ids = [p.id for p in all_projs]
+    projs_by_share: dict[str, list] = {sid: [] for sid in share_ids}
+    for p in all_projs:
+        projs_by_share[p.share_id].append(p)
+
+    # 3. All tasks for all projects in one query
+    tasks_by_project: dict[str, list] = {pid: [] for pid in proj_ids}
+    if proj_ids:
+        tasks_res = await db.execute(select(Task).filter(Task.project_id.in_(proj_ids)).order_by(Task.created_at))
+        for t in tasks_res.scalars().all():
+            tasks_by_project[t.project_id].append(t)
+
+    # 4. All chat messages for all shared dashboards in one query
+    chat_by_share: dict[str, list] = {sid: [] for sid in share_ids}
+    chat_res = await db.execute(
+        select(ChatMessage)
+        .filter(ChatMessage.share_id.in_(share_ids))
+        .order_by(ChatMessage.timestamp.desc())
+    )
+    for m in chat_res.scalars().all():
+        chat_by_share[m.share_id].append(m)
+
+    # Build aggregated results
+    results = []
+    for sd in all_shared:
+        share_id = sd.share_id
+        projs = projs_by_share.get(share_id, [])
+
+        def build_tree(task_list, parent_id=None):
+            nodes = []
+            for t in [x for x in task_list if x.parent_id == parent_id]:
+                nodes.append({
+                    "id": t.id, "title": t.title, "done": bool(t.done),
+                    "deadline": t.deadline, "children": build_tree(task_list, t.id)
+                })
+            return nodes
+
+        projects = [
+            {"id": p.id, "title": p.title, "tasks": build_tree(tasks_by_project.get(p.id, []))}
+            for p in projs
+        ]
+
+        # Apply saved project order
+        shared_data = _parse_json(sd.data, {})
+        project_order = shared_data.get("projectOrder") or [] if isinstance(shared_data, dict) else []
+        if project_order:
+            by_id = {p["id"]: p for p in projects}
+            ordered = [by_id[pid] for pid in project_order if pid in by_id]
+            tail = [p for p in projects if p["id"] not in project_order]
+            projects = ordered + tail
+
+        # Chat (limited to last 100 per dashboard)
+        chat_rows = chat_by_share.get(share_id, [])[-100:]
+        chat = [
+            {
+                "id": m.id, "senderId": m.sender_id, "text": m.text,
+                "timestamp": int(m.timestamp.timestamp() * 1000)
+            }
+            for m in chat_rows  # Already in desc order, reversed for chronological
+        ]
+        chat.reverse()
+
+        if not isinstance(shared_data, dict):
+            shared_data = _parse_json(sd.data, {}) or {}
+        quickTasks = shared_data.get("quickTasks", [])
+        notes = shared_data.get("notes", [])
+        bonifici = shared_data.get("bonifici", [])
+        passwordHash = shared_data.get("passwordHash")
+        sectionPasswords = shared_data.get("sectionPasswords") or {}
+
+        results.append({
+            "share_id": sd.share_id,
+            "title": sd.title,
+            "data": {
+                "projects": projects,
+                "quickTasks": quickTasks,
+                "notes": notes,
+                "chat": chat,
+                "bonifici": bonifici,
+                "passwordHash": passwordHash,
+                "sectionPasswords": sectionPasswords
+            },
+            "updated_at": _serialize_dt(sd.updated_at)
+        })
+
+    return results
 
 async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, data: dict, title: str | None = None):
     """Partial update for shared dashboards."""

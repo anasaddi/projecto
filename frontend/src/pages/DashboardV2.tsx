@@ -6,12 +6,12 @@ import { useDashboardStore } from '../store/dashboardStore';
 import { Icons } from '../components/dashboard/Icons';
 import { PomodoroCompact } from '../components/dashboard/PomodoroCompact';
 import { FocusHeatmap } from '../components/dashboard/FocusHeatmap';
-import { PrayersCountdowns } from '../components/dashboard/PrayersCountdowns';
+import { PrayersCountdownsV2 } from '../components/dashboard/PrayersCountdownsV2';
 import { DailyTimelineWidget2 } from '../components/dashboard/DailyTimelineWidget2';
-import { QuickTasksSection } from '../components/dashboard/QuickTasksSection';
-import { Top3Section } from '../components/dashboard/Top3Section';
+import { QuickTasksSectionV2 } from '../components/dashboard/QuickTasksSectionV2';
+import { Top3SectionV2 } from '../components/dashboard/Top3SectionV2';
 import { HabitsSection } from '../components/dashboard/HabitsSection';
-import { ProjectsSection } from '../components/dashboard/ProjectsSection';
+import { ProjectsSectionV2 } from '../components/dashboard/ProjectsSectionV2';
 import { LifeGoalsSection } from '../components/dashboard/LifeGoalsSection';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { HabitSkeleton, ProjectSkeleton, Top3Skeleton, QuickTaskSkeleton } from '../components/dashboard/SkeletonSection';
@@ -56,17 +56,26 @@ export default function DashboardV2(): React.ReactElement {
   useDashboardSync();
 
   const { updateStats } = useDashboardStats() || { updateStats: () => {} };
-  const { config } = useGlobalConfig();
+  const { config } = useGlobalConfig() || { config: null };
   const PRAYERS = useMemo(() => config?.PRAYERS || ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'], [config]);
 
   const [now, setNow] = useState(new Date());
+  // Track "today" separately so streak/habits don't recalculate every second
+  const [today, setToday] = useState(() => new Date());
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
+    const timer = setInterval(() => {
+      const next = new Date();
+      setNow(next);
+      // Only update "today" when the date actually changes (not every second)
+      if (toDateKey(next) !== toDateKey(today)) {
+        setToday(next);
+      }
+    }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [today]);
 
-  const todayKey = toDateKey(now);
+  const todayKey = toDateKey(today);
   const todayTaskLog = useMemo(() => {
     const logs = (dailyTaskLogs[todayKey] as { id: string; done: boolean }[]) || [];
     const map: Record<string, boolean> = {};
@@ -75,33 +84,33 @@ export default function DashboardV2(): React.ReactElement {
   }, [dailyTaskLogs, todayKey]);
   const todayPrayerLog = (prayerLogs[todayKey] as Record<string, boolean>) || {};
 
-  const activeHabits = useMemo(() => dailyTaskTemplates.filter((t) => !t.locked), [dailyTaskTemplates]);
+  const activeHabits = useMemo(() => (dailyTaskTemplates as any[]).filter((t: any) => !t.locked), [dailyTaskTemplates]);
   const todayDone = useMemo(
-    () => activeHabits.reduce((acc, t) => acc + (todayTaskLog[t.id] ? 1 : 0), 0),
+    () => (activeHabits as any[]).reduce((acc: number, t: any) => acc + (todayTaskLog[t.id] ? 1 : 0), 0),
     [activeHabits, todayTaskLog]
   );
   const prayerDone = useMemo(
-    () => PRAYERS.reduce((acc, p) => acc + (todayPrayerLog[p] ? 1 : 0), 0),
+    () => PRAYERS.reduce((acc: number, p: string) => acc + (todayPrayerLog[p] ? 1 : 0), 0),
     [PRAYERS, todayPrayerLog]
   );
 
   const allQuickTasks = useMemo(() => {
-    const local = quickTasks.filter((t) => !t.parentId).map((t) => ({ ...t, shareId: null }));
-    const fromShared = sharedDashboards.flatMap((sd) => {
+    const local = (quickTasks as any[]).filter((t: any) => !t.parentId).map((t: any) => ({ ...t, shareId: null }));
+    const fromShared = (sharedDashboards as any[]).flatMap((sd: any) => {
       const list = Array.isArray((sd.data || {}).quickTasks) ? (sd.data as { quickTasks: unknown[] }).quickTasks : [];
       return list
-        .filter((t: { parentId?: string }) => !t.parentId)
-        .map((t: unknown) => ({ ...t, shareId: sd.share_id, sharedTitle: sd.title }));
+        .filter((t: any) => !t.parentId)
+        .map((t: any) => ({ ...t, shareId: sd.share_id, sharedTitle: sd.title }));
     });
     return [...local, ...fromShared];
   }, [quickTasks, sharedDashboards]);
 
   const top3Resolved = useMemo(
-    () => resolveTop3Slots(projects, top3Manual, allQuickTasks, lifeGoals, sharedDashboards),
+    () => resolveTop3Slots(projects, top3Manual as any[], allQuickTasks, lifeGoals as any, sharedDashboards as any[]),
     [projects, top3Manual, allQuickTasks, lifeGoals, sharedDashboards]
   );
   const top3DoneCount = useMemo(
-    () => top3Resolved.filter((s) => s && !s.missing && s.done).length,
+    () => (top3Resolved as any[]).filter((s: any) => s && !s.missing && s.done).length,
     [top3Resolved]
   );
 
@@ -136,7 +145,7 @@ export default function DashboardV2(): React.ReactElement {
         remaining: formatCountdown(eom.getTime() - n.getTime()),
         pct: (n.getTime() - startOfMonth(n).getTime()) / (eom.getTime() - startOfMonth(n).getTime()),
       },
-    ];
+    ] as any[];
   }, [now]);
 
   const focusStreak = useMemo(() => {
@@ -153,29 +162,29 @@ export default function DashboardV2(): React.ReactElement {
         quick: [],
         project: [],
       };
-      const habitsDone = activeHabits.reduce((acc, t) => acc + (taskLogMap[t.id] ? 1 : 0), 0);
-      const prayersDone = PRAYERS.reduce((acc, p) => acc + (prayerLog[p] ? 1 : 0), 0);
+      const habitsDone = (activeHabits as any[]).reduce((acc: number, t: any) => acc + (taskLogMap[t.id] ? 1 : 0), 0);
+      const prayersDone = PRAYERS.reduce((acc: number, p: string) => acc + (prayerLog[p] ? 1 : 0), 0);
       const tasksDone = Math.min(3, (cl.quick?.length || 0) + (cl.project?.length || 0));
       const score = totalItems ? (habitsDone + prayersDone + tasksDone) / totalItems : 0;
       if (score >= 0.8) s++;
       else break;
     }
     return s;
-  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, now, PRAYERS]);
+  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, today, PRAYERS]);
 
   const confirmId = confirmState && typeof confirmState === 'object' && 'id' in confirmState ? (confirmState as { id: string }).id : undefined;
   const confirmPayload = confirmState && typeof confirmState === 'object' && 'payload' in confirmState ? (confirmState as { payload?: { shareId?: string; projectId?: string; goalId?: string } }).payload : undefined;
 
   return (
-    <div className="min-h-full w-full flex flex-col overflow-y-auto overflow-x-hidden font-sans font-normal select-none selection:bg-indigo-500/30 antialiased bg-white dark:bg-[#0b0e14]">
+    <div className="min-h-full w-full flex flex-col overflow-y-auto font-sans font-normal select-none selection:bg-indigo-500/30 antialiased bg-white dark:bg-[#0b0e14]">
       {/* Redundant header removed - items moved to Layout and PrayersCountdowns */}
 
       <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-5 py-5 md:py-6 flex-1 min-h-0`}>
-        <PrayersCountdowns
+        <PrayersCountdownsV2
           todayPrayerLog={todayPrayerLog}
           togglePrayer={togglePrayer}
           PRAYERS={PRAYERS}
-          countdowns={countdowns}
+          countdowns={countdowns as { label: string; remaining: string; pct: number }[]}
           todayFocusScore={todayFocusScore}
           focusStreak={focusStreak}
           onReset={() => setConfirmState({ id: 'reset' })}
@@ -184,23 +193,25 @@ export default function DashboardV2(): React.ReactElement {
 
         <DailyTimelineWidget2 PRAYERS={PRAYERS} todayKey={todayKey} todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} />
 
-        <div className="flex-1 min-h-0 grid grid-cols-1 gap-5 overflow-x-hidden overflow-y-auto pb-1 md:grid-cols-2 lg:grid-cols-12 lg:overflow-hidden">
-        <div className="flex flex-col gap-5 min-h-0 lg:col-span-3">
-          <PomodoroCompact />
-          {isLoaded ? <QuickTasksSection /> : <QuickTaskSkeleton />}
-          <FocusHeatmap
-            dailyTaskLogs={dailyTaskLogs}
-            prayerLogs={prayerLogs}
-            dailyCompletionLog={dailyCompletionLog}
-            activeHabits={activeHabits}
-            now={now}
-          />
-        </div>
-        <div className="flex flex-col gap-5 min-h-0 lg:col-span-3">
-          {isLoaded ? <Top3Section /> : <Top3Skeleton />}
-          {isLoaded ? <HabitsSection /> : <HabitSkeleton />}
-        </div>
-        {isLoaded ? <ProjectsSection PROJECT_ACCENTS={PROJECT_ACCENTS} /> : <ProjectSkeleton />}
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 pb-1">
+          <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
+            <PomodoroCompact />
+            {isLoaded ? <QuickTasksSectionV2 /> : <QuickTaskSkeleton />}
+            <FocusHeatmap
+              dailyTaskLogs={dailyTaskLogs}
+              prayerLogs={prayerLogs}
+              dailyCompletionLog={dailyCompletionLog}
+              activeHabits={activeHabits}
+              now={now}
+            />
+          </div>
+          <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
+            {isLoaded ? <Top3SectionV2 /> : <Top3Skeleton />}
+            {isLoaded ? <HabitsSection /> : <HabitSkeleton />}
+          </div>
+          <div className="flex flex-col gap-4 min-h-0 lg:w-2/4">
+            {isLoaded ? <ProjectsSectionV2 PROJECT_ACCENTS={PROJECT_ACCENTS} /> : <ProjectSkeleton />}
+          </div>
         </div>
 
         <LifeGoalsSection />

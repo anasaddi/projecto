@@ -63,11 +63,14 @@ async def get_dashboard_events(
 
 
 def project_events_to_state(events: list[dict[str, Any]]) -> dict[str, Any]:
-    """Replay events to get state at a point in time. Last DashboardStateUpdated wins."""
+    """Replay events to get state at a point in time. Merges partial updates so
+    that fields from earlier events are preserved when later events don't include them."""
     state: dict[str, Any] = {}
     for ev in events:
         if ev.get("event_type") == EVENT_TYPE_DASHBOARD_UPDATED and isinstance(ev.get("payload"), dict):
-            state = ev["payload"]
+            # Shallow merge: later events override earlier ones for overlapping keys,
+            # but keys not present in later events are preserved from earlier state.
+            state = {**state, **ev["payload"]}
     return state
 
 

@@ -13,7 +13,7 @@ class LoginRequest(BaseModel):
 
 def create_access_token(data: dict, secret_key: str, expires_delta: datetime.timedelta):
     to_encode = data.copy()
-    expire = datetime.datetime.utcnow() + expires_delta
+    expire = datetime.datetime.now(datetime.timezone.utc) + expires_delta
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, secret_key, algorithm="HS256")
     return encoded_jwt
