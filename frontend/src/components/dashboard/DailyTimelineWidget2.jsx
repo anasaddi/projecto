@@ -212,18 +212,24 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
               className="border-t border-zinc-100/80 bg-zinc-50/40 dark:border-zinc-800/60 dark:bg-white/[0.02]"
             >
               <div className="px-3 py-4 no-select-calendar sm:px-5 sm:py-5 md:px-6">
-                {/* Prayer nodes row + connecting lines */}
-                <div className="relative flex items-start gap-2 sm:gap-3">
+                {/* Unified timeline: prayer checkboxes centered between slot cards */}
+                <div className="flex flex-wrap items-start gap-3 justify-center">
                   {PRAYERS.map((prayer, i) => {
                     const isDone = todayPrayerLog[prayer];
                     const slotKey = PRAYER_SLOTS[i];
-                    const hasSlotLine = i < PRAYERS.length - 1;
+                    const isCurrentSlot = currentSlotKey === slotKey;
                     const isPastSlot = PRAYER_SLOTS.indexOf(slotKey) < PRAYER_SLOTS.indexOf(currentSlotKey);
+                    const hasSlotCard = !!slotKey;
+
+                    const routines = slotsForDay[slotKey] || [];
+                    const events = eventsToday.filter(e => e.slotKey === slotKey);
+                    const slotTotal = routines.length;
+                    const slotDone = routines.filter(r => r.done).length;
 
                     return (
                       <React.Fragment key={prayer}>
-                        {/* Prayer node */}
-                        <div className="flex flex-1 min-w-0 flex-col items-center">
+                        {/* Prayer checkbox node */}
+                        <div className="flex flex-col items-center min-w-[120px] flex-1 max-w-[160px]">
                           <motion.button
                             onClick={() => togglePrayer?.(prayer, !isDone)}
                             whileHover={{ scale: 1.08 }}
@@ -242,43 +248,11 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                           </div>
                         </div>
 
-                        {/* Connecting line between prayer nodes */}
-                        {hasSlotLine && (
-                          <div className="relative mt-[20px] h-[3px] min-w-[12px] w-6 shrink-0 flex-1 overflow-hidden rounded-full bg-zinc-200/60 dark:bg-zinc-800">
-                            <motion.div
-                              className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500 to-indigo-500 rounded-full"
-                              initial={false}
-                              animate={{ width: isPastSlot ? '100%' : isDone ? '100%' : '0%' }}
-                              transition={{ duration: 0.8, ease: "easeInOut" }}
-                            />
-                          </div>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
-                </div>
-
-                {/* Slot cards row — wraps on smaller screens */}
-                <div className="mt-4 flex flex-wrap items-start gap-3 justify-center">
-                  {PRAYERS.map((prayer, i) => {
-                    const slotKey = PRAYER_SLOTS[i];
-                    const hasSlotCard = !!slotKey;
-                    const hasSlotLine = i < PRAYERS.length - 1;
-                    const isCurrentSlot = currentSlotKey === slotKey;
-                    const isPastSlot = PRAYER_SLOTS.indexOf(slotKey) < PRAYER_SLOTS.indexOf(currentSlotKey);
-
-                    const routines = slotsForDay[slotKey] || [];
-                    const events = eventsToday.filter(e => e.slotKey === slotKey);
-                    const slotTotal = routines.length;
-                    const slotDone = routines.filter(r => r.done).length;
-
-                    return (
-                      <React.Fragment key={prayer}>
-                        {/* Card for this slot */}
-                        <div className={`flex-1 min-w-[200px] max-w-[248px] transition-all duration-500 ${hasSlotCard ? '' : 'invisible'} ${
-                          isCurrentSlot ? 'opacity-100 z-30' : isPastSlot ? 'opacity-60 hover:opacity-100' : 'opacity-40 hover:opacity-100'
-                        }`}>
-                          {hasSlotCard && (
+                        {/* Slot card */}
+                        {hasSlotCard && (
+                          <div className={`flex-1 min-w-[200px] max-w-[248px] transition-all duration-500 ${
+                            isCurrentSlot ? 'opacity-100 z-30' : isPastSlot ? 'opacity-60 hover:opacity-100' : 'opacity-40 hover:opacity-100'
+                          }`}>
                             <div className={`flex flex-col bg-white dark:bg-zinc-900/80 backdrop-blur-xl border rounded-2xl overflow-hidden transition-all duration-300 ${
                               isCurrentSlot
                                 ? 'border-indigo-400/60 shadow-[0_8px_30px_rgba(99,102,241,0.15)] ring-1 ring-indigo-500/10'
@@ -360,11 +334,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                                 </div>
                               )}
                             </div>
-                          )}
-                        </div>
-
-                        {/* spacer between cards matching the connecting line width — hidden on wrap */}
-                        {hasSlotLine && <div className="hidden" />}
+                          </div>
+                        )}
                       </React.Fragment>
                     );
                   })}
