@@ -212,24 +212,18 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
               className="border-t border-zinc-100/80 bg-zinc-50/40 dark:border-zinc-800/60 dark:bg-white/[0.02]"
             >
               <div className="px-3 py-4 no-select-calendar sm:px-5 sm:py-5 md:px-6">
-                {/* Unified timeline: prayer checkboxes centered between slot cards */}
-                <div className="flex flex-wrap items-start gap-3 justify-center">
+                {/* Prayer nodes row - lowered to align between cards */}
+                <div className="relative flex items-start gap-2 sm:gap-3">
                   {PRAYERS.map((prayer, i) => {
                     const isDone = todayPrayerLog[prayer];
                     const slotKey = PRAYER_SLOTS[i];
-                    const isCurrentSlot = currentSlotKey === slotKey;
+                    const hasSlotLine = i < PRAYERS.length - 1;
                     const isPastSlot = PRAYER_SLOTS.indexOf(slotKey) < PRAYER_SLOTS.indexOf(currentSlotKey);
-                    const hasSlotCard = !!slotKey;
-
-                    const routines = slotsForDay[slotKey] || [];
-                    const events = eventsToday.filter(e => e.slotKey === slotKey);
-                    const slotTotal = routines.length;
-                    const slotDone = routines.filter(r => r.done).length;
 
                     return (
                       <React.Fragment key={prayer}>
-                        {/* Prayer checkbox node */}
-                        <div className="flex flex-col items-center min-w-[120px] flex-1 max-w-[160px]">
+                        {/* Prayer node */}
+                        <div className="flex flex-1 min-w-0 flex-col items-center mt-6">
                           <motion.button
                             onClick={() => togglePrayer?.(prayer, !isDone)}
                             whileHover={{ scale: 1.08 }}
@@ -248,6 +242,37 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                           </div>
                         </div>
 
+                        {/* Connecting line between prayer nodes */}
+                        {hasSlotLine && (
+                          <div className="relative mt-[20px] h-[3px] min-w-[12px] w-6 shrink-0 flex-1 overflow-hidden rounded-full bg-zinc-200/60 dark:bg-zinc-800">
+                            <motion.div
+                              className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500 to-indigo-500 rounded-full"
+                              initial={false}
+                              animate={{ width: isPastSlot ? '100%' : isDone ? '100%' : '0%' }}
+                              transition={{ duration: 0.8, ease: "easeInOut" }}
+                            />
+                          </div>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+
+                {/* Slot cards row — wraps on smaller screens */}
+                <div className="mt-4 flex flex-wrap items-start gap-3 justify-center">
+                  {PRAYERS.map((prayer, i) => {
+                    const slotKey = PRAYER_SLOTS[i];
+                    const hasSlotCard = !!slotKey;
+                    const isCurrentSlot = currentSlotKey === slotKey;
+                    const isPastSlot = PRAYER_SLOTS.indexOf(slotKey) < PRAYER_SLOTS.indexOf(currentSlotKey);
+
+                    const routines = slotsForDay[slotKey] || [];
+                    const events = eventsToday.filter(e => e.slotKey === slotKey);
+                    const slotTotal = routines.length;
+                    const slotDone = routines.filter(r => r.done).length;
+
+                    return (
+                      <React.Fragment key={prayer}>
                         {/* Slot card */}
                         {hasSlotCard && (
                           <div className={`flex-1 min-w-[200px] max-w-[248px] transition-all duration-500 ${
