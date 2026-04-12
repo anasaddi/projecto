@@ -5,3 +5,8 @@ dist
 .trae
 .log
 .figma
+backend
+*.sqlite
+*.sqlite-journal
+.venv
+__pycache__

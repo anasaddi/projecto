@@ -149,7 +149,7 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
             {/* Shared Projects */}
             {hasShared && (
               <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-3 py-2 border-t border-zinc-200 dark:border-zinc-800">
+                <div className="flex items-center gap-3 py-2">
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-500/10">
                       <Icons.MessageCircle className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
