@@ -26,10 +26,10 @@ export function PrayersCountdownsV2({
   
   return (
     <Card variant="elevated" radius="xl" className="overflow-hidden">
-      <CardBody className="p-5">
-        <div className="flex items-center gap-6">
+      <CardBody className="p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
           {/* Section 1: Focus Score */}
-          <div className="flex flex-col gap-2 flex-1 min-w-0">
+          <div className="flex flex-col gap-2 w-full sm:flex-1 sm:min-w-0">
             <div className="flex items-center justify-between">
               <Label>Focus Score</Label>
               <Numeric className="text-emerald-600 dark:text-emerald-400 font-bold">
@@ -55,20 +55,20 @@ export function PrayersCountdownsV2({
             </div>
           </div>
 
-          {/* Divider */}
-          <div className="h-12 w-px bg-zinc-200 dark:bg-zinc-700 shrink-0" />
+          {/* Divider - hidden on mobile */}
+          <div className="hidden sm:block h-12 w-px bg-zinc-200 dark:bg-zinc-700 shrink-0" />
 
-          {/* Section 2: Countdowns */}
-          <div className="flex items-center gap-4 lg:gap-6 shrink-0">
+          {/* Section 2: Countdowns - wraps on smaller screens */}
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-x-4 sm:gap-x-5 lg:gap-x-6 gap-y-3 w-full sm:w-auto">
             {Array.isArray(countdowns) && countdowns.map((c) => (
-              <div key={c.label} className="flex flex-col items-center min-w-[70px]">
-                <Text variant="overline" color="muted">
+              <div key={c.label} className="flex flex-col items-center min-w-0 flex-1 sm:flex-initial sm:min-w-[80px] max-w-[120px] sm:max-w-none">
+                <Text variant="overline" color="muted" className="truncate w-full text-center" title={c.label}>
                   {c.label}
                 </Text>
-                <Text variant="h4" className="tabular-nums">
+                <Text variant="h4" className="tabular-nums text-center">
                   {c.remaining}
                 </Text>
-                <div className="w-12 h-1 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden mt-1.5">
+                <div className="w-full sm:w-12 h-1 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden mt-1.5">
                   <div 
                     className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-1000" 
                     style={{ width: `${(c.pct || 0) * 100}%` }} 
