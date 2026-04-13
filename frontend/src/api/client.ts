@@ -1,7 +1,8 @@
 import { logAndToast } from '../utils/errorLog';
 import type { LoginResponse } from '../types/api';
+import { API_BASE } from '../config';
 
-const BASE = '/api';
+const BASE = API_BASE;
 const DEFAULT_TIMEOUT_MS = 30_000;
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 500;
