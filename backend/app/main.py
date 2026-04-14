@@ -22,7 +22,13 @@ logger = logging.getLogger("km")
 
 def _cors_origins_list(settings) -> list:
     s = (getattr(settings, "cors_origins", None) or "").strip()
-    return [x.strip() for x in s.split(",") if x.strip()]
+    origins = [x.strip() for x in s.split(",") if x.strip()]
+    # Always allow Vercel deployment origins (even if CORS_ORIGINS env var is missing)
+    vercel_origins = ["https://projecto-indol.vercel.app", "https://projecto-frontend.vercel.app"]
+    for vo in vercel_origins:
+        if vo not in origins:
+            origins.append(vo)
+    return origins
 
 
 @asynccontextmanager
