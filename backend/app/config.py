@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     environment: str = "development"
     log_level: str = "INFO"
-    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000,https://projecto-frontend.vercel.app,https://projecto-frontend-git-main-anasaddi.vercel.app"
     admin_access_key: str = "change-me-in-env"
     training_access_key: str = ""  # Se impostata, solo chi fa login con questa chiave vede Training (es. Flavio)
     secret_key: str = "your-secret-key-for-jwt"  # Change in .env
