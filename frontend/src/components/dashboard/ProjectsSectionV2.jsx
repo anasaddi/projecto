@@ -27,6 +27,7 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
   const sharedDashboards = useDashboardStore((s) => s.sharedDashboards) ?? [];
   const updateSharedDashboardProject = useDashboardStore((s) => s.updateSharedDashboardProject);
   const deleteSharedDashboardProject = useDashboardStore((s) => s.deleteSharedDashboardProject);
+  const moveQuickTaskToProject = useDashboardStore((s) => s.moveQuickTaskToProject);
 
   const hasProjects = projects.length > 0;
   const hasShared = sharedDashboards.length > 0;
@@ -84,7 +85,10 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
                   <ProjectCard
                     key={project.id}
                     dragPayload={{ type: 'project', fromIndex: idx }}
-                    onDrop={(p) => { if (p.type === 'project') reorderProjects(p.fromIndex, idx); }}
+                    onDrop={(p) => {
+                      if (p.type === 'project') reorderProjects(p.fromIndex, idx);
+                      else if (p.type === 'quick' && p.quickTaskId) moveQuickTaskToProject(p.quickTaskId, project.id);
+                    }}
                   >
                     <StandardProjectCard
                       project={project}
@@ -173,7 +177,10 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
                         <ProjectCard
                           key={`${shared.share_id}-${project.id}`}
                           dragPayload={{ type: 'sharedProject', shareId: shared.share_id, fromIndex: pIdx }}
-                          onDrop={(p) => { if (p.type === 'sharedProject' && p.shareId === shared.share_id) reorderSharedDashboardProjects(p.shareId, p.fromIndex, pIdx); }}
+                          onDrop={(p) => {
+                            if (p.type === 'sharedProject' && p.shareId === shared.share_id) reorderSharedDashboardProjects(p.shareId, p.fromIndex, pIdx);
+                            else if (p.type === 'quick' && p.quickTaskId) moveQuickTaskToProject(p.quickTaskId, project.id);
+                          }}
                         >
                           <StandardProjectCard
                             project={project}

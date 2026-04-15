@@ -133,6 +133,8 @@ export function DenseTaskNode({
   const updateSharedDashboardProject = useDashboardStore((s) => s.updateSharedDashboardProject);
   const updateGoal = useDashboardStore((s) => s.updateGoal);
   const setProjects = useDashboardStore((s) => s.setProjects);
+  const activePomodoroTask = useDashboardStore((s) => s.activePomodoroTask);
+  const setActivePomodoroTask = useDashboardStore((s) => s.setActivePomodoroTask);
 
   const isLifeGoal = typeof projectId === 'string' && projectId.startsWith('lg-');
   const goalId = isLifeGoal ? projectId.slice(3) : null;
@@ -360,8 +362,15 @@ export function DenseTaskNode({
   const deadlineTone = getDeadlineColorClass(node.deadline, node.done);
   const sharedMetaTagBase = 'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium tracking-tight';
 
+  const isFocusActive = activePomodoroTask && activePomodoroTask.taskId === node.id && activePomodoroTask.projectId === projectId;
   const taskActions = [
-    !hideTop3Button && !node.done && (isTop3 || hasFreeTop3Slot) && {
+    !node.done && !isFocusActive && {
+      icon: <Icons.Clock className="h-3 w-3" />,
+      onClick: (e) => { e.stopPropagation(); setActivePomodoroTask({ taskId: node.id, projectId, title: node.title }); },
+      title: 'Inizia Focus',
+      className: 'text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20',
+    },
+    !hideTop3Button && (isTop3 || hasFreeTop3Slot) && {
       icon: <Icons.Target className="h-3 w-3" />,
       onClick: (e) => { e.stopPropagation(); onToggleTop3(projectId, node.id); },
       title: isTop3 ? 'Rimuovi da Focus' : 'Pin a Focus',

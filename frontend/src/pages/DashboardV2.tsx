@@ -52,6 +52,12 @@ export default function DashboardV2(): React.ReactElement {
   const deleteGoal = useDashboardStore((s) => s.deleteGoal);
   const deleteSharedDashboardProject = useDashboardStore((s) => s.deleteSharedDashboardProject);
   const togglePrayer = useDashboardStore((s) => s.togglePrayer);
+  const sectionOrder = useDashboardStore((s) => s.sectionOrder) ?? {
+    left: ['pomodoro', 'quickTasks', 'focusHeatmap'],
+    center: ['top3', 'habits'],
+    right: ['projects'],
+  };
+  const reorderSection = useDashboardStore((s) => s.reorderSection);
 
   useDashboardSync();
 
@@ -195,22 +201,70 @@ export default function DashboardV2(): React.ReactElement {
 
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 pb-1">
           <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
-            <PomodoroCompact />
-            {isLoaded ? <QuickTasksSectionV2 /> : <QuickTaskSkeleton />}
-            <FocusHeatmap
-              dailyTaskLogs={dailyTaskLogs}
-              prayerLogs={prayerLogs}
-              dailyCompletionLog={dailyCompletionLog}
-              activeHabits={activeHabits}
-              now={now}
-            />
+            {(sectionOrder.left || ['pomodoro', 'quickTasks', 'focusHeatmap']).map((sectionId: string, idx: number) => {
+              const sectionProps = {
+                key: sectionId,
+                draggable: true,
+                onDragStart: (e: React.DragEvent) => {
+                  e.dataTransfer.setData('application/json', JSON.stringify({ type: 'section', column: 'left', fromIndex: idx }));
+                  e.dataTransfer.effectAllowed = 'move';
+                },
+                onDragOver: (e: React.DragEvent) => e.preventDefault(),
+                onDrop: (e: React.DragEvent) => {
+                  try {
+                    const p = JSON.parse(e.dataTransfer.getData('application/json'));
+                    if (p.type === 'section' && p.column === 'left') reorderSection('left', p.fromIndex, idx);
+                  } catch (_) {}
+                },
+              };
+              if (sectionId === 'pomodoro') return <div {...sectionProps} className="transition-all duration-300"><PomodoroCompact /></div>;
+              if (sectionId === 'quickTasks') return <div {...sectionProps} className="transition-all duration-300">{isLoaded ? <QuickTasksSectionV2 /> : <QuickTaskSkeleton />}</div>;
+              if (sectionId === 'focusHeatmap') return <div {...sectionProps} className="transition-all duration-300"><FocusHeatmap dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} now={now} /></div>;
+              return null;
+            })}
           </div>
           <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
-            {isLoaded ? <Top3SectionV2 /> : <Top3Skeleton />}
-            {isLoaded ? <HabitsSection /> : <HabitSkeleton />}
+            {(sectionOrder.center || ['top3', 'habits']).map((sectionId: string, idx: number) => {
+              const sectionProps = {
+                key: sectionId,
+                draggable: true,
+                onDragStart: (e: React.DragEvent) => {
+                  e.dataTransfer.setData('application/json', JSON.stringify({ type: 'section', column: 'center', fromIndex: idx }));
+                  e.dataTransfer.effectAllowed = 'move';
+                },
+                onDragOver: (e: React.DragEvent) => e.preventDefault(),
+                onDrop: (e: React.DragEvent) => {
+                  try {
+                    const p = JSON.parse(e.dataTransfer.getData('application/json'));
+                    if (p.type === 'section' && p.column === 'center') reorderSection('center', p.fromIndex, idx);
+                  } catch (_) {}
+                },
+              };
+              if (sectionId === 'top3') return <div {...sectionProps} className="transition-all duration-300">{isLoaded ? <Top3SectionV2 /> : <Top3Skeleton />}</div>;
+              if (sectionId === 'habits') return <div {...sectionProps} className="transition-all duration-300">{isLoaded ? <HabitsSection /> : <HabitSkeleton />}</div>;
+              return null;
+            })}
           </div>
           <div className="flex flex-col gap-4 min-h-0 lg:w-2/4">
-            {isLoaded ? <ProjectsSectionV2 PROJECT_ACCENTS={PROJECT_ACCENTS} /> : <ProjectSkeleton />}
+            {(sectionOrder.right || ['projects']).map((sectionId: string, idx: number) => {
+              const sectionProps = {
+                key: sectionId,
+                draggable: true,
+                onDragStart: (e: React.DragEvent) => {
+                  e.dataTransfer.setData('application/json', JSON.stringify({ type: 'section', column: 'right', fromIndex: idx }));
+                  e.dataTransfer.effectAllowed = 'move';
+                },
+                onDragOver: (e: React.DragEvent) => e.preventDefault(),
+                onDrop: (e: React.DragEvent) => {
+                  try {
+                    const p = JSON.parse(e.dataTransfer.getData('application/json'));
+                    if (p.type === 'section' && p.column === 'right') reorderSection('right', p.fromIndex, idx);
+                  } catch (_) {}
+                },
+              };
+              if (sectionId === 'projects') return <div {...sectionProps} className="transition-all duration-300">{isLoaded ? <ProjectsSectionV2 PROJECT_ACCENTS={PROJECT_ACCENTS} /> : <ProjectSkeleton />}</div>;
+              return null;
+            })}
           </div>
         </div>
 

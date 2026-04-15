@@ -5,6 +5,7 @@ import { TaskCheckbox } from './DashboardComponents';
 import { ActionButton } from './Card';
 import { formatDeadline, getDeadlineColorClass } from './DashboardUtils';
 import { useLongPressActions } from '../../hooks/useLongPressActions';
+import { useDashboardStore } from '../../store/dashboardStore';
 
 export function QuickTaskRow({
   task, isShared, localIdx, idx, pinned, isHovered,
@@ -15,10 +16,19 @@ export function QuickTaskRow({
   updateQuickTask, updateSharedQuickTask,
   top3Manual, setTop3SlotAtIndex,
   removeQuickTask, removeSharedQuickTask,
-  reorderQuickTasks,
+  reorderQuickTasks, promoteQuickTaskToProject,
 }) {
+  const activePomodoroTask = useDashboardStore((s) => s.activePomodoroTask);
+  const setActivePomodoroTask = useDashboardStore((s) => s.setActivePomodoroTask);
   const taskId = isShared ? `shared-${task.shareId}-${task.id}` : task.id;
+  const isFocusActive = activePomodoroTask && (activePomodoroTask.quickTaskId === task.id || activePomodoroTask.taskId === taskId);
   const actions = [
+    !task.done && !isFocusActive && {
+      icon: <Icons.Clock className="h-3 w-3" />,
+      onClick: () => setActivePomodoroTask({ taskId: task.id, quickTaskId: task.id, title: task.title }),
+      title: 'Inizia Focus',
+      className: 'text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/20',
+    },
     !task.deadline && quickTaskDeadlineEditing !== taskId && {
       icon: <Icons.Calendar className="h-3 w-3" />,
       onClick: () => { setQuickTaskDeadlineInput(''); setQuickTaskDeadlineEditing(taskId); },
@@ -33,6 +43,12 @@ export function QuickTaskRow({
       },
       title: pinned ? 'Rimuovi dai Top 3' : 'Aggiungi ai Top 3',
       className: pinned ? 'text-amber-500 bg-amber-50 dark:text-amber-300 dark:bg-amber-500/30 dark:ring-1 dark:ring-amber-400/50' : '',
+    },
+    {
+      icon: <Icons.ArrowUpRight className="h-3 w-3" />,
+      onClick: () => promoteQuickTaskToProject?.(task.id),
+      title: 'Promuovi a progetto',
+      className: 'text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/20',
     },
     {
       icon: <Icons.X className="h-3 w-3" />,
@@ -56,10 +72,10 @@ export function QuickTaskRow({
       className={`
         group relative flex items-center gap-2 rounded-2xl border border-transparent p-3
         ${task.done ? 'opacity-75' : 'opacity-100'}
-        ${!isShared ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
+        ${isFocusActive ? 'ring-2 ring-indigo-400/60 dark:ring-indigo-500/40 bg-indigo-50/50 dark:bg-indigo-500/5' : !isShared ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
         transition-colors duration-200
-        ${isHovered ? 'bg-zinc-100/90 border-zinc-200/70 dark:bg-white/[0.04] dark:border-white/[0.06]' : 'bg-transparent'}
-        hover:bg-zinc-100/90 hover:border-zinc-200/70 dark:hover:bg-white/[0.04] dark:hover:border-white/[0.06]
+        ${!isFocusActive && (isHovered ? 'bg-zinc-100/90 border-zinc-200/70 dark:bg-white/[0.04] dark:border-white/[0.06]' : 'bg-transparent')}
+        ${!isFocusActive && 'hover:bg-zinc-100/90 hover:border-zinc-200/70 dark:hover:bg-white/[0.04] dark:hover:border-white/[0.06]'}
       `}
       draggable={!isShared}
       onMouseEnter={() => setHoveredTaskId(taskId)}

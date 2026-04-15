@@ -34,6 +34,8 @@ interface SyncData {
   lifeGoals?: LifeGoalsState;
   timelineRoutines?: Record<string, unknown>;
   timelinePanelExpanded?: boolean;
+  activePomodoroTask?: { taskId: string; projectId?: string; quickTaskId?: string; title: string } | null;
+  sectionOrder?: Record<string, string[]>;
 }
 
 const defaultInitial = {
@@ -47,6 +49,12 @@ const defaultInitial = {
   lifeGoals: buildDefaultLifeGoals() as LifeGoalsState,
   timelineRoutines: {} as Record<string, unknown>,
   timelinePanelExpanded: true,
+  activePomodoroTask: null as { taskId: string; projectId?: string; quickTaskId?: string; title: string } | null,
+  sectionOrder: {
+    left: ['pomodoro', 'quickTasks', 'focusHeatmap'],
+    center: ['top3', 'habits'],
+    right: ['projects'],
+  } as Record<string, string[]>,
 };
 
 const loaded = loadState() as Partial<SyncData> | null;
@@ -87,8 +95,24 @@ export const useDashboardStore = create(
         goalDeadlineInput: '',
         sharedDashboards: [] as unknown[],
         timelinePanelExpanded: initialState.timelinePanelExpanded !== false,
+        activePomodoroTask: initialState.activePomodoroTask ?? null,
+        sectionOrder: (initialState as any).sectionOrder ?? defaultInitial.sectionOrder,
 
-        // --- Slices ---
+        setActivePomodoroTask: (task: { taskId: string; projectId?: string; quickTaskId?: string; title: string } | null) =>
+          set((s: unknown) => {
+            const state = s as { activePomodoroTask: { taskId: string; projectId?: string; quickTaskId?: string; title: string } | null };
+            state.activePomodoroTask = task;
+          }),
+
+        reorderSection: (column: string, fromIndex: number, toIndex: number) =>
+          set((s: unknown) => {
+            const state = s as { sectionOrder: Record<string, string[]> };
+            const sections = state.sectionOrder[column];
+            if (!sections || fromIndex === toIndex) return;
+            const [removed] = sections.splice(fromIndex, 1);
+            sections.splice(toIndex, 0, removed);
+          }),
+
         ...createUISlice(set),
         ...createHabitSlice(set, get),
         logTimelineCompletionEvent: (type: string, id: string, title: string, val: boolean) =>

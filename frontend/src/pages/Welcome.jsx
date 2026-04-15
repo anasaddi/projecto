@@ -3,7 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AppLogo } from '../components/AppLogo';
 
 export default function Welcome() {
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('km-theme') === 'dark');
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('km-theme');
+    if (saved) return saved === 'dark';
+    return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+  });
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);

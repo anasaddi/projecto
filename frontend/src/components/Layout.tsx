@@ -33,12 +33,28 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
     return () => clearTimeout(t);
   }, [lastSavedAt, setLastSavedAt]);
 
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('km-theme') === 'dark');
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('km-theme');
+    if (saved) return saved === 'dark';
+    // Auto-detect from system preference
+    return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+  });
   const [collabWho, setCollabWho] = useState<CollabIdentity>(() => getCollabIdentity());
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
     localStorage.setItem('km-theme', isDark ? 'dark' : 'light');
   }, [isDark]);
+
+  // Listen for system theme changes (only when no manual override)
+  useEffect(() => {
+    const mq = window.matchMedia?.('(prefers-color-scheme: dark)');
+    if (!mq) return;
+    const handler = (e: MediaQueryListEvent) => {
+      if (!localStorage.getItem('km-theme')) setIsDark(e.matches);
+    };
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const isGuest = localStorage.getItem('km-user-role') === 'guest';
   const isAdmin =

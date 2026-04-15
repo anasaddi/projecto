@@ -149,6 +149,33 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   animation: slide-up 200ms ease-out both;
 }
 
+/* Glow pulse animations for completed cards */
+@keyframes glow-success-pulse {
+  0%, 100% {
+    box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.15), 0 4px 6px -4px rgba(16, 185, 129, 0.1);
+  }
+  50% {
+    box-shadow: 0 10px 25px -3px rgba(16, 185, 129, 0.25), 0 4px 10px -4px rgba(16, 185, 129, 0.15);
+  }
+}
+
+.animate-glow-success {
+  animation: glow-success-pulse 2s ease-in-out infinite;
+}
+
+@keyframes glow-indigo-pulse {
+  0%, 100% {
+    box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.15), 0 4px 6px -4px rgba(99, 102, 241, 0.1);
+  }
+  50% {
+    box-shadow: 0 10px 25px -3px rgba(99, 102, 241, 0.3), 0 4px 10px -4px rgba(99, 102, 241, 0.15);
+  }
+}
+
+.animate-glow-indigo {
+  animation: glow-indigo-pulse 2s ease-in-out infinite;
+}
+
 /* -------------------------------------------------------
    TRANSCRIPT
 -------------------------------------------------------- */

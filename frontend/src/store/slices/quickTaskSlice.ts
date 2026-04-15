@@ -1,14 +1,16 @@
 import type { QuickTask, DayCompletionPayload } from '../../types/dashboard';
-import { toDateKey } from '../../components/dashboard/DashboardUtils';
+import { toDateKey, uid } from '../../components/dashboard/DashboardUtils';
 import { haptic } from '../../utils/haptics';
 import { logTimelineEvent } from '../storeHelpers';
 
 export type QuickTaskSet = (fn: (s: unknown) => void) => void;
 export type QuickTaskGet = () => {
   quickTasks: QuickTask[];
+  projects: Array<{ id: string; title: string; tasks: unknown[]; ordinal?: number; active?: boolean; lifeGoalId?: string; deadline?: string }>;
   dailyCompletionLog: Record<string, DayCompletionPayload>;
   lifeGoals: { tiers: Array<{ goals: Array<{ id: string; done: boolean }> }> } | null;
-  updateSharedDashboardData: (shareId: string, updater: (d: unknown) => unknown) => void;
+  sharedDashboards: Array<{ share_id: string; data?: { quickTasks?: QuickTask[]; projects?: unknown[]; chat?: unknown[] } }>;
+  updateSharedDashboardData: (shareId: string, updater: (d: { projects: unknown[]; quickTasks: QuickTask[]; chat: unknown[] }) => unknown) => void;
 };
 
 export function createQuickTaskSlice(set: QuickTaskSet, get: QuickTaskGet) {
@@ -130,5 +132,54 @@ export function createQuickTaskSlice(set: QuickTaskSet, get: QuickTaskGet) {
         );
       });
     },
+
+    promoteQuickTaskToProject: (taskId: string) =>
+      set((s: unknown) => {
+        const state = s as {
+          quickTasks: QuickTask[];
+          projects: Array<{ id: string; title: string; tasks: unknown[]; ordinal?: number; active?: boolean; lifeGoalId?: string; deadline?: string }>;
+          top3Manual: (unknown)[];
+        };
+        const task = state.quickTasks.find((t) => t.id === taskId);
+        if (!task) return;
+        // Create new project from the quick task
+        const newProject = {
+          id: uid('proj'),
+          title: task.title,
+          tasks: [],
+          ordinal: state.projects.length,
+          active: true,
+          deadline: task.deadline,
+        };
+        state.projects.push(newProject);
+        // Remove the quick task
+        state.quickTasks = state.quickTasks.filter((t) => t.id !== taskId && t.parentId !== taskId);
+        // Clean up top3Manual
+        state.top3Manual = state.top3Manual.map((slot) =>
+          slot && (slot as { quickTaskId?: string }).quickTaskId === taskId ? null : slot
+        );
+      }),
+
+    moveQuickTaskToProject: (taskId: string, projectId: string) =>
+      set((s: unknown) => {
+        const state = s as {
+          quickTasks: QuickTask[];
+          projects: Array<{ id: string; title: string; tasks: unknown[]; ordinal?: number; active?: boolean; lifeGoalId?: string; deadline?: string }>;
+          top3Manual: (unknown)[];
+        };
+        const task = state.quickTasks.find((t) => t.id === taskId);
+        if (!task) return;
+        const project = state.projects.find((p) => p.id === projectId);
+        if (!project) return;
+        // Add task to project as a new task node
+        const newNode = { id: uid('task'), title: task.title, done: task.done, deadline: task.deadline, children: [] };
+        project.tasks = [...(project.tasks || []), newNode];
+        // Remove the quick task
+        state.quickTasks = state.quickTasks.filter((t) => t.id !== taskId && t.parentId !== taskId);
+        // Clean up top3Manual
+        state.top3Manual = state.top3Manual.map((slot) =>
+          slot && (slot as { quickTaskId?: string }).quickTaskId === taskId ? null : slot
+        );
+      }),
   };
 }

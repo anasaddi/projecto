@@ -30,7 +30,8 @@ export function QuickTasksSection() {
     setTop3SlotAtIndex,
     removeSharedQuickTask,
     removeQuickTask,
-    reorderQuickTasks
+    reorderQuickTasks,
+    promoteQuickTaskToProject
   } = store ?? {};
 
   const allQuickTasks = useMemo(() => {
@@ -132,6 +133,7 @@ export function QuickTasksSection() {
                   removeQuickTask={removeQuickTask}
                   removeSharedQuickTask={removeSharedQuickTask}
                   reorderQuickTasks={reorderQuickTasks}
+                  promoteQuickTaskToProject={promoteQuickTaskToProject}
                 />
               );
             })}

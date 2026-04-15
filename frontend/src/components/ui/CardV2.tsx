@@ -80,9 +80,10 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
   }, ref) => {
     const glowClasses = {
       primary: 'shadow-lg shadow-indigo-500/20 dark:shadow-indigo-500/10',
-      success: 'shadow-lg shadow-emerald-500/20 dark:shadow-emerald-500/10',
+      success: 'shadow-lg shadow-emerald-500/20 dark:shadow-emerald-500/10 animate-glow-success',
       warning: 'shadow-lg shadow-amber-500/20 dark:shadow-amber-500/10',
       error: 'shadow-lg shadow-red-500/20 dark:shadow-red-500/10',
+      indigo: 'shadow-lg shadow-indigo-500/20 dark:shadow-indigo-500/10 animate-glow-indigo',
     };
 
     return (
