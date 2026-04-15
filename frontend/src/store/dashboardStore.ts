@@ -34,7 +34,7 @@ interface SyncData {
   lifeGoals?: LifeGoalsState;
   timelineRoutines?: Record<string, unknown>;
   timelinePanelExpanded?: boolean;
-  activePomodoroTask?: { taskId: string; projectId?: string; quickTaskId?: string; title: string } | null;
+  activePomodoroTask?: { taskId: string; projectId?: string; quickTaskId?: string; shareId?: string; title: string } | null;
   sectionOrder?: Record<string, string[]>;
 }
 
@@ -49,7 +49,7 @@ const defaultInitial = {
   lifeGoals: buildDefaultLifeGoals() as LifeGoalsState,
   timelineRoutines: {} as Record<string, unknown>,
   timelinePanelExpanded: true,
-  activePomodoroTask: null as { taskId: string; projectId?: string; quickTaskId?: string; title: string } | null,
+  activePomodoroTask: null as { taskId: string; projectId?: string; quickTaskId?: string; shareId?: string; title: string } | null,
   sectionOrder: {
     left: ['pomodoro', 'quickTasks', 'focusHeatmap'],
     center: ['top3', 'habits'],
@@ -98,9 +98,9 @@ export const useDashboardStore = create(
         activePomodoroTask: initialState.activePomodoroTask ?? null,
         sectionOrder: (initialState as any).sectionOrder ?? defaultInitial.sectionOrder,
 
-        setActivePomodoroTask: (task: { taskId: string; projectId?: string; quickTaskId?: string; title: string } | null) =>
+        setActivePomodoroTask: (task: { taskId: string; projectId?: string; quickTaskId?: string; shareId?: string; title: string } | null) =>
           set((s: unknown) => {
-            const state = s as { activePomodoroTask: { taskId: string; projectId?: string; quickTaskId?: string; title: string } | null };
+            const state = s as { activePomodoroTask: { taskId: string; projectId?: string; quickTaskId?: string; shareId?: string; title: string } | null };
             state.activePomodoroTask = task;
           }),
 

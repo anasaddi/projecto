@@ -22,14 +22,19 @@ export function Card({
   className = '',
   hover = true,
   glow = false,
+  glowColor = 'indigo',
   ...props 
 }) {
+  const glowStyles = {
+    indigo: 'ring-1 ring-indigo-500/20 shadow-[0_2px_4px_rgba(15,23,42,0.06),0_16px_48px_-20px_rgba(99,102,241,0.28),0_36px_70px_-36px_rgba(99,102,241,0.2)] dark:ring-indigo-400/20',
+    success: 'ring-1 ring-emerald-500/20 shadow-[0_2px_4px_rgba(15,23,42,0.06),0_16px_48px_-20px_rgba(16,185,129,0.28),0_36px_70px_-36px_rgba(16,185,129,0.2)] dark:ring-emerald-400/20 animate-glow-success',
+  };
   return (
     <div
       className={`
         ${baseClasses}
         ${hover ? 'hover:-translate-y-0.5 hover:border-zinc-300/80 hover:shadow-[0_2px_4px_rgba(15,23,42,0.06),0_16px_48px_-20px_rgba(79,70,229,0.22),0_36px_80px_-40px_rgba(79,70,229,0.16)] dark:hover:border-white/[0.12] dark:hover:shadow-[0_2px_6px_rgba(0,0,0,0.3),0_20px_56px_-24px_rgba(0,0,0,0.6),0_40px_80px_-40px_rgba(0,0,0,0.5)]' : ''}
-        ${glow ? 'ring-1 ring-indigo-500/20 shadow-[0_2px_4px_rgba(15,23,42,0.06),0_16px_48px_-20px_rgba(99,102,241,0.28),0_36px_70px_-36px_rgba(99,102,241,0.2)] dark:ring-indigo-400/20' : ''}
+        ${glow ? (glowStyles[glowColor] || glowStyles.indigo) : ''}
         ${className}
       `}
       {...props}

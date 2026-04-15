@@ -25,7 +25,12 @@ export function QuickTaskRow({
   const actions = [
     !task.done && !isFocusActive && {
       icon: <Icons.Clock className="h-3 w-3" />,
-      onClick: () => setActivePomodoroTask({ taskId: task.id, quickTaskId: task.id, title: task.title }),
+      onClick: () => setActivePomodoroTask({
+        taskId: task.id,
+        quickTaskId: isShared ? undefined : task.id,
+        shareId: isShared ? task.shareId : undefined,
+        title: task.title,
+      }),
       title: 'Inizia Focus',
       className: 'text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/20',
     },

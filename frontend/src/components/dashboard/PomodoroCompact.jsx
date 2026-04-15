@@ -10,10 +10,16 @@ export function PomodoroCompact() {
   const [status, setStatus] = useState('idle');
   const [sessionsToday, setSessionsToday] = useState(0);
   const intervalRef = useRef(null);
+  const completedRef = useRef(false);
+  const activePomodoroTaskRef = useRef(null);
   const activePomodoroTask = useDashboardStore((s) => s.activePomodoroTask);
   const setActivePomodoroTask = useDashboardStore((s) => s.setActivePomodoroTask);
   const toggleQuickTask = useDashboardStore((s) => s.toggleQuickTask);
+  const toggleSharedQuickTask = useDashboardStore((s) => s.toggleSharedQuickTask);
   const toggleProjectTask = useDashboardStore((s) => s.toggleProjectTask);
+
+  // Keep ref in sync so the interval callback always has the latest value
+  useEffect(() => { activePomodoroTaskRef.current = activePomodoroTask; }, [activePomodoroTask]);
   
   const todayKey = toDateKey(new Date());
 
@@ -37,29 +43,57 @@ export function PomodoroCompact() {
       return next;
     });
     // Auto-mark the linked task as done
-    if (activePomodoroTask) {
-      if (activePomodoroTask.quickTaskId) {
-        toggleQuickTask(activePomodoroTask.quickTaskId, true);
-      } else if (activePomodoroTask.projectId && activePomodoroTask.taskId) {
-        toggleProjectTask(activePomodoroTask.projectId, activePomodoroTask.taskId, true);
+    const task = activePomodoroTaskRef.current;
+    if (task) {
+      if (task.shareId && task.quickTaskId === undefined) {
+        toggleSharedQuickTask(task.shareId, task.taskId, true);
+      } else if (task.quickTaskId) {
+        toggleQuickTask(task.quickTaskId, true);
+      } else if (task.projectId && task.taskId) {
+        toggleProjectTask(task.projectId, task.taskId, true);
       }
       setActivePomodoroTask(null);
     }
   };
 
   useEffect(() => {
+    if (!completedRef.current) return;
+    completedRef.current = false;
+    // Run completion logic outside of React state updater
+    const task = activePomodoroTaskRef.current;
+    if (task) {
+      if (task.shareId && task.quickTaskId === undefined) {
+        toggleSharedQuickTask(task.shareId, task.taskId, true);
+      } else if (task.quickTaskId) {
+        toggleQuickTask(task.quickTaskId, true);
+      } else if (task.projectId && task.taskId) {
+        toggleProjectTask(task.projectId, task.taskId, true);
+      }
+      setActivePomodoroTask(null);
+    }
+  });
+
+  useEffect(() => {
     if (status !== 'running') return;
     intervalRef.current = setInterval(() => {
       setRemaining((r) => {
         if (r <= 1) {
-          handleComplete();
+          // Signal completion without calling zustand set() inside React state updater
+          completedRef.current = true;
+          setStatus('idle');
+          setSessionsToday((s) => {
+            const next = s + 1;
+            try { localStorage.setItem(POMODORO_STORAGE, JSON.stringify({ date: todayKey, sessions: next })); } catch (_) { }
+            if (typeof window !== 'undefined' && window.Notification?.permission === 'granted') new window.Notification('Pomodoro completato!');
+            return next;
+          });
           return POMODORO_DURATION;
         }
         return r - 1;
       });
     }, 1000);
     return () => clearInterval(intervalRef.current);
-  }, [status, todayKey, activePomodoroTask]);
+  }, [status, todayKey]);
 
   const m = Math.floor(remaining / 60);
   const s = remaining % 60;
