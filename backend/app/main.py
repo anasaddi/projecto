@@ -159,8 +159,16 @@ def create_app() -> FastAPI:
             content["traceback"] = traceback.format_exc()
         return JSONResponse(status_code=500, content=content)
 
-    # Middleware stack (order matters: last added = first executed)
-    # 1. CORS
+    # Middleware stack (order matters: last added = first executed on request)
+    # CORS must be outermost so it handles preflight OPTIONS before any other
+    # middleware can interfere, and adds headers to every response last.
+    # 1. Request logging (innermost – runs last on request path)
+    add_request_logging(app)
+    # 2. Rate limiting
+    add_rate_limiter(app)
+    # 3. Compression (GZip)
+    add_compression(app)
+    # 4. CORS (outermost – runs first on request, adds CORS headers last on response)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=_cors_origins_list(settings),
@@ -168,12 +176,6 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    # 2. Compression (GZip)
-    add_compression(app)
-    # 3. Rate Limiting
-    add_rate_limiter(app)
-    # 4. Structured Request Logging
-    add_request_logging(app)
 
     # Routers
     app.include_router(training.router, prefix="/api/training", tags=["training"])
