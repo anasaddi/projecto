@@ -85,13 +85,10 @@ const HypertrophyTable = ({ exercise, onRowsChange, onProgressionChange, initial
   useEffect(() => {
     if (!expanded || !exercise_id) return;
     setHistoryLoading(true);
-    const ctrl = new AbortController();
-    fetch(`${import.meta.env.VITE_API_BASE || '/api'}/training/history?exercise_id=${encodeURIComponent(exercise_id)}&limit=12`, { signal: ctrl.signal })
-      .then(res => res.json())
-      .then(res => setHistory(res?.entries || []))
+    api.training.getHistory(exercise_id, 12)
+      .then(res => { setHistory(res?.entries || []); })
       .catch(() => setHistory([]))
       .finally(() => setHistoryLoading(false));
-    return () => ctrl.abort();
   }, [expanded, exercise_id]);
 
   const formatDate = (d) => {

@@ -146,12 +146,11 @@ function ExerciseRow({ exercise, index, onRowsChange, onProgressionChange, initi
 
   useEffect(() => {
     if (!expanded || !exercise_id) return;
-    const ctrl = new AbortController();
     setHistLoading(true);
-    fetch(`${import.meta.env.VITE_API_BASE || '/api'}/training/history?exercise_id=${encodeURIComponent(exercise_id)}&limit=10`, { signal: ctrl.signal })
-      .then(r => r.json()).then(r => setHistory(r?.entries || [])).catch(() => setHistory([]))
+    api.training.getHistory(exercise_id, 10)
+      .then(r => { setHistory(r?.entries || []); })
+      .catch(() => setHistory([]))
       .finally(() => setHistLoading(false));
-    return () => ctrl.abort();
   }, [expanded, exercise_id]);
 
   const schemaLabel = `${base_sets || 2}×`;
