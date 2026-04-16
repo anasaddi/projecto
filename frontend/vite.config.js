@@ -24,6 +24,10 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // Force skip waiting - update Service Worker immediately without waiting for tab close
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -41,14 +45,13 @@ export default defineConfig({
           },
           {
             urlPattern: /\/api\/.*/i,
-            handler: 'NetworkFirst',
+            handler: 'NetworkOnly', // Don't cache API responses - always fetch fresh
             options: {
               cacheName: 'api-cache',
               expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 5 // <== 5 minutes (dashboard data changes frequently)
-              },
-              networkTimeoutSeconds: 10
+                maxEntries: 0,
+                maxAgeSeconds: 0
+              }
             }
           }
         ]
