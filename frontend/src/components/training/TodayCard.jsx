@@ -5,23 +5,15 @@ import { Zap, Target, Dumbbell } from 'lucide-react';
 import { useGlobalConfig } from '../../context/GlobalConfigContext';
 import { getActiveMonth, getActiveWeek } from '../../utils/trainingUtils';
 import { api } from '../../api/client';
-
-// ─── configs (mirrors AWIsoTable + AWSpeedTable) ────────────────────────────
-
-const ISO_LIGHT_KEYS = ['aw_iso_light_rising', 'aw_iso_light_cup', 'aw_iso_light_pronation', 'aw_iso_light_side', 'aw_iso_light_dita', 'aw_iso_light_press', 'aw_iso_light_bicipite'];
-const ISO_HEAVY_KEYS = ['aw_iso_heavy_rising', 'aw_iso_heavy_cup', 'aw_iso_heavy_pronation', 'aw_iso_heavy_side', 'aw_iso_heavy_dita', 'aw_iso_heavy_press', 'aw_iso_heavy_bicipite'];
-const ISO_LABELS = ['Rising + back', 'Cup + drag', 'Pronation 45°', 'Side + supination', 'Mazurenko dita', 'Press', 'Bicipite'];
-const ISO_LIGHT_WEIGHTS = [12, 18, 15, 9, 15, 15, 18];
-const ISO_HEAVY_WEIGHTS = [17, 23, 20, 13, 20, 19, 23];
-
-const SPEED_SLOTS = [
-  { id: 'lat_cup', label: 'LAT + CUP', refW: 10 },
-  { id: 'pronation_45', label: 'PRONATION 45°', refW: 10 },
-  { id: 'low_multi', label: 'LOW MULTI SIDE', refW: 10 },
-  { id: 'high_multi', label: 'HIGH MULTI SIDE', refW: 10 },
-];
-
-const STRENGTH_WEEK_LABELS = ['5×5', '4×4', 'AMRAP', '3×5'];
+import {
+  ISO_LIGHT_KEYS,
+  ISO_HEAVY_KEYS,
+  ISO_LABELS,
+  ISO_LIGHT_WEIGHTS,
+  ISO_HEAVY_WEIGHTS,
+  SPEED_CONFIG,
+  STRENGTH_WEEK_LABELS,
+} from '../../constants/trainingConstants';
 
 // ─── AW classification + expansion ─────────────────────────────────────────
 
@@ -53,10 +45,10 @@ function expandAwExercises(rawAwEx, allProgressions, awProgram) {
         });
       });
     } else if (type === 'speed') {
-      SPEED_SLOTS.forEach(cfg => {
+      SPEED_CONFIG.forEach(cfg => {
         out.push({
           exercise_id: `${ex.exercise_id}::${cfg.id}`, exercise_name: cfg.label,
-          _type: 'speed', _baseId: ex.exercise_id, _speedCfg: cfg.id, _refW: cfg.refW, _target: '6 reps'
+          _type: 'speed', _baseId: ex.exercise_id, _speedCfg: cfg.id, _refW: cfg.weight, _target: '6 reps'
         });
       });
     } else if (type === 'maxday') {
@@ -70,7 +62,20 @@ function expandAwExercises(rawAwEx, allProgressions, awProgram) {
       });
       const week = maxWeek || 1;
       const protoW = ((week - 1) % 5) + 1;
-      const weekExercises = awProgram?.max_day?.weeks?.find(w => w.week === protoW)?.exercises || [];
+      
+      // Defensive validation for awProgram structure
+      let weekExercises = [];
+      if (awProgram && typeof awProgram === 'object' && 
+          awProgram.max_day && typeof awProgram.max_day === 'object' && 
+          Array.isArray(awProgram.max_day.weeks)) {
+        const weekData = awProgram.max_day.weeks.find(w => w && w.week === protoW);
+        if (weekData && Array.isArray(weekData.exercises)) {
+          weekExercises = weekData.exercises;
+        }
+      } else {
+        console.warn('[TodayCard] AW program structure is malformed or missing max_day.weeks:', awProgram);
+      }
+      
       if (weekExercises.length === 0) {
         out.push({ ...ex, _type: type, _baseId: ex.exercise_id });
       } else {
@@ -339,7 +344,9 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
     commitProg(exerciseId, newProg);
     const week = newData[monthIdx - 1]?.[wi];
     if (week?.anas?.completed && week?.flavio?.completed)
-      import('canvas-confetti').then(m => m.default({ particleCount: 40, spread: 60, origin: { y: 0.7 }, colors: ['#4f46e5', '#8b5cf6'] }));
+      import('canvas-confetti')
+        .then(m => m.default({ particleCount: 40, spread: 60, origin: { y: 0.7 }, colors: ['#4f46e5', '#8b5cf6'] }))
+        .catch(err => console.warn('[TodayCard] Failed to load confetti:', err));
   }, [allProgressions, commitProg]);
 
   const weightStrength = useCallback((exerciseId, athlete, value) => {
@@ -414,7 +421,9 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
     const newProg = { ...prog, [athlete]: { ...prog[athlete], completed: !prog[athlete]?.completed } };
     commitProg(exerciseId, newProg);
     if (newProg.anas?.completed && newProg.flavio?.completed)
-      import('canvas-confetti').then(m => m.default({ particleCount: 30, spread: 50, origin: { y: 0.7 }, colors: ['#10b981', '#34d399'] }));
+      import('canvas-confetti')
+        .then(m => m.default({ particleCount: 30, spread: 50, origin: { y: 0.7 }, colors: ['#10b981', '#34d399'] }))
+        .catch(err => console.warn('[TodayCard] Failed to load confetti:', err));
   }, [allProgressions, commitProg]);
 
   const weightHyper = useCallback((exerciseId, athlete, value) => {

@@ -3,7 +3,6 @@ import { useDashboardStats } from '../context/DashboardStatsContext';
 import { useGlobalConfig } from '../context/GlobalConfigContext';
 import { useDashboardStore } from '../store/dashboardStore';
 
-import { Icons } from '../components/dashboard/Icons';
 import { PomodoroCompact } from '../components/dashboard/PomodoroCompact';
 import { FocusHeatmap } from '../components/dashboard/FocusHeatmap';
 import { PrayersCountdownsV2 } from '../components/dashboard/PrayersCountdownsV2';
@@ -13,6 +12,7 @@ import { Top3SectionV2 } from '../components/dashboard/Top3SectionV2';
 import { HabitsSection } from '../components/dashboard/HabitsSection';
 import { ProjectsSectionV2 } from '../components/dashboard/ProjectsSectionV2';
 import { LifeGoalsSection } from '../components/dashboard/LifeGoalsSection';
+import { TodayCardDashboard } from '../components/dashboard/TodayCardDashboard';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { HabitSkeleton, ProjectSkeleton, Top3Skeleton, QuickTaskSkeleton } from '../components/dashboard/SkeletonSection';
 
@@ -198,6 +198,9 @@ export default function DashboardV2(): React.ReactElement {
         />
 
         <DailyTimelineWidget2 PRAYERS={PRAYERS} todayKey={todayKey} todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} />
+
+        {/* Training Section - Full Width */}
+        <TodayCardDashboard />
 
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 pb-1">
           <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">

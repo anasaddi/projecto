@@ -1,33 +1,18 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../api/client';
 import { Card, ModernInput, ModernCheckbox } from './TrainingUI';
+import {
+  ISO_CONFIG,
+  ISO_LIGHT_KEYS,
+  ISO_HEAVY_KEYS,
+  ISO_LABELS,
+  ISO_LIGHT_WEIGHTS,
+  ISO_HEAVY_WEIGHTS,
+} from '../../constants/trainingConstants';
 
-// Reference weights — same for all 5 weeks (user fills progression themselves)
-const ISO_CONFIG = {
-  // Light (2×15s)
-  aw_iso_light_rising:    { label: 'Rising + back',     weight: 12, target: '2×15s', isHeavy: false },
-  aw_iso_light_cup:       { label: 'Cup + drag',        weight: 18, target: '2×15s', isHeavy: false },
-  aw_iso_light_pronation: { label: 'Pronation 45°',     weight: 15, target: '2×15s', isHeavy: false },
-  aw_iso_light_side:      { label: 'Side + supination', weight: 9,  target: '2×15s', isHeavy: false },
-  aw_iso_light_dita:      { label: 'Mazurenko dita',    weight: 15, target: '2×15s', isHeavy: false },
-  aw_iso_light_press:     { label: 'Press',             weight: 15, target: '2×15s', isHeavy: false },
-  aw_iso_light_bicipite:  { label: 'Bicipite',          weight: 18, target: '2×15s', isHeavy: false },
-  // Heavy (2×5s)
-  aw_iso_heavy_rising:    { label: 'Rising + back',     weight: 17, target: '2×5s',  isHeavy: true },
-  aw_iso_heavy_cup:       { label: 'Cup + drag',        weight: 23, target: '2×5s',  isHeavy: true },
-  aw_iso_heavy_pronation: { label: 'Pronation 45°',     weight: 20, target: '2×5s',  isHeavy: true },
-  aw_iso_heavy_side:      { label: 'Side + supination', weight: 13, target: '2×5s',  isHeavy: true },
-  aw_iso_heavy_dita:      { label: 'Mazurenko dita',    weight: 20, target: '2×5s',  isHeavy: true },
-  aw_iso_heavy_press:     { label: 'Press',             weight: 19, target: '2×5s',  isHeavy: true },
-  aw_iso_heavy_bicipite:  { label: 'Bicipite',          weight: 23, target: '2×5s',  isHeavy: true },
-};
-
-// Ordered exercise names — used when template has generic names like "Isometria Leggera"
-const ISO_LIGHT_LABELS = ['Rising + back', 'Cup + drag', 'Pronation 45°', 'Side + supination', 'Mazurenko dita', 'Press', 'Bicipite'];
-const ISO_HEAVY_LABELS = ['Rising + back', 'Cup + drag', 'Pronation 45°', 'Side + supination', 'Mazurenko dita', 'Press', 'Bicipite'];
-
-const ISO_LIGHT_KEYS = ['aw_iso_light_rising', 'aw_iso_light_cup', 'aw_iso_light_pronation', 'aw_iso_light_side', 'aw_iso_light_dita', 'aw_iso_light_press', 'aw_iso_light_bicipite'];
-const ISO_HEAVY_KEYS = ['aw_iso_heavy_rising', 'aw_iso_heavy_cup', 'aw_iso_heavy_pronation', 'aw_iso_heavy_side', 'aw_iso_heavy_dita', 'aw_iso_heavy_press', 'aw_iso_heavy_bicipite'];
+// Use ISO_LABELS for both light and heavy (same labels)
+const ISO_LIGHT_LABELS = ISO_LABELS;
+const ISO_HEAVY_LABELS = ISO_LABELS;
 
 const findCfgByName = (name, isHeavy) => {
   const lower = (name || '').toLowerCase();
@@ -49,7 +34,7 @@ const getCfg = (exercise_id, exercise_name, isHeavy, index) => {
   const byName = findCfgByName(exercise_name, isHeavy);
   if (byName) return byName;
   const labels = isHeavy ? ISO_HEAVY_LABELS : ISO_LIGHT_LABELS;
-  const weights = isHeavy ? [17, 23, 20, 13, 20, 19, 23] : [12, 18, 15, 9, 15, 15, 18];
+  const weights = isHeavy ? ISO_HEAVY_WEIGHTS : ISO_LIGHT_WEIGHTS;
   const label = labels[index % labels.length];
   const weight = weights[index % weights.length];
   return { label, weight, target: isHeavy ? '2×5s' : '2×15s', isHeavy };

@@ -45,7 +45,7 @@ export function Card({
 }
 
 export function CardHeader({ 
-  children, 
+  children = null, 
   icon: Icon,
   iconColor = 'text-indigo-500',
   title,

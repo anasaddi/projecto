@@ -1,13 +1,7 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../api/client';
 import { Card, ModernInput, ModernCheckbox } from './TrainingUI';
-
-const SPEED_CONFIG = [
-  { id: 'lat_cup',      label: 'LAT + CUP',        weight: 10 },
-  { id: 'pronation_45', label: 'PRONATION 45°',    weight: 10 },
-  { id: 'low_multi',    label: 'LOW MULTI SIDE',   weight: 10 },
-  { id: 'high_multi',   label: 'HIGH MULTI SIDE',  weight: 10 },
-];
+import { SPEED_CONFIG } from '../../constants/trainingConstants';
 
 function SpeedRow({ baseExerciseId, cfg, progressions }) {
   const key = `${baseExerciseId}_${cfg.id}`;

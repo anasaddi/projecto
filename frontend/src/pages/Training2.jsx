@@ -27,6 +27,9 @@ import {
 } from '../utils/trainingUtils';
 import { groupAwExercises } from '../utils/awGrouping';
 
+// Date normalization helper
+const normalizeDate = (d) => (d?.date || d?.date_ || '').slice(0, 10);
+
 // --- MAIN PAGE ---
 export default function Training2() {
   const [selectedDay, setSelectedDay] = useState(null);
@@ -53,9 +56,13 @@ export default function Training2() {
 
   const loadWeekData = useCallback(async (isInitial = false) => {
     if (isInitial) setLoading(true);
+    setLoadError(false);
     try {
       const [templates, scheduleData, awData, progressions] = await Promise.all([
-        api.training.getWeek(),
+        api.training.getWeek().catch(err => {
+          console.error('[Training2] Failed to load week templates:', err);
+          throw new Error('Failed to load week templates');
+        }),
         api.training.getSchedule(null, 21).catch(() => []),
         api.training.getAwProgram().catch(() => ({})),
         api.training.getAllProgressions().catch(() => [])
@@ -104,11 +111,11 @@ export default function Training2() {
       if (isInitial) {
         // Seleziona il giorno corrente nello schedule
         const todayStr = new Date().toDateString();
-        const todayDay = mergedData.find(d => new Date(d.date || d.date_).toDateString() === todayStr) || mergedData[0];
+        const todayDay = mergedData.find(d => new Date(normalizeDate(d)).toDateString() === todayStr) || mergedData[0];
 
         if (todayDay) {
           setSelectedDay(todayDay.template);
-          setSelectedDate(todayDay.date || todayDay.date_);
+          setSelectedDate(normalizeDate(todayDay));
         }
       } else {
         // Aggiorna il giorno selezionato se i suoi dati sono cambiati
@@ -179,14 +186,14 @@ export default function Training2() {
   const handleToggleDayComplete = useCallback(async (date, completed) => {
     try {
       setWeekData(prev => prev.map(day => {
-        const d = day.date || day.date_;
+        const d = normalizeDate(day);
         return d === date ? { ...day, is_completed: completed } : day;
       }));
       await api.training.updateSchedule(date, completed);
     } catch (err) {
       console.error("Errore completamento giorno:", err);
       setWeekData(prev => prev.map(day => {
-        const d = day.date || day.date_;
+        const d = normalizeDate(day);
         return d === date ? { ...day, is_completed: !completed } : day;
       }));
     }

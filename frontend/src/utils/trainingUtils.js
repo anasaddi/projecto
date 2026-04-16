@@ -8,9 +8,21 @@ export const calc1RM = (weight, reps) => {
 };
 
 export const sanitizeProgressionData = (data) => {
-  if (!data || typeof data !== 'object') return {};
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return {};
   const sanitized = { ...data };
-  if (!Array.isArray(sanitized.dataByMonth)) sanitized.dataByMonth = [];
+  
+  // Validate dataByMonth is an array of arrays
+  if (!Array.isArray(sanitized.dataByMonth)) {
+    sanitized.dataByMonth = [];
+  } else {
+    // Ensure each month is an array and contains objects (not primitives)
+    sanitized.dataByMonth = sanitized.dataByMonth.map(month => {
+      if (!Array.isArray(month)) return [];
+      // Filter out non-object entries
+      return month.filter(week => week && typeof week === 'object' && !Array.isArray(week));
+    });
+  }
+  
   if (!Array.isArray(sanitized.tmByMonth)) sanitized.tmByMonth = [];
   return sanitized;
 };

@@ -1,13 +1,12 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Icons } from './Icons';
 import { StandardProjectCard, CreateProjectCard } from './ProjectComponents';
 import { ProjectCard } from './ProjectCard';
 import { DenseTaskNode } from './DenseTaskNode';
-import { createTaskNode, updateNodeInTree, countTreeStats, getDeadlineColorClass, formatDeadline } from './DashboardUtils';
+import { createTaskNode, countTreeStats, getDeadlineColorClass, formatDeadline } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
-import { Card, CardHeader, CardBody, Badge } from '../ui/CardV2';
-import { Heading, Text, Label } from '../ui/Typography';
+import { Card, CardHeader, CardBody } from '../ui/CardV2';
+import { Label } from '../ui/Typography';
 import { AddItemInputBar } from './AddItemInputBar';
 
 export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
