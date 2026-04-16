@@ -6,8 +6,8 @@ function isLocalHost() {
   return typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 }
 
-// Production backend URL on Railway
-const PRODUCTION_API_BASE = 'https://projecto-production-feda.up.railway.app/api';
+// Production backend URL on Render
+const PRODUCTION_API_BASE = 'https://projecto-backend-7we9.onrender.com/api';
 
 export const API_BASE = isLocalHost()
   ? (import.meta.env.VITE_API_BASE || '/api')
@@ -15,7 +15,7 @@ export const API_BASE = isLocalHost()
 
 export const WS_HOST = isLocalHost()
   ? 'localhost:8000'
-  : (import.meta.env.VITE_WS_HOST || 'projecto-production-feda.up.railway.app');
+  : (import.meta.env.VITE_WS_HOST || 'projecto-backend-7we9.onrender.com');
 
 export function getSharedDashboardWsUrl(shareId) {
   const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
