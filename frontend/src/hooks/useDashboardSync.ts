@@ -24,7 +24,7 @@ export function useDashboardSync(): void {
     (dailyTaskTemplates?.length ?? 0) > 0 ||
       (quickTasks?.length ?? 0) > 0 ||
       (projects?.length ?? 0) > 0 ||
-      (lifeGoals?.tiers ?? []).some((t: { goals?: unknown[] }) => (t?.goals?.length ?? 0) > 0)
+      (lifeGoals?.tiers?.some?.((t: { goals?: unknown[] }) => (t?.goals?.length ?? 0) > 0))
   );
 
   const wsConnections = useRef<Record<string, WebSocket>>({});
