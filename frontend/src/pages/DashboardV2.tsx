@@ -61,7 +61,7 @@ export default function DashboardV2(): React.ReactElement {
   const reorderSection = useDashboardStore((s) => s.reorderSection);
 
   useDashboardSync();
-  useNotificationReminders();
+  // useNotificationReminders(); // TODO: Fix infinite loop
 
   const { updateStats } = useDashboardStats() || { updateStats: () => {} };
   const { config } = useGlobalConfig() || { config: null };
