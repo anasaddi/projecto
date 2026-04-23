@@ -42,6 +42,16 @@ export function Top3SectionV2() {
   const top3Resolved = useMemo(() => resolveTop3Slots(projects, top3Manual, allQuickTasks, lifeGoals, sharedDashboards), [projects, top3Manual, allQuickTasks, lifeGoals, sharedDashboards]);
   const top3DoneCount = useMemo(() => top3Resolved.filter((s) => s && !s.missing && s.done).length, [top3Resolved]);
 
+  const canAcceptTop3Drop = (raw) => {
+    if (!raw) return false;
+    try {
+      const payload = JSON.parse(raw);
+      return ['top3', 'project', 'project-task', 'quick'].includes(payload?.type);
+    } catch {
+      return false;
+    }
+  };
+
   const toggleTop3Slot = (slot) => {
     if (!slot || slot.missing) return;
     if (slot.isQuick) {
@@ -112,8 +122,16 @@ export function Top3SectionV2() {
                 e.dataTransfer.setData('application/json', JSON.stringify({ type: 'top3', fromIndex: idx })); 
                 e.dataTransfer.effectAllowed = 'move'; 
               } : undefined}
-              onDragOver={(e) => { e.preventDefault(); setDragOverIndex(idx); }}
-              onDragLeave={() => setDragOverIndex(null)}
+              onDragOver={(e) => {
+                const raw = e.dataTransfer.getData('application/json');
+                if (!canAcceptTop3Drop(raw)) {
+                  if (dragOverIndex !== null) setDragOverIndex(null);
+                  return;
+                }
+                e.preventDefault();
+                setDragOverIndex(idx);
+              }}
+              onDragLeave={() => setDragOverIndex((current) => (current === idx ? null : current))}
               onDrop={(e) => {
                 e.preventDefault();
                 setDragOverIndex(null);
@@ -182,10 +200,10 @@ export function Top3SectionV2() {
                   </motion.button>
                 </div>
               ) : (
-                <div className="absolute inset-0 z-10 flex items-center justify-center">
+                <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
                   <button
                     onClick={() => showToast?.('Trascina un task qui per aggiungerlo ai Top 3', { type: 'info' })}
-                    className="flex items-center justify-center gap-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+                    className="pointer-events-auto flex items-center justify-center gap-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
                   >
                     <Label className="font-medium">+ slot libero</Label>
                   </button>

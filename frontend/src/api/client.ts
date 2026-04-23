@@ -245,6 +245,8 @@ export const api = {
       }),
     getDashboardState: (opts?: RequestOptions) =>
       request<{ data?: unknown }>('/training/dashboard-state', opts ?? {}),
+    getDashboardStateAt: (at: string, opts?: RequestOptions) =>
+      request<{ data?: unknown }>(`/training/dashboard-state/at?at=${encodeURIComponent(at)}`, opts ?? {}),
     updateDashboardState: (data: unknown, opts?: { timeout?: number }) =>
       request('/training/dashboard-state', {
         method: 'PUT',

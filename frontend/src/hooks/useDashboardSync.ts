@@ -64,7 +64,7 @@ export function useDashboardSync(): void {
             }
           } catch (_) {}
         }
-        const res = await api.training.getDashboardState({ timeout: 15_000 });
+        const res = await api.training.getDashboardStateAt(new Date().toISOString(), { timeout: 15_000 }).catch(async () => api.training.getDashboardState({ timeout: 15_000 }));
         const payload = extractDashboardPayload(res) ?? extractDashboardPayload((res as { data?: unknown } | null | undefined)?.data);
         if (payload && syncWithServer && !hasLocalData) syncWithServer(payload);
         const shared = await api.training.listSharedDashboards({ timeout: 10_000 }).catch(() => null);
