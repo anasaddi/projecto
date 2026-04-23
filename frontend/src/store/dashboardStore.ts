@@ -58,7 +58,7 @@ const defaultInitial = {
 };
 
 const loaded = loadState() as Partial<SyncData> | null;
-const initialState = { ...defaultInitial, ...loaded } as SyncData;
+const initialState = loaded ? { ...defaultInitial, ...loaded } : defaultInitial;
 
 export const useDashboardStore = create(
   subscribeWithSelector(

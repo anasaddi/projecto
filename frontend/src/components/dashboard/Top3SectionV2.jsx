@@ -182,7 +182,7 @@ export function Top3SectionV2() {
                   </motion.button>
                 </div>
               ) : (
-                <div className="relative z-10 h-full flex flex-col items-center justify-center">
+                <div className="relative z-10 flex-1 flex flex-col items-center justify-center">
                   <button
                     onClick={() => showToast?.('Trascina un task qui per aggiungerlo ai Top 3', { type: 'info' })}
                     className="flex items-center gap-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"

@@ -366,30 +366,31 @@ export function normalizeLifeGoals(lg, fallback) {
   };
 }
 
-export function loadDashboardStateFromStorage(fallback) {
-  if (typeof window === 'undefined' || !window.localStorage) return fallback;
+export function loadDashboardStateFromStorage(fallback = null) {
+  if (typeof window === 'undefined' || !window.localStorage) return null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return fallback;
+    if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return fallback;
+    if (!parsed || typeof parsed !== 'object') return null;
+    const fb = fallback || {};
     const top3 = parsed.top3Manual;
-    const top3Normalized = Array.isArray(top3) ? [top3[0] ?? null, top3[1] ?? null, top3[2] ?? null] : fallback.top3Manual;
+    const top3Normalized = Array.isArray(top3) ? [top3[0] ?? null, top3[1] ?? null, top3[2] ?? null] : fb.top3Manual;
     return {
-      dailyTaskTemplates: Array.isArray(parsed.dailyTaskTemplates) ? parsed.dailyTaskTemplates : fallback.dailyTaskTemplates,
-      dailyTaskLogs: parsed.dailyTaskLogs && typeof parsed.dailyTaskLogs === 'object' ? parsed.dailyTaskLogs : fallback.dailyTaskLogs,
-      projects: Array.isArray(parsed.projects) ? parsed.projects : fallback.projects,
-      prayerLogs: parsed.prayerLogs && typeof parsed.prayerLogs === 'object' ? parsed.prayerLogs : fallback.prayerLogs,
+      dailyTaskTemplates: Array.isArray(parsed.dailyTaskTemplates) ? parsed.dailyTaskTemplates : fb.dailyTaskTemplates,
+      dailyTaskLogs: parsed.dailyTaskLogs && typeof parsed.dailyTaskLogs === 'object' ? parsed.dailyTaskLogs : fb.dailyTaskLogs,
+      projects: Array.isArray(parsed.projects) ? parsed.projects : fb.projects,
+      prayerLogs: parsed.prayerLogs && typeof parsed.prayerLogs === 'object' ? parsed.prayerLogs : fb.prayerLogs,
       top3Manual: top3Normalized,
-      quickTasks: Array.isArray(parsed.quickTasks) ? parsed.quickTasks : fallback.quickTasks,
-      dailyCompletionLog: parsed.dailyCompletionLog && typeof parsed.dailyCompletionLog === 'object' ? parsed.dailyCompletionLog : fallback.dailyCompletionLog,
-      lifeGoals: normalizeLifeGoals(parsed.lifeGoals ?? null, fallback.lifeGoals ?? null),
-      timelineRoutines: parsed.timelineRoutines && typeof parsed.timelineRoutines === 'object' ? parsed.timelineRoutines : fallback.timelineRoutines,
+      quickTasks: Array.isArray(parsed.quickTasks) ? parsed.quickTasks : fb.quickTasks,
+      dailyCompletionLog: parsed.dailyCompletionLog && typeof parsed.dailyCompletionLog === 'object' ? parsed.dailyCompletionLog : fb.dailyCompletionLog,
+      lifeGoals: parsed.lifeGoals ? normalizeLifeGoals(parsed.lifeGoals, fb.lifeGoals) : fb.lifeGoals,
+      timelineRoutines: parsed.timelineRoutines && typeof parsed.timelineRoutines === 'object' ? parsed.timelineRoutines : fb.timelineRoutines,
       timelinePanelExpanded: parsed.timelinePanelExpanded !== undefined ? parsed.timelinePanelExpanded : true,
     };
   } catch (err) {
     console.error('Failed to parse dashboard state from localStorage:', err);
-    return fallback;
+    return null;
   }
 }
 
