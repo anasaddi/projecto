@@ -190,37 +190,30 @@ export default function Dashboard3(): React.ReactElement {
 
   return (
     <div className="min-h-full w-full flex flex-col overflow-y-auto font-sans font-normal select-none selection:bg-indigo-500/30 antialiased bg-gradient-to-br from-slate-950 via-indigo-950/30 to-slate-950 relative">
-      {/* Premium background effects */}
+      {/* Premium background effects - static to avoid re-render loops */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-indigo-500/15 rounded-full blur-[150px]" />
         <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-violet-500/10 rounded-full blur-[120px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[180px]" />
       </div>
 
       <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-5 py-5 md:py-6 flex-1 min-h-0 relative z-10`}>
-        {/* Prayers Countdowns - Premium */}
-        <GlassSection>
-          <PrayersCountdownsV2
-            todayPrayerLog={todayPrayerLog}
-            togglePrayer={togglePrayer}
-            PRAYERS={PRAYERS}
-            countdowns={countdowns as { label: string; remaining: string; pct: number }[]}
-            todayFocusScore={todayFocusScore}
-            focusStreak={focusStreak}
-          />
-        </GlassSection>
+        {/* Prayers Countdowns */}
+        <PrayersCountdownsV2
+          todayPrayerLog={todayPrayerLog}
+          togglePrayer={togglePrayer}
+          PRAYERS={PRAYERS}
+          countdowns={countdowns as { label: string; remaining: string; pct: number }[]}
+          todayFocusScore={todayFocusScore}
+          focusStreak={focusStreak}
+        />
 
-        {/* Daily Timeline - Premium */}
-        <GlassSection>
-          <DailyTimelineWidget2 PRAYERS={PRAYERS} todayKey={todayKey} todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} />
-        </GlassSection>
+        {/* Daily Timeline */}
+        <DailyTimelineWidget2 PRAYERS={PRAYERS} todayKey={todayKey} todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} />
 
-        {/* Today Card - Premium */}
-        <GlassSection>
-          <TodayCardDashboard />
-        </GlassSection>
+        {/* Today Card */}
+        <TodayCardDashboard />
 
-        {/* 3 Column Layout with Glass Cards */}
+        {/* 3 Column Layout */}
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 pb-1">
           {/* Left Column */}
           <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
@@ -241,9 +234,9 @@ export default function Dashboard3(): React.ReactElement {
                   } catch (_) {}
                 },
               };
-              if (sectionId === 'pomodoro') return <div {...sectionProps} className="transition-all duration-300"><GlassSection><PomodoroCompact /></GlassSection></div>;
-              if (sectionId === 'quickTasks') return <div {...sectionProps} className="transition-all duration-300"><GlassSection>{isLoaded ? <QuickTasksSectionV2 /> : <QuickTaskSkeleton />}</GlassSection></div>;
-              if (sectionId === 'focusHeatmap') return <div {...sectionProps} className="transition-all duration-300"><GlassSection><FocusHeatmap dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} now={now} /></GlassSection></div>;
+              if (sectionId === 'pomodoro') return <div {...sectionProps} className="transition-all duration-300"><PomodoroCompact /></div>;
+              if (sectionId === 'quickTasks') return <div {...sectionProps} className="transition-all duration-300">{isLoaded ? <QuickTasksSectionV2 /> : <QuickTaskSkeleton />}</div>;
+              if (sectionId === 'focusHeatmap') return <div {...sectionProps} className="transition-all duration-300"><FocusHeatmap dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} now={now} /></div>;
               return null;
             })}
           </div>
@@ -267,8 +260,8 @@ export default function Dashboard3(): React.ReactElement {
                   } catch (_) {}
                 },
               };
-              if (sectionId === 'top3') return <div {...sectionProps} className="transition-all duration-300"><GlassSection>{isLoaded ? <Top3SectionV2 /> : <Top3Skeleton />}</GlassSection></div>;
-              if (sectionId === 'habits') return <div {...sectionProps} className="transition-all duration-300"><GlassSection>{isLoaded ? <HabitsSection /> : <HabitSkeleton />}</GlassSection></div>;
+              if (sectionId === 'top3') return <div {...sectionProps} className="transition-all duration-300">{isLoaded ? <Top3SectionV2 /> : <Top3Skeleton />}</div>;
+              if (sectionId === 'habits') return <div {...sectionProps} className="transition-all duration-300">{isLoaded ? <HabitsSection /> : <HabitSkeleton />}</div>;
               return null;
             })}
           </div>
@@ -300,16 +293,14 @@ export default function Dashboard3(): React.ReactElement {
                   }
                 },
               };
-              if (sectionId === 'projects') return <div {...sectionProps} className="transition-all duration-300"><GlassSection>{isLoaded ? <ProjectsSectionV2 PROJECT_ACCENTS={PROJECT_ACCENTS} /> : <ProjectSkeleton />}</GlassSection></div>;
+              if (sectionId === 'projects') return <div {...sectionProps} className="transition-all duration-300">{isLoaded ? <ProjectsSectionV2 PROJECT_ACCENTS={PROJECT_ACCENTS} /> : <ProjectSkeleton />}</div>;
               return null;
             })}
           </div>
         </div>
 
-        {/* Life Goals - Premium */}
-        <GlassSection>
-          <LifeGoalsSection />
-        </GlassSection>
+        {/* Life Goals */}
+        <LifeGoalsSection />
       </div>
 
       <ConfirmModal
