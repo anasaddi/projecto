@@ -369,6 +369,7 @@ export function loadDashboardStateFromStorage(fallback) {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return fallback;
     const top3 = parsed.top3Manual;
     const top3Normalized = Array.isArray(top3) ? [top3[0] ?? null, top3[1] ?? null, top3[2] ?? null] : fallback.top3Manual;
     return {

@@ -147,13 +147,7 @@ export function Top3SectionV2() {
                 {idx + 1}
               </span>
               
-              {isDragOver && !filled ? (
-                <div className="relative z-10 h-full flex items-center justify-center">
-                  <Label className="text-amber-600 dark:text-amber-400">
-                    Rilascia per aggiungere
-                  </Label>
-                </div>
-              ) : filled ? (
+              {filled ? (
                 <div className="relative z-10 flex items-start gap-3 px-3 py-3 h-full">
                   <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
                     <TaskCheckbox done={isDone} onClick={() => toggleTop3Slot(slot)} />
