@@ -90,7 +90,7 @@ export function QuickTasksSectionV2() {
         />
 
         {/* Tasks list */}
-        <div className="flex flex-col gap-1 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+        <div className="flex flex-col gap-1">
           <AnimatePresence mode="popLayout">
             {allQuickTasks.map((task, idx) => {
               const isShared = !!task.shareId;

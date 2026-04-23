@@ -222,17 +222,9 @@ export default function DashboardV2(): React.ReactElement {
                 onDrop: (e: React.DragEvent) => {
                   try {
                     const p = JSON.parse(e.dataTransfer.getData('application/json'));
-                    const validTypes = ['section'];
-                    if (!validTypes.includes(p.type)) {
-                      showToast?.('Puoi trascinare solo sezioni qui', { type: 'warning' });
-                      return;
-                    }
-                    if (p.type === 'section' && p.column === 'left') reorderSection('left', p.fromIndex, idx);
-                    else showToast?.('Sezione non valida per questa colonna', { type: 'warning' });
-                  } catch (err) {
-                    console.error('Drop error:', err);
-                    showToast?.('Errore durante il trascinamento', { type: 'error' });
-                  }
+                    if (p.type !== 'section') return;
+                    if (p.column === 'left') reorderSection('left', p.fromIndex, idx);
+                  } catch (_) {}
                 },
               };
               if (sectionId === 'pomodoro') return <div {...sectionProps} className="transition-all duration-300"><PomodoroCompact /></div>;
@@ -254,17 +246,9 @@ export default function DashboardV2(): React.ReactElement {
                 onDrop: (e: React.DragEvent) => {
                   try {
                     const p = JSON.parse(e.dataTransfer.getData('application/json'));
-                    const validTypes = ['section'];
-                    if (!validTypes.includes(p.type)) {
-                      showToast?.('Puoi trascinare solo sezioni qui', { type: 'warning' });
-                      return;
-                    }
-                    if (p.type === 'section' && p.column === 'center') reorderSection('center', p.fromIndex, idx);
-                    else showToast?.('Sezione non valida per questa colonna', { type: 'warning' });
-                  } catch (err) {
-                    console.error('Drop error:', err);
-                    showToast?.('Errore durante il trascinamento', { type: 'error' });
-                  }
+                    if (p.type !== 'section') return;
+                    if (p.column === 'center') reorderSection('center', p.fromIndex, idx);
+                  } catch (_) {}
                 },
               };
               if (sectionId === 'top3') return <div {...sectionProps} className="transition-all duration-300">{isLoaded ? <Top3SectionV2 /> : <Top3Skeleton />}</div>;

@@ -171,7 +171,7 @@ export function QuickTaskRow({
               setQuickTaskEditingTitle(task.title);
             }}
             title={task.title}
-            className={`min-w-0 cursor-pointer select-text text-sm font-semibold leading-relaxed break-words [overflow-wrap:anywhere] transition-colors ${task.done ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-800 dark:text-zinc-200'}`}
+            className={`min-w-0 flex-1 cursor-pointer text-sm font-semibold leading-snug truncate transition-colors ${task.done ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-800 dark:text-zinc-200'}`}
           >
             {task.title}
             {isShared && task.sharedTitle && (
