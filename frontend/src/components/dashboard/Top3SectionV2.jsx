@@ -122,9 +122,15 @@ export function Top3SectionV2() {
                   const raw = e.dataTransfer.getData('application/json');
                   if (!raw) return;
                   const payload = JSON.parse(raw);
+                  const validTypes = ['top3', 'project', 'project-task', 'quick'];
+                  if (!validTypes.includes(payload.type)) {
+                    showToast?.('Puoi trascinare solo task validi nei Top 3', { type: 'warning' });
+                    return;
+                  }
                   if (payload.type === 'top3') reorderTop3(payload.fromIndex, toIndex);
                   else if ((payload.type === 'project' || payload.type === 'project-task') && payload.projectId && payload.taskId) setTop3SlotAtIndex(toIndex, { projectId: payload.projectId, taskId: payload.taskId, shareId: payload.shareId ?? null });
                   else if (payload.type === 'quick' && payload.quickTaskId) setTop3SlotAtIndex(toIndex, { quickTaskId: payload.quickTaskId, shareId: payload.shareId ?? null });
+                  else showToast?.('Elemento non valido per i Top 3', { type: 'warning' });
                 } catch (_) { }
               }}
               initial={false}
