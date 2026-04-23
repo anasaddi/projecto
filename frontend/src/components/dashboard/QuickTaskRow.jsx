@@ -2,10 +2,8 @@
 import { motion } from 'framer-motion';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
-import { ActionButton } from './Card';
 import { formatDeadline, getDeadlineColorClass } from './DashboardUtils';
 import { useLongPressActions } from '../../hooks/useLongPressActions';
-import { useDashboardStore } from '../../store/dashboardStore';
 import { useToast } from '../../context/ToastContext';
 
 export function QuickTaskRow({
@@ -13,17 +11,14 @@ export function QuickTaskRow({
   allQuickTasks, setHoveredTaskId,
   toggleQuickTask, toggleSharedQuickTask,
   quickTaskEditingId, setQuickTaskEditingId, quickTaskEditingTitle, setQuickTaskEditingTitle,
-  quickTaskDeadlineEditing, setQuickTaskDeadlineInput, setQuickTaskDeadlineEditing, quickTaskDeadlineInput,
   updateQuickTask, updateSharedQuickTask,
   top3Manual, setTop3SlotAtIndex,
   removeQuickTask, removeSharedQuickTask,
   reorderQuickTasks, promoteQuickTaskToProject,
 }) {
-  const activePomodoroTask = useDashboardStore((s) => s.activePomodoroTask);
-  const setActivePomodoroTask = useDashboardStore((s) => s.setActivePomodoroTask);
   const showToast = useToast();
   const taskId = isShared ? `shared-${task.shareId}-${task.id}` : task.id;
-  const isFocusActive = activePomodoroTask && (activePomodoroTask.quickTaskId === task.id || activePomodoroTask.taskId === taskId);
+  const isFocusActive = false;
   
   const priority = task.priority || 'medium';
   const priorityColors = {
@@ -32,22 +27,6 @@ export function QuickTaskRow({
     low: 'bg-zinc-400',
   };
   const actions = [
-    !task.done && !isFocusActive && {
-      icon: <Icons.Clock className="h-3 w-3" />,
-      onClick: () => setActivePomodoroTask({
-        taskId: task.id,
-        quickTaskId: isShared ? undefined : task.id,
-        shareId: isShared ? task.shareId : undefined,
-        title: task.title,
-      }),
-      title: 'Inizia Focus',
-      className: 'text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/20',
-    },
-    !task.deadline && quickTaskDeadlineEditing !== taskId && {
-      icon: <Icons.Calendar className="h-3 w-3" />,
-      onClick: () => { setQuickTaskDeadlineInput(''); setQuickTaskDeadlineEditing(taskId); },
-      title: 'Scadenza',
-    },
     {
       icon: <Icons.Target className="h-3 w-3" />,
       onClick: () => {
@@ -179,35 +158,10 @@ export function QuickTaskRow({
             )}
           </span>
         )}
-        {task.deadline && quickTaskDeadlineEditing !== taskId && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setQuickTaskDeadlineInput(task.deadline || ''); setQuickTaskDeadlineEditing(taskId); }}
-            className={`shrink-0 px-2 py-0.5 rounded-lg text-xs font-semibold border ${getDeadlineColorClass(task.deadline, task.done)}`}
-          >
+        {task.deadline && (
+          <span className={`shrink-0 px-2 py-0.5 rounded-lg text-xs font-semibold border ${getDeadlineColorClass(task.deadline, task.done)}`}>
             {formatDeadline(task.deadline)}
-          </button>
-        )}
-        {quickTaskDeadlineEditing === taskId && (
-          <input
-            type="date"
-            autoFocus
-            value={quickTaskDeadlineInput}
-            onChange={(e) => setQuickTaskDeadlineInput(e.target.value)}
-            onBlur={() => {
-              (isShared ? updateSharedQuickTask(task.shareId, task.id, t => ({ ...t, deadline: quickTaskDeadlineInput.trim() || undefined })) : updateQuickTask(task.id, t => ({ ...t, deadline: quickTaskDeadlineInput.trim() || undefined })));
-              setQuickTaskDeadlineEditing(null);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                (isShared ? updateSharedQuickTask(task.shareId, task.id, t => ({ ...t, deadline: quickTaskDeadlineInput.trim() || undefined })) : updateQuickTask(task.id, t => ({ ...t, deadline: quickTaskDeadlineInput.trim() || undefined })));
-                setQuickTaskDeadlineEditing(null);
-              }
-              if (e.key === 'Escape') setQuickTaskDeadlineEditing(null);
-            }}
-            onClick={(e) => e.stopPropagation()}
-            className="w-28 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-900 outline-none dark:border-white/[0.08] dark:bg-zinc-800 dark:text-zinc-100"
-          />
+          </span>
         )}
       </div>
       <motion.div
