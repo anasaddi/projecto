@@ -42,11 +42,13 @@ export function Top3SectionV2() {
   const top3Resolved = useMemo(() => resolveTop3Slots(projects, top3Manual, allQuickTasks, lifeGoals, sharedDashboards), [projects, top3Manual, allQuickTasks, lifeGoals, sharedDashboards]);
   const top3DoneCount = useMemo(() => top3Resolved.filter((s) => s && !s.missing && s.done).length, [top3Resolved]);
 
-  const canAcceptTop3Drop = (raw) => {
+  const VALID_TOP3_DROP_TYPES = ['top3', 'project', 'project-task', 'quick', 'lifeGoal'];
+
+  const isValidTop3Payload = (raw) => {
     if (!raw) return false;
     try {
       const payload = JSON.parse(raw);
-      return ['top3', 'project', 'project-task', 'quick'].includes(payload?.type);
+      return VALID_TOP3_DROP_TYPES.includes(payload?.type);
     } catch {
       return false;
     }
@@ -123,12 +125,14 @@ export function Top3SectionV2() {
                 e.dataTransfer.effectAllowed = 'move'; 
               } : undefined}
               onDragOver={(e) => {
-                const raw = e.dataTransfer.getData('application/json');
-                if (!canAcceptTop3Drop(raw)) {
+                // dataTransfer.getData is empty during drag phase (browser security)
+                // so we check types instead
+                if (!e.dataTransfer.types?.includes('application/json')) {
                   if (dragOverIndex !== null) setDragOverIndex(null);
                   return;
                 }
                 e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
                 setDragOverIndex(idx);
               }}
               onDragLeave={() => setDragOverIndex((current) => (current === idx ? null : current))}
@@ -140,14 +144,14 @@ export function Top3SectionV2() {
                   const raw = e.dataTransfer.getData('application/json');
                   if (!raw) return;
                   const payload = JSON.parse(raw);
-                  const validTypes = ['top3', 'project', 'project-task', 'quick'];
-                  if (!validTypes.includes(payload.type)) {
+                  if (!VALID_TOP3_DROP_TYPES.includes(payload.type)) {
                     showToast?.('Puoi trascinare solo task validi nei Top 3', { type: 'warning' });
                     return;
                   }
                   if (payload.type === 'top3') reorderTop3(payload.fromIndex, toIndex);
                   else if ((payload.type === 'project' || payload.type === 'project-task') && payload.projectId && payload.taskId) setTop3SlotAtIndex(toIndex, { projectId: payload.projectId, taskId: payload.taskId, shareId: payload.shareId ?? null });
                   else if (payload.type === 'quick' && payload.quickTaskId) setTop3SlotAtIndex(toIndex, { quickTaskId: payload.quickTaskId, shareId: payload.shareId ?? null });
+                  else if (payload.type === 'lifeGoal' && payload.goalId) setTop3SlotAtIndex(toIndex, { projectId: `lg-${payload.goalId}`, taskId: payload.goalId, shareId: payload.shareId ?? null });
                   else showToast?.('Elemento non valido per i Top 3', { type: 'warning' });
                 } catch (_) { }
               }}
