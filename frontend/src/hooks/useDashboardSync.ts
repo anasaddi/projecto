@@ -45,6 +45,18 @@ export function useDashboardSync(): void {
     return extractDashboardPayload(candidate.data);
   };
 
+  const hasMeaningfulDashboardData = (value: unknown): boolean => {
+    const payload = extractDashboardPayload(value);
+    if (!payload) return false;
+    const lifeGoals = payload.lifeGoals as { tiers?: Array<{ goals?: unknown[] }> } | undefined;
+    return Boolean(
+      (Array.isArray(payload.dailyTaskTemplates) && payload.dailyTaskTemplates.length > 0) ||
+        (Array.isArray(payload.projects) && payload.projects.length > 0) ||
+        (Array.isArray(payload.quickTasks) && payload.quickTasks.length > 0) ||
+        (Array.isArray(lifeGoals?.tiers) && lifeGoals.tiers.some((tier) => (tier?.goals?.length ?? 0) > 0))
+    );
+  };
+
   useEffect(() => {
     if (hasHydratedRef.current) return;
     hasHydratedRef.current = true;
@@ -55,7 +67,8 @@ export function useDashboardSync(): void {
       try {
         if (!hasLocalData && syncWithServer) {
           try {
-            const idbState = extractDashboardPayload(await getLocalState());
+            const localState = await getLocalState();
+            const idbState = hasMeaningfulDashboardData(localState) ? extractDashboardPayload(localState) : null;
             if (idbState) {
               syncWithServer(idbState);
               const shared = await api.training.listSharedDashboards({ timeout: 10_000 }).catch(() => null);
@@ -64,8 +77,12 @@ export function useDashboardSync(): void {
             }
           } catch (_) {}
         }
-        const res = await api.training.getDashboardStateAt(new Date().toISOString(), { timeout: 15_000 }).catch(async () => api.training.getDashboardState({ timeout: 15_000 }));
-        const payload = extractDashboardPayload(res) ?? extractDashboardPayload((res as { data?: unknown } | null | undefined)?.data);
+        const freshRes = await api.training.getDashboardStateAt(new Date().toISOString(), { timeout: 15_000 }).catch(() => null);
+        let payload = extractDashboardPayload(freshRes) ?? extractDashboardPayload((freshRes as { data?: unknown } | null | undefined)?.data);
+        if (!hasMeaningfulDashboardData(payload)) {
+          const currentRes = await api.training.getDashboardState({ timeout: 15_000 }).catch(() => null);
+          payload = extractDashboardPayload(currentRes) ?? extractDashboardPayload((currentRes as { data?: unknown } | null | undefined)?.data);
+        }
         if (payload && syncWithServer && !hasLocalData) syncWithServer(payload);
         const shared = await api.training.listSharedDashboards({ timeout: 10_000 }).catch(() => null);
         if (!cancelled && Array.isArray(shared) && setSharedDashboards) setSharedDashboards(shared);
