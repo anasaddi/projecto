@@ -380,7 +380,7 @@ export function loadDashboardStateFromStorage(fallback) {
       top3Manual: top3Normalized,
       quickTasks: Array.isArray(parsed.quickTasks) ? parsed.quickTasks : fallback.quickTasks,
       dailyCompletionLog: parsed.dailyCompletionLog && typeof parsed.dailyCompletionLog === 'object' ? parsed.dailyCompletionLog : fallback.dailyCompletionLog,
-      lifeGoals: normalizeLifeGoals(parsed.lifeGoals, fallback.lifeGoals),
+      lifeGoals: normalizeLifeGoals(parsed.lifeGoals ?? null, fallback.lifeGoals ?? null),
       timelineRoutines: parsed.timelineRoutines && typeof parsed.timelineRoutines === 'object' ? parsed.timelineRoutines : fallback.timelineRoutines,
       timelinePanelExpanded: parsed.timelinePanelExpanded !== undefined ? parsed.timelinePanelExpanded : true,
     };
