@@ -166,9 +166,13 @@ export function QuickTaskRow({
       </div>
       <motion.div
         ref={barRef}
-        className="flex items-center gap-0.5 touch-manipulation"
+        className="flex items-center gap-0.5 touch-manipulation shrink-0 overflow-hidden"
         initial={false}
-        animate={{ opacity: showActions ? 1 : 0, x: showActions ? 0 : 10 }}
+        animate={{
+          opacity: showActions ? 1 : 0,
+          width: showActions ? 'auto' : 0,
+          marginLeft: showActions ? undefined : 0,
+        }}
         transition={{ duration: 0.15 }}
         onClick={(e) => e.stopPropagation()}
       >
