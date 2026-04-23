@@ -4,25 +4,29 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../../lib/utils';
 
 const cardVariants = cva(
-  'relative overflow-hidden transition-all duration-300',
+  'relative overflow-hidden transition-all duration-500',
   {
     variants: {
       variant: {
-        default: 'bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700',
-        elevated: 'bg-white dark:bg-stone-800 shadow-lg shadow-stone-200/50 dark:shadow-black/30',
-        glass: 'bg-white/80 dark:bg-stone-800/80 backdrop-blur-xl border border-white/20 dark:border-stone-700/50',
-        compact: 'bg-stone-50 dark:bg-stone-900/50 border border-stone-100 dark:border-stone-800',
-        ghost: 'bg-transparent border border-transparent hover:bg-stone-50 dark:hover:bg-stone-800/50',
+        default: 'bg-white/90 dark:bg-stone-900/80 backdrop-blur-md border border-white/20 dark:border-white/10',
+        elevated: 'bg-white/95 dark:bg-stone-900/90 backdrop-blur-xl shadow-2xl shadow-stone-200/30 dark:shadow-black/40',
+        glass: 'bg-white/70 dark:bg-stone-800/60 backdrop-blur-2xl border border-white/30 dark:border-white/10',
+        premium: 'bg-gradient-to-br from-white/90 to-white/70 dark:from-stone-800/90 dark:to-stone-900/70 backdrop-blur-xl border border-white/40 dark:border-white/5 shadow-xl',
+        glow: 'bg-stone-900/80 backdrop-blur-xl border border-indigo-500/30 shadow-lg shadow-indigo-500/10',
+        compact: 'bg-stone-50/80 dark:bg-stone-900/50 border border-stone-100 dark:border-stone-800',
+        ghost: 'bg-transparent border border-transparent hover:bg-white/50 dark:hover:bg-stone-800/50',
       },
       size: {
-        sm: 'rounded-xl p-3',
-        md: 'rounded-2xl p-4',
-        lg: 'rounded-3xl p-5',
+        sm: 'rounded-2xl p-4',
+        md: 'rounded-3xl p-5',
+        lg: 'rounded-[2rem] p-6',
+        xl: 'rounded-[2.5rem] p-8',
       },
       hover: {
         none: '',
-        lift: 'hover:-translate-y-0.5 hover:shadow-lg cursor-pointer',
-        glow: 'hover:shadow-indigo-500/20 hover:shadow-lg',
+        lift: 'hover:-translate-y-1 hover:shadow-2xl cursor-pointer',
+        glow: 'hover:shadow-indigo-500/30 hover:shadow-xl hover:border-indigo-500/30',
+        scale: 'hover:scale-[1.02] cursor-pointer',
       },
     },
     defaultVariants: {
