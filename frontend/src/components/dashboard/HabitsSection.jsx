@@ -75,9 +75,15 @@ function SortableHabitItem({ task, idx, todayTaskLog, isHovered, setHoveredHabit
         ${isDragging ? 'opacity-50' : ''}
       `}
     >
-      <div {...attributes} {...listeners} className={isLocked ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}>
-        <Icons.GripVertical className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
-      </div>
+      {isLocked ? (
+        <div className="w-4 flex justify-center">
+          <Icons.Lock className="h-3 w-3 text-amber-500/70" />
+        </div>
+      ) : (
+        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+          <Icons.GripVertical className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+        </div>
+      )}
 
       <TaskCheckbox 
         done={isDone} 

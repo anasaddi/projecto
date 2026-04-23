@@ -4,6 +4,7 @@ import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
 import { resolveTop3Slots, updateNodeInTree } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
+import { useToast } from '../../context/ToastContext';
 import { Card, CardHeader, Badge } from '../ui/CardV2';
 import { Label, Text } from '../ui/Typography';
 
@@ -26,6 +27,8 @@ export function Top3SectionV2() {
     updateGoal,
     logTimelineCompletionEvent
   } = store ?? {};
+
+  const showToast = useToast();
 
   const allQuickTasks = useMemo(() => {
     const local = quickTasks.filter(t => !t.parentId).map(t => ({ ...t, shareId: null }));
@@ -181,14 +184,11 @@ export function Top3SectionV2() {
               ) : (
                 <div className="relative z-10 h-full flex items-center justify-center">
                   <button
-                    onClick={() => {
-                      // Could open a picker dialog here
-                      console.log('Open picker for slot', idx);
-                    }}
+                    onClick={() => showToast?.('Trascina un task qui per aggiungerlo ai Top 3', { type: 'info' })}
                     className="flex items-center gap-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
                   >
                     <Icons.Plus className="w-4 h-4" />
-                    <Label>Aggiungi priorità</Label>
+                    <Label>Slot libero</Label>
                   </button>
                 </div>
               )}

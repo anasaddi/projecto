@@ -118,11 +118,11 @@ export function QuickTaskRow({
       </span>
       {/* Priority indicator */}
       <div
-        className={`w-2 h-2 rounded-full shrink-0 ${priorityColors[priority]}`}
-        title={`Priorità: ${priority}`}
+        className={`w-2 h-2 rounded-full shrink-0 ${priorityColors[priority]} ${isShared ? '' : 'cursor-pointer hover:scale-125'} transition-transform`}
+        title={isShared ? `Priorità: ${priority} (non modificabile in condivisione)` : `Clicca per cambiare priorità: ${priority}`}
         onClick={(e) => {
           e.stopPropagation();
-          if (!isShared) {
+          if (!isShared && updateQuickTask) {
             const priorities = ['low', 'medium', 'high'];
             const currentIdx = priorities.indexOf(priority);
             const nextPriority = priorities[(currentIdx + 1) % priorities.length];
