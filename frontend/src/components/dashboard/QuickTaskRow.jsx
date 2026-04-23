@@ -17,11 +17,19 @@ export function QuickTaskRow({
   top3Manual, setTop3SlotAtIndex,
   removeQuickTask, removeSharedQuickTask,
   reorderQuickTasks, promoteQuickTaskToProject,
+  quickTaskPriorityEditing, setQuickTaskPriorityEditing,
 }) {
   const activePomodoroTask = useDashboardStore((s) => s.activePomodoroTask);
   const setActivePomodoroTask = useDashboardStore((s) => s.setActivePomodoroTask);
   const taskId = isShared ? `shared-${task.shareId}-${task.id}` : task.id;
   const isFocusActive = activePomodoroTask && (activePomodoroTask.quickTaskId === task.id || activePomodoroTask.taskId === taskId);
+  
+  const priority = task.priority || 'medium';
+  const priorityColors = {
+    high: 'bg-red-500',
+    medium: 'bg-amber-500',
+    low: 'bg-zinc-400',
+  };
   const actions = [
     !task.done && !isFocusActive && {
       icon: <Icons.Clock className="h-3 w-3" />,
@@ -108,6 +116,20 @@ export function QuickTaskRow({
       <span onClick={(e) => e.stopPropagation()}>
         <TaskCheckbox done={task.done} onClick={() => isShared ? toggleSharedQuickTask(task.shareId, task.id, !task.done) : toggleQuickTask(task.id, !task.done)} />
       </span>
+      {/* Priority indicator */}
+      <div
+        className={`w-2 h-2 rounded-full shrink-0 ${priorityColors[priority]}`}
+        title={`Priorità: ${priority}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!isShared) {
+            const priorities = ['low', 'medium', 'high'];
+            const currentIdx = priorities.indexOf(priority);
+            const nextPriority = priorities[(currentIdx + 1) % priorities.length];
+            updateQuickTask(task.id, t => ({ ...t, priority: nextPriority }));
+          }
+        }}
+      />
       <div className="flex flex-1 min-w-0 items-center gap-2">
         {quickTaskEditingId === taskId ? (
           <input

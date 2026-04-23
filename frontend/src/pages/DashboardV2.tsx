@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useDashboardStats } from '../context/DashboardStatsContext';
 import { useGlobalConfig } from '../context/GlobalConfigContext';
 import { useDashboardStore } from '../store/dashboardStore';
+import { useNotificationReminders } from '../hooks/useNotificationReminders';
 
 import { PomodoroCompact } from '../components/dashboard/PomodoroCompact';
 import { FocusHeatmap } from '../components/dashboard/FocusHeatmap';
@@ -60,6 +61,7 @@ export default function DashboardV2(): React.ReactElement {
   const reorderSection = useDashboardStore((s) => s.reorderSection);
 
   useDashboardSync();
+  useNotificationReminders();
 
   const { updateStats } = useDashboardStats() || { updateStats: () => {} };
   const { config } = useGlobalConfig() || { config: null };
@@ -182,10 +184,13 @@ export default function DashboardV2(): React.ReactElement {
   const confirmPayload = confirmState && typeof confirmState === 'object' && 'payload' in confirmState ? (confirmState as { payload?: { shareId?: string; projectId?: string; goalId?: string } }).payload : undefined;
 
   return (
-    <div className="min-h-full w-full flex flex-col overflow-y-auto font-sans font-normal select-none selection:bg-indigo-500/30 antialiased bg-white dark:bg-[#0b0e14]">
+    <div className="min-h-full w-full flex flex-col overflow-y-auto font-sans font-normal select-none selection:bg-indigo-500/30 antialiased bg-white dark:bg-[#0b0e14] relative">
+      {/* Subtle grain texture overlay */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.06] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMDAwIi8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmZmYiLz4KPC9zdmc+')] dark:bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIi8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiMwMDAiLz4KPC9zdmc+')] z-0" />
+      
       {/* Redundant header removed - items moved to Layout and PrayersCountdowns */}
 
-      <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-5 py-5 md:py-6 flex-1 min-h-0`}>
+      <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-5 py-5 md:py-6 flex-1 min-h-0 relative z-10`}>
         <PrayersCountdownsV2
           todayPrayerLog={todayPrayerLog}
           togglePrayer={togglePrayer}
@@ -193,8 +198,6 @@ export default function DashboardV2(): React.ReactElement {
           countdowns={countdowns as { label: string; remaining: string; pct: number }[]}
           todayFocusScore={todayFocusScore}
           focusStreak={focusStreak}
-          onReset={() => setConfirmState({ id: 'reset' })}
-          now={now}
         />
 
         <DailyTimelineWidget2 PRAYERS={PRAYERS} todayKey={todayKey} todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} />

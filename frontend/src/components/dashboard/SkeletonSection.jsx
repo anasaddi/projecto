@@ -1,7 +1,11 @@
 import React from 'react';
 
 const SkeletonBase = ({ className }) => (
-  <div className={`animate-pulse rounded bg-zinc-200 dark:bg-zinc-800/50 ${className}`} />
+  <div 
+    className={`relative overflow-hidden rounded bg-zinc-200 dark:bg-zinc-800/50 ${className}`}
+  >
+    <div className="absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+  </div>
 );
 
 export const HabitSkeleton = () => (

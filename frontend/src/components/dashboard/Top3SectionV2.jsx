@@ -78,7 +78,7 @@ export function Top3SectionV2() {
   };
 
   return (
-    <Card variant="elevated" radius="xl" className="flex flex-col shrink-0">
+    <Card variant="glass" radius="xl" className="flex flex-col shrink-0">
       <CardHeader
         icon={<Icons.Target className="w-5 h-5 text-amber-500" />}
         iconColor="text-amber-500"
@@ -129,12 +129,12 @@ export function Top3SectionV2() {
                 scale: isDragOver ? 1.02 : 1,
               }}
               className={`
-                relative overflow-hidden min-h-[3.5rem] rounded-2xl border transition-all duration-200
+                relative overflow-hidden min-h-[4rem] rounded-2xl border transition-all duration-200
                 ${getSlotStyles(isDragOver, filled, isDone)}
               `}
             >
-              {/* Large number watermark */}
-              <span className="absolute -right-1 -bottom-2 text-[3.5rem] font-black text-zinc-100 dark:text-white/[0.03] pointer-events-none select-none leading-none z-0">
+              {/* Large number watermark - more prominent */}
+              <span className="absolute -right-2 -bottom-4 text-[5rem] font-black text-zinc-200/50 dark:text-white/[0.05] pointer-events-none select-none leading-none z-0">
                 {idx + 1}
               </span>
               
@@ -180,10 +180,16 @@ export function Top3SectionV2() {
                 </div>
               ) : (
                 <div className="relative z-10 h-full flex items-center justify-center">
-                  <Label className="flex items-center gap-2">
-                    <Icons.Plus className="w-3 h-3" />
-                    Trascina qui
-                  </Label>
+                  <button
+                    onClick={() => {
+                      // Could open a picker dialog here
+                      console.log('Open picker for slot', idx);
+                    }}
+                    className="flex items-center gap-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+                  >
+                    <Icons.Plus className="w-4 h-4" />
+                    <Label>Aggiungi priorità</Label>
+                  </button>
                 </div>
               )}
             </motion.div>

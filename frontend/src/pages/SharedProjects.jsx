@@ -1085,10 +1085,20 @@ export default function SharedProjects() {
 
         {/* MAIN CONTENT: PROJECTS */}
         <div className="order-2 min-w-0 flex-[2] space-y-6 2xl:order-1">
-          <header className="mb-6 rounded-[32px] border border-zinc-200/70 bg-white/[0.88] p-5 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#141922]/85 dark:shadow-[0_30px_70px_-42px_rgba(0,0,0,0.62)] md:p-6">
+          <header className="mb-6 rounded-[32px] border border-white/10 bg-white/5 backdrop-blur-md p-5 shadow-xl dark:bg-zinc-900/30 md:p-6">
             <div className="mb-5 flex flex-col justify-between gap-5 md:flex-row md:items-end">
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
+                  {/* Avatar colored by user identity */}
+                  <div 
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
+                    style={{
+                      backgroundColor: `hsl(${(id?.charCodeAt(0) || 0) * 137 % 360}, 70%, 50%)`
+                    }}
+                    title="Your avatar"
+                  >
+                    {localStorage.getItem('km-chat-sender-id')?.charAt(0).toUpperCase() || 'U'}
+                  </div>
                   <input
                     value={dashboard.title}
                     onChange={(e) => updateLocal({ title: e.target.value })}

@@ -1,5 +1,6 @@
 ﻿import React from 'react';
 import { Icons } from './Icons';
+import { ProgressBar } from '../ui/CardV2';
 
 /**
  * Single tier row in Life Goals: header (emoji, name, progress bar, collapse) + drop zone + children when expanded.
@@ -39,9 +40,7 @@ export function LifeGoalTierRow({ tier, onToggleCollapse, onDrop, children }) {
               {tier.name}
             </span>
             <div className="flex items-center gap-2">
-              <div className="w-16 h-0.5 rounded-full bg-zinc-100 dark:bg-white/5 overflow-hidden">
-                <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} />
-              </div>
+              <ProgressBar value={pct} max={100} size="sm" color="primary" className="w-16" />
               <span className="text-xs font-bold text-zinc-400 tabular-nums leading-none flex items-center">
                 {completedCount}/{totalCount}
               </span>

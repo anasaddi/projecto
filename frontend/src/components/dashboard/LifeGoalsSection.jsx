@@ -1,4 +1,4 @@
-﻿import React, { useCallback } from 'react';
+﻿import React, { useCallback, useMemo } from 'react';
 import { Icons } from './Icons';
 import { LifeGoalCard } from './LifeGoalComponents';
 import { DenseTaskNode } from './DenseTaskNode';
@@ -8,6 +8,7 @@ import { useDashboardStore } from '../../store/dashboardStore';
 import { useToast } from '../../context/ToastContext';
 import { Card, CardHeader, CardBody } from './Card';
 import { AddItemInputBar } from './AddItemInputBar';
+import { ProgressBar } from '../ui/CardV2';
 
 export function LifeGoalsSection() {
   const store = useDashboardStore();
@@ -42,6 +43,15 @@ export function LifeGoalsSection() {
     (s.projectId === `lg-${gid}` && s.taskId === gid) ||
     (s.quickTaskId && quickTasks.some(qt => qt.id === s.quickTaskId && qt.lifeGoalId === gid))
   )), [top3Manual, quickTasks]);
+
+  const tierProgress = useMemo(() => {
+    return (lifeGoals.tiers || []).map(tier => {
+      const goals = tier.goals || [];
+      const total = goals.length;
+      const done = goals.filter(g => g.done).length;
+      return { id: tier.id, done, total, percentage: total > 0 ? (done / total) * 100 : 0 };
+    });
+  }, [lifeGoals]);
   const handleToggleTop3 = useCallback((gid) => {
     const idx = getTop3IndexForGoal(gid);
     if (idx !== -1) setTop3SlotAtIndex(idx, null);

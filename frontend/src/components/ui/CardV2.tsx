@@ -18,6 +18,7 @@ const cardVariants = cva(
         outlined: 'bg-transparent border-2 border-zinc-200 dark:border-zinc-700',
         ghost: 'bg-transparent border border-transparent hover:border-zinc-200/60 dark:hover:border-zinc-800/60',
         accent: 'bg-indigo-50/50 dark:bg-indigo-950/20 border-2 border-indigo-200 dark:border-indigo-800/50',
+        glass: 'bg-white/5 dark:bg-zinc-900/30 backdrop-blur-md border border-white/10 dark:border-white/5 shadow-xl',
       },
       // Size/padding
       size: {
