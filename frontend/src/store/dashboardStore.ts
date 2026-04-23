@@ -72,7 +72,7 @@ export const useDashboardStore = create(
         top3Manual: initialState.top3Manual,
         quickTasks: initialState.quickTasks,
         dailyCompletionLog: initialState.dailyCompletionLog,
-        lifeGoals: initialState.lifeGoals,
+        lifeGoals: initialState.lifeGoals ?? buildDefaultLifeGoals(),
         timelineRoutines: initialState.timelineRoutines ?? {},
 
         // --- UI State ---
