@@ -30,12 +30,8 @@ export function useDashboardSync(): void {
   const wsConnections = useRef<Record<string, WebSocket>>({});
   const bcChannels = useRef<Record<string, BroadcastChannel>>({});
   const applyingFromSharedBC = useRef(false);
-  const hasHydratedRef = useRef(false);
 
   useEffect(() => {
-    if (hasHydratedRef.current) return;
-    hasHydratedRef.current = true;
-
     let cancelled = false;
 
     async function hydrateAndFetch() {
@@ -74,7 +70,7 @@ export function useDashboardSync(): void {
     return () => {
       cancelled = true;
     };
-  }, [syncWithServer, setSharedDashboards, setIsLoaded, hasLocalData]);
+  }, []);
 
   const isLoaded = useDashboardStore((s) => s.isLoaded);
 
