@@ -17,7 +17,6 @@ export function QuickTaskRow({
   top3Manual, setTop3SlotAtIndex,
   removeQuickTask, removeSharedQuickTask,
   reorderQuickTasks, promoteQuickTaskToProject,
-  quickTaskPriorityEditing, setQuickTaskPriorityEditing,
 }) {
   const activePomodoroTask = useDashboardStore((s) => s.activePomodoroTask);
   const setActivePomodoroTask = useDashboardStore((s) => s.setActivePomodoroTask);

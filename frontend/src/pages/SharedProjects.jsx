@@ -575,6 +575,12 @@ export default function SharedProjects() {
   const chatScrollRef = useRef(null);
   const chatInputRef = useRef(null);
   const [notesPanelCollapsed, setNotesPanelCollapsed] = useState(false);
+  const [avatarLetter, setAvatarLetter] = useState('U');
+
+  useEffect(() => {
+    const senderId = localStorage.getItem('km-chat-sender-id');
+    setAvatarLetter(senderId?.charAt(0).toUpperCase() || 'U');
+  }, []);
 
   useEffect(() => {
     if (chatScrollRef.current && dashboard.chat.length > 0) {
@@ -1097,7 +1103,7 @@ export default function SharedProjects() {
                     }}
                     title="Your avatar"
                   >
-                    {localStorage.getItem('km-chat-sender-id')?.charAt(0).toUpperCase() || 'U'}
+                    {avatarLetter}
                   </div>
                   <input
                     value={dashboard.title}
