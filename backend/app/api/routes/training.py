@@ -18,6 +18,25 @@ EMPTY_DASHBOARD = {
     "dailyCompletionLog": {},
     "lifeGoals": {"collapsed": False, "tiers": []},
 }
+
+
+def _has_meaningful_dashboard_data(data: Any) -> bool:
+    if not isinstance(data, dict):
+        return False
+    life_goals = data.get("lifeGoals") if isinstance(data.get("lifeGoals"), dict) else None
+    tiers = life_goals.get("tiers") if isinstance(life_goals, dict) else None
+    return any(
+        [
+            isinstance(data.get("dailyTaskTemplates"), list) and len(data.get("dailyTaskTemplates") or []) > 0,
+            isinstance(data.get("projects"), list) and len(data.get("projects") or []) > 0,
+            isinstance(data.get("quickTasks"), list) and len(data.get("quickTasks") or []) > 0,
+            isinstance(tiers, list) and any(isinstance(t, dict) and len(t.get("goals") or []) > 0 for t in tiers),
+        ]
+    )
+
+
+def _dashboard_snapshot_or_empty(data: Any) -> dict:
+    return data if isinstance(data, dict) and _has_meaningful_dashboard_data(data) else EMPTY_DASHBOARD
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
 from app.api.deps import get_current_admin, get_current_user, get_training_access
@@ -231,8 +250,10 @@ async def get_dashboard_state(
     from app.cache import get_cached_dashboard, set_cached_dashboard
     try:
         cached = await get_cached_dashboard()
-        if cached:
+        if _has_meaningful_dashboard_data(cached):
             return {"key": "default", "data": cached, "updated_at": datetime.now(timezone.utc)}
+        if cached:
+            logger.info("Ignoring empty dashboard cache hit; fetching DB snapshot")
         data = await dashboard_service.get_dashboard(db, user_id=user_id)
         await set_cached_dashboard(data)
         return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
@@ -256,9 +277,10 @@ async def get_dashboard_state_at(
         raise HTTPException(status_code=400, detail="Invalid 'at' timestamp (use ISO 8601)")
     agg_id = user_id or "default"
     data = await get_state_at(db, agg_id, at=at_dt)
-    if not data:
-        return None
-    return {"key": "default", "data": data, "updated_at": at_dt}
+    if not _has_meaningful_dashboard_data(data):
+        logger.info("Dashboard time-travel snapshot empty; falling back to current DB state")
+        data = await dashboard_service.get_dashboard(db, user_id=user_id)
+    return {"key": "default", "data": _dashboard_snapshot_or_empty(data), "updated_at": at_dt}
 
 @router.put("/dashboard-state", response_model=schemas.DashboardStateOut)
 async def update_dashboard_state(

@@ -3,6 +3,7 @@ import { api } from '../api/client';
 import { getLocalState } from '../db/localDb';
 import { getSharedDashboardWsUrl } from '../config';
 import { useDashboardStore } from '../store/dashboardStore';
+import { extractDashboardPayload, hasMeaningfulDashboardData } from '../utils/dashboardState';
 
 /**
  * Handles dashboard initial load: hydrate from IndexedDB if localStorage empty,
@@ -31,32 +32,6 @@ export function useDashboardSync(): void {
   const applyingFromSharedBC = useRef(false);
   const hasHydratedRef = useRef(false);
 
-  const extractDashboardPayload = (value: unknown): Parameters<typeof syncWithServer>[0] | null => {
-    if (!value || typeof value !== 'object') return null;
-    const candidate = value as Record<string, unknown> & Parameters<typeof syncWithServer>[0] & { data?: unknown };
-    const hasDashboardShape =
-      Array.isArray(candidate.dailyTaskTemplates) ||
-      Array.isArray(candidate.projects) ||
-      Array.isArray(candidate.quickTasks) ||
-      candidate.lifeGoals != null ||
-      candidate.top3Manual != null ||
-      candidate.dailyCompletionLog != null;
-    if (hasDashboardShape) return candidate;
-    return extractDashboardPayload(candidate.data);
-  };
-
-  const hasMeaningfulDashboardData = (value: unknown): boolean => {
-    const payload = extractDashboardPayload(value);
-    if (!payload) return false;
-    const lifeGoals = payload.lifeGoals as { tiers?: Array<{ goals?: unknown[] }> } | undefined;
-    return Boolean(
-      (Array.isArray(payload.dailyTaskTemplates) && payload.dailyTaskTemplates.length > 0) ||
-        (Array.isArray(payload.projects) && payload.projects.length > 0) ||
-        (Array.isArray(payload.quickTasks) && payload.quickTasks.length > 0) ||
-        (Array.isArray(lifeGoals?.tiers) && lifeGoals.tiers.some((tier) => (tier?.goals?.length ?? 0) > 0))
-    );
-  };
-
   useEffect(() => {
     if (hasHydratedRef.current) return;
     hasHydratedRef.current = true;
@@ -70,7 +45,7 @@ export function useDashboardSync(): void {
             const localState = await getLocalState();
             const idbState = hasMeaningfulDashboardData(localState) ? extractDashboardPayload(localState) : null;
             if (idbState) {
-              syncWithServer(idbState);
+              syncWithServer(idbState as Parameters<typeof syncWithServer>[0]);
               const shared = await api.training.listSharedDashboards({ timeout: 10_000 }).catch(() => null);
               if (!cancelled && Array.isArray(shared) && setSharedDashboards) setSharedDashboards(shared);
               return;
@@ -83,7 +58,7 @@ export function useDashboardSync(): void {
           const currentRes = await api.training.getDashboardState({ timeout: 15_000 }).catch(() => null);
           payload = extractDashboardPayload(currentRes) ?? extractDashboardPayload((currentRes as { data?: unknown } | null | undefined)?.data);
         }
-        if (payload && syncWithServer && !hasLocalData) syncWithServer(payload);
+        if (payload && syncWithServer && !hasLocalData) syncWithServer(payload as Parameters<typeof syncWithServer>[0]);
         const shared = await api.training.listSharedDashboards({ timeout: 10_000 }).catch(() => null);
         if (!cancelled && Array.isArray(shared) && setSharedDashboards) setSharedDashboards(shared);
       } catch (err) {
