@@ -57,7 +57,7 @@ const defaultInitial = {
   } as Record<string, string[]>,
 };
 
-const loaded = loadState() as Partial<SyncData> | null;
+const loaded = loadState(defaultInitial) as Partial<SyncData> | null;
 const initialState = loaded ?? defaultInitial;
 
 export const useDashboardStore = create(
