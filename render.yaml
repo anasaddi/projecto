@@ -7,7 +7,7 @@ services:
     plan: free
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    startCommand: bash start.sh
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
@@ -16,6 +16,7 @@ services:
         fromDatabase:
           name: projecto-db
           property: connectionString
+      # REDIS_URL: set manually if using Upstash Redis (free tier available at upstash.com)
       - key: ADMIN_ACCESS_KEY
         sync: false
       - key: SECRET_KEY
@@ -35,3 +36,6 @@ databases:
     plan: free
     region: frankfurt
     ipAllowList: []
+# NOTE: Redis is NOT available on Render free tier.
+# Use Upstash Redis (free tier at https://upstash.com/) or run without cache.
+# Set REDIS_URL env var manually if using Upstash.

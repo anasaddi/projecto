@@ -213,6 +213,12 @@ async def health():
     return {"status": "ok"}
 
 
+@app.get("/keepalive")
+async def keepalive():
+    """Keepalive endpoint to prevent Render free tier sleep."""
+    return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+
 @app.get("/ready")
 async def readiness():
     """Deep readiness check: DB + Redis connectivity."""

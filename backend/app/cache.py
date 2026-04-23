@@ -16,11 +16,11 @@ _pool: Optional[ConnectionPool] = None
 _redis: Optional[Redis] = None
 # Circuit breaker: skip connection attempts until this time (monotonic) when Redis recently failed
 _redis_unavailable_until: float = 0.0
-REDIS_CIRCUIT_BREAKER_SEC = 60
+REDIS_CIRCUIT_BREAKER_SEC = 30
 
-# TTL for cached dashboard state (seconds)
-DASHBOARD_TTL = 300  # 5 minutes
-SHARED_DASHBOARD_TTL = 120  # 2 minutes
+# TTL for cached dashboard state (seconds) - increased for better performance
+DASHBOARD_TTL = 600  # 10 minutes
+SHARED_DASHBOARD_TTL = 300  # 5 minutes
 
 
 async def get_redis() -> Optional[Redis]:

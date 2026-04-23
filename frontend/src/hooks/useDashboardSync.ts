@@ -30,10 +30,14 @@ export function useDashboardSync(): void {
   const wsConnections = useRef<Record<string, WebSocket>>({});
   const bcChannels = useRef<Record<string, BroadcastChannel>>({});
   const applyingFromSharedBC = useRef(false);
+  const isLoadingRef = useRef(false);
 
   useEffect(() => {
     setIsLoaded(true);
     async function hydrateAndFetch() {
+      if (isLoadingRef.current) return;
+      isLoadingRef.current = true;
+
       if (!hasLocalData && syncWithServer) {
         try {
           const idbState = await getLocalState();
@@ -43,22 +47,28 @@ export function useDashboardSync(): void {
             (idbState.dailyTaskTemplates?.length || idbState.quickTasks?.length || idbState.projects?.length)
           ) {
             syncWithServer(idbState as Parameters<typeof syncWithServer>[0]);
-            const shared = await api.training.listSharedDashboards({ timeout: 10_000 }).catch(() => null);
+            const shared = await api.training.listSharedDashboards({ timeout: 5_000 }).catch(() => null);
             if (Array.isArray(shared) && setSharedDashboards) setSharedDashboards(shared);
+            isLoadingRef.current = false;
             return;
           }
         } catch (_) {}
       }
       try {
-        const res = await api.training.getDashboardState({ timeout: 15_000 });
+        // Parallelize API calls to reduce total wait time
+        const [res, shared] = await Promise.all([
+          api.training.getDashboardState({ timeout: 8_000 }).catch(() => null),
+          api.training.listSharedDashboards({ timeout: 5_000 }).catch(() => null),
+        ]);
         if (res?.data && syncWithServer && !hasLocalData)
           syncWithServer(res.data as Parameters<typeof syncWithServer>[0]);
-        const shared = await api.training.listSharedDashboards({ timeout: 10_000 }).catch(() => null);
         if (Array.isArray(shared) && setSharedDashboards) setSharedDashboards(shared);
       } catch (err) {
         if (process.env.NODE_ENV !== 'production') {
           console.warn('Dashboard load from server failed (using local state):', (err as Error)?.message || err);
         }
+      } finally {
+        isLoadingRef.current = false;
       }
     }
     hydrateAndFetch();

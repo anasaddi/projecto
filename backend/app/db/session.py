@@ -13,11 +13,13 @@ engine = create_async_engine(
     echo=False,
     future=True,
     # Connection pooling config (ignored for SQLite)
+    # Optimized for Render PostgreSQL free tier (~20-25 max connections)
+    # With 4 Gunicorn workers: 4 workers * 4 pool_size + 4 workers * 2 overflow = ~24 max
     **({} if _is_sqlite else {
-        "pool_size": 10,           # Persistent connections
-        "max_overflow": 20,        # Burst capacity
+        "pool_size": 4,            # Persistent connections per worker
+        "max_overflow": 2,         # Burst capacity per worker
         "pool_pre_ping": True,     # Verify connections before use
-        "pool_recycle": 1800,      # Recycle connections every 30 minutes
+        "pool_recycle": 900,       # Recycle connections every 15 min (faster for cold-start recovery)
         "pool_timeout": 30,        # Wait max 30s for a connection
     })
 )
