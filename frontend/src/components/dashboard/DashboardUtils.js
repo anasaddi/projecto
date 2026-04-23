@@ -322,7 +322,9 @@ export function buildDefaultState() {
 }
 
 export function normalizeLifeGoals(lg, fallback) {
-  if (!lg || !Array.isArray(lg.tiers) || lg.tiers.length === 0) return fallback;
+  if (!lg || !Array.isArray(lg.tiers) || lg.tiers.length === 0) {
+    return fallback || { tiers: [] };
+  }
   const projectTitles = [
     'Eliminare ogni addiction', 'Completare PROJECTO', 'Pagare tutti i debiti',
     'Correre una maratona', 'Ottenere il brevetto da pilota', 'Iniziare memorizzazione del Corano (Hafiz)',
@@ -336,10 +338,11 @@ export function normalizeLifeGoals(lg, fallback) {
     'tier-4': { name: 'Tier 4', emoji: '👑' },
     'tier-5': { name: 'Tier 5', emoji: '🚀' },
   };
+  const fallbackTiers = Array.isArray(fallback?.tiers) ? fallback.tiers : [];
   return {
     ...lg,
     tiers: lg.tiers.map(t => {
-      const fallbackTier = fallback.tiers.find(ft => ft.id === t.id);
+      const fallbackTier = fallbackTiers.find(ft => ft.id === t.id);
       const currentGoals = Array.isArray(t.goals) && t.goals.length > 0 ? t.goals : (fallbackTier ? fallbackTier.goals : []);
       const meta = tierMeta[t.id] || { name: t.name, emoji: t.emoji };
       return {
