@@ -24,13 +24,16 @@ export function PomodoroCompact() {
   const todayKey = toDateKey(new Date());
 
   useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
     try {
       const stored = localStorage.getItem(POMODORO_STORAGE);
       if (stored) {
         const { date, sessions } = JSON.parse(stored);
         if (date === todayKey) setSessionsToday(sessions || 0);
       }
-    } catch (_) { }
+    } catch (err) {
+      console.error('Failed to load pomodoro sessions from localStorage:', err);
+    }
   }, [todayKey]);
 
   const handleComplete = () => {
@@ -38,7 +41,9 @@ export function PomodoroCompact() {
     setRemaining(POMODORO_DURATION);
     setSessionsToday((s) => {
       const next = s + 1;
-      try { localStorage.setItem(POMODORO_STORAGE, JSON.stringify({ date: todayKey, sessions: next })); } catch (_) { }
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try { localStorage.setItem(POMODORO_STORAGE, JSON.stringify({ date: todayKey, sessions: next })); } catch (err) { console.error('Failed to save pomodoro sessions:', err); }
+      }
       if (typeof window !== 'undefined' && window.Notification?.permission === 'granted') new window.Notification('Pomodoro completato!');
       return next;
     });
@@ -83,7 +88,9 @@ export function PomodoroCompact() {
           setStatus('idle');
           setSessionsToday((s) => {
             const next = s + 1;
-            try { localStorage.setItem(POMODORO_STORAGE, JSON.stringify({ date: todayKey, sessions: next })); } catch (_) { }
+            if (typeof window !== 'undefined' && window.localStorage) {
+              try { localStorage.setItem(POMODORO_STORAGE, JSON.stringify({ date: todayKey, sessions: next })); } catch (err) { console.error('Failed to save pomodoro sessions:', err); }
+            }
             if (typeof window !== 'undefined' && window.Notification?.permission === 'granted') new window.Notification('Pomodoro completato!');
             return next;
           });

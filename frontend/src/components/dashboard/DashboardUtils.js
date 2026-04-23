@@ -363,10 +363,10 @@ export function normalizeLifeGoals(lg, fallback) {
   };
 }
 
-export function loadState() {
-  const fallback = buildDefaultState();
+export function loadDashboardStateFromStorage(fallback) {
+  if (typeof window === 'undefined' || !window.localStorage) return fallback;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('km-dashboard-v1');
+    const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw);
     const top3 = parsed.top3Manual;
@@ -383,7 +383,8 @@ export function loadState() {
       timelineRoutines: parsed.timelineRoutines && typeof parsed.timelineRoutines === 'object' ? parsed.timelineRoutines : fallback.timelineRoutines,
       timelinePanelExpanded: parsed.timelinePanelExpanded !== undefined ? parsed.timelinePanelExpanded : true,
     };
-  } catch (_) {
+  } catch (err) {
+    console.error('Failed to parse dashboard state from localStorage:', err);
     return fallback;
   }
 }

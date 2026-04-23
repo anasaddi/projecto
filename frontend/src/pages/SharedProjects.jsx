@@ -10,6 +10,7 @@ import { ConfirmModal } from '../components/ConfirmModal';
 import { Icons } from '../components/dashboard/Icons';
 import FinanzeSection from '../components/shared/FinanzeSection';
 import { DASHBOARD_CONTENT_CLASS } from '../constants/layout';
+import { useToast } from '../context/ToastContext';
 /**
  * ----------------------------------------------------------------------
  * UTILS
@@ -576,6 +577,7 @@ export default function SharedProjects() {
   const chatInputRef = useRef(null);
   const [notesPanelCollapsed, setNotesPanelCollapsed] = useState(false);
   const [avatarLetter, setAvatarLetter] = useState('U');
+  const showToast = useToast();
 
   useEffect(() => {
     const senderId = localStorage.getItem('km-chat-sender-id');
@@ -1295,8 +1297,16 @@ export default function SharedProjects() {
                       e.currentTarget.classList.remove('ring-2', 'ring-indigo-400');
                       try {
                         const p = JSON.parse(e.dataTransfer.getData('application/json'));
+                        const validTypes = ['project'];
+                        if (!validTypes.includes(p.type)) {
+                          showToast?.('Puoi trascinare solo progetti qui', { type: 'warning' });
+                          return;
+                        }
                         if (p.type === 'project') reorderProjects(p.fromIndex, pIdx);
-                      } catch (_) {}
+                      } catch (err) {
+                        console.error('Drop error:', err);
+                        showToast?.('Errore durante il trascinamento', { type: 'error' });
+                      }
                     }}
                     className="cursor-grab active:cursor-grabbing rounded-xl"
                   >

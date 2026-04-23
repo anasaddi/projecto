@@ -12,7 +12,7 @@ import {
   createUISlice,
 } from './slices';
 import {
-  loadState,
+  loadDashboardStateFromStorage as loadState,
   buildDefaultLifeGoals,
   normalizeLifeGoals,
   toDateKey,

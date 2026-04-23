@@ -86,15 +86,21 @@ export function syncMiddleware<T>(config: (set: SetState, get: GetState, api_sto
         timelinePanelExpanded: state.timelinePanelExpanded !== false,
       };
 
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(fullState));
-      } catch (_) {}
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(fullState));
+        } catch (err) {
+          console.error('Failed to save to localStorage:', err);
+        }
+      }
 
       saveLocalState(fullState);
 
       try {
         if (channel) channel.postMessage(fullState);
-      } catch (_) {}
+      } catch (err) {
+        console.error('Failed to post to BroadcastChannel:', err);
+      }
 
       if (syncTimeout) clearTimeout(syncTimeout);
       syncTimeout = setTimeout(async () => {

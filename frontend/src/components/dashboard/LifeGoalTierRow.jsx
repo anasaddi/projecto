@@ -1,11 +1,13 @@
 ﻿import React from 'react';
 import { Icons } from './Icons';
 import { ProgressBar } from '../ui/CardV2';
+import { useToast } from '../../context/ToastContext';
 
 /**
  * Single tier row in Life Goals: header (emoji, name, progress bar, collapse) + drop zone + children when expanded.
  */
 export function LifeGoalTierRow({ tier, onToggleCollapse, onDrop, children }) {
+  const showToast = useToast();
   const completedCount = tier.goals.filter((g) => g.done).length;
   const totalCount = tier.goals.length;
   const pct = totalCount ? Math.round((completedCount / totalCount) * 100) : 0;
@@ -23,8 +25,17 @@ export function LifeGoalTierRow({ tier, onToggleCollapse, onDrop, children }) {
         e.currentTarget.classList.remove('bg-zinc-50/50', 'dark:bg-white/[0.02]');
         try {
           const d = JSON.parse(e.dataTransfer.getData('application/json'));
+          const validTypes = ['lifeGoal'];
+          if (!validTypes.includes(d.type)) {
+            showToast?.('Puoi trascinare solo life goals qui', { type: 'warning' });
+            return;
+          }
           if (d.type === 'lifeGoal') onDrop(d.goalId, tier.id);
-        } catch (_) {}
+          else showToast?.('Elemento non valido per questo tier', { type: 'warning' });
+        } catch (err) {
+          console.error('Drop error:', err);
+          showToast?.('Errore durante il trascinamento', { type: 'error' });
+        }
       }}
     >
       <div

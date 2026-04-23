@@ -6,6 +6,7 @@ import { ActionButton } from './Card';
 import { formatDeadline, getDeadlineColorClass } from './DashboardUtils';
 import { useLongPressActions } from '../../hooks/useLongPressActions';
 import { useDashboardStore } from '../../store/dashboardStore';
+import { useToast } from '../../context/ToastContext';
 
 export function QuickTaskRow({
   task, isShared, localIdx, idx, pinned, isHovered,
@@ -20,6 +21,7 @@ export function QuickTaskRow({
 }) {
   const activePomodoroTask = useDashboardStore((s) => s.activePomodoroTask);
   const setActivePomodoroTask = useDashboardStore((s) => s.setActivePomodoroTask);
+  const showToast = useToast();
   const taskId = isShared ? `shared-${task.shareId}-${task.id}` : task.id;
   const isFocusActive = activePomodoroTask && (activePomodoroTask.quickTaskId === task.id || activePomodoroTask.taskId === taskId);
   
@@ -105,11 +107,21 @@ export function QuickTaskRow({
         e.preventDefault();
         try {
           const p = JSON.parse(e.dataTransfer.getData('application/json'));
+          const validTypes = ['quick'];
+          if (!validTypes.includes(p.type)) {
+            showToast?.('Puoi trascinare solo quick tasks qui', { type: 'warning' });
+            return;
+          }
           if (p.type === 'quick') {
             const targetLocalIdx = allQuickTasks.slice(0, idx).filter(t => !t.shareId).length;
             reorderQuickTasks(p.fromIndex, targetLocalIdx);
+          } else {
+            showToast?.('Elemento non valido per questa lista', { type: 'warning' });
           }
-        } catch (_) {}
+        } catch (err) {
+          console.error('Drop error:', err);
+          showToast?.('Errore durante il trascinamento', { type: 'error' });
+        }
       } : undefined}
     >
       <span onClick={(e) => e.stopPropagation()}>

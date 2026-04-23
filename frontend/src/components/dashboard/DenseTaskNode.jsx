@@ -5,6 +5,7 @@ import { useLongPressActions } from '../../hooks/useLongPressActions';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { updateNodeInTree, removeNodeFromTree, createTaskNode, formatDeadlineDisplay } from './DashboardUtils';
 import { getCollabIdentity, collabDisplayName } from '../../utils/collabIdentity';
+import { useToast } from '../../context/ToastContext';
 
 const MAX_TASK_DEPTH = 2;
 
@@ -135,6 +136,7 @@ export function DenseTaskNode({
   const setProjects = useDashboardStore((s) => s.setProjects);
   const activePomodoroTask = useDashboardStore((s) => s.activePomodoroTask);
   const setActivePomodoroTask = useDashboardStore((s) => s.setActivePomodoroTask);
+  const showToast = useToast();
 
   const isLifeGoal = typeof projectId === 'string' && projectId.startsWith('lg-');
   const goalId = isLifeGoal ? projectId.slice(3) : null;
@@ -418,10 +420,20 @@ export function DenseTaskNode({
         e.currentTarget.classList.remove('bg-zinc-50');
         try {
           const payload = JSON.parse(e.dataTransfer.getData('application/json'));
+          const validTypes = ['project-task'];
+          if (!validTypes.includes(payload.type)) {
+            showToast?.('Puoi trascinare solo task qui', { type: 'warning' });
+            return;
+          }
           if (payload.type === 'project-task' && payload.projectId === projectId && payload.parentId === parentId) {
             onMove(payload.taskId);
+          } else {
+            showToast?.('Task non valido per questa posizione', { type: 'warning' });
           }
-        } catch (_) { }
+        } catch (err) {
+          console.error('Drop error:', err);
+          showToast?.('Errore durante il trascinamento', { type: 'error' });
+        }
       }}
     >
       <div
