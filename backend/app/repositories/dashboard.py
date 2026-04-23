@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from typing import Any, List, Dict
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,90 +23,27 @@ def _serialize_dt(dt: Any) -> Any:
 # --- Dashboard (Aggregated View for Frontend) ---
 
 async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default", user_id: str | None = None):
-    sixty_days_ago = (datetime.now(timezone.utc) - timedelta(days=60)).strftime("%Y-%m-%d")
-    
-    # Phase 1: Execute all independent queries in parallel for maximum performance
-    # This reduces latency from sum(individual latencies) to max(individual latencies)
-    habits_future = db.execute(select(Habit).order_by(Habit.ordinal))
-    habit_logs_future = db.execute(select(HabitLog).filter(HabitLog.date >= sixty_days_ago))
-    quick_tasks_future = db.execute(select(QuickTask).order_by(QuickTask.ordinal, QuickTask.created_at.desc()))
-    prayer_logs_future = db.execute(select(PrayerLog).filter(PrayerLog.date >= sixty_days_ago))
-    top3_future = db.execute(select(Top3Item).order_by(Top3Item.slot))
-    daily_completion_future = db.execute(select(DailyCompletionLog).filter(DailyCompletionLog.date >= sixty_days_ago))
-    life_goals_future = db.execute(
-        select(LifeGoalTier)
-        .options(selectinload(LifeGoalTier.goals))
-        .order_by(LifeGoalTier.ordinal)
-    )
-    dashboard_state_future = db.execute(
-        select(DashboardState)
-        .filter(DashboardState.key == key)
-        .filter(DashboardState.user_id == user_id if user_id is not None else DashboardState.user_id.is_(None))
-    )
-    
-    # Await all parallel queries
-    results = await asyncio.gather(
-        habits_future, habit_logs_future, quick_tasks_future, prayer_logs_future,
-        top3_future, daily_completion_future, life_goals_future, dashboard_state_future
-    )
-    
-    # Unpack results
-    habits_result, logs_result, qt_result, pr_result, top3_result, dc_result, tiers_result, res_ds = results
-    
-    # Process Habits
+    # 1. Habits (Templates)
+    habits_result = await db.execute(select(Habit).order_by(Habit.ordinal))
     habits = habits_result.scalars().all()
     dailyTaskTemplates = [{"id": h.id, "title": h.title, "locked": bool(h.locked), "ordinal": h.ordinal} for h in habits]
-    
-    # Process Habit Logs
+
+    # 2. Habit Logs (Bounded to last 60 days)
+    sixty_days_ago = (datetime.now(timezone.utc) - timedelta(days=60)).strftime("%Y-%m-%d")
+    logs_result = await db.execute(select(HabitLog).filter(HabitLog.date >= sixty_days_ago))
     logs = logs_result.scalars().all()
     dailyTaskLogs = {}
     for l in logs:
         if l.date not in dailyTaskLogs: dailyTaskLogs[l.date] = []
         dailyTaskLogs[l.date].append({"id": l.habit_id, "done": bool(l.status)})
-    
-    # Process QuickTasks
-    quickTasks = [{"id": q.id, "title": q.title, "done": bool(q.done), "deadline": q.deadline, "ordinal": q.ordinal} for q in qt_result.scalars().all()]
-    
-    # Process Prayer Logs
-    pr_logs = pr_result.scalars().all()
-    prayerLogs = {}
-    for pr in pr_logs:
-        if pr.date not in prayerLogs: prayerLogs[pr.date] = {}
-        prayerLogs[pr.date][pr.prayer_name] = bool(pr.completed)
-    
-    # Process Top3 Items
-    top3_rows = top3_result.scalars().all()
-    top3Manual = [None, None, None]
-    for tr in top3_rows:
-        if 0 <= tr.slot < 3:
-            top3Manual[tr.slot] = {
-                "projectId": tr.project_id,
-                "taskId": tr.task_id,
-                "quickTaskId": tr.quick_task_id,
-                "title": tr.title,
-                "done": bool(tr.done)
-            }
-    
-    # Process Daily Completion Log
-    dc_logs = dc_result.scalars().all()
-    dailyCompletionLog = {dc.date: {"score": dc.score, **(dc.data or {})} for dc in dc_logs}
-    
-    # Process Life Goals
-    tiers = tiers_result.scalars().all()
-    ds = res_ds.scalar_one_or_none()
-    ds_data = _parse_json(ds.data, {}) if ds else {}
-    lg_collapsed = ds_data.get("lifeGoals", {}).get("collapsed", False)
-    
-    # Phase 2: Projects and Tasks (Tasks depend on Projects, sequential but optimized)
+
+    # 3. Personal Projects & Tasks (Single-pass build)
     projs_result = await db.execute(select(Project).filter(Project.share_id == None).order_by(Project.ordinal, Project.created_at.desc()))
     projs = projs_result.scalars().all()
     proj_ids = [p.id for p in projs]
-    
-    if proj_ids:
-        tasks_result = await db.execute(select(Task).filter(Task.project_id.in_(proj_ids)).order_by(Task.ordinal, Task.created_at))
-        all_tasks = tasks_result.scalars().all()
-    else:
-        all_tasks = []
+
+    tasks_result = await db.execute(select(Task).filter(Task.project_id.in_(proj_ids)).order_by(Task.ordinal, Task.created_at))
+    all_tasks = tasks_result.scalars().all()
 
     tasks_by_project = {pid: [] for pid in proj_ids}
     for t in all_tasks:
@@ -130,6 +66,56 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
         {"id": p.id, "title": p.title, "ordinal": p.ordinal, "tasks": build_tree(tasks_by_project.get(p.id, []))}
         for p in projs
     ]
+
+    # 4. QuickTasks
+    qt_result = await db.execute(select(QuickTask).order_by(QuickTask.ordinal, QuickTask.created_at.desc()))
+    quickTasks = [{"id": q.id, "title": q.title, "done": bool(q.done), "deadline": q.deadline, "ordinal": q.ordinal} for q in qt_result.scalars().all()]
+
+    # 5. Prayer Logs
+    pr_result = await db.execute(select(PrayerLog).filter(PrayerLog.date >= sixty_days_ago))
+    pr_logs = pr_result.scalars().all()
+    prayerLogs = {}
+    for pr in pr_logs:
+        if pr.date not in prayerLogs: prayerLogs[pr.date] = {}
+        prayerLogs[pr.date][pr.prayer_name] = bool(pr.completed)
+
+    # 6. Top3 Items
+    top3_result = await db.execute(select(Top3Item).order_by(Top3Item.slot))
+    top3_rows = top3_result.scalars().all()
+    top3Manual = [None, None, None]
+    for tr in top3_rows:
+        if 0 <= tr.slot < 3:
+            top3Manual[tr.slot] = {
+                "projectId": tr.project_id,
+                "taskId": tr.task_id,
+                "quickTaskId": tr.quick_task_id,
+                "title": tr.title,
+                "done": bool(tr.done)
+            }
+
+    # 7. Daily Completion Log
+    dc_result = await db.execute(select(DailyCompletionLog).filter(DailyCompletionLog.date >= sixty_days_ago))
+    dc_logs = dc_result.scalars().all()
+    dailyCompletionLog = {dc.date: {"score": dc.score, **(dc.data or {})} for dc in dc_logs}
+
+    # 8. Life Goals (Tiered)
+    tiers_result = await db.execute(
+        select(LifeGoalTier)
+        .options(selectinload(LifeGoalTier.goals))
+        .order_by(LifeGoalTier.ordinal)
+    )
+    tiers = tiers_result.scalars().all()
+    
+    # We also need the top-level 'collapsed' from DashboardState for now
+    q = select(DashboardState).filter(DashboardState.key == key)
+    if user_id is not None:
+        q = q.filter(DashboardState.user_id == user_id)
+    else:
+        q = q.filter(DashboardState.user_id.is_(None))
+    res_ds = await db.execute(q)
+    ds = res_ds.scalar_one_or_none()
+    ds_data = _parse_json(ds.data, {}) if ds else {}
+    lg_collapsed = ds_data.get("lifeGoals", {}).get("collapsed", False)
 
     lifeGoals = {
         "collapsed": lg_collapsed,

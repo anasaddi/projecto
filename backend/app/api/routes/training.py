@@ -227,22 +227,14 @@ async def get_dashboard_state(
     db: AsyncSession = Depends(get_db),
     user_id: str | None = Depends(get_current_user),
 ):
-    """Fetch the dashboard state — Redis-first, in-memory fallback, DB fallback. Filtered by user_id when present."""
+    """Fetch the dashboard state — Redis-first, DB fallback. Filtered by user_id when present."""
     from app.cache import get_cached_dashboard, set_cached_dashboard
-    from app.simple_cache import get_cached_dashboard_fallback, set_cached_dashboard_fallback
     try:
-        # Try Redis first
         cached = await get_cached_dashboard()
         if cached:
             return {"key": "default", "data": cached, "updated_at": datetime.now(timezone.utc)}
-        # Fallback to in-memory cache (per-worker, useful when Redis unavailable on Render free tier)
-        cached_mem = await get_cached_dashboard_fallback()
-        if cached_mem:
-            return {"key": "default", "data": cached_mem, "updated_at": datetime.now(timezone.utc)}
         data = await dashboard_service.get_dashboard(db, user_id=user_id)
-        # Cache in both layers
         await set_cached_dashboard(data)
-        await set_cached_dashboard_fallback(data)
         return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
     except Exception as e:
         logger.exception("get_dashboard_state failed: %s", e)
@@ -276,13 +268,10 @@ async def update_dashboard_state(
 ):
     """Save the dashboard state to DB and invalidate cache. Scoped by user_id when present."""
     from app.cache import invalidate_dashboard, set_cached_dashboard
-    from app.simple_cache import invalidate_dashboard_fallback, set_cached_dashboard_fallback
     try:
         data = await dashboard_service.update_dashboard(db, body.data, user_id=user_id)
         await invalidate_dashboard()
         await set_cached_dashboard(data)
-        await invalidate_dashboard_fallback()
-        await set_cached_dashboard_fallback(data)
         return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
     except Exception as e:
         logger.exception("update_dashboard_state failed: %s", e)
@@ -342,19 +331,14 @@ async def get_audit_events(
 
 @router.get("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut | None)
 async def get_shared_dashboard(share_id: str, db: AsyncSession = Depends(get_db)):
-    """Fetch a shared dashboard — Redis-first, in-memory fallback, DB fallback. PUBLIC ROUTE."""
+    """Fetch a shared dashboard — Redis-first, DB fallback. PUBLIC ROUTE."""
     from app.cache import get_cached_shared_dashboard, set_cached_shared_dashboard
-    from app.simple_cache import get_cached_shared_dashboard_fallback, set_cached_shared_dashboard_fallback
     cached = await get_cached_shared_dashboard(share_id)
     if cached:
         return cached
-    cached_mem = await get_cached_shared_dashboard_fallback(share_id)
-    if cached_mem:
-        return cached_mem
     data = await dashboard_service.get_shared_dashboard(db, share_id)
     if data:
         await set_cached_shared_dashboard(share_id, data)
-        await set_cached_shared_dashboard_fallback(share_id, data)
     return data
 
 @router.get("/shared-dashboards", response_model=list[schemas.SharedDashboardOut])
@@ -366,14 +350,11 @@ async def list_shared_dashboards(db: AsyncSession = Depends(get_db)):
 async def update_shared_dashboard(share_id: str, body: schemas.SharedDashboardUpdate, db: AsyncSession = Depends(get_db)):
     """Update or create a shared dashboard. Invalidates cache + broadcasts. PUBLIC ROUTE."""
     from app.cache import invalidate_shared_dashboard, set_cached_shared_dashboard
-    from app.simple_cache import invalidate_shared_dashboard_fallback, set_cached_shared_dashboard_fallback
     from app.repositories.audit import record_event
     
     dashboard = await dashboard_service.update_shared_dashboard(db, share_id, body.data, body.title)
     await invalidate_shared_dashboard(share_id)
     await set_cached_shared_dashboard(share_id, dashboard)
-    await invalidate_shared_dashboard_fallback(share_id)
-    await set_cached_shared_dashboard_fallback(share_id, dashboard)
     
     await record_event(db, "shared_dashboard", share_id, "updated",
                        share_id=share_id, new_data={"title": body.title})
@@ -396,15 +377,11 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
     try:
         # Send initial state (try cache first)
         from app.cache import get_cached_shared_dashboard, set_cached_shared_dashboard
-        from app.simple_cache import get_cached_shared_dashboard_fallback, set_cached_shared_dashboard_fallback
         dashboard = await get_cached_shared_dashboard(share_id)
-        if not dashboard:
-            dashboard = await get_cached_shared_dashboard_fallback(share_id)
         if not dashboard:
             dashboard = await dashboard_service.get_shared_dashboard(db, share_id)
             if dashboard:
                 await set_cached_shared_dashboard(share_id, dashboard)
-                await set_cached_shared_dashboard_fallback(share_id, dashboard)
         
         from fastapi.encoders import jsonable_encoder
         if dashboard:
