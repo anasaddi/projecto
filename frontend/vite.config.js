@@ -69,18 +69,7 @@ export default defineConfig({
         manualChunks: {
           react: ['react', 'react-dom', 'react-router-dom'],
           motion: ['framer-motion'],
-          state: ['zustand', 'immer', 'yjs'],
-          ui: ['lucide-react', 'sonner', 'class-variance-authority', 'tailwind-merge', 'clsx'],
         },
-      },
-    },
-    // Optimize for Render cold-start - smaller initial chunks
-    target: 'es2020',
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
       },
     },
   },
