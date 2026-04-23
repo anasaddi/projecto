@@ -29,38 +29,59 @@ export function useDashboardSync(): void {
   const wsConnections = useRef<Record<string, WebSocket>>({});
   const bcChannels = useRef<Record<string, BroadcastChannel>>({});
   const applyingFromSharedBC = useRef(false);
+  const hasHydratedRef = useRef(false);
+
+  const extractDashboardPayload = (value: unknown): Parameters<typeof syncWithServer>[0] | null => {
+    if (!value || typeof value !== 'object') return null;
+    const candidate = value as Record<string, unknown> & Parameters<typeof syncWithServer>[0] & { data?: unknown };
+    const hasDashboardShape =
+      Array.isArray(candidate.dailyTaskTemplates) ||
+      Array.isArray(candidate.projects) ||
+      Array.isArray(candidate.quickTasks) ||
+      candidate.lifeGoals != null ||
+      candidate.top3Manual != null ||
+      candidate.dailyCompletionLog != null;
+    if (hasDashboardShape) return candidate;
+    return extractDashboardPayload(candidate.data);
+  };
 
   useEffect(() => {
-    setIsLoaded(true);
+    if (hasHydratedRef.current) return;
+    hasHydratedRef.current = true;
+
+    let cancelled = false;
+
     async function hydrateAndFetch() {
-      if (!hasLocalData && syncWithServer) {
-        try {
-          const idbState = await getLocalState();
-          if (
-            idbState &&
-            typeof idbState === 'object' &&
-            (idbState.dailyTaskTemplates?.length || idbState.quickTasks?.length || idbState.projects?.length)
-          ) {
-            syncWithServer(idbState as Parameters<typeof syncWithServer>[0]);
-            const shared = await api.training.listSharedDashboards({ timeout: 10_000 }).catch(() => null);
-            if (Array.isArray(shared) && setSharedDashboards) setSharedDashboards(shared);
-            return;
-          }
-        } catch (_) {}
-      }
       try {
+        if (!hasLocalData && syncWithServer) {
+          try {
+            const idbState = extractDashboardPayload(await getLocalState());
+            if (idbState) {
+              syncWithServer(idbState);
+              const shared = await api.training.listSharedDashboards({ timeout: 10_000 }).catch(() => null);
+              if (!cancelled && Array.isArray(shared) && setSharedDashboards) setSharedDashboards(shared);
+              return;
+            }
+          } catch (_) {}
+        }
         const res = await api.training.getDashboardState({ timeout: 15_000 });
-        if (res?.data && syncWithServer && !hasLocalData)
-          syncWithServer(res.data as Parameters<typeof syncWithServer>[0]);
+        const payload = extractDashboardPayload(res) ?? extractDashboardPayload((res as { data?: unknown } | null | undefined)?.data);
+        if (payload && syncWithServer && !hasLocalData) syncWithServer(payload);
         const shared = await api.training.listSharedDashboards({ timeout: 10_000 }).catch(() => null);
-        if (Array.isArray(shared) && setSharedDashboards) setSharedDashboards(shared);
+        if (!cancelled && Array.isArray(shared) && setSharedDashboards) setSharedDashboards(shared);
       } catch (err) {
         if (typeof window !== 'undefined' && (window as any).process?.env?.NODE_ENV !== 'production') {
           console.warn('Dashboard load from server failed (using local state):', (err as Error)?.message || err);
         }
+      } finally {
+        if (!cancelled) setIsLoaded(true);
       }
     }
     hydrateAndFetch();
+
+    return () => {
+      cancelled = true;
+    };
   }, [syncWithServer, setSharedDashboards, setIsLoaded, hasLocalData]);
 
   const isLoaded = useDashboardStore((s) => s.isLoaded);
