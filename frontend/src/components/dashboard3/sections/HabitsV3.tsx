@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo } from 'react';
+import React, { useState, useCallback, memo, useMemo } from 'react';
 import { CardV3 } from '../ui/CardV3';
 
 interface Habit {
@@ -21,12 +21,15 @@ const WEEK_DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 export const HabitsV3 = memo(function HabitsV3() {
   const [habits, setHabits] = useState<Habit[]>(INITIAL_HABITS);
 
+  const todayDayIndex = useMemo(() => {
+    const jsDay = new Date().getDay(); // 0=Sun, 1=Mon...
+    return jsDay === 0 ? 6 : jsDay - 1; // Convert: 0=Mon, 6=Sun
+  }, []);
+
   const toggleHabit = useCallback((id: string) => {
     setHabits((prev) =>
       prev.map((h) =>
-        h.id === id
-          ? { ...h, completed: !h.completed, streak: !h.completed ? h.streak + 1 : Math.max(0, h.streak - 1) }
-          : h
+        h.id === id ? { ...h, completed: !h.completed } : h
       )
     );
   }, []);
@@ -48,7 +51,7 @@ export const HabitsV3 = memo(function HabitsV3() {
             <div
               key={i}
               className={`w-6 h-6 rounded text-[10px] flex items-center justify-center font-medium ${
-                i === new Date().getDay() - 1
+                i === todayDayIndex
                   ? 'bg-[var(--d3-primary)] text-white'
                   : 'bg-[var(--d3-surface-elevated)] text-[var(--d3-text-muted)]'
               }`}
@@ -59,21 +62,22 @@ export const HabitsV3 = memo(function HabitsV3() {
         </div>
       </div>
 
-      <div className="flex-1 space-y-2">
+      <div className="flex-1 space-y-2 overflow-auto">
         {habits.map((habit) => (
           <button
             key={habit.id}
             onClick={() => toggleHabit(habit.id)}
-            className={`w-full flex items-center gap-3 p-3 rounded-[var(--d3-radius-md)] transition-all duration-200 group ${
+            className={`w-full flex items-center gap-3 p-3 rounded-[var(--d3-radius-md)] transition-colors duration-200 group text-left ${
               habit.completed
-                ? 'bg-[var(--d3-success)]/10 border border-[var(--d3-success)]/20'
-                : 'bg-[var(--d3-surface-elevated)] border border-transparent hover:border-[var(--d3-border)]'
+                ? 'border border-[var(--d3-success)]/20'
+                : 'border border-transparent hover:border-[var(--d3-border)]'
             }`}
+            style={{ backgroundColor: habit.completed ? 'var(--d3-success-bg)' : 'var(--d3-surface-elevated)' }}
           >
             <span className="text-2xl">{habit.icon}</span>
-            <div className="flex-1 text-left">
+            <div className="flex-1 min-w-0">
               <p
-                className={`text-sm font-medium transition-all ${
+                className={`text-sm font-medium truncate ${
                   habit.completed
                     ? 'text-[var(--d3-success)] line-through'
                     : 'text-[var(--d3-text)]'
@@ -86,9 +90,9 @@ export const HabitsV3 = memo(function HabitsV3() {
               </p>
             </div>
             <div
-              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                 habit.completed
-                  ? 'bg-[var(--d3-success)] border-[var(--d3-success)] scale-110'
+                  ? 'bg-[var(--d3-success)] border-[var(--d3-success)]'
                   : 'border-[var(--d3-border)] group-hover:border-[var(--d3-primary)]'
               }`}
             >
@@ -111,8 +115,11 @@ export const HabitsV3 = memo(function HabitsV3() {
         </div>
         <div className="mt-2 h-2 bg-[var(--d3-surface-elevated)] rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-[var(--d3-primary)] to-[var(--d3-primary-light)] rounded-full transition-all duration-500"
-            style={{ width: `${(completedCount / habits.length) * 100}%` }}
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${(completedCount / habits.length) * 100}%`,
+              background: 'linear-gradient(to right, var(--d3-primary), var(--d3-primary-light))',
+            }}
           />
         </div>
       </div>

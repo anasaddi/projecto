@@ -1,4 +1,4 @@
-import React, { useMemo, memo } from 'react';
+import React, { useState, useEffect, useMemo, memo } from 'react';
 import { CardV3 } from '../ui/CardV3';
 
 interface TimelineEvent {
@@ -10,10 +10,10 @@ interface TimelineEvent {
 }
 
 const EVENTS: TimelineEvent[] = [
-  { id: '1', time: '05:30', title: 'Fajr Prayer', type: 'prayer', completed: true },
-  { id: '2', time: '06:00', title: 'Morning Workout', type: 'habit', completed: true },
+  { id: '1', time: '05:30', title: 'Fajr Prayer', type: 'prayer', completed: false },
+  { id: '2', time: '06:00', title: 'Morning Workout', type: 'habit', completed: false },
   { id: '3', time: '08:00', title: 'Deep Work Block', type: 'task', completed: false },
-  { id: '4', time: '12:45', title: 'Dhuhr Prayer', type: 'prayer', completed: true },
+  { id: '4', time: '12:45', title: 'Dhuhr Prayer', type: 'prayer', completed: false },
   { id: '5', time: '13:00', title: 'Lunch Break', type: 'event', completed: false },
   { id: '6', time: '15:30', title: 'Asr Prayer', type: 'prayer', completed: false },
   { id: '7', time: '18:00', title: 'Team Meeting', type: 'event', completed: false },
@@ -36,10 +36,14 @@ const TYPE_ICONS = {
 };
 
 export const TimelineV3 = memo(function TimelineV3() {
-  const currentTime = useMemo(() => {
-    const now = new Date();
-    return now.getHours() * 60 + now.getMinutes();
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(timer);
   }, []);
+
+  const currentTime = useMemo(() => now.getHours() * 60 + now.getMinutes(), [now]);
 
   const currentIndex = useMemo(() => {
     for (let i = 0; i < EVENTS.length; i++) {
@@ -68,44 +72,51 @@ export const TimelineV3 = memo(function TimelineV3() {
         {/* Current time indicator */}
         <div
           className="absolute top-0 bottom-0 w-px bg-[var(--d3-primary)] z-10"
-          style={{
-            left: `${(currentIndex / EVENTS.length) * 100}%`,
-          }}
+          style={{ left: `${(currentIndex / EVENTS.length) * 100}%` }}
         >
           <div className="absolute -top-1 -left-1.5 w-3 h-3 rounded-full bg-[var(--d3-primary)]" />
         </div>
 
         {/* Timeline events */}
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {EVENTS.map((event, index) => (
-            <div
-              key={event.id}
-              className={`flex-shrink-0 w-28 p-3 rounded-[var(--d3-radius-md)] border transition-all ${
-                event.completed
-                  ? 'bg-[var(--d3-success)]/5 border-[var(--d3-success)]/20'
-                  : index === currentIndex
-                  ? 'bg-[var(--d3-primary)]/5 border-[var(--d3-primary)]'
-                  : 'bg-[var(--d3-surface-elevated)] border-transparent'
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm">{TYPE_ICONS[event.type]}</span>
-                <span
-                  className="text-xs font-medium"
-                  style={{ color: TYPE_COLORS[event.type] }}
-                >
-                  {event.time}
-                </span>
-              </div>
-              <p
-                className={`text-sm font-medium truncate ${
-                  event.completed ? 'line-through text-[var(--d3-text-muted)]' : 'text-[var(--d3-text)]'
-                }`}
+          {EVENTS.map((event, index) => {
+            const isCurrent = index === currentIndex;
+            const bgStyle = event.completed
+              ? 'var(--d3-success-bg)'
+              : isCurrent
+              ? 'var(--d3-primary-bg)'
+              : 'var(--d3-surface-elevated)';
+            const borderClass = event.completed
+              ? 'border-[var(--d3-success)]/20'
+              : isCurrent
+              ? 'border-[var(--d3-primary)]'
+              : 'border-transparent';
+
+            return (
+              <div
+                key={event.id}
+                className={`flex-shrink-0 w-28 p-3 rounded-[var(--d3-radius-md)] border ${borderClass}`}
+                style={{ backgroundColor: bgStyle }}
               >
-                {event.title}
-              </p>
-            </div>
-          ))}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm">{TYPE_ICONS[event.type]}</span>
+                  <span
+                    className="text-xs font-medium"
+                    style={{ color: TYPE_COLORS[event.type] }}
+                  >
+                    {event.time}
+                  </span>
+                </div>
+                <p
+                  className={`text-sm font-medium truncate ${
+                    event.completed ? 'line-through text-[var(--d3-text-muted)]' : 'text-[var(--d3-text)]'
+                  }`}
+                >
+                  {event.title}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </CardV3>

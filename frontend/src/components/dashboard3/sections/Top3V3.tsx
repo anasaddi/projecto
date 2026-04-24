@@ -32,16 +32,16 @@ export const Top3V3 = memo(function Top3V3() {
   }, []);
 
   const addTask = useCallback(() => {
-    if (!newTask.trim()) return;
+    if (!newTask.trim() || tasks.length >= 3) return;
     const task: Task = {
       id: Date.now().toString(),
       text: newTask,
       completed: false,
       priority: 'medium',
     };
-    setTasks((prev) => [...prev.slice(0, 2), task]);
+    setTasks((prev) => [...prev, task]);
     setNewTask('');
-  }, [newTask]);
+  }, [newTask, tasks.length]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') addTask();
@@ -87,11 +87,11 @@ export const Top3V3 = memo(function Top3V3() {
         </div>
       </div>
 
-      <div className="flex-1 space-y-2">
+      <div className="flex-1 space-y-2 overflow-auto">
         {tasks.map((task, index) => (
           <div
             key={task.id}
-            className={`flex items-center gap-3 p-3 rounded-[var(--d3-radius-md)] transition-all duration-200 ${
+            className={`flex items-center gap-3 p-3 rounded-[var(--d3-radius-md)] transition-colors duration-200 ${
               task.completed
                 ? 'bg-[var(--d3-surface-elevated)] opacity-60'
                 : 'bg-[var(--d3-surface-elevated)] hover:bg-[var(--d3-border)]'
@@ -101,9 +101,8 @@ export const Top3V3 = memo(function Top3V3() {
               className="w-2 h-2 rounded-full flex-shrink-0"
               style={{ backgroundColor: PRIORITY_COLORS[task.priority] }}
             />
-            <button
-              onClick={() => toggleTask(task.id)}
-              className={`flex-1 text-left text-sm transition-all ${
+            <span
+              className={`flex-1 text-sm ${
                 task.completed
                   ? 'line-through text-[var(--d3-text-muted)]'
                   : 'text-[var(--d3-text)]'
@@ -113,10 +112,10 @@ export const Top3V3 = memo(function Top3V3() {
                 {index + 1}.
               </span>
               {task.text}
-            </button>
+            </span>
             <button
               onClick={() => toggleTask(task.id)}
-              className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+              className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0 ${
                 task.completed
                   ? 'bg-[var(--d3-success)] border-[var(--d3-success)]'
                   : 'border-[var(--d3-border)] hover:border-[var(--d3-primary)]'

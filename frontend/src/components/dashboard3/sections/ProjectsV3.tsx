@@ -118,9 +118,10 @@ export const ProjectsV3 = memo(function ProjectsV3() {
               <span
                 className={`text-xs font-medium px-2 py-1 rounded-full ${
                   formatDate(project.deadline) === 'Overdue'
-                    ? 'bg-[var(--d3-danger)]/10 text-[var(--d3-danger)]'
-                    : 'bg-[var(--d3-surface)] text-[var(--d3-text-muted)]'
+                    ? 'text-[var(--d3-danger)]'
+                    : 'text-[var(--d3-text-muted)]'
                 }`}
+                style={{ backgroundColor: formatDate(project.deadline) === 'Overdue' ? 'var(--d3-danger-bg)' : 'var(--d3-surface)' }}
               >
                 {formatDate(project.deadline)}
               </span>

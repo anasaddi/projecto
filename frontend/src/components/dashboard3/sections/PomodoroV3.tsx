@@ -31,7 +31,7 @@ export const PomodoroV3 = memo(function PomodoroV3({ initialMinutes = 25 }: Pomo
   }, []);
 
   useEffect(() => {
-    if (!isRunning || timeLeft <= 0) return;
+    if (!isRunning) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -45,7 +45,7 @@ export const PomodoroV3 = memo(function PomodoroV3({ initialMinutes = 25 }: Pomo
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isRunning, timeLeft]);
+  }, [isRunning]);
 
   const handleStart = useCallback(() => setIsRunning(true), []);
   const handlePause = useCallback(() => setIsRunning(false), []);

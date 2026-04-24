@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, memo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { CardV3 } from '../ui/CardV3';
 
 interface Prayer {
@@ -8,18 +8,16 @@ interface Prayer {
 }
 
 const PRAYERS: Prayer[] = [
-  { name: 'Fajr', time: '05:30', completed: true },
-  { name: 'Dhuhr', time: '12:45', completed: true },
+  { name: 'Fajr', time: '05:30', completed: false },
+  { name: 'Dhuhr', time: '12:45', completed: false },
   { name: 'Asr', time: '15:30', completed: false },
   { name: 'Maghrib', time: '18:45', completed: false },
   { name: 'Isha', time: '20:15', completed: false },
 ];
 
-const COUNTDOWNS = [
-  { label: 'Day', pct: 0.6 },
-  { label: 'Week', pct: 0.3 },
-  { label: 'Month', pct: 0.8 },
-];
+function startOfDay(d: Date) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function startOfWeek(d: Date) { const day = d.getDay(); const diff = d.getDate() - day + (day === 0 ? -6 : 1); return new Date(d.getFullYear(), d.getMonth(), diff); }
+function startOfMonth(d: Date) { return new Date(d.getFullYear(), d.getMonth(), 1); }
 
 export const PrayerCountdownV3 = memo(function PrayerCountdownV3() {
   const [prayers, setPrayers] = useState<Prayer[]>(PRAYERS);
@@ -30,11 +28,11 @@ export const PrayerCountdownV3 = memo(function PrayerCountdownV3() {
     return () => clearInterval(timer);
   }, []);
 
-  const togglePrayer = (name: string) => {
+  const togglePrayer = useCallback((name: string) => {
     setPrayers((prev) =>
       prev.map((p) => (p.name === name ? { ...p, completed: !p.completed } : p))
     );
-  };
+  }, []);
 
   const nextPrayer = useMemo(() => {
     const currentTime = now.getHours() * 60 + now.getMinutes();
@@ -50,6 +48,18 @@ export const PrayerCountdownV3 = memo(function PrayerCountdownV3() {
 
   const completedCount = prayers.filter((p) => p.completed).length;
   const progress = (completedCount / prayers.length) * 100;
+
+  const countdowns = useMemo(() => {
+    const sod = startOfDay(now);
+    const eod = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const eow = new Date(startOfWeek(now).getTime() + 7 * 86400000);
+    const eom = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return [
+      { label: 'Day', pct: (now.getTime() - sod.getTime()) / (eod.getTime() - sod.getTime()) },
+      { label: 'Week', pct: (now.getTime() - startOfWeek(now).getTime()) / (eow.getTime() - startOfWeek(now).getTime()) },
+      { label: 'Month', pct: (now.getTime() - startOfMonth(now).getTime()) / (eom.getTime() - startOfMonth(now).getTime()) },
+    ];
+  }, [now]);
 
   return (
     <CardV3 className="w-full" elevated>
@@ -84,17 +94,16 @@ export const PrayerCountdownV3 = memo(function PrayerCountdownV3() {
             <button
               key={prayer.name}
               onClick={() => togglePrayer(prayer.name)}
-              className={`flex flex-col items-center gap-1 p-2 rounded-[var(--d3-radius-md)] transition-all ${
-                prayer.completed
-                  ? 'bg-[var(--d3-success)]/10'
-                  : 'bg-[var(--d3-surface-elevated)] hover:bg-[var(--d3-border)]'
+              className={`flex flex-col items-center gap-1 p-2 rounded-[var(--d3-radius-md)] transition-colors ${
+                prayer.completed ? '' : 'hover:bg-[var(--d3-surface-elevated)]'
               }`}
+              style={{ backgroundColor: prayer.completed ? 'var(--d3-success-bg)' : 'transparent' }}
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
                   prayer.completed
                     ? 'bg-[var(--d3-success)] text-white'
-                    : 'bg-[var(--d3-border)] text-[var(--d3-text-muted)]'
+                    : 'bg-[var(--d3-surface-elevated)] text-[var(--d3-text-muted)]'
                 }`}
               >
                 {prayer.name[0]}
@@ -114,7 +123,7 @@ export const PrayerCountdownV3 = memo(function PrayerCountdownV3() {
 
         {/* Right: Countdowns */}
         <div className="flex gap-4">
-          {COUNTDOWNS.map((cd) => (
+          {countdowns.map((cd) => (
             <div key={cd.label} className="text-center">
               <div className="relative w-12 h-12 mb-1">
                 <svg className="w-full h-full transform -rotate-90">
@@ -135,7 +144,7 @@ export const PrayerCountdownV3 = memo(function PrayerCountdownV3() {
                     strokeWidth="3"
                     strokeLinecap="round"
                     strokeDasharray={`${cd.pct * 126} 126`}
-                    className="transition-all duration-500"
+                    className="d3-progress-ring-circle"
                   />
                 </svg>
                 <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-[var(--d3-text)]">
