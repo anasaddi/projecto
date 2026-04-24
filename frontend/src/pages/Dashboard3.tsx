@@ -1,5 +1,6 @@
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import '../components/dashboard3/styles/design-tokens.css';
+import { DASHBOARD_CONTENT_CLASS } from '../constants/layout';
 
 import {
   PrayerCountdownV3,
@@ -15,9 +16,7 @@ import {
 } from '../components/dashboard3/sections';
 import { useDashboardSync } from '../hooks/useDashboardSync';
 import { useDashboardStore } from '../store/dashboardStore';
-const TodayCardDashboard = React.lazy(() =>
-  import('../components/dashboard/TodayCardDashboard').then((mod) => ({ default: mod.TodayCardDashboard }))
-);
+import { TodayCardDashboard } from '../components/dashboard/TodayCardDashboard';
 
 const DEFAULT_SECTION_ORDER = {
   left: ['pomodoro', 'quickTasks', 'focusHeatmap'],
@@ -29,39 +28,22 @@ export default function Dashboard3(): React.ReactElement {
   useDashboardSync();
   const sectionOrder = useDashboardStore((s: any) => s.sectionOrder) ?? DEFAULT_SECTION_ORDER;
   const reorderSection = useDashboardStore((s: any) => s.reorderSection);
+  const isLoaded = useDashboardStore((s: any) => s.isLoaded);
 
-  const [now, setNow] = useState(() => new Date());
-  const [canDragSections, setCanDragSections] = useState(false);
-
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
-    const query = window.matchMedia('(pointer: fine)');
-    const update = () => setCanDragSections(query.matches);
-    update();
-    query.addEventListener?.('change', update);
-    return () => query.removeEventListener?.('change', update);
-  }, []);
-
-  const greeting = useMemo(() => {
-    const hour = now.getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
-  }, [now]);
-
-  const dateFormatted = useMemo(() => {
-    return now.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  }, [now]);
+  const makeDragProps = (column: 'left' | 'center' | 'right', idx: number) => ({
+    draggable: true as const,
+    onDragStart: (e: React.DragEvent) => {
+      e.dataTransfer.setData('application/json', JSON.stringify({ type: 'section', column, fromIndex: idx }));
+      e.dataTransfer.effectAllowed = 'move';
+    },
+    onDragOver: (e: React.DragEvent) => e.preventDefault(),
+    onDrop: (e: React.DragEvent) => {
+      try {
+        const p = JSON.parse(e.dataTransfer.getData('application/json'));
+        if (p?.type === 'section' && p.column === column) reorderSection(column, p.fromIndex, idx);
+      } catch (_) {}
+    },
+  });
 
   const renderSection = (sectionId: string) => {
     if (sectionId === 'pomodoro') return <PomodoroV3 />;
@@ -73,93 +55,54 @@ export default function Dashboard3(): React.ReactElement {
     return null;
   };
 
-  const renderColumn = (column: 'left' | 'center' | 'right') => {
-    const sections = (sectionOrder[column] || DEFAULT_SECTION_ORDER[column]) as string[];
-    return sections.map((sectionId, idx) => (
-      <div
-        key={`${column}-${sectionId}`}
-        draggable={canDragSections}
-        onDragStart={canDragSections ? (e) => {
-          e.dataTransfer.setData('application/json', JSON.stringify({ type: 'section', column, fromIndex: idx }));
-          e.dataTransfer.effectAllowed = 'move';
-        } : undefined}
-        onDragOver={canDragSections ? (e) => e.preventDefault() : undefined}
-        onDrop={canDragSections ? (e) => {
-          try {
-            const payload = JSON.parse(e.dataTransfer.getData('application/json'));
-            if (payload?.type === 'section' && payload.column === column) {
-              reorderSection(column, payload.fromIndex, idx);
-            }
-          } catch {
-            // ignore malformed drag payloads
-          }
-        } : undefined}
-        className="transition-all duration-300 min-h-[260px] md:min-h-[360px]"
-      >
-        {renderSection(sectionId)}
-      </div>
-    ));
-  };
-
   return (
-    <div className="d3-container min-h-screen overflow-y-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6">
-        {/* Header */}
-        <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-[var(--d3-text)]">{greeting}</h1>
-          <p className="text-[var(--d3-text-muted)] mt-1">{dateFormatted}</p>
-        </header>
+    <div className="d3-container min-h-full w-full flex flex-col overflow-y-auto font-sans select-none antialiased">
+      <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-5 py-5 md:py-6 flex-1 min-h-0`}>
 
-        {/* Stats Row */}
-        <section className="mb-6">
+        {/* Prayers + Stats + Countdowns (same position as V2) */}
+        <div className="flex flex-col gap-3">
           <StatsMiniV3 />
-        </section>
-
-        {/* Prayer Countdown */}
-        <section className="mb-6">
           <PrayerCountdownV3 />
-        </section>
+        </div>
 
         {/* Timeline */}
-        <section className="mb-6">
-          <TimelineV3 />
-        </section>
+        <TimelineV3 />
 
-        {/* Training */}
-        <section className="mb-6">
-          <Suspense
-            fallback={
-              <div className="rounded-[var(--d3-radius-lg)] border border-[var(--d3-border)] bg-[var(--d3-surface)] p-5 min-h-[280px] md:min-h-[320px] animate-pulse">
-                <div className="h-4 w-24 rounded bg-[var(--d3-border)] mb-4" />
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="h-52 rounded-[var(--d3-radius-md)] bg-[var(--d3-surface-elevated)]" />
-                  <div className="h-52 rounded-[var(--d3-radius-md)] bg-[var(--d3-surface-elevated)]" />
-                  <div className="h-52 rounded-[var(--d3-radius-md)] bg-[var(--d3-surface-elevated)]" />
-                </div>
+        {/* Training - Full Width */}
+        <TodayCardDashboard />
+
+        {/* Main columns: 1/4 | 1/4 | 2/4 — mirrors DashboardV2 exactly */}
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 pb-1">
+          {/* Left col: Pomodoro / QuickTasks / FocusHeatmap */}
+          <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
+            {(sectionOrder.left || DEFAULT_SECTION_ORDER.left).map((sectionId: string, idx: number) => (
+              <div key={sectionId} {...makeDragProps('left', idx)} className="transition-all duration-300">
+                {renderSection(sectionId)}
               </div>
-            }
-          >
-            <TodayCardDashboard />
-          </Suspense>
-        </section>
+            ))}
+          </div>
 
-        {/* Main Grid */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 mb-6">
-          <div className="lg:col-span-4 flex flex-col gap-4 min-h-0">
-            {renderColumn('left')}
+          {/* Center col: Top3 / Habits */}
+          <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
+            {(sectionOrder.center || DEFAULT_SECTION_ORDER.center).map((sectionId: string, idx: number) => (
+              <div key={sectionId} {...makeDragProps('center', idx)} className="transition-all duration-300">
+                {renderSection(sectionId)}
+              </div>
+            ))}
           </div>
-          <div className="lg:col-span-4 flex flex-col gap-4 min-h-0">
-            {renderColumn('center')}
-          </div>
-          <div className="lg:col-span-4 flex flex-col gap-4 min-h-0">
-            {renderColumn('right')}
-          </div>
-        </section>
 
-        {/* Life Goals */}
-        <section className="mb-6">
-          <LifeGoalsV3 />
-        </section>
+          {/* Right col: Projects (wide) */}
+          <div className="flex flex-col gap-4 min-h-0 lg:w-2/4">
+            {(sectionOrder.right || DEFAULT_SECTION_ORDER.right).map((sectionId: string, idx: number) => (
+              <div key={sectionId} {...makeDragProps('right', idx)} className="transition-all duration-300">
+                {renderSection(sectionId)}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Life Goals - full width at bottom */}
+        <LifeGoalsV3 />
       </div>
     </div>
   );
