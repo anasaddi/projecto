@@ -9,14 +9,14 @@ interface CardV3Props {
   onClick?: () => void;
 }
 
-const paddingMap = { none: '', sm: 'p-3', md: 'p-5', lg: 'p-6' };
+const paddingMap = { none: '', sm: 'p-3', md: 'p-4', lg: 'p-5' };
 
 export const CardV3 = memo(function CardV3({
   children,
   className = '',
   elevated = false,
   interactive = false,
-  padding = 'md',
+  padding = 'sm',
   onClick,
 }: CardV3Props) {
   return (

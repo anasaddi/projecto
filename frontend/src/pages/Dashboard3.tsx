@@ -4,7 +4,6 @@ import { DASHBOARD_CONTENT_CLASS } from '../constants/layout';
 
 import {
   PrayerCountdownV3,
-  StatsMiniV3,
   TimelineV3,
   PomodoroV3,
   Top3V3,
@@ -57,24 +56,21 @@ export default function Dashboard3(): React.ReactElement {
 
   return (
     <div className="d3-container min-h-full w-full flex flex-col overflow-y-auto font-sans select-none antialiased">
-      <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-5 py-5 md:py-6 flex-1 min-h-0`}>
+      <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-3 py-3 md:py-4 flex-1 min-h-0`}>
 
-        {/* Prayers + Stats + Countdowns (same position as V2) */}
-        <div className="flex flex-col gap-3">
-          <StatsMiniV3 />
-          <PrayerCountdownV3 />
-        </div>
+        {/* Prayers + Countdowns */}
+        <PrayerCountdownV3 />
 
         {/* Timeline */}
         <TimelineV3 />
 
         {/* Training - Full Width */}
-        <TodayCardDashboard />
+        <TodayCardDashboard defaultExpanded={false} />
 
         {/* Main columns: 1/4 | 1/4 | 2/4 — mirrors DashboardV2 exactly */}
-        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 pb-1">
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-3 pb-1">
           {/* Left col: Pomodoro / QuickTasks / FocusHeatmap */}
-          <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
+          <div className="flex flex-col gap-3 min-h-0 lg:w-1/4">
             {(sectionOrder.left || DEFAULT_SECTION_ORDER.left).map((sectionId: string, idx: number) => (
               <div key={sectionId} {...makeDragProps('left', idx)} className="transition-all duration-300">
                 {renderSection(sectionId)}
@@ -83,7 +79,7 @@ export default function Dashboard3(): React.ReactElement {
           </div>
 
           {/* Center col: Top3 / Habits */}
-          <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
+          <div className="flex flex-col gap-3 min-h-0 lg:w-1/4">
             {(sectionOrder.center || DEFAULT_SECTION_ORDER.center).map((sectionId: string, idx: number) => (
               <div key={sectionId} {...makeDragProps('center', idx)} className="transition-all duration-300">
                 {renderSection(sectionId)}
@@ -92,7 +88,7 @@ export default function Dashboard3(): React.ReactElement {
           </div>
 
           {/* Right col: Projects (wide) */}
-          <div className="flex flex-col gap-4 min-h-0 lg:w-2/4">
+          <div className="flex flex-col gap-3 min-h-0 lg:w-2/4">
             {(sectionOrder.right || DEFAULT_SECTION_ORDER.right).map((sectionId: string, idx: number) => (
               <div key={sectionId} {...makeDragProps('right', idx)} className="transition-all duration-300">
                 {renderSection(sectionId)}

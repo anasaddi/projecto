@@ -65,15 +65,15 @@ export const PrayerCountdownV3 = memo(function PrayerCountdownV3() {
 
   return (
     <CardV3 className="w-full" elevated>
-      <div className="flex flex-col md:flex-row md:items-center gap-6">
+      <div className="flex flex-col md:flex-row md:items-center gap-4">
         {/* Left: Next Prayer */}
         <div className="flex-1">
-          <p className="text-sm text-[var(--d3-text-muted)] mb-1">Next Prayer</p>
+          <p className="text-xs md:text-sm text-[var(--d3-text-muted)] mb-1">Next Prayer</p>
           <div className="flex items-baseline gap-3">
-            <h2 className="text-3xl font-bold text-[var(--d3-text)]">
+            <h2 className="text-2xl md:text-3xl font-bold text-[var(--d3-text)]">
               {nextPrayer?.name}
             </h2>
-            <span className="text-xl text-[var(--d3-primary)] font-medium">
+            <span className="text-lg md:text-xl text-[var(--d3-primary)] font-medium">
               {nextPrayer?.time}
             </span>
           </div>
@@ -98,11 +98,11 @@ export const PrayerCountdownV3 = memo(function PrayerCountdownV3() {
               <button
                 key={prayer.name}
                 onClick={() => togglePrayer(prayer.name, !done)}
-                className={`flex flex-col items-center gap-1 p-2 rounded-[var(--d3-radius-md)] transition-colors ${done ? '' : 'hover:bg-[var(--d3-surface-elevated)]'}`}
+                className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-[var(--d3-radius-md)] transition-colors ${done ? '' : 'hover:bg-[var(--d3-surface-elevated)]'}`}
                 style={{ backgroundColor: done ? 'var(--d3-success-bg)' : 'transparent' }}
               >
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-medium transition-colors ${
                     done
                       ? 'bg-[var(--d3-success)] text-white'
                       : 'bg-[var(--d3-surface-elevated)] text-[var(--d3-text-muted)]'
@@ -125,32 +125,32 @@ export const PrayerCountdownV3 = memo(function PrayerCountdownV3() {
         </div>
 
         {/* Right: Countdowns */}
-        <div className="flex gap-4">
+        <div className="flex gap-3">
           {countdowns.map((cd) => (
             <div key={cd.label} className="text-center">
-              <div className="relative w-12 h-12 mb-1">
+              <div className="relative w-10 h-10 mb-1">
                 <svg className="w-full h-full transform -rotate-90">
                   <circle
-                    cx="24"
-                    cy="24"
-                    r="20"
+                    cx="20"
+                    cy="20"
+                    r="16"
                     fill="none"
                     stroke="var(--d3-border)"
-                    strokeWidth="3"
+                    strokeWidth="2.5"
                   />
                   <circle
-                    cx="24"
-                    cy="24"
-                    r="20"
+                    cx="20"
+                    cy="20"
+                    r="16"
                     fill="none"
                     stroke="var(--d3-primary)"
-                    strokeWidth="3"
+                    strokeWidth="2.5"
                     strokeLinecap="round"
-                    strokeDasharray={`${cd.pct * 126} 126`}
+                    strokeDasharray={`${cd.pct * 100} 100`}
                     className="d3-progress-ring-circle"
                   />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-[var(--d3-text)]">
+                <span className="absolute inset-0 flex items-center justify-center text-[10px] font-medium text-[var(--d3-text)]">
                   {Math.round(cd.pct * 100)}%
                 </span>
               </div>
