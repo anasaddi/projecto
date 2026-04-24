@@ -1,341 +1,76 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useDashboardStats } from '../context/DashboardStatsContext';
-import { useGlobalConfig } from '../context/GlobalConfigContext';
-import { useDashboardStore } from '../store/dashboardStore';
-import { useNotificationReminders } from '../hooks/useNotificationReminders';
-import { useToast } from '../context/ToastContext';
-
-import { PomodoroCompact } from '../components/dashboard/PomodoroCompact';
-import { FocusHeatmap } from '../components/dashboard/FocusHeatmap';
-import { PrayersCountdownsV2 } from '../components/dashboard/PrayersCountdownsV2';
-import { DailyTimelineWidget2 } from '../components/dashboard/DailyTimelineWidget2';
-import { QuickTasksSectionV2 } from '../components/dashboard/QuickTasksSectionV2';
-import { Top3SectionV2 } from '../components/dashboard/Top3SectionV2';
-import { HabitsSection } from '../components/dashboard/HabitsSection';
-import { ProjectsSectionV2 } from '../components/dashboard/ProjectsSectionV2';
-import { LifeGoalsSection } from '../components/dashboard/LifeGoalsSection';
-import { TodayCardDashboard } from '../components/dashboard/TodayCardDashboard';
-import { ConfirmModal as ConfirmModalRaw } from '../components/ConfirmModal';
-const ConfirmModal = ConfirmModalRaw as any;
-import { HabitSkeleton, ProjectSkeleton, Top3Skeleton, QuickTaskSkeleton } from '../components/dashboard/SkeletonSection';
+import React, { useMemo } from 'react';
+import '../components/dashboard3/styles/design-tokens.css';
 
 import {
-  STORAGE_KEY,
-  toDateKey,
-  startOfDay,
-  addDays,
-  startOfWeek,
-  startOfMonth,
-  formatCountdown,
-  resolveTop3Slots,
-  POMODORO_STORAGE,
-} from '../components/dashboard/DashboardUtils';
-import { useDashboardSync } from '../hooks/useDashboardSync';
-import { DASHBOARD_CONTENT_CLASS } from '../constants/layout';
-
-const PROJECT_ACCENTS = ['indigo', 'sky', 'violet', 'emerald', 'amber', 'rose'];
+  PrayerCountdownV3,
+  StatsMiniV3,
+  TimelineV3,
+  PomodoroV3,
+  Top3V3,
+  HabitsV3,
+  ProjectsV3,
+} from '../components/dashboard3/sections';
 
 export default function Dashboard3(): React.ReactElement {
-  const dailyTaskTemplates = useDashboardStore((s) => s.dailyTaskTemplates) ?? [];
-  const dailyTaskLogs = useDashboardStore((s) => s.dailyTaskLogs) ?? {};
-  const projects = useDashboardStore((s) => s.projects) ?? [];
-  const prayerLogs = useDashboardStore((s) => s.prayerLogs) ?? {};
-  const top3Manual = useDashboardStore((s) => s.top3Manual) ?? [null, null, null];
-  const quickTasks = useDashboardStore((s) => s.quickTasks) ?? [];
-  const dailyCompletionLog = useDashboardStore((s) => s.dailyCompletionLog) ?? {};
-  const lifeGoals = useDashboardStore((s) => s.lifeGoals) ?? { tiers: [] };
-  const sharedDashboards = useDashboardStore((s) => s.sharedDashboards) ?? [];
-  const isLoaded = useDashboardStore((s) => s.isLoaded);
-  const lastSavedAt = useDashboardStore((s) => s.lastSavedAt);
-  const confirmState = useDashboardStore((s) => s.confirmState);
-  const setIsLoaded = useDashboardStore((s) => s.setIsLoaded);
-  const setLastSavedAt = useDashboardStore((s) => s.setLastSavedAt);
-  const setConfirmState = useDashboardStore((s) => s.setConfirmState);
-  const deleteProject = useDashboardStore((s) => s.deleteProject);
-  const deleteGoal = useDashboardStore((s) => s.deleteGoal);
-  const deleteSharedDashboardProject = useDashboardStore((s) => s.deleteSharedDashboardProject);
-  const togglePrayer = useDashboardStore((s) => s.togglePrayer);
-  const sectionOrder = useDashboardStore((s) => s.sectionOrder) ?? {
-    left: ['pomodoro', 'quickTasks', 'focusHeatmap'],
-    center: ['top3', 'habits'],
-    right: ['projects'],
-  };
-  const reorderSection = useDashboardStore((s) => s.reorderSection);
-
-  useDashboardSync();
-
-  const showToast = useToast() as ((msg: string, opts?: { type?: string }) => void) | undefined;
-
-  const { updateStats } = (useDashboardStats() as any) || { updateStats: undefined };
-  const globalConfig = useGlobalConfig();
-  const config = (globalConfig as any)?.config as { PRAYERS?: string[] } | null;
-  const PRAYERS = useMemo(() => config?.PRAYERS || ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'], [config]);
-
-  const [now, setNow] = useState(new Date());
-  const [today, setToday] = useState(() => new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const next = new Date();
-      setNow(next);
-      if (toDateKey(next) !== toDateKey(today)) {
-        setToday(next);
-      }
-    }, 1000);
-    return () => clearInterval(timer);
+  const today = useMemo(() => new Date(), []);
+  const greeting = useMemo(() => {
+    const hour = today.getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
   }, [today]);
 
-  const todayKey = toDateKey(today);
-  const todayTaskLog = useMemo(() => {
-    const logs = (dailyTaskLogs[todayKey] as { id: string; done: boolean }[]) || [];
-    const map: Record<string, boolean> = {};
-    logs.forEach((l) => (map[l.id] = l.done));
-    return map;
-  }, [dailyTaskLogs, todayKey]);
-  const todayPrayerLog = (prayerLogs[todayKey] as Record<string, boolean>) || {};
-
-  const activeHabits = useMemo(() => (dailyTaskTemplates as any[]).filter((t: any) => !t.locked), [dailyTaskTemplates]);
-  const todayDone = useMemo(
-    () => (activeHabits as any[]).reduce((acc: number, t: any) => acc + (todayTaskLog[t.id] ? 1 : 0), 0),
-    [activeHabits, todayTaskLog]
-  );
-  const prayerDone = useMemo(
-    () => PRAYERS.reduce((acc: number, p: string) => acc + (todayPrayerLog[p] ? 1 : 0), 0),
-    [PRAYERS, todayPrayerLog]
-  );
-
-  const allQuickTasks = useMemo(() => {
-    const local = (quickTasks as any[]).filter((t: any) => !t.parentId).map((t: any) => ({ ...t, shareId: null }));
-    const fromShared = (sharedDashboards as any[]).flatMap((sd: any) => {
-      const list = Array.isArray((sd.data || {}).quickTasks) ? (sd.data as { quickTasks: unknown[] }).quickTasks : [];
-      return list
-        .filter((t: any) => !t.parentId)
-        .map((t: any) => ({ ...t, shareId: sd.share_id, sharedTitle: sd.title }));
+  const dateFormatted = useMemo(() => {
+    return today.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
-    return [...local, ...fromShared];
-  }, [quickTasks, sharedDashboards]);
-
-  const top3Resolved = useMemo(
-    () => resolveTop3Slots(projects, top3Manual as any[], allQuickTasks, lifeGoals as any, sharedDashboards as any[]),
-    [projects, top3Manual, allQuickTasks, lifeGoals, sharedDashboards]
-  );
-  const top3DoneCount = useMemo(
-    () => (top3Resolved as any[]).filter((s: any) => s && !s.missing && s.done).length,
-    [top3Resolved]
-  );
-
-  const totalFocusItems = activeHabits.length + PRAYERS.length + 3;
-  const doneFocusItems = todayDone + prayerDone + top3DoneCount;
-  const todayFocusScore = totalFocusItems ? doneFocusItems / totalFocusItems : 0;
-
-  useEffect(() => {
-    if (updateStats) updateStats(doneFocusItems, totalFocusItems);
-  }, [doneFocusItems, totalFocusItems, updateStats]);
-
-  const countdowns = useMemo(() => {
-    const n = new Date(now);
-    const eod = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
-    const eow = addDays(startOfWeek(n), 7);
-    const eom = new Date(n.getFullYear(), n.getMonth() + 1, 1);
-    return [
-      {
-        label: 'Day',
-        remaining: formatCountdown(eod.getTime() - n.getTime()),
-        pct: (n.getTime() - startOfDay(n).getTime()) / (eod.getTime() - startOfDay(n).getTime()),
-      },
-      {
-        label: 'Week',
-        remaining: formatCountdown(eow.getTime() - n.getTime()),
-        pct: (n.getTime() - startOfWeek(n).getTime()) / (eow.getTime() - startOfWeek(n).getTime()),
-      },
-      {
-        label: 'Month',
-        remaining: formatCountdown(eom.getTime() - n.getTime()),
-        pct: (n.getTime() - startOfMonth(n).getTime()) / (eom.getTime() - startOfMonth(n).getTime()),
-      },
-    ] as any[];
-  }, [now]);
-
-  const focusStreak = useMemo(() => {
-    const totalItems = activeHabits.length + PRAYERS.length + 3;
-    let s = 0;
-    for (let i = 0; i < 30; i++) {
-      const d = addDays(startOfDay(now), -i);
-      const key = toDateKey(d);
-      const taskLog = (dailyTaskLogs[key] as { id: string; done: boolean }[]) || [];
-      const taskLogMap: Record<string, boolean> = {};
-      taskLog.forEach((l) => (taskLogMap[l.id] = l.done));
-      const prayerLog = (prayerLogs[key] as Record<string, boolean>) || {};
-      const cl = (dailyCompletionLog[key] as { quick?: string[]; project?: string[] }) || { quick: [], project: [] };
-      const habitsDone = (activeHabits as any[]).reduce((acc: number, t: any) => acc + (taskLogMap[t.id] ? 1 : 0), 0);
-      const prayersDone = PRAYERS.reduce((acc: number, p: string) => acc + (prayerLog[p] ? 1 : 0), 0);
-      const tasksDone = Math.min(3, (cl.quick?.length || 0) + (cl.project?.length || 0));
-      const score = totalItems ? (habitsDone + prayersDone + tasksDone) / totalItems : 0;
-      if (score >= 0.8) s++;
-      else break;
-    }
-    return s;
-  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, today, PRAYERS]);
-
-  const confirmId = confirmState && typeof confirmState === 'object' && 'id' in confirmState ? (confirmState as { id: string }).id : undefined;
-  const confirmPayload = confirmState && typeof confirmState === 'object' && 'payload' in confirmState ? (confirmState as { payload?: { shareId?: string; projectId?: string; goalId?: string } }).payload : undefined;
+  }, [today]);
 
   return (
-    <div className="min-h-full w-full flex flex-col overflow-y-auto font-sans font-normal select-none selection:bg-indigo-500/30 antialiased bg-gradient-to-br from-slate-950 via-indigo-950/20 to-slate-950 relative">
-      {/* Static background glow - no re-render */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[200px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[35%] h-[35%] bg-violet-500/8 rounded-full blur-[180px]" />
+    <div className="d3-container min-h-screen overflow-y-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header */}
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold text-[var(--d3-text)]">{greeting}</h1>
+          <p className="text-[var(--d3-text-muted)] mt-1">{dateFormatted}</p>
+        </header>
+
+        {/* Stats Row */}
+        <section className="mb-6">
+          <StatsMiniV3 />
+        </section>
+
+        {/* Prayer Countdown */}
+        <section className="mb-6">
+          <PrayerCountdownV3 />
+        </section>
+
+        {/* Timeline */}
+        <section className="mb-6">
+          <TimelineV3 />
+        </section>
+
+        {/* Main Grid: Pomodoro | Top3 | Habits */}
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+          <div className="h-[320px]">
+            <PomodoroV3 />
+          </div>
+          <div className="h-[320px]">
+            <Top3V3 />
+          </div>
+          <div className="h-[320px]">
+            <HabitsV3 />
+          </div>
+        </section>
+
+        {/* Projects */}
+        <section className="mb-6">
+          <ProjectsV3 />
+        </section>
       </div>
-
-      <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-5 py-5 md:py-6 flex-1 min-h-0 relative z-10`}>
-        {/* Prayers Countdowns */}
-        <PrayersCountdownsV2
-          todayPrayerLog={todayPrayerLog}
-          togglePrayer={togglePrayer}
-          PRAYERS={PRAYERS}
-          countdowns={countdowns as { label: string; remaining: string; pct: number }[]}
-          todayFocusScore={todayFocusScore}
-          focusStreak={focusStreak}
-        />
-
-        {/* Daily Timeline */}
-        <DailyTimelineWidget2 PRAYERS={PRAYERS} todayKey={todayKey} todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} />
-
-        {/* Today Card */}
-        <TodayCardDashboard />
-
-        {/* 3 Column Layout */}
-        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 pb-1">
-          {/* Left Column */}
-          <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
-            {(sectionOrder.left || ['pomodoro', 'quickTasks', 'focusHeatmap']).map((sectionId: string, idx: number) => {
-              const sectionProps = {
-                key: sectionId,
-                draggable: true,
-                onDragStart: (e: React.DragEvent) => {
-                  e.dataTransfer.setData('application/json', JSON.stringify({ type: 'section', column: 'left', fromIndex: idx }));
-                  e.dataTransfer.effectAllowed = 'move';
-                },
-                onDragOver: (e: React.DragEvent) => e.preventDefault(),
-                onDrop: (e: React.DragEvent) => {
-                  try {
-                    const p = JSON.parse(e.dataTransfer.getData('application/json'));
-                    if (p.type !== 'section') return;
-                    if (p.column === 'left') reorderSection('left', p.fromIndex, idx);
-                  } catch (_) {}
-                },
-              };
-              if (sectionId === 'pomodoro') return <div {...sectionProps} className="transition-all duration-300"><PomodoroCompact /></div>;
-              if (sectionId === 'quickTasks') return <div {...sectionProps} className="transition-all duration-300">{isLoaded ? <QuickTasksSectionV2 /> : <QuickTaskSkeleton />}</div>;
-              if (sectionId === 'focusHeatmap') return <div {...sectionProps} className="transition-all duration-300"><FocusHeatmap dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} now={now} /></div>;
-              return null;
-            })}
-          </div>
-
-          {/* Center Column */}
-          <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
-            {(sectionOrder.center || ['top3', 'habits']).map((sectionId: string, idx: number) => {
-              const sectionProps = {
-                key: sectionId,
-                draggable: true,
-                onDragStart: (e: React.DragEvent) => {
-                  e.dataTransfer.setData('application/json', JSON.stringify({ type: 'section', column: 'center', fromIndex: idx }));
-                  e.dataTransfer.effectAllowed = 'move';
-                },
-                onDragOver: (e: React.DragEvent) => e.preventDefault(),
-                onDrop: (e: React.DragEvent) => {
-                  try {
-                    const p = JSON.parse(e.dataTransfer.getData('application/json'));
-                    if (p.type !== 'section') return;
-                    if (p.column === 'center') reorderSection('center', p.fromIndex, idx);
-                  } catch (_) {}
-                },
-              };
-              if (sectionId === 'top3') return <div {...sectionProps} className="transition-all duration-300">{isLoaded ? <Top3SectionV2 /> : <Top3Skeleton />}</div>;
-              if (sectionId === 'habits') return <div {...sectionProps} className="transition-all duration-300">{isLoaded ? <HabitsSection /> : <HabitSkeleton />}</div>;
-              return null;
-            })}
-          </div>
-
-          {/* Right Column */}
-          <div className="flex flex-col gap-4 min-h-0 lg:w-2/4">
-            {(sectionOrder.right || ['projects']).map((sectionId: string, idx: number) => {
-              const sectionProps = {
-                key: sectionId,
-                draggable: true,
-                onDragStart: (e: React.DragEvent) => {
-                  e.dataTransfer.setData('application/json', JSON.stringify({ type: 'section', column: 'right', fromIndex: idx }));
-                  e.dataTransfer.effectAllowed = 'move';
-                },
-                onDragOver: (e: React.DragEvent) => e.preventDefault(),
-                onDrop: (e: React.DragEvent) => {
-                  try {
-                    const p = JSON.parse(e.dataTransfer.getData('application/json'));
-                    const validTypes = ['section'];
-                    if (!validTypes.includes(p.type)) {
-                      showToast?.('Puoi trascinare solo sezioni qui', { type: 'warning' });
-                      return;
-                    }
-                    if (p.type === 'section' && p.column === 'right') reorderSection('right', p.fromIndex, idx);
-                    else showToast?.('Sezione non valida per questa colonna', { type: 'warning' });
-                  } catch (err) {
-                    console.error('Drop error:', err);
-                    showToast?.('Errore durante il trascinamento', { type: 'error' });
-                  }
-                },
-              };
-              if (sectionId === 'projects') return <div {...sectionProps} className="transition-all duration-300">{isLoaded ? <ProjectsSectionV2 PROJECT_ACCENTS={PROJECT_ACCENTS} /> : <ProjectSkeleton />}</div>;
-              return null;
-            })}
-          </div>
-        </div>
-
-        {/* Life Goals */}
-        <LifeGoalsSection />
-      </div>
-
-      <ConfirmModal
-        open={!!confirmState}
-        title={
-          confirmId === 'deleteShared'
-            ? 'Elimina progetto condiviso'
-            : confirmId === 'deleteGoal'
-              ? 'Elimina obiettivo'
-              : confirmId === 'deleteProject'
-                ? 'Elimina progetto'
-                : 'Reset dashboard'
-        }
-        message={
-          confirmId === 'deleteShared'
-            ? 'Sei sicuro di voler eliminare questo progetto condiviso?'
-            : confirmId === 'deleteGoal'
-              ? 'Sei sicuro di voler eliminare questo obiettivo?'
-              : confirmId === 'deleteProject'
-                ? 'Il progetto e tutti i suoi task verranno eliminati. Questa azione non si può annullare.'
-                : 'Azzerare tutto? Verranno eliminati progetti, task, abitudini e dati della dashboard. Ricarica la pagina.'
-        }
-        variant={
-          confirmId === 'reset' || confirmId === 'deleteProject' || confirmId === 'deleteGoal' || confirmId === 'deleteShared'
-            ? 'danger'
-            : 'default'
-        }
-        onConfirm={() => {
-          if (confirmId === 'deleteShared' && confirmPayload?.shareId && confirmPayload?.projectId) {
-            deleteSharedDashboardProject(confirmPayload.shareId, confirmPayload.projectId);
-          } else if (confirmId === 'deleteGoal' && confirmPayload?.goalId) {
-            deleteGoal(confirmPayload.goalId);
-          } else if (confirmId === 'deleteProject' && confirmPayload?.projectId) {
-            deleteProject(confirmPayload.projectId);
-          } else if (confirmId === 'reset') {
-            localStorage.removeItem(STORAGE_KEY);
-            localStorage.removeItem(POMODORO_STORAGE);
-            window.location.reload();
-          }
-          setConfirmState(null);
-        }}
-        onCancel={() => setConfirmState(null)}
-      />
     </div>
   );
 }
