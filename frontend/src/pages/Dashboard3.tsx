@@ -181,8 +181,14 @@ export default function Dashboard3(): React.ReactElement {
   const confirmPayload = confirmState && typeof confirmState === 'object' && 'payload' in confirmState ? (confirmState as { payload?: { shareId?: string; projectId?: string; goalId?: string } }).payload : undefined;
 
   return (
-    <div className="min-h-full w-full flex flex-col overflow-y-auto font-sans font-normal select-none selection:bg-indigo-500/30 antialiased bg-white dark:bg-[#0b0e14] relative">
-      <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-5 py-5 md:py-6 flex-1 min-h-0`}>
+    <div className="min-h-full w-full flex flex-col overflow-y-auto font-sans font-normal select-none selection:bg-indigo-500/30 antialiased bg-gradient-to-br from-slate-950 via-indigo-950/20 to-slate-950 relative">
+      {/* Static background glow - no re-render */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[200px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[35%] h-[35%] bg-violet-500/8 rounded-full blur-[180px]" />
+      </div>
+
+      <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-5 py-5 md:py-6 flex-1 min-h-0 relative z-10`}>
         {/* Prayers Countdowns */}
         <PrayersCountdownsV2
           todayPrayerLog={todayPrayerLog}
