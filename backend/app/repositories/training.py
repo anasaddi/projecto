@@ -45,6 +45,15 @@ async def get_today_template(db: AsyncSession, for_date: date | None = None):
     if sched and sched.template_id:
         r = await db.execute(select(WorkoutDayTemplate).filter(WorkoutDayTemplate.id == sched.template_id).limit(1))
         return r.scalar_one_or_none()
+    # Fallback: if the generated schedule is missing, use the weekday template directly.
+    weekday_res = await db.execute(
+        select(WorkoutDayTemplate)
+        .filter(WorkoutDayTemplate.weekday == target.weekday())
+        .limit(1)
+    )
+    weekday_template = weekday_res.scalar_one_or_none()
+    if weekday_template:
+        return weekday_template
     return None
 
 async def get_today_exercises_grouped(db: AsyncSession, for_date: date | None = None):

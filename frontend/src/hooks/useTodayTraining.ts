@@ -19,6 +19,10 @@ interface DayTemplate {
 
 interface TodayResponse {
   template?: DayTemplate;
+  template_id?: string;
+  day_name?: string;
+  hypertrophy_exercises?: Exercise[];
+  strength_aw_exercises?: Exercise[];
   date?: string;
 }
 
@@ -283,8 +287,17 @@ export function useTodayTraining(): UseTodayTrainingReturn {
 
         // Process today's data
         const todayData = todayRes as TodayResponse | null;
+        const groupedHypertrophy = todayData?.hypertrophy_exercises ?? [];
+        const groupedStrength = todayData?.strength_aw_exercises ?? [];
         if (todayData?.template) {
           setSelectedDay(todayData.template);
+        } else if (groupedHypertrophy.length || groupedStrength.length) {
+          const response = todayData ?? {};
+          setSelectedDay({
+            template_id: response.template_id || today,
+            day_name: response.day_name || 'Today',
+            exercises: [...groupedHypertrophy, ...groupedStrength],
+          });
         }
 
         // Process progressions
