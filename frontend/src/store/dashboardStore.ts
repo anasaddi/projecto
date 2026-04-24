@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { syncMiddleware } from './syncMiddleware';
 import {
@@ -19,7 +18,7 @@ import {
 } from '../components/dashboard/DashboardUtils';
 import { haptic } from '../utils/haptics';
 import { logTimelineEvent } from './storeHelpers';
-import type { LifeGoalsState } from '../types/dashboard';
+import type { DayCompletionPayload, LifeGoalsState } from '../types/dashboard';
 import type { Project, Top3Slot } from '../types/dashboard';
 import type { QuickTask } from '../types/dashboard';
 
@@ -30,7 +29,7 @@ interface SyncData {
   prayerLogs?: Record<string, unknown>;
   top3Manual?: (Top3Slot | null)[];
   quickTasks?: QuickTask[];
-  dailyCompletionLog?: Record<string, unknown>;
+  dailyCompletionLog?: Record<string, DayCompletionPayload>;
   lifeGoals?: LifeGoalsState;
   timelineRoutines?: Record<string, unknown>;
   timelinePanelExpanded?: boolean;
@@ -45,7 +44,7 @@ const defaultInitial = {
   prayerLogs: {} as Record<string, unknown>,
   top3Manual: [null, null, null] as (Top3Slot | null)[],
   quickTasks: [] as QuickTask[],
-  dailyCompletionLog: {} as Record<string, unknown>,
+  dailyCompletionLog: {} as Record<string, DayCompletionPayload>,
   lifeGoals: buildDefaultLifeGoals() as LifeGoalsState,
   timelineRoutines: {} as Record<string, unknown>,
   timelinePanelExpanded: true,
@@ -60,10 +59,9 @@ const defaultInitial = {
 const loaded = loadState() as Partial<SyncData> | null;
 const initialState = loaded ? { ...defaultInitial, ...loaded } : defaultInitial;
 
-export const useDashboardStore = create(
-  subscribeWithSelector(
-    syncMiddleware(
-      immer((set: (fn: (s: unknown) => void) => void, get: () => Record<string, unknown>) => ({
+const dashboardStore = create<any>()(
+  syncMiddleware(
+    immer((set: any, get: any) => ({
         // --- Dashboard Data ---
         dailyTaskTemplates: initialState.dailyTaskTemplates,
         dailyTaskLogs: initialState.dailyTaskLogs,
@@ -117,32 +115,38 @@ export const useDashboardStore = create(
         ...createHabitSlice(set, get),
         logTimelineCompletionEvent: (type: string, id: string, title: string, val: boolean) =>
           set((s: unknown) => {
-            logTimelineEvent(s as { dailyCompletionLog: Record<string, { events?: unknown[] }> }, type as 'habit' | 'quick' | 'project' | 'shared_quick', id, title, val);
+            logTimelineEvent(s as { dailyCompletionLog: Record<string, DayCompletionPayload> }, type as 'habit' | 'quick' | 'project' | 'shared_quick', id, title, val);
           }),
 
         setProjects: (val: unknown) =>
-          set((s: { projects: Project[] }) => {
-            s.projects = typeof val === 'function' ? (val as (p: Project[]) => Project[])(s.projects) : (val as Project[]);
+          set((s: unknown) => {
+            const state = s as { projects: Project[] };
+            state.projects = typeof val === 'function' ? (val as (p: Project[]) => Project[])(state.projects) : (val as Project[]);
           }),
         setPrayerLogs: (val: unknown) =>
-          set((s: { prayerLogs: Record<string, unknown> }) => {
-            s.prayerLogs = typeof val === 'function' ? (val as (p: Record<string, unknown>) => Record<string, unknown>)(s.prayerLogs) : (val as Record<string, unknown>);
+          set((s: unknown) => {
+            const state = s as { prayerLogs: Record<string, unknown> };
+            state.prayerLogs = typeof val === 'function' ? (val as (p: Record<string, unknown>) => Record<string, unknown>)(state.prayerLogs) : (val as Record<string, unknown>);
           }),
         setTop3Manual: (val: unknown) =>
-          set((s: { top3Manual: (Top3Slot | null)[] }) => {
-            s.top3Manual = typeof val === 'function' ? (val as (p: (Top3Slot | null)[]) => (Top3Slot | null)[])(s.top3Manual) : (val as (Top3Slot | null)[]);
+          set((s: unknown) => {
+            const state = s as { top3Manual: (Top3Slot | null)[] };
+            state.top3Manual = typeof val === 'function' ? (val as (p: (Top3Slot | null)[]) => (Top3Slot | null)[])(state.top3Manual) : (val as (Top3Slot | null)[]);
           }),
         setQuickTasks: (val: unknown) =>
-          set((s: { quickTasks: QuickTask[] }) => {
-            s.quickTasks = typeof val === 'function' ? (val as (p: QuickTask[]) => QuickTask[])(s.quickTasks) : (val as QuickTask[]);
+          set((s: unknown) => {
+            const state = s as { quickTasks: QuickTask[] };
+            state.quickTasks = typeof val === 'function' ? (val as (p: QuickTask[]) => QuickTask[])(state.quickTasks) : (val as QuickTask[]);
           }),
         setDailyCompletionLog: (val: unknown) =>
-          set((s: { dailyCompletionLog: Record<string, unknown> }) => {
-            s.dailyCompletionLog = typeof val === 'function' ? (val as (p: Record<string, unknown>) => Record<string, unknown>)(s.dailyCompletionLog) : (val as Record<string, unknown>);
+          set((s: unknown) => {
+            const state = s as { dailyCompletionLog: Record<string, unknown> };
+            state.dailyCompletionLog = typeof val === 'function' ? (val as (p: Record<string, unknown>) => Record<string, unknown>)(state.dailyCompletionLog) : (val as Record<string, unknown>);
           }),
         setLifeGoals: (val: unknown) =>
-          set((s: { lifeGoals: LifeGoalsState }) => {
-            s.lifeGoals = typeof val === 'function' ? (val as (p: LifeGoalsState) => LifeGoalsState)(s.lifeGoals) : (val as LifeGoalsState);
+          set((s: unknown) => {
+            const state = s as { lifeGoals: LifeGoalsState };
+            state.lifeGoals = typeof val === 'function' ? (val as (p: LifeGoalsState) => LifeGoalsState)(state.lifeGoals) : (val as LifeGoalsState);
           }),
 
         syncWithServer: (data: SyncData) =>
@@ -183,17 +187,28 @@ export const useDashboardStore = create(
         ...createTop3Slice(set),
 
         togglePrayer: (name: string, val: boolean) =>
-          set((s: { prayerLogs: Record<string, Record<string, boolean>> }) => {
+          set((s: unknown) => {
+            const state = s as { prayerLogs: Record<string, Record<string, boolean>> };
             if (val) haptic([50]);
             const date = toDateKey(new Date());
-            if (!s.prayerLogs[date]) s.prayerLogs[date] = {};
-            s.prayerLogs[date][name] = val;
+            if (!state.prayerLogs[date]) state.prayerLogs[date] = {};
+            state.prayerLogs[date][name] = val;
           }),
 
         ...createProjectSlice(set, get),
         ...createTimelineSlice(set),
         ...createLifeGoalsSlice(set, get),
       }))
-    )
   )
 );
+
+export const useDashboardStore = ((selector: (state: any) => any) => dashboardStore(selector)) as {
+  <T>(selector: (state: any) => T): T;
+  getState: () => any;
+  setState: (...args: any[]) => void;
+  subscribe: (...args: any[]) => void;
+};
+
+useDashboardStore.getState = dashboardStore.getState;
+useDashboardStore.setState = dashboardStore.setState;
+useDashboardStore.subscribe = dashboardStore.subscribe;

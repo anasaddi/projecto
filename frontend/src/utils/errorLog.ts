@@ -34,8 +34,8 @@ export function logError(
     stack: err.stack,
     timestamp: new Date().toISOString(),
   };
-  if (typeof window !== "undefined" && window.__LOG_ERROR__) {
-    (window as unknown as { __LOG_ERROR__: (p: unknown) => void }).__LOG_ERROR__(payload);
+  if (typeof window !== "undefined" && (window as unknown as { __LOG_ERROR__?: (p: unknown) => void }).__LOG_ERROR__) {
+    (window as unknown as { __LOG_ERROR__?: (p: unknown) => void }).__LOG_ERROR__?.(payload);
   }
   console.error("[km:error]", payload);
 }

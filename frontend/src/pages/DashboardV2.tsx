@@ -33,6 +33,7 @@ import { useDashboardSync } from '../hooks/useDashboardSync';
 import { DASHBOARD_CONTENT_CLASS } from '../constants/layout';
 
 const PROJECT_ACCENTS = ['indigo', 'sky', 'violet', 'emerald', 'amber', 'rose'];
+const ConfirmModalComponent = ConfirmModal as unknown as React.ComponentType<any>;
 
 export default function DashboardV2(): React.ReactElement {
   const dailyTaskTemplates = useDashboardStore((s) => s.dailyTaskTemplates) ?? [];
@@ -64,10 +65,12 @@ export default function DashboardV2(): React.ReactElement {
   useDashboardSync();
   // useNotificationReminders(); // TODO: Fix infinite loop
 
-  const showToast = useToast();
+  const showToast = useToast() as ((message: string, opts?: { type?: 'default' | 'warning' | 'error' }) => void) | null;
 
-  const { updateStats } = useDashboardStats() || { updateStats: () => {} };
-  const { config } = useGlobalConfig() || { config: null };
+  const dashboardStats = useDashboardStats() as { updateStats?: (done: number, total: number) => void } | null;
+  const updateStats = dashboardStats?.updateStats;
+  const globalConfig = useGlobalConfig() as { config?: { PRAYERS?: string[] } } | null;
+  const config = globalConfig?.config;
   const PRAYERS = useMemo(() => config?.PRAYERS || ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'], [config]);
 
   const [now, setNow] = useState(new Date());
@@ -291,7 +294,7 @@ export default function DashboardV2(): React.ReactElement {
         <LifeGoalsSection />
       </div>
 
-      <ConfirmModal
+      <ConfirmModalComponent
         open={!!confirmState}
         title={
           confirmId === 'deleteShared'

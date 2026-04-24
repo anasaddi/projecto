@@ -11,15 +11,15 @@ import { extractDashboardPayload, hasMeaningfulDashboardData } from '../utils/da
  * Call once in DashboardV2; effects run when store state (e.g. isLoaded, sharedDashboards) is ready.
  */
 export function useDashboardSync(): void {
-  const syncWithServer = useDashboardStore((s) => s.syncWithServer);
-  const setSharedDashboards = useDashboardStore((s) => s.setSharedDashboards);
-  const setIsLoaded = useDashboardStore((s) => s.setIsLoaded);
-  const sharedDashboards = useDashboardStore((s) => s.sharedDashboards) ?? [];
-  const updateSharedDashboardData = useDashboardStore((s) => s.updateSharedDashboardData);
-  const dailyTaskTemplates = useDashboardStore((s) => s.dailyTaskTemplates) ?? [];
-  const quickTasks = useDashboardStore((s) => s.quickTasks) ?? [];
-  const projects = useDashboardStore((s) => s.projects) ?? [];
-  const lifeGoals = useDashboardStore((s) => s.lifeGoals) ?? { tiers: [] };
+  const syncWithServer = useDashboardStore((s: any) => s.syncWithServer);
+  const setSharedDashboards = useDashboardStore((s: any) => s.setSharedDashboards);
+  const setIsLoaded = useDashboardStore((s: any) => s.setIsLoaded);
+  const sharedDashboards = useDashboardStore((s: any) => s.sharedDashboards) ?? [];
+  const updateSharedDashboardData = useDashboardStore((s: any) => s.updateSharedDashboardData);
+  const dailyTaskTemplates = useDashboardStore((s: any) => s.dailyTaskTemplates) ?? [];
+  const quickTasks = useDashboardStore((s: any) => s.quickTasks) ?? [];
+  const projects = useDashboardStore((s: any) => s.projects) ?? [];
+  const lifeGoals = useDashboardStore((s: any) => s.lifeGoals) ?? { tiers: [] };
 
   const hasLocalData = Boolean(
     (dailyTaskTemplates?.length ?? 0) > 0 ||
@@ -72,7 +72,7 @@ export function useDashboardSync(): void {
     };
   }, []);
 
-  const isLoaded = useDashboardStore((s) => s.isLoaded);
+  const isLoaded = useDashboardStore((s: any) => s.isLoaded);
 
   useEffect(() => {
     if (!isLoaded || sharedDashboards.length === 0) return;
@@ -88,7 +88,7 @@ export function useDashboardSync(): void {
           if (msg.type === 'chat' && msg.data) {
             updateSharedDashboardData(shareId, (prev: { chat?: unknown[] }) => {
               const chat = Array.isArray(prev.chat) ? prev.chat : [];
-              if (chat.some((m: { id?: string }) => m.id === msg.data.id)) return prev;
+              if ((chat as Array<{ id?: string }>).some((m) => m.id === msg.data.id)) return prev;
               return { ...prev, chat: [...chat.slice(-99), msg.data] };
             });
           } else if (msg.type === 'sync' && msg.data) {
@@ -117,7 +117,7 @@ export function useDashboardSync(): void {
           if (message.type === 'chat' && message.data) {
             updateSharedDashboardData(shareId, (prev: { chat?: unknown[] }) => {
               const chat = Array.isArray(prev.chat) ? prev.chat : [];
-              if (chat.some((m: { id?: string }) => m.id === message.data.id)) return prev;
+              if ((chat as Array<{ id?: string }>).some((m) => m.id === message.data.id)) return prev;
               return { ...prev, chat: [...chat.slice(-99), message.data] };
             });
           } else if (message.type === 'sync') {

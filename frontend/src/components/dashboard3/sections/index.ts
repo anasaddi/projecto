@@ -5,3 +5,6 @@ export { ProjectsV3 } from './ProjectsV3';
 export { PrayerCountdownV3 } from './PrayerCountdownV3';
 export { StatsMiniV3 } from './StatsMiniV3';
 export { TimelineV3 } from './TimelineV3';
+export { QuickTasksV3 } from './QuickTasksV3';
+export { LifeGoalsV3 } from './LifeGoalsV3';
+export { FocusHeatmapV3 } from './FocusHeatmapV3';

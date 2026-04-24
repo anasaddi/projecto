@@ -23,9 +23,9 @@ if (typeof window !== 'undefined') {
     const queue = await getSyncQueue();
     if (queue.length > 0) {
       console.log('Reconnected! Flushing sync queue...');
-      const dashboardUpdates = queue.filter((i) => i.type === 'dashboard_update');
+      const dashboardUpdates = queue.filter((i: { type?: string }) => i.type === 'dashboard_update');
       if (dashboardUpdates.length > 0) {
-        const latest = dashboardUpdates.sort((a, b) => b.timestamp - a.timestamp)[0];
+        const latest = dashboardUpdates.sort((a: { timestamp?: number }, b: { timestamp?: number }) => (b.timestamp ?? 0) - (a.timestamp ?? 0))[0];
         try {
           await api.training.updateDashboardState(latest.data);
           console.log('Sync queue flushed successfully');
@@ -33,7 +33,7 @@ if (typeof window !== 'undefined') {
           console.error('Failed to flush sync queue:', err);
         }
       }
-      await clearSyncQueue(queue.map((i) => i.id));
+      await clearSyncQueue(queue.map((i: { id: string }) => i.id));
     }
   });
 }
@@ -63,7 +63,7 @@ type GetState = () => SyncStateSlice & Record<string, unknown>;
  * 2. BroadcastChannel (instant cross-tab)
  * 3. REST API or Sync Queue (debounced 500ms)
  */
-export function syncMiddleware<T>(config: (set: SetState, get: GetState, api_store: unknown) => T): (set: SetState, get: GetState, api_store: unknown) => T {
+export function syncMiddleware(config: any): any {
   const channel = getBroadcastChannel();
 
   return (set: SetState, get: GetState, api_store: unknown) => {

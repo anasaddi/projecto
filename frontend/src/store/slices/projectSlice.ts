@@ -112,12 +112,12 @@ export function createProjectSlice(set: ProjectSet, get: ProjectGet) {
         if (p) {
           const title = findTaskTitle(p.tasks, taskId);
           logTimelineEvent(state, 'project', taskId, title ?? '', val, p.title);
-          p.tasks = updateNodeInTree(p.tasks, taskId, (n) => ({ ...n, done: val })) as TaskNode[];
+          p.tasks = updateNodeInTree(p.tasks, taskId, (n: TaskNode) => ({ ...n, done: val })) as TaskNode[];
           if (p.lifeGoalId) {
             for (const tier of state.lifeGoals?.tiers ?? []) {
               const goal = (tier.goals || []).find((g) => g.id === p.lifeGoalId);
               if (goal) {
-                goal.tasks = updateNodeInTree(goal.tasks, taskId, (n) => ({ ...n, done: val })) as TaskNode[];
+                goal.tasks = updateNodeInTree(goal.tasks, taskId, (n: TaskNode) => ({ ...n, done: val })) as TaskNode[];
                 break;
               }
             }
@@ -169,7 +169,7 @@ export function createProjectSlice(set: ProjectSet, get: ProjectGet) {
         const state = s as { projects: Project[] };
         const p = state.projects.find((x) => x.id === projectId);
         if (p) {
-          p.tasks = updateNodeInTree(p.tasks, parentId, (parent) => {
+          p.tasks = updateNodeInTree(p.tasks, parentId, (parent: TaskNode) => {
             const next = [...(parent.children || [])];
             const fromIndex = next.findIndex((t) => t.id === taskId);
             if (fromIndex !== -1) {

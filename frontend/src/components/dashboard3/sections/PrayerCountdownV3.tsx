@@ -1,53 +1,55 @@
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import React, { useEffect, useMemo, useCallback, memo, useState } from 'react';
 import { CardV3 } from '../ui/CardV3';
+import { useGlobalConfig } from '../../../context/GlobalConfigContext';
+import { useDashboardStore } from '../../../store/dashboardStore';
+import { toDateKey, startOfDay, startOfWeek, startOfMonth } from '../../../components/dashboard/DashboardUtils';
 
 interface Prayer {
   name: string;
   time: string;
-  completed: boolean;
 }
 
-const PRAYERS: Prayer[] = [
-  { name: 'Fajr', time: '05:30', completed: false },
-  { name: 'Dhuhr', time: '12:45', completed: false },
-  { name: 'Asr', time: '15:30', completed: false },
-  { name: 'Maghrib', time: '18:45', completed: false },
-  { name: 'Isha', time: '20:15', completed: false },
-];
-
-function startOfDay(d: Date) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
-function startOfWeek(d: Date) { const day = d.getDay(); const diff = d.getDate() - day + (day === 0 ? -6 : 1); return new Date(d.getFullYear(), d.getMonth(), diff); }
-function startOfMonth(d: Date) { return new Date(d.getFullYear(), d.getMonth(), 1); }
+const DEFAULT_PRAYER_TIMES: Record<string, string> = {
+  Fajr: '05:24',
+  Dhuhr: '12:31',
+  Asr: '15:47',
+  Maghrib: '18:22',
+  Isha: '19:48',
+};
 
 export const PrayerCountdownV3 = memo(function PrayerCountdownV3() {
-  const [prayers, setPrayers] = useState<Prayer[]>(PRAYERS);
   const [now, setNow] = useState(new Date());
+  const globalConfig = useGlobalConfig() as { config?: { PRAYERS?: string[] } } | null;
+  const config = globalConfig?.config;
+  const PRAYERS = useMemo(() => config?.PRAYERS || ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'], [config]);
+  const todayKey = toDateKey(now);
+  const prayerLogs = (useDashboardStore((s) => s.prayerLogs) ?? {}) as Record<string, Record<string, boolean>>;
+  const togglePrayer = useDashboardStore((s) => s.togglePrayer);
+  const todayPrayerLog = prayerLogs[todayKey] || {};
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
 
-  const togglePrayer = useCallback((name: string) => {
-    setPrayers((prev) =>
-      prev.map((p) => (p.name === name ? { ...p, completed: !p.completed } : p))
-    );
-  }, []);
+  const prayerRows = useMemo<Prayer[]>(() => {
+    return PRAYERS.map((name: string) => ({ name, time: DEFAULT_PRAYER_TIMES[name] || DEFAULT_PRAYER_TIMES.Dhuhr }));
+  }, [PRAYERS]);
 
   const nextPrayer = useMemo(() => {
     const currentTime = now.getHours() * 60 + now.getMinutes();
-    for (const prayer of prayers) {
+    for (const prayer of prayerRows) {
       const [hours, mins] = prayer.time.split(':').map(Number);
       const prayerTime = hours * 60 + mins;
-      if (prayerTime > currentTime && !prayer.completed) {
+      if (prayerTime > currentTime && !todayPrayerLog[prayer.name]) {
         return prayer;
       }
     }
-    return prayers.find((p) => !p.completed) || prayers[prayers.length - 1];
-  }, [prayers, now]);
+    return prayerRows.find((p) => !todayPrayerLog[p.name]) || prayerRows[prayerRows.length - 1];
+  }, [prayerRows, now, todayPrayerLog]);
 
-  const completedCount = prayers.filter((p) => p.completed).length;
-  const progress = (completedCount / prayers.length) * 100;
+  const completedCount = PRAYERS.reduce((acc: number, p: string) => acc + (todayPrayerLog[p] ? 1 : 0), 0);
+  const progress = PRAYERS.length ? (completedCount / PRAYERS.length) * 100 : 0;
 
   const countdowns = useMemo(() => {
     const sod = startOfDay(now);
@@ -83,42 +85,43 @@ export const PrayerCountdownV3 = memo(function PrayerCountdownV3() {
               />
             </div>
             <span className="text-sm text-[var(--d3-text-muted)]">
-              {completedCount}/{prayers.length}
+              {completedCount}/{PRAYERS.length}
             </span>
           </div>
         </div>
 
         {/* Center: Prayer Toggles */}
-        <div className="flex gap-2">
-          {prayers.map((prayer) => (
-            <button
-              key={prayer.name}
-              onClick={() => togglePrayer(prayer.name)}
-              className={`flex flex-col items-center gap-1 p-2 rounded-[var(--d3-radius-md)] transition-colors ${
-                prayer.completed ? '' : 'hover:bg-[var(--d3-surface-elevated)]'
-              }`}
-              style={{ backgroundColor: prayer.completed ? 'var(--d3-success-bg)' : 'transparent' }}
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
-                  prayer.completed
-                    ? 'bg-[var(--d3-success)] text-white'
-                    : 'bg-[var(--d3-surface-elevated)] text-[var(--d3-text-muted)]'
-                }`}
+        <div className="flex gap-2 flex-wrap">
+          {prayerRows.map((prayer: Prayer) => {
+            const done = !!todayPrayerLog[prayer.name];
+            return (
+              <button
+                key={prayer.name}
+                onClick={() => togglePrayer(prayer.name, !done)}
+                className={`flex flex-col items-center gap-1 p-2 rounded-[var(--d3-radius-md)] transition-colors ${done ? '' : 'hover:bg-[var(--d3-surface-elevated)]'}`}
+                style={{ backgroundColor: done ? 'var(--d3-success-bg)' : 'transparent' }}
               >
-                {prayer.name[0]}
-              </div>
-              <span
-                className={`text-[10px] ${
-                  prayer.completed
-                    ? 'text-[var(--d3-success)]'
-                    : 'text-[var(--d3-text-muted)]'
-                }`}
-              >
-                {prayer.time}
-              </span>
-            </button>
-          ))}
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
+                    done
+                      ? 'bg-[var(--d3-success)] text-white'
+                      : 'bg-[var(--d3-surface-elevated)] text-[var(--d3-text-muted)]'
+                  }`}
+                >
+                  {prayer.name[0]}
+                </div>
+                <span
+                  className={`text-[10px] ${
+                    done
+                      ? 'text-[var(--d3-success)]'
+                      : 'text-[var(--d3-text-muted)]'
+                  }`}
+                >
+                  {prayer.time}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Right: Countdowns */}

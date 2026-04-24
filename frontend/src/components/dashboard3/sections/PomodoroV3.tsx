@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { CardV3 } from '../ui/CardV3';
 import { ButtonV3 } from '../ui/ButtonV3';
 import { ProgressRing } from '../ui/ProgressRing';
+import { useDashboardStore } from '../../../store/dashboardStore';
+import { POMODORO_STORAGE, toDateKey } from '../../../components/dashboard/DashboardUtils';
 
 interface PomodoroV3Props {
   initialMinutes?: number;
@@ -18,6 +20,13 @@ export const PomodoroV3 = memo(function PomodoroV3({ initialMinutes = 25 }: Pomo
   const [timeLeft, setTimeLeft] = useState(initialMinutes * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [sessions, setSessions] = useState(0);
+  const activePomodoroTask = useDashboardStore((s) => s.activePomodoroTask);
+  const setActivePomodoroTask = useDashboardStore((s) => s.setActivePomodoroTask);
+  const toggleQuickTask = useDashboardStore((s) => s.toggleQuickTask);
+  const toggleSharedQuickTask = useDashboardStore((s) => s.toggleSharedQuickTask);
+  const toggleProjectTask = useDashboardStore((s) => s.toggleProjectTask);
+
+  const todayKey = toDateKey(new Date());
 
   const progress = useMemo(() => {
     if (duration === 0) return 0;
@@ -31,6 +40,49 @@ export const PomodoroV3 = memo(function PomodoroV3({ initialMinutes = 25 }: Pomo
   }, []);
 
   useEffect(() => {
+    try {
+      const raw = localStorage.getItem(POMODORO_STORAGE);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { date?: string; timeLeft?: number; duration?: number; sessions?: number; isRunning?: boolean };
+      if (parsed.date === todayKey) {
+        if (typeof parsed.duration === 'number' && parsed.duration > 0) setDuration(parsed.duration);
+        if (typeof parsed.timeLeft === 'number' && parsed.timeLeft >= 0) setTimeLeft(parsed.timeLeft);
+        if (typeof parsed.sessions === 'number') setSessions(parsed.sessions);
+        if (typeof parsed.isRunning === 'boolean') setIsRunning(parsed.isRunning);
+      }
+    } catch {
+      // ignore malformed local state
+    }
+  }, [todayKey]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(POMODORO_STORAGE, JSON.stringify({
+        date: todayKey,
+        timeLeft,
+        duration,
+        sessions,
+        isRunning,
+      }));
+    } catch {
+      // ignore storage failures
+    }
+  }, [todayKey, timeLeft, duration, sessions, isRunning]);
+
+  const completeLinkedTask = useCallback(() => {
+    const task = activePomodoroTask;
+    if (!task) return;
+    if (task.shareId && task.quickTaskId === undefined) {
+      toggleSharedQuickTask(task.shareId, task.taskId, true);
+    } else if (task.quickTaskId) {
+      toggleQuickTask(task.taskId, true);
+    } else if (task.projectId) {
+      toggleProjectTask(task.projectId, task.taskId, true);
+    }
+    setActivePomodoroTask(null);
+  }, [activePomodoroTask, setActivePomodoroTask, toggleProjectTask, toggleQuickTask, toggleSharedQuickTask]);
+
+  useEffect(() => {
     if (!isRunning) return;
 
     const timer = setInterval(() => {
@@ -38,6 +90,7 @@ export const PomodoroV3 = memo(function PomodoroV3({ initialMinutes = 25 }: Pomo
         if (prev <= 1) {
           setIsRunning(false);
           setSessions((s) => s + 1);
+          completeLinkedTask();
           return 0;
         }
         return prev - 1;
@@ -45,7 +98,7 @@ export const PomodoroV3 = memo(function PomodoroV3({ initialMinutes = 25 }: Pomo
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isRunning]);
+  }, [isRunning, completeLinkedTask]);
 
   const handleStart = useCallback(() => setIsRunning(true), []);
   const handlePause = useCallback(() => setIsRunning(false), []);
@@ -67,6 +120,12 @@ export const PomodoroV3 = memo(function PomodoroV3({ initialMinutes = 25 }: Pomo
         <h3 className="text-sm font-medium text-[var(--d3-text-muted)] uppercase tracking-wider">
           Focus Timer
         </h3>
+
+        {activePomodoroTask && (
+          <div className="w-full rounded-[var(--d3-radius-md)] border border-[var(--d3-primary)]/20 bg-[var(--d3-primary-bg)] px-3 py-2 text-xs text-[var(--d3-text)]">
+            Active task: <span className="font-medium">{activePomodoroTask.title}</span>
+          </div>
+        )}
         
         <ProgressRing 
           progress={progress} 

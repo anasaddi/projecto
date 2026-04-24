@@ -1,5 +1,4 @@
-import type { TimelineRoutineItem } from '../../types/dashboard';
-import type { DailyTaskTemplate } from '../../types/dashboard';
+import type { TimelineRoutineItem, DailyTaskTemplate, DayCompletionPayload } from '../../types/dashboard';
 import { uid } from '../../components/dashboard/DashboardUtils';
 import { haptic } from '../../utils/haptics';
 import { logTimelineEvent } from '../storeHelpers';
@@ -22,7 +21,7 @@ export function createTimelineSlice(set: TimelineSet) {
       set((s: unknown) => {
         const state = s as {
           timelineRoutines: Record<string, Record<string, TimelineRoutineItem[]>>;
-          dailyCompletionLog: Record<string, { events?: { id: string }[] }>;
+          dailyCompletionLog: Record<string, DayCompletionPayload>;
           dailyTaskTemplates: DailyTaskTemplate[];
         };
         const list = state.timelineRoutines[dateKey]?.[slotKey];
@@ -41,7 +40,7 @@ export function createTimelineSlice(set: TimelineSet) {
       set((s: unknown) => {
         const state = s as {
           timelineRoutines: Record<string, Record<string, TimelineRoutineItem[]>>;
-          dailyCompletionLog: Record<string, { events?: { id: string }[] }>;
+          dailyCompletionLog: Record<string, DayCompletionPayload>;
         };
         if (!state.timelineRoutines[dateKey]?.[slotKey]) return;
         state.timelineRoutines[dateKey][slotKey] = state.timelineRoutines[dateKey][slotKey].filter(

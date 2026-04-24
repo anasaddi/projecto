@@ -1,88 +1,63 @@
-import React, { useState, useCallback, memo } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import { CardV3 } from '../ui/CardV3';
 import { ButtonV3 } from '../ui/ButtonV3';
+import { useDashboardStore } from '../../../store/dashboardStore';
+import { countTreeStats, formatDeadlineDisplay } from '../../../components/dashboard/DashboardUtils';
+import type { Project, TaskNode } from '../../../types/dashboard';
 
-interface Project {
-  id: string;
-  name: string;
-  progress: number;
-  color: string;
-  tasks: { id: string; text: string; completed: boolean }[];
-  deadline: string;
+function countProgress(tasks: TaskNode[]) {
+  const stats = countTreeStats(tasks);
+  return stats.total ? Math.round((stats.completed / stats.total) * 100) : 0;
 }
 
-const INITIAL_PROJECTS: Project[] = [
-  {
-    id: '1',
-    name: 'Website Redesign',
-    progress: 75,
-    color: '#6366f1',
-    tasks: [
-      { id: '1', text: 'Design system', completed: true },
-      { id: '2', text: 'Homepage', completed: true },
-      { id: '3', text: 'About page', completed: false },
-      { id: '4', text: 'Contact form', completed: false },
-    ],
-    deadline: '2026-04-30',
-  },
-  {
-    id: '2',
-    name: 'Mobile App',
-    progress: 45,
-    color: '#22c55e',
-    tasks: [
-      { id: '1', text: 'User auth', completed: true },
-      { id: '2', text: 'Dashboard', completed: false },
-      { id: '3', text: 'Settings', completed: false },
-    ],
-    deadline: '2026-05-15',
-  },
-  {
-    id: '3',
-    name: 'Marketing Campaign',
-    progress: 90,
-    color: '#f59e0b',
-    tasks: [
-      { id: '1', text: 'Strategy', completed: true },
-      { id: '2', text: 'Content', completed: true },
-      { id: '3', text: 'Launch', completed: false },
-    ],
-    deadline: '2026-04-25',
-  },
-];
-
-const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr);
-  const today = new Date();
-  const diff = Math.ceil((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  if (diff === 0) return 'Today';
-  if (diff === 1) return 'Tomorrow';
-  if (diff < 0) return 'Overdue';
-  return `${diff} days`;
-};
+function renderTaskTree(
+  nodes: TaskNode[],
+  onToggle: (taskId: string, done: boolean) => void,
+  depth = 0
+) {
+  return nodes.map((task) => (
+    <div key={task.id} className="space-y-1" style={{ marginLeft: depth * 12 }}>
+      <button
+        type="button"
+        onClick={() => onToggle(task.id, !task.done)}
+        className="w-full flex items-start gap-2 text-left"
+      >
+        <span
+          className={`mt-0.5 w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+            task.done
+              ? 'bg-[var(--d3-success)] border-[var(--d3-success)]'
+              : 'border-[var(--d3-border)] hover:border-[var(--d3-primary)]'
+          }`}
+        >
+          {task.done && (
+            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          )}
+        </span>
+        <span className={`flex-1 text-sm ${task.done ? 'line-through text-[var(--d3-text-muted)]' : 'text-[var(--d3-text)]'}`}>
+          {task.title}
+        </span>
+      </button>
+      {Array.isArray(task.children) && task.children.length > 0 && (
+        <div className="space-y-1">
+          {renderTaskTree(task.children, onToggle, depth + 1)}
+        </div>
+      )}
+    </div>
+  ));
+}
 
 export const ProjectsV3 = memo(function ProjectsV3() {
-  const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
+  const projects = (useDashboardStore((s) => s.projects) ?? []) as Project[];
+  const toggleProjectTask = useDashboardStore((s) => s.toggleProjectTask);
+  const createProject = useDashboardStore((s) => s.createProject);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const toggleTask = useCallback((projectId: string, taskId: string) => {
-    setProjects((prev) =>
-      prev.map((p) => {
-        if (p.id !== projectId) return p;
-        const updatedTasks = p.tasks.map((t) =>
-          t.id === taskId ? { ...t, completed: !t.completed } : t
-        );
-        const progress = Math.round(
-          (updatedTasks.filter((t) => t.completed).length / updatedTasks.length) * 100
-        );
-        return { ...p, tasks: updatedTasks, progress };
-      })
-    );
-  }, []);
-
-  const totalProgress = Math.round(
-    projects.reduce((sum, p) => sum + p.progress, 0) / projects.length
-  );
+  const totalProgress = useMemo(() => {
+    const ratios = projects.map((p) => countProgress(p.tasks));
+    return ratios.length ? Math.round(ratios.reduce((a, b) => a + b, 0) / ratios.length) : 0;
+  }, [projects]);
 
   return (
     <CardV3 className="h-full flex flex-col">
@@ -93,7 +68,7 @@ export const ProjectsV3 = memo(function ProjectsV3() {
             {projects.length} active · {totalProgress}% avg
           </p>
         </div>
-        <ButtonV3 variant="ghost" size="sm">
+        <ButtonV3 variant="ghost" size="sm" onClick={createProject}>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
@@ -101,90 +76,68 @@ export const ProjectsV3 = memo(function ProjectsV3() {
         </ButtonV3>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-auto">
-        {projects.map((project) => (
-          <div
-            key={project.id}
-            className="bg-[var(--d3-surface-elevated)] rounded-[var(--d3-radius-md)] p-4 transition-all hover:border-[var(--d3-border)] border border-transparent"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: project.color }}
-                />
-                <h4 className="font-medium text-[var(--d3-text)]">{project.name}</h4>
-              </div>
-              <span
-                className={`text-xs font-medium px-2 py-1 rounded-full ${
-                  formatDate(project.deadline) === 'Overdue'
-                    ? 'text-[var(--d3-danger)]'
-                    : 'text-[var(--d3-text-muted)]'
-                }`}
-                style={{ backgroundColor: formatDate(project.deadline) === 'Overdue' ? 'var(--d3-danger-bg)' : 'var(--d3-surface)' }}
-              >
-                {formatDate(project.deadline)}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex-1 h-2 bg-[var(--d3-border)] rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    width: `${project.progress}%`,
-                    backgroundColor: project.color,
-                  }}
-                />
-              </div>
-              <span className="text-sm font-medium text-[var(--d3-text)] w-10 text-right">
-                {project.progress}%
-              </span>
-            </div>
-
-            <button
-              onClick={() => setExpanded(expanded === project.id ? null : project.id)}
-              className="text-xs text-[var(--d3-text-muted)] hover:text-[var(--d3-primary)] transition-colors"
-            >
-              {expanded === project.id ? 'Hide' : 'Show'} {project.tasks.length} tasks
-            </button>
-
-            {expanded === project.id && (
-              <div className="mt-3 pt-3 border-t border-[var(--d3-border)] space-y-2">
-                {project.tasks.map((task) => (
-                  <button
-                    key={task.id}
-                    onClick={() => toggleTask(project.id, task.id)}
-                    className="w-full flex items-center gap-2 text-left group"
-                  >
-                    <div
-                      className={`w-4 h-4 rounded border transition-all ${
-                        task.completed
-                          ? 'bg-[var(--d3-success)] border-[var(--d3-success)]'
-                          : 'border-[var(--d3-border)] group-hover:border-[var(--d3-primary)]'
-                      }`}
-                    >
-                      {task.completed && (
-                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </div>
-                    <span
-                      className={`text-sm ${
-                        task.completed
-                          ? 'line-through text-[var(--d3-text-muted)]'
-                          : 'text-[var(--d3-text-secondary)]'
-                      }`}
-                    >
-                      {task.text}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
+      <div className="flex-1 space-y-3 overflow-auto pr-1">
+        {projects.length === 0 ? (
+          <div className="rounded-[var(--d3-radius-md)] border border-dashed border-[var(--d3-border)] p-4 text-sm text-[var(--d3-text-muted)]">
+            Nessun progetto disponibile.
           </div>
-        ))}
+        ) : (
+          projects.map((project) => {
+            const progress = countProgress(project.tasks);
+            const deadlineLabel = project.deadline ? formatDeadlineDisplay(project.deadline) : 'No deadline';
+
+            return (
+              <div
+                key={project.id}
+                className="bg-[var(--d3-surface-elevated)] rounded-[var(--d3-radius-md)] p-4 border border-transparent hover:border-[var(--d3-border)] transition-colors"
+              >
+                <div className="flex items-center justify-between mb-2 gap-3">
+                  <div>
+                    <h4 className="font-medium text-[var(--d3-text)]">{project.title}</h4>
+                    <p className="text-xs text-[var(--d3-text-muted)]">{deadlineLabel}</p>
+                  </div>
+                  <span
+                    className="text-xs font-medium px-2 py-1 rounded-full"
+                    style={{
+                      backgroundColor: project.deadline ? 'var(--d3-danger-bg)' : 'var(--d3-surface)',
+                      color: project.deadline ? 'var(--d3-danger)' : 'var(--d3-text-muted)',
+                    }}
+                  >
+                    {deadlineLabel}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex-1 h-2 bg-[var(--d3-border)] rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${progress}%`,
+                        background: 'linear-gradient(to right, var(--d3-primary), var(--d3-primary-light))',
+                      }}
+                    />
+                  </div>
+                  <span className="text-sm font-medium text-[var(--d3-text)] w-10 text-right">
+                    {progress}%
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => setExpanded(expanded === project.id ? null : project.id)}
+                  className="text-xs text-[var(--d3-text-muted)] hover:text-[var(--d3-primary)] transition-colors"
+                >
+                  {expanded === project.id ? 'Hide' : 'Show'} {project.tasks.length} tasks
+                </button>
+
+                {expanded === project.id && (
+                  <div className="mt-3 pt-3 border-t border-[var(--d3-border)] space-y-2">
+                    {renderTaskTree(project.tasks, (taskId, done) => toggleProjectTask(project.id, taskId, done))}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
     </CardV3>
   );
