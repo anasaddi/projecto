@@ -8,7 +8,6 @@ import { useToast } from '../context/ToastContext';
 import { PomodoroCompact } from '../components/dashboard/PomodoroCompact';
 import { FocusHeatmap } from '../components/dashboard/FocusHeatmap';
 import { PrayersCountdownsV2 } from '../components/dashboard/PrayersCountdownsV2';
-import { PrayersOptimizedV2 } from '../components/dashboard/PrayersOptimizedV2';
 import { DailyTimelineWidget2 } from '../components/dashboard/DailyTimelineWidget2';
 import { QuickTasksSectionV2 } from '../components/dashboard/QuickTasksSectionV2';
 import { Top3SectionV2 } from '../components/dashboard/Top3SectionV2';
@@ -199,15 +198,6 @@ export default function DashboardV2(): React.ReactElement {
 
       <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-5 py-5 md:py-6 flex-1 min-h-0 relative z-10`}>
         <PrayersCountdownsV2
-          todayPrayerLog={todayPrayerLog}
-          togglePrayer={togglePrayer}
-          PRAYERS={PRAYERS}
-          countdowns={countdowns as { label: string; remaining: string; pct: number }[]}
-          todayFocusScore={todayFocusScore}
-          focusStreak={focusStreak}
-        />
-
-        <PrayersOptimizedV2
           todayPrayerLog={todayPrayerLog}
           togglePrayer={togglePrayer}
           PRAYERS={PRAYERS}
