@@ -95,7 +95,7 @@ export function Top3SectionV2() {
   return (
     <Card className="flex flex-col shrink-0">
       <CardHeader
-        icon={<Icons.Target className="w-5 h-5 text-amber-500" />}
+        icon={Icons.Target}
         iconColor="text-amber-500"
         title="Top 3 Focus"
         subtitle="Le tue priorità principali"

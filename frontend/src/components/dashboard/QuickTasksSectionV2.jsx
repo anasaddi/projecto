@@ -63,7 +63,7 @@ export function QuickTasksSectionV2() {
       glowColor="success"
     >
       <CardHeader
-        icon={<Icons.Zap className="w-5 h-5 text-rose-500" />}
+        icon={Icons.Zap}
         iconColor="text-rose-500"
         title="Quick Tasks"
         subtitle="Task veloci senza progetto"
