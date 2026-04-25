@@ -183,15 +183,13 @@ export function Top3SectionV2() {
                     )}
                   </div>
                   
-                  <motion.button 
+                  <button 
                     type="button" 
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={(e) => { e.stopPropagation(); removeFromTop3(idx); }} 
-                    className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                    onClick={() => removeFromTop3(idx)}
+                    className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors hover:scale-110 active:scale-90"
                   >
                     <Icons.X className="w-4 h-4" />
-                  </motion.button>
+                  </button>
                 </div>
               ) : (
                 <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
