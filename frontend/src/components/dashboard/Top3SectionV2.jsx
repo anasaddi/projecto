@@ -117,7 +117,6 @@ export function Top3SectionV2() {
           return (
             <motion.div
               key={idx}
-              layout
               data-slot-index={idx}
               draggable={filled}
               onDragStart={filled ? (e) => { 

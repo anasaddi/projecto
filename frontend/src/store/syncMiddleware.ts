@@ -3,6 +3,7 @@ import { STORAGE_KEY, BC_CHANNEL } from '../components/dashboard/DashboardUtils'
 import { saveLocalState, addToSyncQueue, getSyncQueue, clearSyncQueue } from '../db/localDb';
 
 let syncTimeout: ReturnType<typeof setTimeout> | null = null;
+let persistTimeout: ReturnType<typeof setTimeout> | null = null;
 let isApplyingFromBC = false;
 let isApplyingFromBCQueue: unknown[] = [];  // Buffer BC updates while applying
 let bc: BroadcastChannel | null = null;
@@ -90,21 +91,22 @@ export function syncMiddleware(config: any): any {
         activePomodoroTask: state.activePomodoroTask ?? null,
       };
 
-      if (typeof window !== 'undefined' && window.localStorage) {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(fullState));
-        } catch (err) {
-          console.error('Failed to save to localStorage:', err);
+      if (persistTimeout) clearTimeout(persistTimeout);
+      persistTimeout = setTimeout(() => {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(fullState));
+          } catch (err) {
+            console.error('Failed to save to localStorage:', err);
+          }
         }
-      }
-
-      saveLocalState(fullState);
-
-      try {
-        if (channel) channel.postMessage(fullState);
-      } catch (err) {
-        console.error('Failed to post to BroadcastChannel:', err);
-      }
+        saveLocalState(fullState);
+        try {
+          if (channel) channel.postMessage(fullState);
+        } catch (err) {
+          console.error('Failed to post to BroadcastChannel:', err);
+        }
+      }, 300);
 
       if (syncTimeout) clearTimeout(syncTimeout);
       syncTimeout = setTimeout(async () => {
@@ -141,15 +143,21 @@ export function syncMiddleware(config: any): any {
         const s = e?.data;
         if (!s) return;
         if (isApplyingFromBC) {
-          // Buffer incoming BC updates instead of dropping them
           isApplyingFromBCQueue.push(s);
           return;
         }
-        isApplyingFromBC = true;
-        wrappedSet(s);
-        queueMicrotask(() => {
-          isApplyingFromBC = false;
-        });
+        // Defer to next task to avoid blocking the message handler
+        setTimeout(() => {
+          isApplyingFromBC = true;
+          set(s);
+          queueMicrotask(() => {
+            isApplyingFromBC = false;
+            if (isApplyingFromBCQueue.length > 0) {
+              const queued = isApplyingFromBCQueue.splice(0);
+              for (const data of queued) set(data);
+            }
+          });
+        }, 0);
       };
     }
 
