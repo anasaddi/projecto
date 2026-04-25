@@ -66,11 +66,13 @@ async def lifespan(app: FastAPI):
     # Seeding
     if db_ready:
         from app.db.session import AsyncSessionLocal
-        from app.db.seed_training import seed_training_if_empty, seed_fake_history
+        from app.db.seed_training import seed_training_if_empty, seed_fake_history, sync_missing_exercises
         async with AsyncSessionLocal() as db:
             try:
                 n = await seed_training_if_empty(db)
                 if n: logger.info(f"Seeded {n} exercises.")
+                added = await sync_missing_exercises(db)
+                if added: logger.info(f"Synced {added} missing exercises.")
                 m = await seed_fake_history(db)
                 if m: logger.info(f"Seeded {m} history logs.")
             except Exception as e:

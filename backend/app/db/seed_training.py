@@ -10,6 +10,38 @@ def _seed_path() -> Path:
     return Path(__file__).resolve().parent.parent / "data" / "training_seed.json"
 
 
+async def sync_missing_exercises(db: AsyncSession) -> int:
+    """Insert exercises from training_seed.json that are missing from the DB. Safe to run on a live DB. Returns number of new exercises added."""
+    path = _seed_path()
+    if not path.exists():
+        return 0
+    data = json.loads(path.read_text(encoding="utf-8"))
+    seed_exercises = data.get("exercises", [])
+    if not seed_exercises:
+        return 0
+
+    res = await db.execute(select(Exercise.id))
+    existing_ids = {row[0] for row in res.all()}
+
+    added = 0
+    for ex in seed_exercises:
+        if ex["id"] not in existing_ids:
+            db.add(Exercise(
+                id=ex["id"],
+                name=ex["name"],
+                category=ex["category"],
+                primary_muscles=ex.get("primary_muscles", []),
+                secondary_muscles=ex.get("secondary_muscles", []),
+                cns_fatigue=float(ex.get("cns_fatigue", 0)),
+                joint_stress=ex.get("joint_stress", {}),
+            ))
+            added += 1
+
+    if added:
+        await db.commit()
+    return added
+
+
 async def seed_training_if_empty(db: AsyncSession) -> int:
     """Seed exercises and day templates from training_seed.json if no exercises exist. Returns number of exercises seeded."""
     count_res = await db.execute(select(func.count(Exercise.id)))

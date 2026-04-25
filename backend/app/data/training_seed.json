@@ -330,6 +330,132 @@
       }
     },
     {
+      "id": "aw_iso_light_rising",
+      "name": "AW ISO Light - Rising + back",
+      "category": "AW",
+      "primary_muscles": ["forearms", "biceps"],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.3,
+      "joint_stress": { "elbow": 0.4, "wrist": 0.4 }
+    },
+    {
+      "id": "aw_iso_light_cup",
+      "name": "AW ISO Light - Cup + drag",
+      "category": "AW",
+      "primary_muscles": ["forearms", "wrist_flexors"],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.3,
+      "joint_stress": { "elbow": 0.4, "wrist": 0.5 }
+    },
+    {
+      "id": "aw_iso_light_pronation",
+      "name": "AW ISO Light - Pronation 45°",
+      "category": "AW",
+      "primary_muscles": ["pronators", "forearms"],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.3,
+      "joint_stress": { "elbow": 0.4, "wrist": 0.4 }
+    },
+    {
+      "id": "aw_iso_light_side",
+      "name": "AW ISO Light - Side + supination",
+      "category": "AW",
+      "primary_muscles": ["supinators", "forearms"],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.3,
+      "joint_stress": { "elbow": 0.4, "wrist": 0.4 }
+    },
+    {
+      "id": "aw_iso_light_dita",
+      "name": "AW ISO Light - Mazurenko dita",
+      "category": "AW",
+      "primary_muscles": ["forearms", "wrist_flexors"],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.3,
+      "joint_stress": { "wrist": 0.5 }
+    },
+    {
+      "id": "aw_iso_light_press",
+      "name": "AW ISO Light - Press",
+      "category": "AW",
+      "primary_muscles": ["forearms", "pronators"],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.3,
+      "joint_stress": { "elbow": 0.3, "wrist": 0.4 }
+    },
+    {
+      "id": "aw_iso_light_bicipite",
+      "name": "AW ISO Light - Bicipite",
+      "category": "AW",
+      "primary_muscles": ["biceps", "forearms"],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.3,
+      "joint_stress": { "elbow": 0.4 }
+    },
+    {
+      "id": "aw_iso_heavy_rising",
+      "name": "AW ISO Heavy - Rising + back",
+      "category": "AW",
+      "primary_muscles": ["forearms", "biceps"],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.7,
+      "joint_stress": { "elbow": 0.8, "wrist": 0.8 }
+    },
+    {
+      "id": "aw_iso_heavy_cup",
+      "name": "AW ISO Heavy - Cup + drag",
+      "category": "AW",
+      "primary_muscles": ["forearms", "wrist_flexors"],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.7,
+      "joint_stress": { "elbow": 0.8, "wrist": 0.9 }
+    },
+    {
+      "id": "aw_iso_heavy_pronation",
+      "name": "AW ISO Heavy - Pronation 45°",
+      "category": "AW",
+      "primary_muscles": ["pronators", "forearms"],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.7,
+      "joint_stress": { "elbow": 0.8, "wrist": 0.8 }
+    },
+    {
+      "id": "aw_iso_heavy_side",
+      "name": "AW ISO Heavy - Side + supination",
+      "category": "AW",
+      "primary_muscles": ["supinators", "forearms"],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.7,
+      "joint_stress": { "elbow": 0.8, "wrist": 0.8 }
+    },
+    {
+      "id": "aw_iso_heavy_dita",
+      "name": "AW ISO Heavy - Mazurenko dita",
+      "category": "AW",
+      "primary_muscles": ["forearms", "wrist_flexors"],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.7,
+      "joint_stress": { "wrist": 0.9 }
+    },
+    {
+      "id": "aw_iso_heavy_press",
+      "name": "AW ISO Heavy - Press",
+      "category": "AW",
+      "primary_muscles": ["forearms", "pronators"],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.7,
+      "joint_stress": { "elbow": 0.7, "wrist": 0.8 }
+    },
+    {
+      "id": "aw_iso_heavy_bicipite",
+      "name": "AW ISO Heavy - Bicipite",
+      "category": "AW",
+      "primary_muscles": ["biceps", "forearms"],
+      "secondary_muscles": [],
+      "cns_fatigue": 0.7,
+      "joint_stress": { "elbow": 0.8 }
+    },
+    {
       "id": "jm_press",
       "name": "JM Press",
       "category": "HYPERTROPHY",
