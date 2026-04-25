@@ -56,9 +56,10 @@ export function Top3SectionV2() {
 
   const toggleTop3Slot = (slot) => {
     if (!slot || slot.missing) return;
-    if (slot.isQuick) {
+    if (slot.quickTaskId) {
       if (slot.shareId) toggleSharedQuickTask(slot.shareId, slot.quickTaskId, !slot.done);
       else toggleQuickTask(slot.quickTaskId, !slot.done);
+      return;
     } else if (slot.projectId?.startsWith('lg-') && updateGoal) {
       const goalId = slot.projectId.replace(/^lg-/, '');
       const newVal = !slot.done;

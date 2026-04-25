@@ -51,6 +51,8 @@ interface SyncStateSlice {
   lifeGoals?: unknown;
   timelineRoutines?: Record<string, unknown>;
   timelinePanelExpanded?: boolean;
+  activePomodoroTask?: unknown;
+  sectionOrder?: Record<string, string[]>;
   lastSavedAt?: number | null;
 }
 
@@ -84,6 +86,8 @@ export function syncMiddleware(config: any): any {
         lifeGoals: state.lifeGoals,
         timelineRoutines: state.timelineRoutines ?? {},
         timelinePanelExpanded: state.timelinePanelExpanded !== false,
+        sectionOrder: state.sectionOrder,
+        activePomodoroTask: state.activePomodoroTask ?? null,
       };
 
       if (typeof window !== 'undefined' && window.localStorage) {

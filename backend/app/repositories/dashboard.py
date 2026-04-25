@@ -116,6 +116,8 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
     ds = res_ds.scalar_one_or_none()
     ds_data = _parse_json(ds.data, {}) if ds else {}
     lg_collapsed = ds_data.get("lifeGoals", {}).get("collapsed", False)
+    timeline_routines = ds_data.get("timelineRoutines") if isinstance(ds_data.get("timelineRoutines"), dict) else {}
+    section_order = ds_data.get("sectionOrder") if isinstance(ds_data.get("sectionOrder"), dict) else None
 
     lifeGoals = {
         "collapsed": lg_collapsed,
@@ -153,6 +155,10 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
         "top3Manual": top3Manual,
         "dailyCompletionLog": dailyCompletionLog,
         "lifeGoals": lifeGoals,
+        "timelineRoutines": timeline_routines,
+        "timelinePanelExpanded": ds_data.get("timelinePanelExpanded", True),
+        "sectionOrder": section_order,
+        "activePomodoroTask": ds_data.get("activePomodoroTask"),
     }
 
 async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "default", user_id: str | None = None):
@@ -310,6 +316,12 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
         if "lifeGoals" not in merged: merged["lifeGoals"] = {}
         merged["lifeGoals"]["collapsed"] = lg.get("collapsed", False)
         ds.data = merged
+
+        for ui_key in ("timelineRoutines", "timelinePanelExpanded", "sectionOrder", "activePomodoroTask"):
+            if ui_key in data:
+                merged = _parse_json(ds.data, {})
+                merged[ui_key] = data[ui_key]
+                ds.data = merged
 
         if "tiers" in lg:
             incoming_tier_ids = [str(t["id"]) for t in lg["tiers"]]

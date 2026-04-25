@@ -387,6 +387,8 @@ export function loadDashboardStateFromStorage(fallback = null) {
       lifeGoals: parsed.lifeGoals ? normalizeLifeGoals(parsed.lifeGoals, fb.lifeGoals) : fb.lifeGoals,
       timelineRoutines: parsed.timelineRoutines && typeof parsed.timelineRoutines === 'object' ? parsed.timelineRoutines : fb.timelineRoutines,
       timelinePanelExpanded: parsed.timelinePanelExpanded !== undefined ? parsed.timelinePanelExpanded : true,
+      sectionOrder: parsed.sectionOrder && typeof parsed.sectionOrder === 'object' ? parsed.sectionOrder : fb.sectionOrder,
+      activePomodoroTask: parsed.activePomodoroTask !== undefined ? parsed.activePomodoroTask : fb.activePomodoroTask,
     };
   } catch (err) {
     console.error('Failed to parse dashboard state from localStorage:', err);

@@ -11,8 +11,6 @@ import AppErrorBoundary from './components/AppErrorBoundary';
 import { isTokenExpired } from './api/client';
 
 import DashboardV2 from './pages/DashboardV2';
-import Dashboard2 from './pages/Dashboard2';
-import Dashboard3 from './pages/Dashboard3';
 
 const SourceList = lazy(() => import('./pages/SourceList'));
 const YouTubeViewer = lazy(() => import('./pages/YouTubeViewer'));
@@ -102,8 +100,8 @@ export default function App(): React.ReactElement {
                     <Route path="/" element={<HomePage />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/dashboard" element={<AdminRoute><DashboardV2 /></AdminRoute>} />
-                    <Route path="/dashboard2" element={<AdminRoute><Dashboard2 /></AdminRoute>} />
-                    <Route path="/dashboard3" element={<AdminRoute><Dashboard3 /></AdminRoute>} />
+                    <Route path="/dashboard2" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="/dashboard3" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/shared" element={<SharedProjects />} />
                     <Route path="/shared/:shareId" element={<SharedProjects />} />
                     <Route

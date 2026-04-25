@@ -105,23 +105,27 @@ async def cache_publish(channel: str, data: dict):
 
 
 # Dashboard-specific helpers
-DASHBOARD_CACHE_KEY = "dashboard:default"
+DASHBOARD_CACHE_PREFIX = "dashboard:"
+
+
+def dashboard_cache_key(user_id: str | None = None) -> str:
+    return f"{DASHBOARD_CACHE_PREFIX}{user_id or 'default'}"
+
+
+async def get_cached_dashboard(user_id: str | None = None) -> Optional[dict]:
+    return await cache_get(dashboard_cache_key(user_id))
+
+
+async def set_cached_dashboard(data: dict, user_id: str | None = None):
+    await cache_set(dashboard_cache_key(user_id), data, DASHBOARD_TTL)
+
+
+async def invalidate_dashboard(user_id: str | None = None):
+    await cache_delete(dashboard_cache_key(user_id))
 
 
 def shared_dashboard_key(share_id: str) -> str:
     return f"shared_dashboard:{share_id}"
-
-
-async def get_cached_dashboard() -> Optional[dict]:
-    return await cache_get(DASHBOARD_CACHE_KEY)
-
-
-async def set_cached_dashboard(data: dict):
-    await cache_set(DASHBOARD_CACHE_KEY, data, DASHBOARD_TTL)
-
-
-async def invalidate_dashboard():
-    await cache_delete(DASHBOARD_CACHE_KEY)
 
 
 async def get_cached_shared_dashboard(share_id: str) -> Optional[dict]:

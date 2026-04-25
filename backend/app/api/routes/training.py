@@ -249,13 +249,13 @@ async def get_dashboard_state(
     """Fetch the dashboard state — Redis-first, DB fallback. Filtered by user_id when present."""
     from app.cache import get_cached_dashboard, set_cached_dashboard
     try:
-        cached = await get_cached_dashboard()
+        cached = await get_cached_dashboard(user_id)
         if _has_meaningful_dashboard_data(cached):
             return {"key": "default", "data": cached, "updated_at": datetime.now(timezone.utc)}
         if cached:
             logger.info("Ignoring empty dashboard cache hit; fetching DB snapshot")
         data = await dashboard_service.get_dashboard(db, user_id=user_id)
-        await set_cached_dashboard(data)
+        await set_cached_dashboard(data, user_id)
         return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
     except Exception as e:
         logger.exception("get_dashboard_state failed: %s", e)
@@ -292,8 +292,8 @@ async def update_dashboard_state(
     from app.cache import invalidate_dashboard, set_cached_dashboard
     try:
         data = await dashboard_service.update_dashboard(db, body.data, user_id=user_id)
-        await invalidate_dashboard()
-        await set_cached_dashboard(data)
+        await invalidate_dashboard(user_id)
+        await set_cached_dashboard(data, user_id)
         return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
     except Exception as e:
         logger.exception("update_dashboard_state failed: %s", e)
