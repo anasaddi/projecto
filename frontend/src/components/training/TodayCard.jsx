@@ -305,7 +305,7 @@ function SectionHeader({ icon: Icon, color, label, showRepsLabels }) {
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
-export default function TodayCard({ selectedDay, allProgressions, selectedDate, progressPercent, isToday, onProgressionChange, awProgram }) {
+export default function TodayCard({ selectedDay, allProgressions, selectedDate, progressPercent, isToday, onProgressionChange, awProgram, embedded = false }) {
   const saveTimers = useRef({});
   const { config } = useGlobalConfig();
   const remoteExerciseMap = config?.EXERCISE_MUSCLE_MAP || {};
@@ -444,6 +444,122 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
     ? new Date(safeDate + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
     : selectedDay?.day_name || '';
 
+  const footerLegend = (
+    <div className="flex items-center gap-6 sm:gap-8 lg:gap-10">
+      {[
+        { dot: 'bg-indigo-500', label: 'Forza' },
+        { dot: 'bg-amber-500', label: 'AW' },
+        { dot: 'bg-emerald-500', label: 'Ipertrofia' },
+      ].map(item => (
+        <div key={item.label} className="flex items-center gap-2.5">
+          <div className={`w-1.5 h-1.5 rounded-full ${item.dot}`} />
+          <span className="text-xs font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{item.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+
+  const sectionsGrid = (
+    <div className="grid grid-cols-1 lg:grid-cols-3 lg:divide-x divide-zinc-100/80 dark:divide-white/[0.04]">
+      {/* Strength Section */}
+      <div className="flex flex-col min-h-[400px]">
+        <SectionHeader icon={Zap} color="text-indigo-500" label="Strength Focus" />
+        <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
+          {strengthEx.length > 0 ? strengthEx.map(ex => {
+            const prog = allProgressions?.[ex.exercise_id];
+            const { monthIdx, wi } = getStrengthActiveWeekIdx(prog);
+            const week = prog?.dataByMonth?.[monthIdx - 1]?.[wi] || {};
+            return (
+              <ExRow key={ex.exercise_id}
+                exerciseId={ex.exercise_id} exerciseName={ex.exercise_name}
+                badge={STRENGTH_WEEK_LABELS[wi] || '—'} badgeBg="bg-indigo-600"
+                anasC={!!week?.anas?.completed} flavioC={!!week?.flavio?.completed}
+                anasW={week?.anas?.weight ?? ''} flavioW={week?.flavio?.weight ?? ''}
+                remoteMap={remoteExerciseMap} configMap={config}
+                onToggle={a => toggleStrength(ex.exercise_id, a)}
+                onWeight={(a, v) => weightStrength(ex.exercise_id, a, v)}
+              />
+            );
+          }) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
+              <Zap size={24} className="text-zinc-300" />
+              <span className="text-xs font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* AW Section */}
+      <div className="flex flex-col min-h-[400px]">
+        <SectionHeader icon={Target} color="text-amber-500" label="AW Specialization" />
+        <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
+          {awEx.length > 0 ? awEx.map(ex => {
+            const { anasC, flavioC, anasW, flavioW } = getAwData(ex, allProgressions);
+            const badge = AW_BADGE[ex._type] || AW_BADGE.other;
+            return (
+              <ExRow key={ex.exercise_id}
+                exerciseId={ex.exercise_id} exerciseName={ex.exercise_name}
+                badge={badge.label} badgeBg={badge.bg}
+                anasC={anasC} flavioC={flavioC} anasW={anasW} flavioW={flavioW}
+                remoteMap={remoteExerciseMap} configMap={config}
+                onToggle={a => toggleAw(ex, a)}
+                onWeight={(a, v) => weightAw(ex, a, v)}
+              />
+            );
+          }) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
+              <Target size={24} className="text-zinc-300" />
+              <span className="text-xs font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Hypertrophy Section */}
+      <div className="flex flex-col min-h-[400px]">
+        <SectionHeader icon={Dumbbell} color="text-emerald-500" label="Hypertrophy Foundation" showRepsLabels />
+        <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
+          {hypEx.length > 0 ? hypEx.map(ex => {
+            const prog = allProgressions?.[ex.exercise_id] || {};
+            return (
+              <ExRow key={ex.exercise_id}
+                exerciseId={ex.exercise_id} exerciseName={ex.exercise_name}
+                badge={`${ex.base_sets || 2}×${ex.base_reps || '—'}`} badgeBg="bg-emerald-600"
+                anasC={!!prog?.anas?.completed} flavioC={!!prog?.flavio?.completed}
+                anasW={prog?.anas?.weight ?? ''} flavioW={prog?.flavio?.weight ?? ''}
+                anasR={prog?.anas?.reps ?? ''} flavioR={prog?.flavio?.reps ?? ''}
+                remoteMap={remoteExerciseMap} configMap={config}
+                onToggle={a => toggleHyper(ex.exercise_id, a)}
+                onWeight={(a, v) => weightHyper(ex.exercise_id, a, v)}
+                onReps={(a, v) => repsHyper(ex.exercise_id, a, v)}
+              />
+            );
+          }) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
+              <Dumbbell size={24} className="text-zinc-300" />
+              <span className="text-xs font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (embedded) {
+    return (
+      <div className="animate-in fade-in duration-300">
+        {sectionsGrid}
+        <div className="bg-zinc-50/30 dark:bg-black/20 px-6 py-3.5 border-t border-zinc-100/80 dark:border-white/[0.04] flex items-center justify-between">
+          {footerLegend}
+          <div className="flex items-center gap-2 text-xs font-medium text-zinc-400/40 tracking-[0.2em] uppercase">
+            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500/30 animate-pulse" />
+            PROJECTO
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4 sm:gap-6 lg:gap-8 animate-in fade-in zoom-in-95 duration-500">
       {/* ── Header ───────────────────────────────────────────────────────────── */}
@@ -482,109 +598,12 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
 
       {/* ── Unique Unified Card ──────────────────────────────────────────────── */}
       <div className="relative group/card">
-        {/* Glow behind the card */}
         <div className="absolute -inset-0.5 bg-gradient-to-br from-indigo-500/10 via-transparent to-violet-500/10 rounded-[32px] blur-2xl opacity-50 group-hover/card:opacity-80 transition-opacity duration-1000" />
-
         <div className="relative bg-white/95 dark:bg-[#090a0b]/90 backdrop-blur-2xl rounded-[30px] border border-zinc-200/60 dark:border-white/[0.08] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] overflow-hidden">
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 lg:divide-x divide-zinc-100/80 dark:divide-white/[0.04]">
-            {/* Strength Section */}
-            <div className="flex flex-col min-h-[400px]">
-              <SectionHeader icon={Zap} color="text-indigo-500" label="Strength Focus" />
-              <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
-                {strengthEx.length > 0 ? strengthEx.map(ex => {
-                  const prog = allProgressions?.[ex.exercise_id];
-                  const { monthIdx, wi } = getStrengthActiveWeekIdx(prog);
-                  const week = prog?.dataByMonth?.[monthIdx - 1]?.[wi] || {};
-                  return (
-                    <ExRow key={ex.exercise_id}
-                      exerciseId={ex.exercise_id} exerciseName={ex.exercise_name}
-                      badge={STRENGTH_WEEK_LABELS[wi] || '—'} badgeBg="bg-indigo-600"
-                      anasC={!!week?.anas?.completed} flavioC={!!week?.flavio?.completed}
-                      anasW={week?.anas?.weight ?? ''} flavioW={week?.flavio?.weight ?? ''}
-                      remoteMap={remoteExerciseMap} configMap={config}
-                      onToggle={a => toggleStrength(ex.exercise_id, a)}
-                      onWeight={(a, v) => weightStrength(ex.exercise_id, a, v)}
-                    />
-                  );
-                }) : (
-                  <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
-                    <Zap size={24} className="text-zinc-300" />
-              <span className="text-xs font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
-              </div>
-                )}
-              </div>
-            </div>
-
-            {/* AW Section */}
-            <div className="flex flex-col min-h-[400px]">
-              <SectionHeader icon={Target} color="text-amber-500" label="AW Specialization" />
-              <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
-                {awEx.length > 0 ? awEx.map(ex => {
-                  const { anasC, flavioC, anasW, flavioW } = getAwData(ex, allProgressions);
-                  const badge = AW_BADGE[ex._type] || AW_BADGE.other;
-                  return (
-                    <ExRow key={ex.exercise_id}
-                      exerciseId={ex.exercise_id} exerciseName={ex.exercise_name}
-                      badge={badge.label} badgeBg={badge.bg}
-                      anasC={anasC} flavioC={flavioC} anasW={anasW} flavioW={flavioW}
-                      remoteMap={remoteExerciseMap} configMap={config}
-                      onToggle={a => toggleAw(ex, a)}
-                      onWeight={(a, v) => weightAw(ex, a, v)}
-                    />
-                  );
-                }) : (
-                  <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
-                    <Target size={24} className="text-zinc-300" />
-                    <span className="text-xs font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Hypertrophy Section */}
-            <div className="flex flex-col min-h-[400px]">
-              <SectionHeader icon={Dumbbell} color="text-emerald-500" label="Hypertrophy Foundation" showRepsLabels />
-              <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
-                {hypEx.length > 0 ? hypEx.map(ex => {
-                  const prog = allProgressions?.[ex.exercise_id] || {};
-                  return (
-                    <ExRow key={ex.exercise_id}
-                      exerciseId={ex.exercise_id} exerciseName={ex.exercise_name}
-                      badge={`${ex.base_sets || 2}×${ex.base_reps || '—'}`} badgeBg="bg-emerald-600"
-                      anasC={!!prog?.anas?.completed} flavioC={!!prog?.flavio?.completed}
-                      anasW={prog?.anas?.weight ?? ''} flavioW={prog?.flavio?.weight ?? ''}
-                      anasR={prog?.anas?.reps ?? ''} flavioR={prog?.flavio?.reps ?? ''}
-                      remoteMap={remoteExerciseMap} configMap={config}
-                      onToggle={a => toggleHyper(ex.exercise_id, a)}
-                      onWeight={(a, v) => weightHyper(ex.exercise_id, a, v)}
-                      onReps={(a, v) => repsHyper(ex.exercise_id, a, v)}
-                    />
-                  );
-                }) : (
-                  <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
-                    <Dumbbell size={24} className="text-zinc-300" />
-                    <span className="text-xs font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
+          {sectionsGrid}
           {/* Card Footer Info */}
           <div className="bg-zinc-50/50 dark:bg-black/40 px-8 py-5 border-t border-zinc-100 dark:border-white/[0.06] flex items-center justify-between">
-            <div className="flex items-center gap-6 sm:gap-8 lg:gap-10">
-              {[
-                { dot: 'bg-indigo-500', label: 'Forza' },
-                { dot: 'bg-amber-500', label: 'AW' },
-                { dot: 'bg-emerald-500', label: 'Ipertrofia' }
-              ].map(item => (
-                <div key={item.label} className="flex items-center gap-2.5">
-                  <div className={`w-1.5 h-1.5 rounded-full ${item.dot} shadow-[0_0_8px_rgba(0,0,0,0.1)]`} />
-                  <span className="text-xs font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{item.label}</span>
-                </div>
-              ))}
-            </div>
+            {footerLegend}
             <div className="flex items-center gap-2 text-xs font-medium text-zinc-400/40 tracking-[0.2em] uppercase">
               <div className="w-1.5 h-1.5 rounded-full bg-indigo-500/30 animate-pulse" />
               PROJECTO

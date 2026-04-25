@@ -143,21 +143,20 @@ export function TodayCardDashboard({ defaultExpanded = true }: TodayCardDashboar
             className="overflow-hidden"
           >
             <div className="p-4 pt-0">
-              <div className="max-h-[600px] overflow-y-auto custom-scrollbar">
-                {loading ? (
-                  <TodayCardSkeleton />
-                ) : (
-                  <TodayCard
-                    selectedDay={selectedDay}
-                    allProgressions={allProgressions}
-                    selectedDate={selectedDate}
-                    progressPercent={progressPercent}
-                    isToday={isToday}
-                    onProgressionChange={onProgressionChange}
-                    awProgram={awProgram}
-                  />
-                )}
-              </div>
+              {loading ? (
+                <TodayCardSkeleton />
+              ) : (
+                <TodayCard
+                  selectedDay={selectedDay}
+                  allProgressions={allProgressions}
+                  selectedDate={selectedDate}
+                  progressPercent={progressPercent}
+                  isToday={isToday}
+                  onProgressionChange={onProgressionChange}
+                  awProgram={awProgram}
+                  embedded
+                />
+              )}
             </div>
           </motion.div>
         )}
