@@ -334,8 +334,10 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
 
   // ── STRENGTH handlers ──────────────────────────────────────────────────────
   const toggleStrength = useCallback((exerciseId, athlete) => {
-    const prog = allProgressions?.[exerciseId];
-    if (!prog) return;
+    const emptyWeek = () => ({ week: 1, anas: { weight: '', completed: false }, flavio: { weight: '', completed: false } });
+    const emptyMonth = () => [emptyWeek(), { ...emptyWeek(), week: 2 }, { ...emptyWeek(), week: 3 }, { ...emptyWeek(), week: 4 }];
+    const baseProg = allProgressions?.[exerciseId] || {};
+    const prog = baseProg.dataByMonth?.length ? baseProg : { ...baseProg, dataByMonth: [emptyMonth(), emptyMonth(), emptyMonth(), emptyMonth(), emptyMonth(), emptyMonth()] };
     const { monthIdx, wi } = getStrengthActiveWeekIdx(prog);
     const newData = (prog.dataByMonth || []).map((m, mi) =>
       mi === monthIdx - 1
@@ -352,8 +354,10 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
   }, [allProgressions, commitProg]);
 
   const weightStrength = useCallback((exerciseId, athlete, value) => {
-    const prog = allProgressions?.[exerciseId];
-    if (!prog) return;
+    const emptyWeek = () => ({ week: 1, anas: { weight: '', completed: false }, flavio: { weight: '', completed: false } });
+    const emptyMonth = () => [emptyWeek(), { ...emptyWeek(), week: 2 }, { ...emptyWeek(), week: 3 }, { ...emptyWeek(), week: 4 }];
+    const baseProg = allProgressions?.[exerciseId] || {};
+    const prog = baseProg.dataByMonth?.length ? baseProg : { ...baseProg, dataByMonth: [emptyMonth(), emptyMonth(), emptyMonth(), emptyMonth(), emptyMonth(), emptyMonth()] };
     const { monthIdx, wi } = getStrengthActiveWeekIdx(prog);
     const newData = (prog.dataByMonth || []).map((m, mi) =>
       mi === monthIdx - 1

@@ -218,15 +218,19 @@ export default function DashboardV2(): React.ReactElement {
                 key: sectionId,
                 draggable: true,
                 onDragStart: (e: React.DragEvent) => {
+                  e.dataTransfer.setData('application/x-section', JSON.stringify({ column: 'left', fromIndex: idx }));
                   e.dataTransfer.setData('application/json', JSON.stringify({ type: 'section', column: 'left', fromIndex: idx }));
                   e.dataTransfer.effectAllowed = 'move';
                 },
-                onDragOver: (e: React.DragEvent) => e.preventDefault(),
+                onDragOver: (e: React.DragEvent) => {
+                  if (e.dataTransfer.types.includes('application/x-section')) e.preventDefault();
+                },
                 onDrop: (e: React.DragEvent) => {
+                  if (!e.dataTransfer.types.includes('application/x-section')) return;
+                  e.preventDefault();
                   try {
-                    const p = JSON.parse(e.dataTransfer.getData('application/json'));
-                    if (p.type !== 'section') return;
-                    if (p.column === 'left') reorderSection('left', p.fromIndex, idx);
+                    const p = JSON.parse(e.dataTransfer.getData('application/x-section'));
+                    reorderSection('left', p.fromIndex, idx);
                   } catch (_) {}
                 },
               };
@@ -242,15 +246,19 @@ export default function DashboardV2(): React.ReactElement {
                 key: sectionId,
                 draggable: true,
                 onDragStart: (e: React.DragEvent) => {
+                  e.dataTransfer.setData('application/x-section', JSON.stringify({ column: 'center', fromIndex: idx }));
                   e.dataTransfer.setData('application/json', JSON.stringify({ type: 'section', column: 'center', fromIndex: idx }));
                   e.dataTransfer.effectAllowed = 'move';
                 },
-                onDragOver: (e: React.DragEvent) => e.preventDefault(),
+                onDragOver: (e: React.DragEvent) => {
+                  if (e.dataTransfer.types.includes('application/x-section')) e.preventDefault();
+                },
                 onDrop: (e: React.DragEvent) => {
+                  if (!e.dataTransfer.types.includes('application/x-section')) return;
+                  e.preventDefault();
                   try {
-                    const p = JSON.parse(e.dataTransfer.getData('application/json'));
-                    if (p.type !== 'section') return;
-                    if (p.column === 'center') reorderSection('center', p.fromIndex, idx);
+                    const p = JSON.parse(e.dataTransfer.getData('application/x-section'));
+                    reorderSection('center', p.fromIndex, idx);
                   } catch (_) {}
                 },
               };
@@ -265,24 +273,20 @@ export default function DashboardV2(): React.ReactElement {
                 key: sectionId,
                 draggable: true,
                 onDragStart: (e: React.DragEvent) => {
+                  e.dataTransfer.setData('application/x-section', JSON.stringify({ column: 'right', fromIndex: idx }));
                   e.dataTransfer.setData('application/json', JSON.stringify({ type: 'section', column: 'right', fromIndex: idx }));
                   e.dataTransfer.effectAllowed = 'move';
                 },
-                onDragOver: (e: React.DragEvent) => e.preventDefault(),
+                onDragOver: (e: React.DragEvent) => {
+                  if (e.dataTransfer.types.includes('application/x-section')) e.preventDefault();
+                },
                 onDrop: (e: React.DragEvent) => {
+                  if (!e.dataTransfer.types.includes('application/x-section')) return;
+                  e.preventDefault();
                   try {
-                    const p = JSON.parse(e.dataTransfer.getData('application/json'));
-                    const validTypes = ['section'];
-                    if (!validTypes.includes(p.type)) {
-                      showToast?.('Puoi trascinare solo sezioni qui', { type: 'warning' });
-                      return;
-                    }
-                    if (p.type === 'section' && p.column === 'right') reorderSection('right', p.fromIndex, idx);
-                    else showToast?.('Sezione non valida per questa colonna', { type: 'warning' });
-                  } catch (err) {
-                    console.error('Drop error:', err);
-                    showToast?.('Errore durante il trascinamento', { type: 'error' });
-                  }
+                    const p = JSON.parse(e.dataTransfer.getData('application/x-section'));
+                    reorderSection('right', p.fromIndex, idx);
+                  } catch (_) {}
                 },
               };
               if (sectionId === 'projects') return <div {...sectionProps} className="transition-all duration-300">{isLoaded ? <ProjectsSectionV2 PROJECT_ACCENTS={PROJECT_ACCENTS} /> : <ProjectSkeleton />}</div>;

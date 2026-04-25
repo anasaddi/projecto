@@ -78,32 +78,22 @@ export function QuickTaskRow({
         isShared ? toggleSharedQuickTask(task.shareId, task.id, !task.done) : toggleQuickTask(task.id, !task.done);
       }}
       onDragStart={!isShared ? (e) => {
+        e.dataTransfer.setData('application/x-quick', JSON.stringify({ quickTaskId: task.id, fromIndex: localIdx }));
         e.dataTransfer.setData('application/json', JSON.stringify({ type: 'quick', quickTaskId: task.id, fromIndex: localIdx }));
         e.dataTransfer.effectAllowed = 'move';
       } : undefined}
       onDragOver={!isShared ? (e) => {
-        try {
-          const types = e.dataTransfer.types;
-          if (types?.includes('application/json')) e.preventDefault();
-        } catch { e.preventDefault(); }
+        if (e.dataTransfer.types.includes('application/x-quick')) e.preventDefault();
       } : undefined}
       onDrop={!isShared ? (e) => {
+        if (!e.dataTransfer.types.includes('application/x-quick')) return;
+        e.preventDefault();
         try {
-          const p = JSON.parse(e.dataTransfer.getData('application/json'));
-          const validTypes = ['quick'];
-          if (!validTypes.includes(p.type)) {
-            return;
-          }
-          e.preventDefault();
-          if (p.type === 'quick') {
-            const targetLocalIdx = allQuickTasks.slice(0, idx).filter(t => !t.shareId).length;
-            reorderQuickTasks(p.fromIndex, targetLocalIdx);
-          } else {
-            showToast?.('Elemento non valido per questa lista', { type: 'warning' });
-          }
+          const p = JSON.parse(e.dataTransfer.getData('application/x-quick'));
+          const targetLocalIdx = allQuickTasks.slice(0, idx).filter(t => !t.shareId).length;
+          reorderQuickTasks(p.fromIndex, targetLocalIdx);
         } catch (err) {
           console.error('Drop error:', err);
-          showToast?.('Errore durante il trascinamento', { type: 'error' });
         }
       } : undefined}
     >
