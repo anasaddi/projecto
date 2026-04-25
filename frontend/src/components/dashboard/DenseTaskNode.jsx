@@ -412,12 +412,12 @@ export function DenseTaskNode({
   return (
     <div
       className={`group/task flex flex-col w-full relative ${showDeadline ? 'z-30' : 'z-auto'}`}
-      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.add('bg-zinc-50'); }}
-      onDragLeave={(e) => { e.currentTarget.classList.remove('bg-zinc-50'); }}
+      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.add('ring-1', 'ring-indigo-400/40', 'bg-indigo-50/30', 'dark:bg-indigo-500/10'); }}
+      onDragLeave={(e) => { e.currentTarget.classList.remove('ring-1', 'ring-indigo-400/40', 'bg-indigo-50/30', 'dark:bg-indigo-500/10'); }}
       onDrop={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        e.currentTarget.classList.remove('bg-zinc-50');
+        e.currentTarget.classList.remove('ring-1', 'ring-indigo-400/40', 'bg-indigo-50/30', 'dark:bg-indigo-500/10');
         try {
           const payload = JSON.parse(e.dataTransfer.getData('application/json'));
           const validTypes = ['project-task'];

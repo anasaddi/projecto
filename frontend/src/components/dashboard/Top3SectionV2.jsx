@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
 import { resolveTop3Slots, updateNodeInTree } from './DashboardUtils';
@@ -115,7 +114,7 @@ export function Top3SectionV2() {
           const isDragOver = dragOverIndex === idx;
           
           return (
-            <motion.div
+            <div
               key={idx}
               data-slot-index={idx}
               draggable={filled}
@@ -124,8 +123,6 @@ export function Top3SectionV2() {
                 e.dataTransfer.effectAllowed = 'move'; 
               } : undefined}
               onDragOver={(e) => {
-                // dataTransfer.getData is empty during drag phase (browser security)
-                // so we check types instead
                 if (!e.dataTransfer.types?.includes('application/json')) {
                   if (dragOverIndex !== null) setDragOverIndex(null);
                   return;
@@ -138,26 +135,23 @@ export function Top3SectionV2() {
               onDrop={(e) => {
                 e.preventDefault();
                 setDragOverIndex(null);
-                const toIndex = Number(e.currentTarget.dataset.slotIndex);
                 try {
                   const raw = e.dataTransfer.getData('application/json');
                   if (!raw) return;
                   const payload = JSON.parse(raw);
                   if (!VALID_TOP3_DROP_TYPES.includes(payload.type)) {
+                    showToast?.('Puoi trascinare solo task validi nei Top 3', { type: 'warning' });
                     return;
                   }
-                  if (payload.type === 'top3') reorderTop3(payload.fromIndex, toIndex);
-                  else if ((payload.type === 'project' || payload.type === 'project-task') && payload.projectId && payload.taskId) setTop3SlotAtIndex(toIndex, { projectId: payload.projectId, taskId: payload.taskId, shareId: payload.shareId ?? null });
-                  else if (payload.type === 'quick' && payload.quickTaskId) setTop3SlotAtIndex(toIndex, { quickTaskId: payload.quickTaskId, shareId: payload.shareId ?? null });
-                  else if (payload.type === 'lifeGoal' && payload.goalId) setTop3SlotAtIndex(toIndex, { projectId: `lg-${payload.goalId}`, taskId: payload.goalId, shareId: payload.shareId ?? null });
+                  if (payload.type === 'top3') reorderTop3(payload.fromIndex, idx);
+                  else if ((payload.type === 'project' || payload.type === 'project-task') && payload.projectId && payload.taskId) setTop3SlotAtIndex(idx, { projectId: payload.projectId, taskId: payload.taskId, shareId: payload.shareId ?? null });
+                  else if (payload.type === 'quick' && payload.quickTaskId) setTop3SlotAtIndex(idx, { quickTaskId: payload.quickTaskId, shareId: payload.shareId ?? null });
+                  else if (payload.type === 'lifeGoal' && payload.goalId) setTop3SlotAtIndex(idx, { projectId: `lg-${payload.goalId}`, taskId: payload.goalId, shareId: payload.shareId ?? null });
                 } catch (_) { }
-              }}
-              initial={false}
-              animate={{
-                scale: isDragOver ? 1.02 : 1,
               }}
               className={`
                 relative overflow-hidden min-h-[4rem] rounded-2xl border transition-all duration-200
+                ${isDragOver ? 'scale-[1.02]' : 'scale-100'}
                 ${getSlotStyles(isDragOver, filled, isDone)}
               `}
             >
@@ -209,7 +203,7 @@ export function Top3SectionV2() {
                   </button>
                 </div>
               )}
-            </motion.div>
+            </div>
           );
         })}
       </div>
