@@ -81,16 +81,20 @@ export function QuickTaskRow({
         e.dataTransfer.setData('application/json', JSON.stringify({ type: 'quick', quickTaskId: task.id, fromIndex: localIdx }));
         e.dataTransfer.effectAllowed = 'move';
       } : undefined}
-      onDragOver={!isShared ? (e) => e.preventDefault() : undefined}
+      onDragOver={!isShared ? (e) => {
+        try {
+          const types = e.dataTransfer.types;
+          if (types?.includes('application/json')) e.preventDefault();
+        } catch { e.preventDefault(); }
+      } : undefined}
       onDrop={!isShared ? (e) => {
-        e.preventDefault();
         try {
           const p = JSON.parse(e.dataTransfer.getData('application/json'));
           const validTypes = ['quick'];
           if (!validTypes.includes(p.type)) {
-            showToast?.('Puoi trascinare solo quick tasks qui', { type: 'warning' });
             return;
           }
+          e.preventDefault();
           if (p.type === 'quick') {
             const targetLocalIdx = allQuickTasks.slice(0, idx).filter(t => !t.shareId).length;
             reorderQuickTasks(p.fromIndex, targetLocalIdx);

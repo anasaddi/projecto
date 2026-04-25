@@ -5,8 +5,7 @@ import { ProjectCard } from './ProjectCard';
 import { DenseTaskNode } from './DenseTaskNode';
 import { createTaskNode, countTreeStats, getDeadlineColorClass, formatDeadline } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
-import { Card, CardHeader, CardBody } from '../ui/CardV2';
-import { Label } from '../ui/Typography';
+import { Card, CardHeader, CardBody } from './Card';
 import { AddItemInputBar } from './AddItemInputBar';
 
 export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
@@ -34,8 +33,6 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
 
   return (
     <Card 
-      variant="elevated" 
-      radius="xl" 
       className="flex flex-col min-h-0"
       glow={allCompleted}
       glowColor="success"
@@ -45,7 +42,6 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
         iconColor="text-indigo-500"
         title="Progetti"
         subtitle={hasProjects ? `${projects.length} progetti attivi` : 'Crea il tuo primo progetto'}
-        bordered={true}
       />
 
       <CardBody className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
@@ -157,7 +153,7 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
                     <div className="p-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-500/10">
                       <Icons.MessageCircle className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                     </div>
-                    <Label>Condivisi</Label>
+                    <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Condivisi</span>
                   </div>
                   <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
                 </div>

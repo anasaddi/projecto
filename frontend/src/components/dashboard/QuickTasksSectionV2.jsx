@@ -2,8 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from './Icons';
 import { useDashboardStore } from '../../store/dashboardStore';
-import { Card, CardHeader, Badge } from '../ui/CardV2';
-import { Label, Text } from '../ui/Typography';
+import { Card, CardHeader, Badge } from './Card';
 import { QuickTaskRow } from './QuickTaskRow';
 import { AddItemInputBar } from './AddItemInputBar';
 
@@ -59,10 +58,7 @@ export function QuickTasksSectionV2() {
   };
 
   return (
-    <Card 
-      variant="elevated" 
-      radius="xl" 
-      className="flex flex-col min-h-0"
+    <Card className="flex flex-col min-h-0"
       glow={doneCount === totalCount && totalCount > 0}
       glowColor="success"
     >
@@ -76,7 +72,6 @@ export function QuickTasksSectionV2() {
             {doneCount}/{totalCount}
           </Badge>
         }
-        bordered={true}
       />
       
       <div className="p-4 pt-3 flex flex-col gap-3">
@@ -141,10 +136,10 @@ export function QuickTasksSectionV2() {
                 <Icons.Zap className="h-5 w-5 text-zinc-400 dark:text-zinc-500" />
               </div>
               <div className="text-center">
-                <Label>Nessuna quick task</Label>
-                <Text variant="body-sm" color="muted" className="mt-0.5">
+                <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Nessuna quick task</p>
+                <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
                   Aggiungi task veloci sopra
-                </Text>
+                </p>
               </div>
             </motion.div>
           )}

@@ -155,6 +155,7 @@ export function TodayCardDashboard({ defaultExpanded = true }: TodayCardDashboar
                   onProgressionChange={onProgressionChange}
                   awProgram={awProgram}
                   embedded
+                  anasOnly
                 />
               )}
             </div>

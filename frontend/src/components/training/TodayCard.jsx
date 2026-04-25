@@ -219,7 +219,7 @@ function MuscDot({ exerciseId, remoteMap, configMap }) {
   );
 }
 
-function ExRow({ exerciseId, exerciseName, badge, badgeBg, anasC, flavioC, anasW, flavioW, anasR, flavioR, remoteMap, configMap, onToggle, onWeight, onReps }) {
+function ExRow({ exerciseId, exerciseName, badge, badgeBg, anasC, flavioC, anasW, flavioW, anasR, flavioR, remoteMap, configMap, onToggle, onWeight, onReps, anasOnly = false }) {
   const bothDone = anasC && flavioC;
 
   return (
@@ -254,11 +254,13 @@ function ExRow({ exerciseId, exerciseName, badge, badgeBg, anasC, flavioC, anasW
         </div>
 
         {/* Flavio Column */}
-        <div className="flex items-center gap-1.5 min-w-[70px] justify-center">
-          <KgInput value={flavioW} onChange={v => onWeight('flavio', v)} />
-          {onReps && <KgInput value={flavioR} onChange={v => onReps('flavio', v)} placeholder="rep" />}
-          <Tick checked={flavioC} onChange={() => onToggle('flavio')} accentBg="bg-violet-500" />
-        </div>
+        {!anasOnly && (
+          <div className="flex items-center gap-1.5 min-w-[70px] justify-center">
+            <KgInput value={flavioW} onChange={v => onWeight('flavio', v)} />
+            {onReps && <KgInput value={flavioR} onChange={v => onReps('flavio', v)} placeholder="rep" />}
+            <Tick checked={flavioC} onChange={() => onToggle('flavio')} accentBg="bg-violet-500" />
+          </div>
+        )}
       </div>
 
       {bothDone && (
@@ -268,7 +270,7 @@ function ExRow({ exerciseId, exerciseName, badge, badgeBg, anasC, flavioC, anasW
   );
 }
 
-function SectionHeader({ icon: Icon, color, label, showRepsLabels }) {
+function SectionHeader({ icon: Icon, color, label, showRepsLabels, anasOnly = false }) {
   return (
     <div className="flex flex-col bg-zinc-50/80 dark:bg-white/[0.03] border-b border-zinc-200/50 dark:border-white/[0.08]">
       <div className="flex items-center justify-between px-5 py-4">
@@ -280,7 +282,7 @@ function SectionHeader({ icon: Icon, color, label, showRepsLabels }) {
         </div>
         <div className="flex items-center gap-4 sm:gap-8 shrink-0">
           <span className="text-xs font-black text-indigo-500/60 tracking-[0.2em] uppercase w-[70px] text-center">Anas</span>
-          <span className="text-xs font-black text-violet-500/60 tracking-[0.2em] uppercase w-[70px] text-center">Flavio</span>
+          {!anasOnly && <span className="text-xs font-black text-violet-500/60 tracking-[0.2em] uppercase w-[70px] text-center">Flavio</span>}
         </div>
       </div>
       {showRepsLabels && (
@@ -305,7 +307,7 @@ function SectionHeader({ icon: Icon, color, label, showRepsLabels }) {
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
-export default function TodayCard({ selectedDay, allProgressions, selectedDate, progressPercent, isToday, onProgressionChange, awProgram, embedded = false }) {
+export default function TodayCard({ selectedDay, allProgressions, selectedDate, progressPercent, isToday, onProgressionChange, awProgram, embedded = false, anasOnly = false }) {
   const saveTimers = useRef({});
   const { config } = useGlobalConfig();
   const remoteExerciseMap = config?.EXERCISE_MUSCLE_MAP || {};
@@ -463,7 +465,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
     <div className="grid grid-cols-1 lg:grid-cols-3 lg:divide-x divide-zinc-100/80 dark:divide-white/[0.04]">
       {/* Strength Section */}
       <div className="flex flex-col min-h-[400px]">
-        <SectionHeader icon={Zap} color="text-indigo-500" label="Strength Focus" />
+        <SectionHeader icon={Zap} color="text-indigo-500" label="Strength Focus" anasOnly={anasOnly} />
         <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
           {strengthEx.length > 0 ? strengthEx.map(ex => {
             const prog = allProgressions?.[ex.exercise_id];
@@ -478,6 +480,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
                 remoteMap={remoteExerciseMap} configMap={config}
                 onToggle={a => toggleStrength(ex.exercise_id, a)}
                 onWeight={(a, v) => weightStrength(ex.exercise_id, a, v)}
+                anasOnly={anasOnly}
               />
             );
           }) : (
@@ -491,7 +494,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
 
       {/* AW Section */}
       <div className="flex flex-col min-h-[400px]">
-        <SectionHeader icon={Target} color="text-amber-500" label="AW Specialization" />
+        <SectionHeader icon={Target} color="text-amber-500" label="AW Specialization" anasOnly={anasOnly} />
         <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
           {awEx.length > 0 ? awEx.map(ex => {
             const { anasC, flavioC, anasW, flavioW } = getAwData(ex, allProgressions);
@@ -504,6 +507,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
                 remoteMap={remoteExerciseMap} configMap={config}
                 onToggle={a => toggleAw(ex, a)}
                 onWeight={(a, v) => weightAw(ex, a, v)}
+                anasOnly={anasOnly}
               />
             );
           }) : (
@@ -517,7 +521,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
 
       {/* Hypertrophy Section */}
       <div className="flex flex-col min-h-[400px]">
-        <SectionHeader icon={Dumbbell} color="text-emerald-500" label="Hypertrophy Foundation" showRepsLabels />
+        <SectionHeader icon={Dumbbell} color="text-emerald-500" label="Hypertrophy Foundation" showRepsLabels anasOnly={anasOnly} />
         <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
           {hypEx.length > 0 ? hypEx.map(ex => {
             const prog = allProgressions?.[ex.exercise_id] || {};
@@ -532,6 +536,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
                 onToggle={a => toggleHyper(ex.exercise_id, a)}
                 onWeight={(a, v) => weightHyper(ex.exercise_id, a, v)}
                 onReps={(a, v) => repsHyper(ex.exercise_id, a, v)}
+                anasOnly={anasOnly}
               />
             );
           }) : (

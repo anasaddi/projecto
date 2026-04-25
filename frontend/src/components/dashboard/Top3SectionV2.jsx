@@ -5,8 +5,7 @@ import { TaskCheckbox } from './DashboardComponents';
 import { resolveTop3Slots, updateNodeInTree } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { useToast } from '../../context/ToastContext';
-import { Card, CardHeader, Badge } from '../ui/CardV2';
-import { Label, Text } from '../ui/Typography';
+import { Card, CardHeader, Badge } from './Card';
 
 export function Top3SectionV2() {
   const [dragOverIndex, setDragOverIndex] = useState(null);
@@ -94,7 +93,7 @@ export function Top3SectionV2() {
   };
 
   return (
-    <Card variant="glass" radius="xl" className="flex flex-col shrink-0">
+    <Card className="flex flex-col shrink-0">
       <CardHeader
         icon={<Icons.Target className="w-5 h-5 text-amber-500" />}
         iconColor="text-amber-500"
@@ -146,14 +145,12 @@ export function Top3SectionV2() {
                   if (!raw) return;
                   const payload = JSON.parse(raw);
                   if (!VALID_TOP3_DROP_TYPES.includes(payload.type)) {
-                    showToast?.('Puoi trascinare solo task validi nei Top 3', { type: 'warning' });
                     return;
                   }
                   if (payload.type === 'top3') reorderTop3(payload.fromIndex, toIndex);
                   else if ((payload.type === 'project' || payload.type === 'project-task') && payload.projectId && payload.taskId) setTop3SlotAtIndex(toIndex, { projectId: payload.projectId, taskId: payload.taskId, shareId: payload.shareId ?? null });
                   else if (payload.type === 'quick' && payload.quickTaskId) setTop3SlotAtIndex(toIndex, { quickTaskId: payload.quickTaskId, shareId: payload.shareId ?? null });
                   else if (payload.type === 'lifeGoal' && payload.goalId) setTop3SlotAtIndex(toIndex, { projectId: `lg-${payload.goalId}`, taskId: payload.goalId, shareId: payload.shareId ?? null });
-                  else showToast?.('Elemento non valido per i Top 3', { type: 'warning' });
                 } catch (_) { }
               }}
               initial={false}
@@ -180,17 +177,16 @@ export function Top3SectionV2() {
                     onClick={() => toggleTop3Slot(slot)}
                     className="flex flex-col flex-1 min-w-0 cursor-pointer pr-1"
                   >
-                    <Text 
-                      variant={isDone ? 'body-sm' : 'body'}
-                      className={`font-semibold break-words leading-snug ${isDone ? 'line-through text-zinc-400 dark:text-zinc-500' : 'text-zinc-800 dark:text-zinc-100'}`}
+                    <span
+                      className={`font-semibold break-words leading-snug text-sm ${isDone ? 'line-through text-zinc-400 dark:text-zinc-500' : 'text-zinc-800 dark:text-zinc-100'}`}
                       title={slot.title}
                     >
                       {slot.title}
-                    </Text>
+                    </span>
                     {slot.projectTitle && (
-                      <Text variant="overline" color="muted" className="mt-0.5">
+                      <span className="mt-0.5 text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                         {slot.projectTitle}
-                      </Text>
+                      </span>
                     )}
                   </div>
                   
@@ -210,7 +206,7 @@ export function Top3SectionV2() {
                     onClick={() => showToast?.('Trascina un task qui per aggiungerlo ai Top 3', { type: 'info' })}
                     className="pointer-events-auto flex items-center justify-center gap-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
                   >
-                    <Label className="font-medium">+ slot libero</Label>
+                    <span className="text-xs font-medium">+ slot libero</span>
                   </button>
                 </div>
               )}
