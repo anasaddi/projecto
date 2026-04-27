@@ -351,6 +351,7 @@ export function DenseTaskNode({
   useEffect(() => { if (showDeadline) setDeadlineInput(node.deadline || ''); }, [showDeadline, node.deadline]);
 
   const handleDragStart = (e) => {
+    e.stopPropagation();
     const payload = { type: 'project-task', projectId, taskId: node.id, parentId, shareId: shareId ?? undefined };
     const raw = JSON.stringify(payload);
     e.dataTransfer.setData('application/x-projecto-drag', raw);

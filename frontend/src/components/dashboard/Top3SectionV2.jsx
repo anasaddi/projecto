@@ -150,6 +150,8 @@ export function Top3SectionV2() {
         setTop3SlotAtIndex(targetIndex, { quickTaskId: payload.quickTaskId, shareId: payload.shareId ?? null });
       } else if (payload.type === 'lifeGoal' && payload.goalId) {
         setTop3SlotAtIndex(targetIndex, { projectId: `lg-${payload.goalId}`, taskId: payload.goalId, shareId: payload.shareId ?? null });
+      } else {
+        showToast?.('Trascinamento non valido: dati mancanti', { type: 'warning' });
       }
     } catch (_) {
       showToast?.('Errore durante il trascinamento', { type: 'error' });
