@@ -117,7 +117,7 @@ export function QuickTasksSectionV2() {
           <AnimatePresence mode="popLayout">
             {[
               { key: 'now', title: 'Ora', items: groupedQuickTasks.nowItems, color: 'text-rose-500' },
-              { key: 'later', title: 'Dopo', items: groupedQuickTasks.laterItems, color: 'text-indigo-500' },
+              { key: 'later', title: 'Da Fare', items: groupedQuickTasks.laterItems, color: 'text-indigo-500' },
               { key: 'done', title: 'Completate', items: groupedQuickTasks.completedItems, color: 'text-emerald-500' },
             ].map((section) => (
               section.items.length > 0 ? (

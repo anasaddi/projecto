@@ -219,7 +219,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
         badge: isDone ? 'Completata' : 'In attesa',
         checkboxClass: isDone
           ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)]'
-          : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-400 hover:border-indigo-400 hover:text-indigo-500',
+          : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-400 ring-2 ring-indigo-500 ring-offset-2 shadow-md hover:border-indigo-400 hover:text-indigo-500',
         labelClass: isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400',
       };
     }
@@ -228,20 +228,20 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
       if (nowMinutes > end) {
         return {
           badge: 'In ritardo',
-          checkboxClass: 'bg-rose-50 dark:bg-rose-950/30 border-rose-300 dark:border-rose-700 text-rose-500 hover:border-rose-400',
+          checkboxClass: 'bg-rose-50 dark:bg-rose-950/30 border-rose-300 dark:border-rose-700 text-rose-500 ring-2 ring-rose-500 ring-offset-2 shadow-md hover:border-rose-400',
           labelClass: 'text-rose-600 dark:text-rose-400',
         };
       }
       if (nowMinutes >= start && nowMinutes <= end) {
         return {
           badge: 'Ora',
-          checkboxClass: 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700 text-amber-500 hover:border-amber-400',
+          checkboxClass: 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700 text-amber-500 ring-2 ring-amber-500 ring-offset-2 shadow-md hover:border-amber-400',
           labelClass: 'text-amber-600 dark:text-amber-400',
         };
       }
       return {
         badge: 'In attesa',
-        checkboxClass: 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-400 hover:border-indigo-400 hover:text-indigo-500',
+        checkboxClass: 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-400 ring-2 ring-indigo-500 ring-offset-2 shadow-md hover:border-indigo-400 hover:text-indigo-500',
         labelClass: 'text-zinc-600 dark:text-zinc-400',
       };
     }
@@ -332,9 +332,9 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                 {/* Timeline: checkbox centered above gap between cards */}
                 <div className="relative">
                   {/* Connecting line at checkbox height */}
-                  <div className="absolute top-5 left-0 right-0 h-[3px] rounded-full bg-zinc-200/60 dark:bg-zinc-800 overflow-hidden pointer-events-none">
+                  <div className="absolute top-5 left-0 right-0 h-[4px] rounded-full bg-zinc-300/60 dark:bg-zinc-700 overflow-hidden pointer-events-none shadow-sm">
                     <motion.div
-                      className="absolute inset-y-0 left-0 h-full bg-gradient-to-r from-emerald-500 to-indigo-500 rounded-full"
+                      className="absolute inset-y-0 left-0 h-full bg-gradient-to-r from-emerald-600 to-indigo-600 rounded-full"
                       initial={false}
                       animate={{ width: `${timelineProgress * 100}%` }}
                       transition={{ duration: 0.8, ease: "easeInOut" }}
@@ -400,31 +400,28 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                                   </div>
 
                                   <div className="p-2.5 flex flex-col gap-1.5 min-h-[72px]">
-                                    {routines.map((r, ri) => {
-                                      const habit = activeHabits.find(h => h.id === r.habitId);
-                                      return (
-                                        <motion.div
-                                          key={r.id}
-                                          initial={{ opacity: 0, x: -5 }}
-                                          animate={{ opacity: 1, x: 0 }}
-                                          transition={{ delay: ri * 0.05 }}
-                                          className="group/task flex items-center gap-2 p-1.5 rounded-xl hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors relative"
+                                    {routines.map((r, ri) => (
+                                      <motion.div
+                                        key={r.id}
+                                        initial={{ opacity: 0, x: -5 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: ri * 0.05 }}
+                                        className="group/task flex items-center gap-2 p-1.5 rounded-xl hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors relative"
+                                      >
+                                        <TaskCheckbox done={r.done} onClick={() => toggleTimelineRoutine(todayKey, slotKey, r.id, !r.done)} />
+                                        <span className={`text-xs font-semibold truncate transition-colors ${r.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}>
+                                          {habit ? habit.title : 'Rimosso'}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => removeTimelineRoutine(todayKey, slotKey, r.id)}
+                                          className="absolute right-1 opacity-70 sm:opacity-0 sm:group-hover/task:opacity-100 p-1 text-zinc-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                                          aria-label="Rimuovi da timeline"
                                         >
-                                          <TaskCheckbox done={r.done} onClick={() => toggleTimelineRoutine(todayKey, slotKey, r.id, !r.done)} />
-                                          <span className={`text-xs font-semibold truncate transition-colors ${r.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}>
-                                            {habit ? habit.title : 'Rimosso'}
-                                          </span>
-                                          <button
-                                            type="button"
-                                            onClick={() => removeTimelineRoutine(todayKey, slotKey, r.id)}
-                                            className="absolute right-1 opacity-70 sm:opacity-0 sm:group-hover/task:opacity-100 p-1 text-zinc-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
-                                            aria-label="Rimuovi da timeline"
-                                          >
-                                            <Icons.X className="w-3 h-3" />
-                                          </button>
-                                        </motion.div>
-                                      );
-                                    })}
+                                          <Icons.X className="w-3 h-3" />
+                                        </button>
+                                      </motion.div>
+                                    ))}
 
                                     <div className="relative mt-0.5">
                                       <button
