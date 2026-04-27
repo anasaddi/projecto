@@ -91,6 +91,71 @@ export function Top3SectionV2() {
     return 'border-dashed border-zinc-300/80 dark:border-white/[0.12] bg-zinc-50/50 dark:bg-white/[0.02] hover:border-zinc-400 dark:hover:border-white/[0.18]';
   };
 
+  const isTaskInTop3 = (payload) => {
+    return top3Manual.some(slot => {
+      if (!slot) return false;
+      if (payload.type === 'quick' && payload.quickTaskId) {
+        return slot.quickTaskId === payload.quickTaskId && slot.shareId === (payload.shareId ?? null);
+      }
+      if ((payload.type === 'project' || payload.type === 'project-task') && payload.projectId && payload.taskId) {
+        return slot.projectId === payload.projectId && slot.taskId === payload.taskId && slot.shareId === (payload.shareId ?? null);
+      }
+      if (payload.type === 'lifeGoal' && payload.goalId) {
+        return slot.projectId === `lg-${payload.goalId}` && slot.taskId === payload.goalId;
+      }
+      return false;
+    });
+  };
+
+  const onDrop = (e, idx) => {
+    e.preventDefault();
+    setDragOverIndex(null);
+    try {
+      const raw = e.dataTransfer.getData('application/json');
+      if (!raw) {
+        showToast?.('Trascinamento non valido', { type: 'warning' });
+        return;
+      }
+      const payload = JSON.parse(raw);
+      
+      // Check valid type
+      if (!VALID_TOP3_DROP_TYPES.includes(payload.type)) {
+        showToast?.('Puoi trascinare solo task, quick task o obiettivi di vita nei Top 3', { type: 'warning' });
+        return;
+      }
+
+      // Check for subtasks (tasks with parentId)
+      if (payload.type === 'project-task' && payload.parentId) {
+        showToast?.('I sotto-task non possono essere aggiunti ai Top 3. Trascina solo task principali.', { type: 'warning' });
+        return;
+      }
+
+      // Check if slot is already filled
+      if (top3Manual[idx] !== null) {
+        showToast?.('Questo slot è già occupato. Rimuovi prima il task esistente.', { type: 'warning' });
+        return;
+      }
+
+      // Check for duplicates
+      if (isTaskInTop3(payload)) {
+        showToast?.('Questo task è già nei Top 3', { type: 'warning' });
+        return;
+      }
+
+      if (payload.type === 'top3') {
+        reorderTop3(payload.fromIndex, idx);
+      } else if ((payload.type === 'project' || payload.type === 'project-task') && payload.projectId && payload.taskId) {
+        setTop3SlotAtIndex(idx, { projectId: payload.projectId, taskId: payload.taskId, shareId: payload.shareId ?? null });
+      } else if (payload.type === 'quick' && payload.quickTaskId) {
+        setTop3SlotAtIndex(idx, { quickTaskId: payload.quickTaskId, shareId: payload.shareId ?? null });
+      } else if (payload.type === 'lifeGoal' && payload.goalId) {
+        setTop3SlotAtIndex(idx, { projectId: `lg-${payload.goalId}`, taskId: payload.goalId, shareId: payload.shareId ?? null });
+      }
+    } catch (_) {
+      showToast?.('Errore durante il trascinamento', { type: 'error' });
+    }
+  };
+
   return (
     <Card className="flex flex-col shrink-0">
       <CardHeader
@@ -132,25 +197,8 @@ export function Top3SectionV2() {
                 setDragOverIndex(idx);
               }}
               onDragLeave={() => setDragOverIndex((current) => (current === idx ? null : current))}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragOverIndex(null);
-                try {
-                  const raw = e.dataTransfer.getData('application/json');
-                  if (!raw) return;
-                  const payload = JSON.parse(raw);
-                  if (!VALID_TOP3_DROP_TYPES.includes(payload.type)) {
-                    showToast?.('Puoi trascinare solo task validi nei Top 3', { type: 'warning' });
-                    return;
-                  }
-                  if (payload.type === 'top3') reorderTop3(payload.fromIndex, idx);
-                  else if ((payload.type === 'project' || payload.type === 'project-task') && payload.projectId && payload.taskId) setTop3SlotAtIndex(idx, { projectId: payload.projectId, taskId: payload.taskId, shareId: payload.shareId ?? null });
-                  else if (payload.type === 'quick' && payload.quickTaskId) setTop3SlotAtIndex(idx, { quickTaskId: payload.quickTaskId, shareId: payload.shareId ?? null });
-                  else if (payload.type === 'lifeGoal' && payload.goalId) setTop3SlotAtIndex(idx, { projectId: `lg-${payload.goalId}`, taskId: payload.goalId, shareId: payload.shareId ?? null });
-                } catch (_) { }
-              }}
-              className={`
-                relative overflow-hidden min-h-[4rem] rounded-2xl border transition-all duration-200
+              onDrop={(e) => onDrop(e, idx)}
+              className={`relative overflow-hidden min-h-[4rem] rounded-2xl border transition-all duration-200
                 ${isDragOver ? 'scale-[1.02]' : 'scale-100'}
                 ${getSlotStyles(isDragOver, filled, isDone)}
               `}
