@@ -351,7 +351,11 @@ export function DenseTaskNode({
   useEffect(() => { if (showDeadline) setDeadlineInput(node.deadline || ''); }, [showDeadline, node.deadline]);
 
   const handleDragStart = (e) => {
-    e.dataTransfer.setData('application/json', JSON.stringify({ type: 'project-task', projectId, taskId: node.id, parentId, shareId: shareId ?? undefined }));
+    const payload = { type: 'project-task', projectId, taskId: node.id, parentId, shareId: shareId ?? undefined };
+    const raw = JSON.stringify(payload);
+    e.dataTransfer.setData('application/x-projecto-drag', raw);
+    e.dataTransfer.setData('application/json', raw);
+    e.dataTransfer.setData('text/plain', raw);
     e.dataTransfer.effectAllowed = 'move';
   };
 
@@ -376,7 +380,9 @@ export function DenseTaskNode({
       icon: <Icons.Target className="h-3 w-3" />,
       onClick: (e) => { e.stopPropagation(); onToggleTop3(projectId, node.id); },
       title: isTop3 ? 'Rimuovi da Focus' : 'Pin a Focus',
-      className: isTop3 ? 'text-amber-600 bg-amber-100 dark:text-amber-300 dark:bg-amber-500/30 dark:ring-1 dark:ring-amber-400/50' : 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20',
+      className: isTop3
+        ? '!rounded-full !bg-transparent !shadow-none !ring-0 !p-1 text-amber-600 hover:!bg-transparent dark:text-amber-300'
+        : '!rounded-full !bg-transparent !shadow-none !ring-0 !p-1 text-amber-500 hover:!bg-transparent hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300',
     },
     !node.done && {
       icon: <Icons.User className="h-3 w-3" />,

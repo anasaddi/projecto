@@ -42,16 +42,6 @@ export function Top3SectionV2() {
 
   const VALID_TOP3_DROP_TYPES = ['top3', 'project', 'project-task', 'quick', 'lifeGoal'];
 
-  const isValidTop3Payload = (raw) => {
-    if (!raw) return false;
-    try {
-      const payload = JSON.parse(raw);
-      return VALID_TOP3_DROP_TYPES.includes(payload?.type);
-    } catch {
-      return false;
-    }
-  };
-
   const toggleTop3Slot = (slot) => {
     if (!slot || slot.missing) return;
     if (slot.quickTaskId) {
@@ -109,26 +99,34 @@ export function Top3SectionV2() {
     });
   };
 
+  const readDragPayload = (dataTransfer) => {
+    const candidateTypes = ['application/x-projecto-drag', 'application/x-quick', 'application/json', 'text/plain'];
+    for (const type of candidateTypes) {
+      try {
+        const raw = dataTransfer.getData(type);
+        if (!raw) continue;
+        const payload = JSON.parse(raw);
+        if (payload && typeof payload === 'object') return payload;
+      } catch {
+        // Try the next MIME type.
+      }
+    }
+    return null;
+  };
+
   const onDrop = (e, idx) => {
     e.preventDefault();
     setDragOverIndex(null);
     try {
-      const raw = e.dataTransfer.getData('application/json');
-      if (!raw) {
+      const payload = readDragPayload(e.dataTransfer);
+      if (!payload) {
         showToast?.('Trascinamento non valido', { type: 'warning' });
         return;
       }
-      const payload = JSON.parse(raw);
       
       // Check valid type
       if (!VALID_TOP3_DROP_TYPES.includes(payload.type)) {
         showToast?.('Puoi trascinare solo task, quick task o obiettivi di vita nei Top 3', { type: 'warning' });
-        return;
-      }
-
-      // Check for subtasks (tasks with parentId)
-      if (payload.type === 'project-task' && payload.parentId) {
-        showToast?.('I sotto-task non possono essere aggiunti ai Top 3. Trascina solo task principali.', { type: 'warning' });
         return;
       }
 

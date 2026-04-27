@@ -12,7 +12,10 @@ export function ProjectCard({ dragPayload, onDrop, children, className = 'cursor
     <div
       draggable
       onDragStart={(e) => {
-        e.dataTransfer.setData('application/json', JSON.stringify(dragPayload));
+        const raw = JSON.stringify(dragPayload);
+        e.dataTransfer.setData('application/x-projecto-drag', raw);
+        e.dataTransfer.setData('application/json', raw);
+        e.dataTransfer.setData('text/plain', raw);
         e.dataTransfer.effectAllowed = 'move';
       }}
       onDragOver={(e) => {

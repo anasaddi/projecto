@@ -35,7 +35,9 @@ export function QuickTaskRow({
         else { const free = top3Manual.findIndex(s => !s); if (free !== -1) setTop3SlotAtIndex(free, { quickTaskId: task.id, shareId: isShared ? task.shareId : null }); }
       },
       title: pinned ? 'Rimuovi dai Top 3' : 'Aggiungi ai Top 3',
-      className: pinned ? 'text-amber-500 bg-amber-50 dark:text-amber-300 dark:bg-amber-500/30 dark:ring-1 dark:ring-amber-400/50' : '',
+      className: pinned
+        ? '!rounded-full !bg-transparent !shadow-none !ring-0 !p-1 text-amber-500 hover:!bg-transparent dark:text-amber-300'
+        : '!rounded-full !bg-transparent !shadow-none !ring-0 !p-1 text-amber-400 hover:!bg-transparent hover:text-amber-500 dark:text-amber-400 dark:hover:text-amber-300',
     },
     {
       icon: <Icons.ArrowUpRight className="h-3 w-3" />,
@@ -78,8 +80,12 @@ export function QuickTaskRow({
         isShared ? toggleSharedQuickTask(task.shareId, task.id, !task.done) : toggleQuickTask(task.id, !task.done);
       }}
       onDragStart={!isShared ? (e) => {
-        e.dataTransfer.setData('application/x-quick', JSON.stringify({ quickTaskId: task.id, fromIndex: localIdx }));
-        e.dataTransfer.setData('application/json', JSON.stringify({ type: 'quick', quickTaskId: task.id, fromIndex: localIdx }));
+        const payload = { type: 'quick', quickTaskId: task.id, fromIndex: localIdx };
+        const raw = JSON.stringify(payload);
+        e.dataTransfer.setData('application/x-quick', raw);
+        e.dataTransfer.setData('application/x-projecto-drag', raw);
+        e.dataTransfer.setData('application/json', raw);
+        e.dataTransfer.setData('text/plain', raw);
         e.dataTransfer.effectAllowed = 'move';
       } : undefined}
       onDragOver={!isShared ? (e) => {
