@@ -6,9 +6,13 @@ export function ToastProvider({ children }) {
   const [toast, setToast] = useState(null);
   const timeoutRef = React.useRef(null);
 
-  const showToast = useCallback((message, type = 'default') => {
+  const showToast = useCallback((message, typeOrOptions = 'default') => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setToast({ message, type });
+    const normalizedType =
+      typeof typeOrOptions === 'string'
+        ? typeOrOptions
+        : (typeOrOptions && typeof typeOrOptions === 'object' && typeOrOptions.type) || 'default';
+    setToast({ message, type: normalizedType });
     timeoutRef.current = setTimeout(() => {
       setToast(null);
       timeoutRef.current = null;

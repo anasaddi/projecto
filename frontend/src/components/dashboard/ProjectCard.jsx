@@ -28,9 +28,9 @@ export function ProjectCard({ dragPayload, onDrop, children, className = 'cursor
         e.currentTarget.classList.remove('ring-2', 'ring-indigo-400');
         try {
           const p = JSON.parse(e.dataTransfer.getData('application/json'));
-          const validTypes = ['project', 'project-task'];
+          const validTypes = ['project', 'project-task', 'quick', 'sharedProject'];
           if (!validTypes.includes(p.type)) {
-            showToast?.('Puoi trascinare solo progetti o task qui', { type: 'warning' });
+            showToast?.('Elemento non valido per questa posizione', { type: 'warning' });
             return;
           }
           onDrop(p);

@@ -51,9 +51,11 @@ export function LifeGoalsSection() {
       if (free !== -1) {
         const qt = quickTasks.find(t => t.lifeGoalId === gid && !t.parentId);
         setTop3SlotAtIndex(free, qt ? { quickTaskId: qt.id, shareId: null } : { projectId: `lg-${gid}`, taskId: gid });
+      } else {
+        showToast?.('I Top 3 sono già pieni. Rimuovi prima un elemento.', 'warning');
       }
     }
-  }, [getTop3IndexForGoal, top3Manual, setTop3SlotAtIndex, quickTasks]);
+  }, [getTop3IndexForGoal, top3Manual, setTop3SlotAtIndex, quickTasks, showToast]);
   const handlePromoteProject = useCallback((goalId) => {
     const wasLinked = projects.some((p) => p.lifeGoalId === goalId);
     promoteGoalToProjects(goalId);

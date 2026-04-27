@@ -32,7 +32,11 @@ export function QuickTaskRow({
       onClick: () => {
         const existingIdx = top3Manual.findIndex(s => s && s.quickTaskId === task.id && (isShared ? s.shareId === task.shareId : !s.shareId));
         if (existingIdx !== -1) setTop3SlotAtIndex(existingIdx, null);
-        else { const free = top3Manual.findIndex(s => !s); if (free !== -1) setTop3SlotAtIndex(free, { quickTaskId: task.id, shareId: isShared ? task.shareId : null }); }
+        else {
+          const free = top3Manual.findIndex(s => !s);
+          if (free !== -1) setTop3SlotAtIndex(free, { quickTaskId: task.id, shareId: isShared ? task.shareId : null });
+          else showToast?.('I Top 3 sono già pieni. Rimuovi prima un elemento.', { type: 'warning' });
+        }
       },
       title: pinned ? 'Rimuovi dai Top 3' : 'Aggiungi ai Top 3',
       className: pinned

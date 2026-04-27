@@ -284,9 +284,10 @@ export function DenseTaskNode({
         const free = top3Manual.findIndex((s) => !s);
         if (free !== -1)
           setTop3SlotAtIndex(free, { projectId: pid, taskId: tid, ...(isShared ? { shareId } : {}) });
+        else showToast?.('I Top 3 sono già pieni. Rimuovi prima un elemento.', { type: 'warning' });
       }
     },
-    [top3Manual, isShared, shareId, setTop3SlotAtIndex]
+    [top3Manual, isShared, shareId, setTop3SlotAtIndex, showToast]
   );
 
   const onMove = useCallback(

@@ -149,6 +149,13 @@ export function Top3SectionV2() {
         return;
       }
 
+      if (payload.type === 'top3') {
+        const fromIndex = Number(payload.fromIndex);
+        if (Number.isNaN(fromIndex) || fromIndex === idx) return;
+        reorderTop3(fromIndex, idx);
+        return;
+      }
+
       const targetIndex = top3Manual[idx] === null ? idx : top3Manual.findIndex((slot) => !slot);
       if (targetIndex === -1) {
         showToast?.('I Top 3 sono già pieni. Rimuovi prima un elemento.', { type: 'warning' });
@@ -161,9 +168,7 @@ export function Top3SectionV2() {
         return;
       }
 
-      if (payload.type === 'top3') {
-        reorderTop3(payload.fromIndex, targetIndex);
-      } else if ((payload.type === 'project' || payload.type === 'project-task') && payload.projectId && payload.taskId) {
+      if ((payload.type === 'project' || payload.type === 'project-task') && payload.projectId && payload.taskId) {
         setTop3SlotAtIndex(targetIndex, { projectId: payload.projectId, taskId: payload.taskId, shareId: payload.shareId ?? null });
       } else if (payload.type === 'quick' && payload.quickTaskId) {
         setTop3SlotAtIndex(targetIndex, { quickTaskId: payload.quickTaskId, shareId: payload.shareId ?? null });
