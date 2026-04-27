@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Card, Badge } from './Card';
+import { Card, CardHeader, Badge } from './Card';
 import { Icons } from './Icons';
 
 const TIME_BAR_CONFIGS = [
@@ -42,6 +42,20 @@ export function PrayersCountdownsV2({
 
   return (
     <Card className="overflow-hidden">
+      <CardHeader
+        icon={Icons.Zap}
+        iconColor="text-indigo-500"
+        title="Focus Score"
+        subtitle="Progressi giornalieri"
+        action={
+          focusStreak > 0 ? (
+            <Badge variant="warning" size="sm">
+              <Icons.Flame className="h-3 w-3 mr-1" />
+              {focusStreak} giorni
+            </Badge>
+          ) : undefined
+        }
+      />
       <div className="p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
 
@@ -73,13 +87,8 @@ export function PrayersCountdownsV2({
               </div>
             </div>
             <div className="flex flex-col gap-1 flex-1">
-              <span className="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Focus Score</span>
-              {focusStreak > 0 && (
-                <Badge variant="warning" size="sm" className="w-fit">
-                  <Icons.Flame className="h-3 w-3 mr-1" />
-                  {focusStreak} giorni
-                </Badge>
-              )}
+              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 tabular-nums">{percentage}%</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">completato oggi</span>
             </div>
           </div>
 

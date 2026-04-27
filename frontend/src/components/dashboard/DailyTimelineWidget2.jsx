@@ -2,11 +2,10 @@
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from './Icons';
-import { AppLogo } from '../AppLogo';
 import { TaskCheckbox } from './DashboardComponents';
 import { PRAYER_SLOTS, getCurrentSlotKey } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
-import { Card } from './Card';
+import { Card, CardHeader } from './Card';
 
 // Mock degli orari di default
 const DEFAULT_PRAYER_TIMES = {
@@ -213,46 +212,45 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
     <div className="relative z-10 w-full min-w-0">
       <Card className="flex flex-col overflow-hidden rounded-3xl">
         
-        {/* HEADER (Sticky & Glass) */}
-        <button
-          type="button"
+        {/* HEADER */}
+        <div
+          className="cursor-pointer"
           onClick={() => setTimelinePanelExpanded(!timelinePanelExpanded)}
-          className="z-20 flex w-full items-center justify-between gap-4 px-6 py-5 text-left transition-colors duration-300 hover:bg-zinc-50/60 dark:hover:bg-white/[0.03] focus-ring"
         >
-          <div className="flex items-center gap-4 min-w-0">
-            <motion.div whileHover={{ scale: 1.05, rotate: 2 }} whileTap={{ scale: 0.95 }}>
-              <AppLogo size="md" />
-            </motion.div>
-            <div className="flex flex-col justify-center">
-              {locationName && (
-                <span className="rounded-full border border-zinc-200/80 bg-zinc-100/90 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-zinc-400 w-fit">{locationName}</span>
-              )}
-            </div>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <div className="hidden md:flex items-center gap-4">
-              <span className="text-xs font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">
-                {Math.round(progress.pct * 100)}%
-              </span>
-              <div className="h-2.5 w-32 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800/80">
-                <motion.div
-                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-emerald-400"
-                  initial={false}
-                  animate={{ width: `${Math.max(2, progress.pct * 100)}%` }}
-                  transition={{ duration: 1, ease: "circOut" }}
-                />
+          <CardHeader
+            icon={Icons.LayoutList}
+            iconColor="text-indigo-500"
+            title="Preghiere & Timeline"
+            subtitle={locationName || 'Timeline giornaliera'}
+            action={
+              <div className="flex items-center gap-2">
+                <div className="hidden md:flex items-center gap-2">
+                  <span className="text-xs font-semibold tabular-nums text-zinc-600 dark:text-zinc-400">
+                    {Math.round(progress.pct * 100)}%
+                  </span>
+                  <div className="h-2 w-24 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800/80">
+                    <motion.div
+                      className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-emerald-400"
+                      initial={false}
+                      animate={{ width: `${Math.max(2, progress.pct * 100)}%` }}
+                      transition={{ duration: 1, ease: 'circOut' }}
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setTimelinePanelExpanded(!timelinePanelExpanded); }}
+                  className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors"
+                  aria-label={isCollapsed ? 'Espandi' : 'Comprimi'}
+                >
+                  {isCollapsed
+                    ? <Icons.ChevronDown className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+                    : <Icons.ChevronUp className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />}
+                </button>
               </div>
-            </div>
-            <motion.div
-              animate={{ rotate: isCollapsed ? 0 : 180 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="rounded-2xl border border-zinc-200/70 bg-zinc-100/90 p-2.5 text-zinc-500 transition-colors hover:text-zinc-900 dark:border-white/[0.06] dark:bg-zinc-800/80 dark:hover:text-white"
-            >
-              <Icons.ChevronDown className="h-4 w-4" />
-            </motion.div>
-          </div>
-        </button>
+            }
+          />
+        </div>
 
         {/* TIMELINE CONTENT */}
         <AnimatePresence initial={false}>
