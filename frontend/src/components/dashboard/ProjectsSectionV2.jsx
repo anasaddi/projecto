@@ -25,6 +25,8 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
   const sharedDashboards = useDashboardStore((s) => s.sharedDashboards) ?? [];
   const updateSharedDashboardProject = useDashboardStore((s) => s.updateSharedDashboardProject);
   const deleteSharedDashboardProject = useDashboardStore((s) => s.deleteSharedDashboardProject);
+  const projectExpandedState = useDashboardStore((s) => s.projectExpandedState) ?? {};
+  const setProjectExpandedState = useDashboardStore((s) => s.setProjectExpandedState);
   const moveQuickTaskToProject = useDashboardStore((s) => s.moveQuickTaskToProject);
 
   const hasProjects = projects.length > 0;
@@ -104,6 +106,8 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
                       setProjectDeadlineEditing={setProjectDeadlineEditing}
                       getDeadlineColorClass={getDeadlineColorClass}
                       formatDeadline={formatDeadline}
+                      defaultExpanded={!!projectExpandedState[project.id]}
+                      onToggleExpand={(val) => setProjectExpandedState((prev) => ({ ...prev, [project.id]: val }))}
                       renderTasks={() => (
                         <>
                           {project.tasks?.map((node, tIdx) => (
@@ -197,6 +201,8 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
                             setProjectDeadlineEditing={setProjectDeadlineEditing}
                             getDeadlineColorClass={getDeadlineColorClass}
                             formatDeadline={formatDeadline}
+                            defaultExpanded={!!projectExpandedState[`${shared.share_id}:${project.id}`]}
+                            onToggleExpand={(val) => setProjectExpandedState((prev) => ({ ...prev, [`${shared.share_id}:${project.id}`]: val }))}
                             renderTasks={() => (
                               <>
                                 {project.tasks?.map((node, tIdx) => (

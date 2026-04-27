@@ -10,6 +10,8 @@ export function createUISlice(set: UISet) {
     setConfirmState: (val: unknown) => set((s: unknown) => void ((s as { confirmState: unknown }).confirmState = val)),
     setTimelinePanelExpanded: (val: boolean) =>
       set((s: unknown) => void ((s as { timelinePanelExpanded: boolean }).timelinePanelExpanded = val)),
+    setTodayTrainingExpanded: (val: boolean) =>
+      set((s: unknown) => void ((s as { todayTrainingExpanded: boolean }).todayTrainingExpanded = val)),
 
     setQuickTaskDraft: (val: string) => set((s: unknown) => void ((s as { quickTaskDraft: string }).quickTaskDraft = val)),
     setQuickTaskEditingId: (val: string | null) =>
@@ -47,6 +49,14 @@ export function createUISlice(set: UISet) {
       set((s: unknown) => void ((s as { goalDeadlineEditing: string | null }).goalDeadlineEditing = val)),
     setGoalDeadlineInput: (val: string) =>
       set((s: unknown) => void ((s as { goalDeadlineInput: string }).goalDeadlineInput = val)),
+
+    setProjectExpandedState: (
+      val: Record<string, boolean> | ((prev: Record<string, boolean>) => Record<string, boolean>)
+    ) =>
+      set((s: unknown) => {
+        const state = s as { projectExpandedState: Record<string, boolean> };
+        state.projectExpandedState = typeof val === 'function' ? val(state.projectExpandedState) : val;
+      }),
 
     setSharedDashboards: (val: unknown[] | ((prev: unknown[]) => unknown[])) =>
       set((s: unknown) => {

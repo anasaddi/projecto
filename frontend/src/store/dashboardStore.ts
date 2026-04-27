@@ -33,6 +33,8 @@ interface SyncData {
   lifeGoals?: LifeGoalsState;
   timelineRoutines?: Record<string, unknown>;
   timelinePanelExpanded?: boolean;
+  todayTrainingExpanded?: boolean;
+  projectExpandedState?: Record<string, boolean>;
   activePomodoroTask?: { taskId: string; projectId?: string; quickTaskId?: string; shareId?: string; title: string } | null;
   sectionOrder?: Record<string, string[]>;
 }
@@ -48,6 +50,8 @@ const defaultInitial = {
   lifeGoals: buildDefaultLifeGoals() as LifeGoalsState,
   timelineRoutines: {} as Record<string, unknown>,
   timelinePanelExpanded: true,
+  todayTrainingExpanded: true,
+  projectExpandedState: {} as Record<string, boolean>,
   activePomodoroTask: null as { taskId: string; projectId?: string; quickTaskId?: string; shareId?: string; title: string } | null,
   sectionOrder: {
     left: ['pomodoro', 'quickTasks', 'focusHeatmap'],
@@ -93,6 +97,8 @@ const dashboardStore = create<any>()(
         goalDeadlineInput: '',
         sharedDashboards: [] as unknown[],
         timelinePanelExpanded: initialState.timelinePanelExpanded !== false,
+        todayTrainingExpanded: initialState.todayTrainingExpanded !== false,
+        projectExpandedState: (initialState as any).projectExpandedState ?? {},
         activePomodoroTask: initialState.activePomodoroTask ?? null,
         sectionOrder: (initialState as any).sectionOrder ?? defaultInitial.sectionOrder,
 
@@ -159,6 +165,8 @@ const dashboardStore = create<any>()(
             if (data.lifeGoals) state.lifeGoals = normalizeLifeGoals(data.lifeGoals, buildDefaultLifeGoals()) as LifeGoalsState;
             if (data.timelineRoutines != null && typeof data.timelineRoutines === 'object') state.timelineRoutines = data.timelineRoutines;
             if (data.timelinePanelExpanded !== undefined) state.timelinePanelExpanded = data.timelinePanelExpanded;
+            if (data.todayTrainingExpanded !== undefined) state.todayTrainingExpanded = data.todayTrainingExpanded;
+            if (data.projectExpandedState && typeof data.projectExpandedState === 'object') state.projectExpandedState = data.projectExpandedState;
             if (data.projects && Array.isArray(data.projects)) {
               const prev = (state.projects || []) as Project[];
               state.projects = data.projects.map((p) => {

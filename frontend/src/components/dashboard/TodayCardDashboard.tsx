@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dumbbell, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTodayTraining } from '../../hooks/useTodayTraining';
+import { useDashboardStore } from '../../store/dashboardStore';
 import TodayCard from '../training/TodayCard';
 import { Card, CardHeader, Badge } from './Card';
 
@@ -63,7 +64,10 @@ const TodayCardSkeleton = () => (
 );
 
 export function TodayCardDashboard({ defaultExpanded = true }: TodayCardDashboardProps): React.ReactElement {
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  const isExpanded = useDashboardStore((s) =>
+    typeof s.todayTrainingExpanded === 'boolean' ? s.todayTrainingExpanded : defaultExpanded
+  );
+  const setTodayTrainingExpanded = useDashboardStore((s) => s.setTodayTrainingExpanded);
   const {
     selectedDay,
     allProgressions,
@@ -119,7 +123,7 @@ export function TodayCardDashboard({ defaultExpanded = true }: TodayCardDashboar
               </Badge>
             )}
             <button
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={() => setTodayTrainingExpanded(!isExpanded)}
               className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors"
               aria-label={isExpanded ? 'Collapse' : 'Expand'}
             >
