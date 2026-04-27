@@ -83,10 +83,12 @@ export function Top3SectionV2() {
 
   const getSlotStyles = (isDragOver, filled, isDone) => {
     if (isDragOver) {
-      return 'border-amber-400/80 dark:border-amber-500/50 bg-amber-50/80 dark:bg-amber-900/20 ring-1 ring-amber-400/25';
+      return 'border-amber-400/80 dark:border-amber-500/50 bg-gradient-to-br from-amber-50/90 to-amber-100/80 dark:from-amber-900/30 dark:to-amber-800/20 ring-2 ring-amber-400/30 shadow-lg shadow-amber-400/10';
     }
     if (filled) {
-      return 'border-zinc-200/70 dark:border-white/[0.08] bg-zinc-50/80 dark:bg-white/[0.03] cursor-grab active:cursor-grabbing hover:border-zinc-300 dark:hover:border-white/[0.12] shadow-sm';
+      return isDone 
+        ? 'border-emerald-200/80 dark:border-emerald-500/30 bg-gradient-to-br from-emerald-50/90 to-emerald-100/70 dark:from-emerald-900/25 dark:to-emerald-800/15 cursor-grab active:cursor-grabbing hover:border-emerald-300 dark:hover:border-emerald-400/40 shadow-md'
+        : 'border-indigo-200/80 dark:border-indigo-400/30 bg-gradient-to-br from-indigo-50/90 to-indigo-100/70 dark:from-indigo-900/25 dark:to-indigo-800/15 cursor-grab active:cursor-grabbing hover:border-indigo-300 dark:hover:border-indigo-400/40 shadow-md';
     }
     return 'border-dashed border-zinc-300/80 dark:border-white/[0.12] bg-zinc-50/50 dark:bg-white/[0.02] hover:border-zinc-400 dark:hover:border-white/[0.18]';
   };
@@ -188,10 +190,6 @@ export function Top3SectionV2() {
                 e.dataTransfer.effectAllowed = 'move'; 
               } : undefined}
               onDragOver={(e) => {
-                if (!e.dataTransfer.types?.includes('application/json')) {
-                  if (dragOverIndex !== null) setDragOverIndex(null);
-                  return;
-                }
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
                 setDragOverIndex(idx);
