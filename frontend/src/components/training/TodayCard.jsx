@@ -285,22 +285,22 @@ function SectionHeader({ icon: Icon, color, label, showRepsLabels, anasOnly = fa
           {!anasOnly && <span className="text-xs font-black text-violet-500/60 tracking-[0.2em] uppercase w-[70px] text-center">Flavio</span>}
         </div>
       </div>
-      {showRepsLabels && (
-        <div className="flex items-center justify-end px-5 py-1.5 bg-black/[0.02] dark:bg-white/[0.01] border-t border-zinc-100/50 dark:border-white/[0.02]">
-          <div className="flex items-center gap-4 sm:gap-8 shrink-0">
-            <div className="flex items-center gap-1.5 w-[70px] justify-center">
-              <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">KG</span>
-              <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">REP</span>
-              <div className="w-6 shrink-0" />
-            </div>
-            <div className="flex items-center gap-1.5 w-[70px] justify-center">
-              <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">KG</span>
-              <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">REP</span>
-              <div className="w-6 shrink-0" />
-            </div>
+      <div className="flex items-center justify-end px-5 py-1.5 bg-black/[0.02] dark:bg-white/[0.01] border-t border-zinc-100/50 dark:border-white/[0.02]">
+        <div className="flex items-center gap-4 sm:gap-8 shrink-0">
+          <div className="flex items-center gap-1.5 w-[70px] justify-center">
+            <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">KG</span>
+            {showRepsLabels && <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">REP</span>}
+            <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-6 text-center">✓</span>
           </div>
+          {!anasOnly && (
+            <div className="flex items-center gap-1.5 w-[70px] justify-center">
+              <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">KG</span>
+              {showRepsLabels && <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">REP</span>}
+              <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-6 text-center">✓</span>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
