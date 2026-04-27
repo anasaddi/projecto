@@ -68,6 +68,10 @@ export function TodayCardDashboard({ defaultExpanded = true }: TodayCardDashboar
     typeof s.todayTrainingExpanded === 'boolean' ? s.todayTrainingExpanded : defaultExpanded
   );
   const setTodayTrainingExpanded = useDashboardStore((s) => s.setTodayTrainingExpanded);
+  const toggleTodayTrainingExpanded = () => {
+    const current = useDashboardStore.getState().todayTrainingExpanded;
+    setTodayTrainingExpanded(!current);
+  };
   const {
     selectedDay,
     allProgressions,
@@ -123,7 +127,7 @@ export function TodayCardDashboard({ defaultExpanded = true }: TodayCardDashboar
               </Badge>
             )}
             <button
-              onClick={() => setTodayTrainingExpanded(!isExpanded)}
+              onClick={toggleTodayTrainingExpanded}
               className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors"
               aria-label={isExpanded ? 'Collapse' : 'Expand'}
             >

@@ -196,6 +196,10 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
   const slotsForDay = useMemo(() => timelineRoutines[todayKey] || {}, [timelineRoutines, todayKey]);
   const currentSlotKey = getCurrentSlotKey();
   const isCollapsed = !timelinePanelExpanded;
+  const toggleTimelinePanel = () => {
+    const current = useDashboardStore.getState().timelinePanelExpanded;
+    setTimelinePanelExpanded(!current);
+  };
   const nowMinutes = useMemo(() => {
     const d = new Date();
     return d.getHours() * 60 + d.getMinutes();
@@ -278,10 +282,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
       <Card className="flex flex-col overflow-hidden rounded-3xl">
         
         {/* HEADER */}
-        <div
-          className="cursor-pointer"
-          onClick={() => setTimelinePanelExpanded(!timelinePanelExpanded)}
-        >
+        <div>
           <CardHeader
             icon={Icons.LayoutList}
             iconColor="text-violet-500"
@@ -304,7 +305,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                 </div>
                 <button
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); setTimelinePanelExpanded(!timelinePanelExpanded); }}
+                  onClick={(e) => { e.stopPropagation(); toggleTimelinePanel(); }}
                   className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors"
                   aria-label={isCollapsed ? 'Espandi' : 'Comprimi'}
                 >

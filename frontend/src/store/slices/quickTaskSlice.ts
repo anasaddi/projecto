@@ -76,7 +76,7 @@ export function createQuickTaskSlice(set: QuickTaskSet, get: QuickTaskGet) {
         const t = title.trim();
         if (t) {
           state.quickTasks.push({
-            id: `quick-${Date.now()}`,
+            id: uid('quick'),
             title: t,
             done: false,
             deadline: undefined,

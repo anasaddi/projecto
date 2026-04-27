@@ -51,8 +51,6 @@ interface SyncStateSlice {
   dailyCompletionLog?: Record<string, unknown>;
   lifeGoals?: unknown;
   timelineRoutines?: Record<string, unknown>;
-  timelinePanelExpanded?: boolean;
-  todayTrainingExpanded?: boolean;
   projectExpandedState?: Record<string, boolean>;
   activePomodoroTask?: unknown;
   sectionOrder?: Record<string, string[]>;
@@ -88,8 +86,6 @@ export function syncMiddleware(config: any): any {
         dailyCompletionLog: state.dailyCompletionLog,
         lifeGoals: state.lifeGoals,
         timelineRoutines: state.timelineRoutines ?? {},
-        timelinePanelExpanded: state.timelinePanelExpanded !== false,
-        todayTrainingExpanded: state.todayTrainingExpanded !== false,
         projectExpandedState: state.projectExpandedState ?? {},
         sectionOrder: state.sectionOrder,
         activePomodoroTask: state.activePomodoroTask ?? null,
