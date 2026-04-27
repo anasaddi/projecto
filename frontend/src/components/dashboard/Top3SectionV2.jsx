@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
-import { resolveTop3Slots, updateNodeInTree } from './DashboardUtils';
+import { resolveTop3Slots } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { useToast } from '../../context/ToastContext';
 import { Card, CardHeader, Badge } from './Card';
@@ -19,7 +19,7 @@ export function Top3SectionV2() {
     setTop3SlotAtIndex,
     removeFromTop3,
     toggleQuickTask,
-    toggleProjectTask,
+    updateProject,
     updateSharedDashboardProject,
     toggleSharedQuickTask,
     updateGoal,
@@ -42,6 +42,22 @@ export function Top3SectionV2() {
 
   const VALID_TOP3_DROP_TYPES = ['top3', 'project', 'project-task', 'quick', 'lifeGoal'];
 
+  const setSubtreeDone = (nodes, targetId, done) => {
+    const applyToAll = (node) => ({
+      ...node,
+      done,
+      children: Array.isArray(node.children) ? node.children.map(applyToAll) : node.children,
+    });
+
+    return (nodes || []).map((node) => {
+      if (node.id === targetId) return applyToAll(node);
+      if (Array.isArray(node.children) && node.children.length) {
+        return { ...node, children: setSubtreeDone(node.children, targetId, done) };
+      }
+      return node;
+    });
+  };
+
   const toggleTop3Slot = (slot) => {
     if (!slot || slot.missing) return;
     if (slot.quickTaskId) {
@@ -56,17 +72,20 @@ export function Top3SectionV2() {
         const qt = quickTasks.find(t => t.lifeGoalId === goalId && !t.parentId);
         if (qt) toggleQuickTask(qt.id, newVal);
       } else {
-        updateGoal(goalId, g => ({ ...g, tasks: updateNodeInTree(g.tasks || [], slot.taskId, n => ({ ...n, done: newVal })) }));
+        updateGoal(goalId, g => ({ ...g, tasks: setSubtreeDone(g.tasks || [], slot.taskId, newVal) }));
       }
       if (logTimelineCompletionEvent && slot.title) logTimelineCompletionEvent('quick', slot.taskId, slot.title, newVal);
     } else {
       if (slot.shareId && updateSharedDashboardProject) {
         updateSharedDashboardProject(slot.shareId, slot.projectId, (p) => ({
           ...p,
-          tasks: updateNodeInTree(p.tasks || [], slot.taskId, (n) => ({ ...n, done: !slot.done })),
+          tasks: setSubtreeDone(p.tasks || [], slot.taskId, !slot.done),
         }));
-      } else if (toggleProjectTask) {
-        toggleProjectTask(slot.projectId, slot.taskId, !slot.done);
+      } else if (updateProject) {
+        updateProject(slot.projectId, (p) => ({
+          ...p,
+          tasks: setSubtreeDone(p.tasks || [], slot.taskId, !slot.done),
+        }));
       }
     }
   };
