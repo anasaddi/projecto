@@ -8,7 +8,6 @@ import { useDashboardStore } from '../../store/dashboardStore';
 const PRESETS = [
   { label: '5m',  minutes: 5 },
   { label: '10m', minutes: 10 },
-  { label: '15m', minutes: 15 },
   { label: '25m', minutes: 25 },
   { label: '45m', minutes: 45 },
   { label: '60m', minutes: 60 },
