@@ -1,12 +1,22 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from './Icons';
-import { POMODORO_DURATION, POMODORO_STORAGE, toDateKey } from './DashboardUtils';
-import { Card, CardHeader, CardBody } from './Card';
+import { POMODORO_STORAGE, toDateKey } from './DashboardUtils';
+import { Card, CardHeader, Badge } from './Card';
 import { useDashboardStore } from '../../store/dashboardStore';
 
+const PRESETS = [
+  { label: '5m',  minutes: 5 },
+  { label: '10m', minutes: 10 },
+  { label: '15m', minutes: 15 },
+  { label: '25m', minutes: 25 },
+  { label: '45m', minutes: 45 },
+  { label: '60m', minutes: 60 },
+];
+
 export function PomodoroCompact() {
-  const [remaining, setRemaining] = useState(POMODORO_DURATION);
+  const [selectedMinutes, setSelectedMinutes] = useState(25);
+  const [remaining, setRemaining] = useState(25 * 60);
   const [status, setStatus] = useState('idle');
   const [sessionsToday, setSessionsToday] = useState(0);
   const intervalRef = useRef(null);
@@ -18,9 +28,8 @@ export function PomodoroCompact() {
   const toggleSharedQuickTask = useDashboardStore((s) => s.toggleSharedQuickTask);
   const toggleProjectTask = useDashboardStore((s) => s.toggleProjectTask);
 
-  // Keep ref in sync so the interval callback always has the latest value
   useEffect(() => { activePomodoroTaskRef.current = activePomodoroTask; }, [activePomodoroTask]);
-  
+
   const todayKey = toDateKey(new Date());
 
   useEffect(() => {
@@ -31,49 +40,17 @@ export function PomodoroCompact() {
         const { date, sessions } = JSON.parse(stored);
         if (date === todayKey) setSessionsToday(sessions || 0);
       }
-    } catch (err) {
-      console.error('Failed to load pomodoro sessions from localStorage:', err);
-    }
+    } catch (err) {}
   }, [todayKey]);
-
-  const handleComplete = () => {
-    setStatus('idle');
-    setRemaining(POMODORO_DURATION);
-    setSessionsToday((s) => {
-      const next = s + 1;
-      if (typeof window !== 'undefined' && window.localStorage) {
-        try { localStorage.setItem(POMODORO_STORAGE, JSON.stringify({ date: todayKey, sessions: next })); } catch (err) { console.error('Failed to save pomodoro sessions:', err); }
-      }
-      if (typeof window !== 'undefined' && window.Notification?.permission === 'granted') new window.Notification('Pomodoro completato!');
-      return next;
-    });
-    // Auto-mark the linked task as done
-    const task = activePomodoroTaskRef.current;
-    if (task) {
-      if (task.shareId && task.quickTaskId === undefined) {
-        toggleSharedQuickTask(task.shareId, task.taskId, true);
-      } else if (task.quickTaskId) {
-        toggleQuickTask(task.quickTaskId, true);
-      } else if (task.projectId && task.taskId) {
-        toggleProjectTask(task.projectId, task.taskId, true);
-      }
-      setActivePomodoroTask(null);
-    }
-  };
 
   useEffect(() => {
     if (!completedRef.current) return;
     completedRef.current = false;
-    // Run completion logic outside of React state updater
     const task = activePomodoroTaskRef.current;
     if (task) {
-      if (task.shareId && task.quickTaskId === undefined) {
-        toggleSharedQuickTask(task.shareId, task.taskId, true);
-      } else if (task.quickTaskId) {
-        toggleQuickTask(task.quickTaskId, true);
-      } else if (task.projectId && task.taskId) {
-        toggleProjectTask(task.projectId, task.taskId, true);
-      }
+      if (task.shareId && task.quickTaskId === undefined) toggleSharedQuickTask(task.shareId, task.taskId, true);
+      else if (task.quickTaskId) toggleQuickTask(task.quickTaskId, true);
+      else if (task.projectId && task.taskId) toggleProjectTask(task.projectId, task.taskId, true);
       setActivePomodoroTask(null);
     }
   });
@@ -83,64 +60,156 @@ export function PomodoroCompact() {
     intervalRef.current = setInterval(() => {
       setRemaining((r) => {
         if (r <= 1) {
-          // Signal completion without calling zustand set() inside React state updater
           completedRef.current = true;
           setStatus('idle');
           setSessionsToday((s) => {
             const next = s + 1;
             if (typeof window !== 'undefined' && window.localStorage) {
-              try { localStorage.setItem(POMODORO_STORAGE, JSON.stringify({ date: todayKey, sessions: next })); } catch (err) { console.error('Failed to save pomodoro sessions:', err); }
+              try { localStorage.setItem(POMODORO_STORAGE, JSON.stringify({ date: todayKey, sessions: next })); } catch (err) {}
             }
-            if (typeof window !== 'undefined' && window.Notification?.permission === 'granted') new window.Notification('Pomodoro completato!');
+            if (typeof window !== 'undefined' && window.Notification?.permission === 'granted') new window.Notification('Timer completato!');
             return next;
           });
-          return POMODORO_DURATION;
+          return selectedMinutes * 60;
         }
         return r - 1;
       });
     }, 1000);
     return () => clearInterval(intervalRef.current);
-  }, [status, todayKey]);
+  }, [status, todayKey, selectedMinutes]);
 
+  const totalSeconds = selectedMinutes * 60;
   const m = Math.floor(remaining / 60);
   const s = remaining % 60;
-  const progress = 1 - remaining / POMODORO_DURATION;
-
+  const progress = 1 - remaining / totalSeconds;
   const timeLeft = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 
-  const handleStartFocus = () => {
+  const circumference = 2 * Math.PI * 36;
+  const strokeDashoffset = circumference - progress * circumference;
+
+  const handleSelectPreset = (minutes) => {
+    if (status !== 'idle') return;
+    setSelectedMinutes(minutes);
+    setRemaining(minutes * 60);
+  };
+
+  const handleStart = () => {
     setStatus('running');
-    setRemaining(POMODORO_DURATION);
   };
 
   const handleStop = () => {
     setStatus('idle');
-    setRemaining(POMODORO_DURATION);
+    setRemaining(selectedMinutes * 60);
     if (activePomodoroTask) setActivePomodoroTask(null);
   };
 
+  const isRunning = status === 'running';
+  const isPaused = status === 'paused';
+  const isIdle = status === 'idle';
+
   return (
-    <Card className="flex flex-col select-none" glow={status === 'running'} glowColor="indigo">
-      <CardBody padding="normal" className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-0.5">Focus</span>
-            <div className="text-3xl sm:text-4xl font-semibold tracking-tighter tabular-nums text-zinc-900 dark:text-zinc-50 leading-none">
-              {timeLeft}
+    <Card className="flex flex-col select-none" glow={isRunning} glowColor="indigo">
+      <CardHeader
+        icon={Icons.Clock}
+        iconColor="text-rose-500"
+        title="Focus Timer"
+        subtitle={isRunning ? 'In corso...' : isPaused ? 'In pausa' : 'Pronto'}
+        action={
+          sessionsToday > 0 ? (
+            <Badge variant="primary" size="sm">{sessionsToday} sess</Badge>
+          ) : undefined
+        }
+      />
+
+      <div className="p-4 flex flex-col gap-4">
+        {/* Circular progress + time */}
+        <div className="flex items-center gap-4">
+          <div className="relative shrink-0 w-20 h-20">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" strokeWidth="6"
+                className="text-zinc-100 dark:text-zinc-800" />
+              <motion.circle
+                cx="40" cy="40" r="36" fill="none"
+                stroke="url(#pomGradient)"
+                strokeWidth="6" strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                initial={false}
+                animate={{ strokeDashoffset }}
+                transition={{ duration: 0.8, ease: 'linear' }}
+              />
+              <defs>
+                <linearGradient id="pomGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#6366f1" />
+                  <stop offset="100%" stopColor="#8b5cf6" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-base font-black tabular-nums text-zinc-900 dark:text-zinc-50 leading-none">
+                {timeLeft}
+              </span>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
-             <div className="text-xs font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/20 mr-1">
-              {sessionsToday} sess
+
+          <div className="flex flex-col gap-3 flex-1 min-w-0">
+            {/* Controls */}
+            <div className="flex items-center gap-2">
+              {isIdle && (
+                <button
+                  onClick={handleStart}
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white h-9 rounded-xl shadow-[0_0_16px_rgba(99,102,241,0.3)] active:scale-95 transition-all text-xs font-bold"
+                >
+                  <Icons.Play className="w-3.5 h-3.5 fill-current" />
+                  Avvia
+                </button>
+              )}
+              {isRunning && (
+                <button
+                  onClick={() => setStatus('paused')}
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-white h-9 rounded-xl shadow-[0_0_16px_rgba(245,158,11,0.3)] active:scale-95 transition-all text-xs font-bold"
+                >
+                  <Icons.Pause className="w-3.5 h-3.5 fill-current" />
+                  Pausa
+                </button>
+              )}
+              {isPaused && (
+                <button
+                  onClick={() => setStatus('running')}
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white h-9 rounded-xl active:scale-95 transition-all text-xs font-bold"
+                >
+                  <Icons.Play className="w-3.5 h-3.5 fill-current" />
+                  Riprendi
+                </button>
+              )}
+              {!isIdle && (
+                <button
+                  onClick={handleStop}
+                  title="Reset"
+                  className="w-9 h-9 flex items-center justify-center rounded-xl bg-zinc-100 dark:bg-white/[0.06] hover:bg-zinc-200 dark:hover:bg-white/[0.1] text-zinc-500 dark:text-zinc-400 border border-zinc-200 dark:border-white/[0.06] active:scale-95 transition-all"
+                >
+                  <Icons.RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
-            <button
-               type="button"
-               onClick={handleStop}
-               className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
-               title="Reset"
-             >
-               <Icons.RotateCcw className="h-4 w-4" />
-             </button>
+
+            {/* Preset chips */}
+            <div className="flex flex-wrap gap-1">
+              {PRESETS.map(({ label, minutes }) => (
+                <button
+                  key={minutes}
+                  onClick={() => handleSelectPreset(minutes)}
+                  disabled={!isIdle}
+                  className={`px-2 py-0.5 rounded-lg text-[11px] font-bold transition-all ${
+                    selectedMinutes === minutes
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-zinc-100 dark:bg-white/[0.05] text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/[0.09] disabled:opacity-40 disabled:cursor-not-allowed'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -168,39 +237,7 @@ export function PomodoroCompact() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        <div className="flex gap-2">
-          {status === 'idle' && (
-            <button onClick={handleStartFocus} className="bg-indigo-600 hover:bg-indigo-500 text-white w-9 h-9 flex items-center justify-center rounded-xl shadow-[0_0_16px_rgba(99,102,241,0.25)] dark:shadow-[0_0_16px_rgba(99,102,241,0.4)] active:scale-95 transition-all">
-              <Icons.Play className="w-4 h-4 fill-current" />
-            </button>
-          )}
-          {status === 'running' && (
-            <button onClick={() => setStatus('paused')} className="bg-amber-500 hover:bg-amber-400 text-white w-9 h-9 flex items-center justify-center rounded-xl shadow-[0_0_16px_rgba(245,158,11,0.3)] dark:shadow-[0_0_16px_rgba(245,158,11,0.4)] active:scale-95 transition-all">
-              <Icons.Pause className="w-4 h-4 fill-current" />
-            </button>
-          )}
-          {status === 'paused' && (
-            <>
-              <button onClick={() => setStatus('running')} className="bg-indigo-600 hover:bg-indigo-500 text-white w-9 h-9 flex items-center justify-center rounded-xl shadow-[0_0_16px_rgba(99,102,241,0.25)] dark:shadow-[0_0_16px_rgba(99,102,241,0.4)] active:scale-95 transition-all">
-                <Icons.Play className="w-4 h-4 fill-current" />
-              </button>
-              <button onClick={handleStop} className="bg-zinc-200 dark:bg-white/[0.06] hover:bg-zinc-300 dark:hover:bg-white/[0.1] text-zinc-700 dark:text-zinc-100 w-9 h-9 flex items-center justify-center rounded-xl active:scale-95 transition-all border border-zinc-200 dark:border-white/[0.06]">
-                <Icons.Square className="w-3.5 h-3.5 fill-current" />
-              </button>
-            </>
-          )}
-        </div>
-
-        <div className="h-[3px] w-full bg-zinc-100 dark:bg-white/[0.04] rounded-full overflow-hidden">
-          <motion.div
-            className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full"
-            initial={false}
-            animate={{ width: `${progress * 100}%` }}
-            transition={{ duration: 1, ease: 'linear' }}
-          />
-        </div>
-      </CardBody>
+      </div>
     </Card>
   );
 }
