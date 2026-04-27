@@ -40,8 +40,8 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
       glowColor="success"
     >
       <CardHeader
-        icon={Icons.Square}
-        iconColor="text-indigo-500"
+        icon={Icons.FolderKanban}
+        iconColor="text-emerald-500"
         title="Progetti"
         subtitle={hasProjects ? `${projects.length} progetti attivi` : 'Crea il tuo primo progetto'}
       />

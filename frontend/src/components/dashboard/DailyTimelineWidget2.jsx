@@ -219,7 +219,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
         >
           <CardHeader
             icon={Icons.LayoutList}
-            iconColor="text-indigo-500"
+            iconColor="text-violet-500"
             title="Preghiere & Timeline"
             subtitle={locationName || 'Timeline giornaliera'}
             action={

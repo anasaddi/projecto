@@ -104,7 +104,7 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
   return (
     <Card className="flex flex-col select-none">
       <CardHeader
-        icon={Icons.Flame}
+        icon={Icons.Calendar}
         iconColor="text-emerald-500"
         title="Ultimi 30 giorni"
         action={
