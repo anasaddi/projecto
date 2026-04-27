@@ -71,27 +71,32 @@ export function QuickTaskRow({
       className={`
         group relative flex items-center gap-2 rounded-2xl border border-transparent p-3
         ${task.done ? 'opacity-75' : 'opacity-100'}
-        ${isFocusActive ? 'ring-2 ring-indigo-400/60 dark:ring-indigo-500/40 bg-indigo-50/50 dark:bg-indigo-500/5' : !isShared ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
+        ${isFocusActive ? 'ring-2 ring-indigo-400/60 dark:ring-indigo-500/40 bg-indigo-50/50 dark:bg-indigo-500/5' : 'cursor-grab active:cursor-grabbing'}
         transition-colors duration-200
         ${!isFocusActive && (isHovered ? 'bg-zinc-100/90 border-zinc-200/70 dark:bg-white/[0.04] dark:border-white/[0.06]' : 'bg-transparent')}
         ${!isFocusActive && 'hover:bg-zinc-100/90 hover:border-zinc-200/70 dark:hover:bg-white/[0.04] dark:hover:border-white/[0.06]'}
       `}
-      draggable={!isShared}
+      draggable
       onMouseEnter={() => setHoveredTaskId(taskId)}
       onMouseLeave={() => setHoveredTaskId(null)}
       onClick={(e) => {
         if (e.target.closest('button') || e.target.closest('input')) return;
         isShared ? toggleSharedQuickTask(task.shareId, task.id, !task.done) : toggleQuickTask(task.id, !task.done);
       }}
-      onDragStart={!isShared ? (e) => {
-        const payload = { type: 'quick', quickTaskId: task.id, fromIndex: localIdx };
+      onDragStart={(e) => {
+        const payload = {
+          type: 'quick',
+          quickTaskId: task.id,
+          fromIndex: localIdx,
+          shareId: isShared ? task.shareId : null,
+        };
         const raw = JSON.stringify(payload);
         e.dataTransfer.setData('application/x-quick', raw);
         e.dataTransfer.setData('application/x-projecto-drag', raw);
         e.dataTransfer.setData('application/json', raw);
         e.dataTransfer.setData('text/plain', raw);
         e.dataTransfer.effectAllowed = 'move';
-      } : undefined}
+      }}
       onDragOver={!isShared ? (e) => {
         if (e.dataTransfer.types.includes('application/x-quick')) e.preventDefault();
       } : undefined}
