@@ -90,15 +90,31 @@ export function Top3SectionV2() {
     }
   };
 
-  const getSlotStyles = (isDragOver, filled, isDone) => {
-    if (isDragOver) {
-      return 'border-amber-400/80 dark:border-amber-500/50 bg-gradient-to-br from-amber-50/90 to-amber-100/80 dark:from-amber-900/30 dark:to-amber-800/20 ring-2 ring-amber-400/30 shadow-lg shadow-amber-400/10';
-    }
-    if (filled) {
-      return isDone 
-        ? 'border-emerald-200/80 dark:border-emerald-500/30 bg-gradient-to-br from-emerald-50/90 to-emerald-100/70 dark:from-emerald-900/25 dark:to-emerald-800/15 cursor-grab active:cursor-grabbing hover:border-emerald-300 dark:hover:border-emerald-400/40 shadow-md'
-        : 'border-indigo-200/80 dark:border-indigo-400/30 bg-gradient-to-br from-indigo-50/90 to-indigo-100/70 dark:from-indigo-900/25 dark:to-indigo-800/15 cursor-grab active:cursor-grabbing hover:border-indigo-300 dark:hover:border-indigo-400/40 shadow-md';
-    }
+  const SLOT_COLORS = [
+    {
+      filled: 'border-amber-300/80 dark:border-amber-500/40 bg-gradient-to-br from-amber-50/90 to-orange-50/70 dark:from-amber-900/25 dark:to-orange-900/15 cursor-grab active:cursor-grabbing hover:border-amber-400 dark:hover:border-amber-400/60 shadow-md shadow-amber-100/60 dark:shadow-amber-900/20',
+      accent: 'text-amber-600 dark:text-amber-400',
+      watermark: 'text-amber-200/60 dark:text-amber-800/30',
+      dragOver: 'border-amber-500/80 dark:border-amber-400/60 bg-gradient-to-br from-amber-50/95 to-orange-50/90 dark:from-amber-900/40 dark:to-orange-900/25 ring-2 ring-amber-400/40 shadow-lg shadow-amber-400/15',
+    },
+    {
+      filled: 'border-violet-300/80 dark:border-violet-500/40 bg-gradient-to-br from-violet-50/90 to-purple-50/70 dark:from-violet-900/25 dark:to-purple-900/15 cursor-grab active:cursor-grabbing hover:border-violet-400 dark:hover:border-violet-400/60 shadow-md shadow-violet-100/60 dark:shadow-violet-900/20',
+      accent: 'text-violet-600 dark:text-violet-400',
+      watermark: 'text-violet-200/60 dark:text-violet-800/30',
+      dragOver: 'border-violet-500/80 dark:border-violet-400/60 bg-gradient-to-br from-violet-50/95 to-purple-50/90 dark:from-violet-900/40 dark:to-purple-900/25 ring-2 ring-violet-400/40 shadow-lg shadow-violet-400/15',
+    },
+    {
+      filled: 'border-sky-300/80 dark:border-sky-500/40 bg-gradient-to-br from-sky-50/90 to-cyan-50/70 dark:from-sky-900/25 dark:to-cyan-900/15 cursor-grab active:cursor-grabbing hover:border-sky-400 dark:hover:border-sky-400/60 shadow-md shadow-sky-100/60 dark:shadow-sky-900/20',
+      accent: 'text-sky-600 dark:text-sky-400',
+      watermark: 'text-sky-200/60 dark:text-sky-800/30',
+      dragOver: 'border-sky-500/80 dark:border-sky-400/60 bg-gradient-to-br from-sky-50/95 to-cyan-50/90 dark:from-sky-900/40 dark:to-cyan-900/25 ring-2 ring-sky-400/40 shadow-lg shadow-sky-400/15',
+    },
+  ];
+
+  const getSlotStyles = (isDragOver, filled, isDone, idx) => {
+    const colors = SLOT_COLORS[idx] || SLOT_COLORS[0];
+    if (isDragOver) return colors.dragOver;
+    if (filled) return colors.filled;
     return 'border-dashed border-zinc-300/80 dark:border-white/[0.12] bg-zinc-50/50 dark:bg-white/[0.02] hover:border-zinc-400 dark:hover:border-white/[0.18]';
   };
 
@@ -222,11 +238,11 @@ export function Top3SectionV2() {
               onDrop={(e) => onDrop(e, idx)}
               className={`relative overflow-hidden min-h-[4rem] rounded-2xl border transition-all duration-200
                 ${isDragOver ? 'scale-[1.02]' : 'scale-100'}
-                ${getSlotStyles(isDragOver, filled, isDone)}
+                ${getSlotStyles(isDragOver, filled, isDone, idx)}
               `}
             >
               {/* Large number watermark - more prominent */}
-              <span className="absolute -right-2 -bottom-4 text-[5rem] font-black text-zinc-200/50 dark:text-white/[0.05] pointer-events-none select-none leading-none z-0">
+              <span className={`absolute -right-2 -bottom-4 text-[5rem] font-black pointer-events-none select-none leading-none z-0 ${filled ? (SLOT_COLORS[idx]?.watermark || 'text-zinc-200/50 dark:text-white/[0.05]') : 'text-zinc-200/50 dark:text-white/[0.05]'}`}>
                 {idx + 1}
               </span>
               
@@ -241,7 +257,7 @@ export function Top3SectionV2() {
                     className="flex flex-col flex-1 min-w-0 cursor-pointer pr-1"
                   >
                     <span
-                      className={`font-semibold break-words leading-snug text-sm ${isDone ? 'line-through text-zinc-400 dark:text-zinc-500' : 'text-zinc-800 dark:text-zinc-100'}`}
+                      className={`font-semibold break-words leading-snug text-sm ${isDone ? 'line-through text-zinc-400 dark:text-zinc-500' : (SLOT_COLORS[idx]?.accent || 'text-zinc-800 dark:text-zinc-100')}`}
                       title={slot.title}
                     >
                       {slot.title}
