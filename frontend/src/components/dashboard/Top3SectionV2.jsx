@@ -130,26 +130,26 @@ export function Top3SectionV2() {
         return;
       }
 
-      // Check if slot is already filled
-      if (top3Manual[idx] !== null) {
-        showToast?.('Questo slot è già occupato. Rimuovi prima il task esistente.', { type: 'warning' });
+      const targetIndex = top3Manual[idx] === null ? idx : top3Manual.findIndex((slot) => !slot);
+      if (targetIndex === -1) {
+        showToast?.('I Top 3 sono già pieni. Rimuovi prima un elemento.', { type: 'warning' });
         return;
       }
 
-      // Check for duplicates
+      // Check if slot is already filled
       if (isTaskInTop3(payload)) {
         showToast?.('Questo task è già nei Top 3', { type: 'warning' });
         return;
       }
 
       if (payload.type === 'top3') {
-        reorderTop3(payload.fromIndex, idx);
+        reorderTop3(payload.fromIndex, targetIndex);
       } else if ((payload.type === 'project' || payload.type === 'project-task') && payload.projectId && payload.taskId) {
-        setTop3SlotAtIndex(idx, { projectId: payload.projectId, taskId: payload.taskId, shareId: payload.shareId ?? null });
+        setTop3SlotAtIndex(targetIndex, { projectId: payload.projectId, taskId: payload.taskId, shareId: payload.shareId ?? null });
       } else if (payload.type === 'quick' && payload.quickTaskId) {
-        setTop3SlotAtIndex(idx, { quickTaskId: payload.quickTaskId, shareId: payload.shareId ?? null });
+        setTop3SlotAtIndex(targetIndex, { quickTaskId: payload.quickTaskId, shareId: payload.shareId ?? null });
       } else if (payload.type === 'lifeGoal' && payload.goalId) {
-        setTop3SlotAtIndex(idx, { projectId: `lg-${payload.goalId}`, taskId: payload.goalId, shareId: payload.shareId ?? null });
+        setTop3SlotAtIndex(targetIndex, { projectId: `lg-${payload.goalId}`, taskId: payload.goalId, shareId: payload.shareId ?? null });
       }
     } catch (_) {
       showToast?.('Errore durante il trascinamento', { type: 'error' });
