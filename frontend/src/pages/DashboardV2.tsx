@@ -14,6 +14,7 @@ import { HabitsSection } from '../components/dashboard/HabitsSection';
 import { ProjectsSectionV2 } from '../components/dashboard/ProjectsSectionV2';
 import { LifeGoalsSection } from '../components/dashboard/LifeGoalsSection';
 import { TodayCardDashboard } from '../components/dashboard/TodayCardDashboard';
+import { DayNavigationButtons } from '../components/dashboard/DayNavigationButtons';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { HabitSkeleton, ProjectSkeleton, Top3Skeleton, QuickTaskSkeleton } from '../components/dashboard/SkeletonSection';
 
@@ -47,6 +48,8 @@ export default function DashboardV2(): React.ReactElement {
   const isLoaded = useDashboardStore((s) => s.isLoaded);
   const lastSavedAt = useDashboardStore((s) => s.lastSavedAt);
   const confirmState = useDashboardStore((s) => s.confirmState);
+  const selectedDate = useDashboardStore((s) => s.selectedDate);
+  const setSelectedDate = useDashboardStore((s) => s.setSelectedDate);
   const setIsLoaded = useDashboardStore((s) => s.setIsLoaded);
   const setLastSavedAt = useDashboardStore((s) => s.setLastSavedAt);
   const setConfirmState = useDashboardStore((s) => s.setConfirmState);
@@ -79,7 +82,7 @@ export default function DashboardV2(): React.ReactElement {
     return () => clearInterval(timer);
   }, [today]);
 
-  const todayKey = toDateKey(today);
+  const todayKey = toDateKey(selectedDate);
   const todayTaskLog = useMemo(() => {
     const logs = (dailyTaskLogs[todayKey] as { id: string; done: boolean }[]) || [];
     const map: Record<string, boolean> = {};
@@ -121,6 +124,9 @@ export default function DashboardV2(): React.ReactElement {
   const totalFocusItems = activeHabits.length + PRAYERS.length + 3;
   const doneFocusItems = todayDone + prayerDone + top3DoneCount;
   const todayFocusScore = totalFocusItems ? doneFocusItems / totalFocusItems : 0;
+
+  const formattedDate = useMemo(() => selectedDate.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' }), [selectedDate]);
+  const isToday = toDateKey(selectedDate) === toDateKey(today);
 
   useEffect(() => {
     if (updateStats) updateStats(doneFocusItems, totalFocusItems);
@@ -184,6 +190,9 @@ export default function DashboardV2(): React.ReactElement {
       {/* Subtle grain texture overlay */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.06] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMDAwIi8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmZmYiLz4KPC9zdmc+')] dark:bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIi8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiMwMDAiLz4KPC9zdmc+')] z-0" />
       
+      {/* Day Navigation Component */}
+      <DayNavigationButtons />
+      
       {/* Redundant header removed - items moved to Layout and PrayersCountdowns */}
 
       <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-5 py-5 md:py-6 flex-1 min-h-0 relative z-10`}>
@@ -191,6 +200,9 @@ export default function DashboardV2(): React.ReactElement {
           countdowns={countdowns as { label: string; remaining: string; pct: number }[]}
           todayFocusScore={todayFocusScore}
           focusStreak={focusStreak}
+          selectedDate={selectedDate}
+          formattedDate={formattedDate}
+          isToday={isToday}
         />
 
         <DailyTimelineWidget2 PRAYERS={PRAYERS} todayKey={todayKey} todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} />

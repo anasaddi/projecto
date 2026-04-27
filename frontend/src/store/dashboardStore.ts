@@ -101,6 +101,7 @@ const dashboardStore = create<any>()(
         projectExpandedState: (initialState as any).projectExpandedState ?? {},
         activePomodoroTask: initialState.activePomodoroTask ?? null,
         sectionOrder: (initialState as any).sectionOrder ?? defaultInitial.sectionOrder,
+        selectedDate: new Date(),
 
         setActivePomodoroTask: (task: { taskId: string; projectId?: string; quickTaskId?: string; shareId?: string; title: string } | null) =>
           set((s: unknown) => {
@@ -115,6 +116,28 @@ const dashboardStore = create<any>()(
             if (!sections || fromIndex === toIndex) return;
             const [removed] = sections.splice(fromIndex, 1);
             sections.splice(toIndex, 0, removed);
+          }),
+
+        setSelectedDate: (date: Date) =>
+          set((s: unknown) => {
+            const state = s as { selectedDate: Date };
+            state.selectedDate = date;
+          }),
+
+        navigateToPreviousDay: () =>
+          set((s: unknown) => {
+            const state = s as { selectedDate: Date };
+            const newDate = new Date(state.selectedDate);
+            newDate.setDate(newDate.getDate() - 1);
+            state.selectedDate = newDate;
+          }),
+
+        navigateToNextDay: () =>
+          set((s: unknown) => {
+            const state = s as { selectedDate: Date };
+            const newDate = new Date(state.selectedDate);
+            newDate.setDate(newDate.getDate() + 1);
+            state.selectedDate = newDate;
           }),
 
         ...createUISlice(set),

@@ -16,12 +16,18 @@ const TIME_BAR_CONFIGS = [
  *   todayFocusScore?: number;
  *   focusStreak?: number;
  *   countdowns?: Array<{ label: string; remaining: string; pct: number }>;
+ *   selectedDate?: Date;
+ *   formattedDate?: string;
+ *   isToday?: boolean;
  * }} props
  */
 export function PrayersCountdownsV2({
   todayFocusScore = 0,
   focusStreak = 0,
   countdowns = [],
+  selectedDate,
+  formattedDate,
+  isToday = true,
 }) {
   const percentage = Math.round(todayFocusScore * 100);
   const circumference = 2 * Math.PI * 40;
@@ -46,7 +52,7 @@ export function PrayersCountdownsV2({
         icon={Icons.Zap}
         iconColor="text-indigo-500"
         title="Focus Score"
-        subtitle="Progressi giornalieri"
+        subtitle={isToday ? "Progressi giornalieri" : formattedDate || "Progressi"}
         action={
           focusStreak > 0 ? (
             <Badge variant="warning" size="sm">
