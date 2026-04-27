@@ -62,7 +62,7 @@ function SortableHabitItem({ task, idx, todayTaskLog, isHovered, setHoveredHabit
       key={task.id}
       layout
       initial={{ opacity: 0, y: -5 }}
-      animate={{ opacity: isLocked ? 0.5 : 1, y: 0 }}
+      animate={{ opacity: isLocked ? 0.72 : 1, y: 0 }}
       exit={{ opacity: 0, x: -20 }}
       onMouseEnter={() => setHoveredHabitId(task.id)}
       onMouseLeave={() => setHoveredHabitId(null)}
@@ -70,13 +70,19 @@ function SortableHabitItem({ task, idx, todayTaskLog, isHovered, setHoveredHabit
         group flex items-center gap-2 rounded-2xl border border-transparent p-3
         ${isLocked ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}
         transition-colors duration-200
-        ${isHovered ? 'border-zinc-200/70 bg-zinc-100/90 dark:border-white/[0.06] dark:bg-white/[0.04]' : 'bg-transparent'}
+        ${isLocked
+          ? 'border-amber-200/70 bg-amber-50/60 dark:border-amber-700/40 dark:bg-amber-950/15'
+          : isHovered
+            ? 'border-zinc-200/70 bg-zinc-100/90 dark:border-white/[0.06] dark:bg-white/[0.04]'
+            : 'bg-transparent'}
         ${isDragging ? 'opacity-50' : ''}
       `}
     >
       {isLocked ? (
         <div className="w-4 flex justify-center">
-          <Icons.Lock className="h-3 w-3 text-amber-500/70" />
+          <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/40">
+            <Icons.Lock className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+          </span>
         </div>
       ) : (
         <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
@@ -86,6 +92,7 @@ function SortableHabitItem({ task, idx, todayTaskLog, isHovered, setHoveredHabit
 
       <TaskCheckbox 
         done={isDone} 
+        className={isLocked ? 'opacity-45 cursor-not-allowed' : ''}
         onClick={() => !isLocked && toggleDailyTask(task.id, !isDone)} 
       />
 
@@ -123,7 +130,13 @@ function SortableHabitItem({ task, idx, todayTaskLog, isHovered, setHoveredHabit
                 setHabitEditingTitle(task.title); 
               }}
               title={task.title}
-              className={`cursor-pointer select-text text-sm leading-relaxed break-words [overflow-wrap:anywhere] transition-colors ${isDone ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-700 dark:text-zinc-200'}`}
+              className={`cursor-pointer select-text text-sm leading-relaxed break-words [overflow-wrap:anywhere] transition-colors ${
+                isLocked
+                  ? 'text-zinc-400 dark:text-zinc-500 italic'
+                  : isDone
+                    ? 'text-zinc-400 line-through dark:text-zinc-500'
+                    : 'text-zinc-700 dark:text-zinc-200'
+              }`}
             >
               {task.title}
             </span>

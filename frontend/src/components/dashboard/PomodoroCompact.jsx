@@ -18,6 +18,8 @@ export function PomodoroCompact() {
   const [remaining, setRemaining] = useState(25 * 60);
   const [status, setStatus] = useState('idle');
   const [sessionsToday, setSessionsToday] = useState(0);
+  const [checkpointPulse, setCheckpointPulse] = useState(0);
+  const [lastCheckpoint, setLastCheckpoint] = useState(0);
   const intervalRef = useRef(null);
   const completedRef = useRef(false);
   const activePomodoroTaskRef = useRef(null);
@@ -81,6 +83,7 @@ export function PomodoroCompact() {
   const m = Math.floor(remaining / 60);
   const s = remaining % 60;
   const progress = 1 - remaining / totalSeconds;
+  const checkpoint = progress >= 0.75 ? 3 : progress >= 0.5 ? 2 : progress >= 0.25 ? 1 : 0;
   const timeLeft = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 
   const circumference = 2 * Math.PI * 36;
@@ -105,6 +108,20 @@ export function PomodoroCompact() {
   const isRunning = status === 'running';
   const isPaused = status === 'paused';
   const isIdle = status === 'idle';
+
+  useEffect(() => {
+    if (isIdle) {
+      setLastCheckpoint(0);
+      setCheckpointPulse(0);
+      return;
+    }
+    if (checkpoint > lastCheckpoint) {
+      setLastCheckpoint(checkpoint);
+      setCheckpointPulse(checkpoint);
+      const t = setTimeout(() => setCheckpointPulse(0), 700);
+      return () => clearTimeout(t);
+    }
+  }, [checkpoint, lastCheckpoint, isIdle]);
 
   return (
     <Card className="flex flex-col select-none" glow={isRunning} glowColor="indigo">
@@ -148,6 +165,22 @@ export function PomodoroCompact() {
               <span className="text-base font-black tabular-nums text-zinc-900 dark:text-zinc-50 leading-none">
                 {timeLeft}
               </span>
+            </div>
+            <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+              {[1, 2, 3].map((step) => {
+                const reached = checkpoint >= step;
+                const pulsing = checkpointPulse === step;
+                return (
+                  <motion.span
+                    key={step}
+                    initial={false}
+                    animate={pulsing ? { scale: [1, 1.55, 1], opacity: [0.8, 1, 0.9] } : { scale: 1, opacity: reached ? 1 : 0.45 }}
+                    transition={{ duration: 0.55, ease: 'easeOut' }}
+                    className={`h-1.5 w-1.5 rounded-full ${reached ? 'bg-indigo-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                    title={`${step * 25}%`}
+                  />
+                );
+              })}
             </div>
           </div>
 

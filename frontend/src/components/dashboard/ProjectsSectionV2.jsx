@@ -31,6 +31,13 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
 
   const hasProjects = projects.length > 0;
   const hasShared = sharedDashboards.length > 0;
+  const sharedProjectsCount = sharedDashboards.reduce((acc, sd) => {
+    const data = sd?.data || {};
+    const list = Array.isArray(data.projects) ? data.projects : (Array.isArray(data) ? data : []);
+    return acc + list.length;
+  }, 0);
+  const totalProjectCount = projects.length + sharedProjectsCount;
+  const denseMode = totalProjectCount >= 7;
   const allCompleted = hasProjects && projects.every(p => countTreeStats(p.tasks).ratio === 1);
 
   return (
@@ -46,15 +53,18 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
         subtitle={hasProjects ? `${projects.length} progetti attivi` : 'Crea il tuo primo progetto'}
       />
 
-      <CardBody className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+      <CardBody
+        padding={denseMode ? 'small' : 'normal'}
+        className={`flex-1 min-h-0 overflow-y-auto custom-scrollbar ${denseMode ? 'text-[13px]' : ''}`}
+      >
         {!hasProjects ? (
           <div className="flex flex-col items-center justify-center gap-3 py-10">
             <CreateProjectCard onClick={createProject} />
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
+          <div className={`flex flex-col ${denseMode ? 'gap-3' : 'gap-4'}`}>
             {/* Personal Projects */}
-            <div className="flex flex-col gap-4">
+            <div className={`flex flex-col ${denseMode ? 'gap-3' : 'gap-4'}`}>
               {projects.map((project, idx) => {
                 const actualStats = countTreeStats(project.tasks);
                 const percentage = Math.round(actualStats.ratio * 100);
@@ -144,14 +154,14 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
                 );
               })}
               
-              <div className="flex min-h-[5.5rem]">
+              <div className={`flex ${denseMode ? 'min-h-[4.75rem]' : 'min-h-[5.5rem]'}`}>
                 <CreateProjectCard onClick={createProject} className="flex-1" />
               </div>
             </div>
 
             {/* Shared Projects */}
             {hasShared && (
-              <div className="flex flex-col gap-4">
+              <div className={`flex flex-col ${denseMode ? 'gap-3' : 'gap-4'}`}>
                 <div className="flex items-center gap-3 py-2">
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-500/10">
@@ -162,7 +172,7 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
                   <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
                 </div>
                               
-                <div className="flex flex-col gap-4">
+                <div className={`flex flex-col ${denseMode ? 'gap-3' : 'gap-4'}`}>
                   {sharedDashboards.map((shared, sIdx) => {
                     const sharedData = shared.data || {};
                     const sharedProjects = Array.isArray(sharedData.projects) ? sharedData.projects : (Array.isArray(sharedData) ? sharedData : []);

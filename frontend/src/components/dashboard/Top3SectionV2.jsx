@@ -206,7 +206,7 @@ export function Top3SectionV2() {
         title="Top 3 Focus"
         subtitle="Le tue priorità principali"
         action={
-          <Badge variant={top3DoneCount === 3 ? 'success' : 'warning'} size="md">
+          <Badge variant={top3DoneCount === 3 ? 'success' : 'warning'} size="sm">
             {top3DoneCount}/3
           </Badge>
         }

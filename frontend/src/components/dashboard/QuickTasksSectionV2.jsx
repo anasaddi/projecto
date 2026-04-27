@@ -47,6 +47,34 @@ export function QuickTasksSectionV2() {
   const doneCount = allQuickTasks.filter(t => t.done).length;
   const totalCount = allQuickTasks.length;
 
+  const groupedQuickTasks = useMemo(() => {
+    const withIndex = allQuickTasks.map((task, originalIdx) => ({ task, originalIdx }));
+    const nowTs = Date.now();
+    const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
+
+    const parseDeadline = (deadline) => {
+      if (!deadline) return Number.POSITIVE_INFINITY;
+      const ts = new Date(deadline).getTime();
+      return Number.isFinite(ts) ? ts : Number.POSITIVE_INFINITY;
+    };
+
+    const isPinnedTask = (task) => top3Manual.some(
+      (s) => s && s.quickTaskId === task.id && (task.shareId ? s.shareId === task.shareId : !s.shareId)
+    );
+
+    const nowItems = withIndex.filter(({ task }) => {
+      if (task.done) return false;
+      const deadlineTs = parseDeadline(task.deadline);
+      const urgentByDeadline = deadlineTs !== Number.POSITIVE_INFINITY && deadlineTs - nowTs <= twoDaysMs;
+      return isPinnedTask(task) || urgentByDeadline;
+    });
+
+    const laterItems = withIndex.filter(({ task }) => !task.done && !nowItems.some((it) => it.task.id === task.id && it.task.shareId === task.shareId));
+    const completedItems = withIndex.filter(({ task }) => !!task.done);
+
+    return { nowItems, laterItems, completedItems };
+  }, [allQuickTasks, top3Manual]);
+
   const addQuickTask = (e) => {
     if (e.key === 'Enter') {
       addQuickTaskAction(quickTaskDraft);
@@ -68,7 +96,7 @@ export function QuickTasksSectionV2() {
         title="Quick Tasks"
         subtitle="Task veloci senza progetto"
         action={
-          <Badge variant={doneCount === totalCount && totalCount > 0 ? 'success' : 'danger'} size="md">
+          <Badge variant={doneCount === totalCount && totalCount > 0 ? 'success' : 'danger'} size="sm">
             {doneCount}/{totalCount}
           </Badge>
         }
@@ -87,43 +115,59 @@ export function QuickTasksSectionV2() {
         {/* Tasks list */}
         <div className="flex flex-col gap-1">
           <AnimatePresence mode="popLayout">
-            {allQuickTasks.map((task, idx) => {
-              const isShared = !!task.shareId;
-              const localIdx = isShared ? -1 : quickTasks.filter(t => !t.parentId).findIndex(t => t.id === task.id);
-              const pinned = isPinned(task);
-              const isHovered = hoveredTaskId === (isShared ? `shared-${task.shareId}-${task.id}` : task.id);
-              return (
-                <QuickTaskRow
-                  key={isShared ? `shared-${task.shareId}-${task.id}` : task.id}
-                  task={task}
-                  isShared={isShared}
-                  localIdx={localIdx}
-                  idx={idx}
-                  pinned={pinned}
-                  isHovered={isHovered}
-                  allQuickTasks={allQuickTasks}
-                  setHoveredTaskId={setHoveredTaskId}
-                  toggleQuickTask={toggleQuickTask}
-                  toggleSharedQuickTask={toggleSharedQuickTask}
-                  quickTaskEditingId={quickTaskEditingId}
-                  setQuickTaskEditingId={setQuickTaskEditingId}
-                  quickTaskEditingTitle={quickTaskEditingTitle}
-                  setQuickTaskEditingTitle={setQuickTaskEditingTitle}
-                  quickTaskDeadlineEditing={quickTaskDeadlineEditing}
-                  setQuickTaskDeadlineInput={setQuickTaskDeadlineInput}
-                  setQuickTaskDeadlineEditing={setQuickTaskDeadlineEditing}
-                  quickTaskDeadlineInput={quickTaskDeadlineInput}
-                  updateQuickTask={updateQuickTask}
-                  updateSharedQuickTask={updateSharedQuickTask}
-                  top3Manual={top3Manual}
-                  setTop3SlotAtIndex={setTop3SlotAtIndex}
-                  removeQuickTask={removeQuickTask}
-                  removeSharedQuickTask={removeSharedQuickTask}
-                  reorderQuickTasks={reorderQuickTasks}
-                  promoteQuickTaskToProject={promoteQuickTaskToProject}
-                />
-              );
-            })}
+            {[
+              { key: 'now', title: 'Ora', items: groupedQuickTasks.nowItems, color: 'text-rose-500' },
+              { key: 'later', title: 'Dopo', items: groupedQuickTasks.laterItems, color: 'text-indigo-500' },
+              { key: 'done', title: 'Completate', items: groupedQuickTasks.completedItems, color: 'text-emerald-500' },
+            ].map((section) => (
+              section.items.length > 0 ? (
+                <motion.div key={section.key} layout className="flex flex-col gap-1.5 mb-1">
+                  <div className="flex items-center gap-2 px-1 pt-1">
+                    <span className={`text-[10px] font-black uppercase tracking-[0.16em] ${section.color}`}>{section.title}</span>
+                    <div className="h-px flex-1 bg-zinc-200/80 dark:bg-zinc-800/80" />
+                    <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500">{section.items.length}</span>
+                  </div>
+                  {section.items.map(({ task, originalIdx }) => {
+                    const idx = originalIdx;
+                    const isShared = !!task.shareId;
+                    const localIdx = isShared ? -1 : quickTasks.filter(t => !t.parentId).findIndex(t => t.id === task.id);
+                    const pinned = isPinned(task);
+                    const isHovered = hoveredTaskId === (isShared ? `shared-${task.shareId}-${task.id}` : task.id);
+                    return (
+                      <QuickTaskRow
+                        key={isShared ? `shared-${task.shareId}-${task.id}` : task.id}
+                        task={task}
+                        isShared={isShared}
+                        localIdx={localIdx}
+                        idx={idx}
+                        pinned={pinned}
+                        isHovered={isHovered}
+                        allQuickTasks={allQuickTasks}
+                        setHoveredTaskId={setHoveredTaskId}
+                        toggleQuickTask={toggleQuickTask}
+                        toggleSharedQuickTask={toggleSharedQuickTask}
+                        quickTaskEditingId={quickTaskEditingId}
+                        setQuickTaskEditingId={setQuickTaskEditingId}
+                        quickTaskEditingTitle={quickTaskEditingTitle}
+                        setQuickTaskEditingTitle={setQuickTaskEditingTitle}
+                        quickTaskDeadlineEditing={quickTaskDeadlineEditing}
+                        setQuickTaskDeadlineInput={setQuickTaskDeadlineInput}
+                        setQuickTaskDeadlineEditing={setQuickTaskDeadlineEditing}
+                        quickTaskDeadlineInput={quickTaskDeadlineInput}
+                        updateQuickTask={updateQuickTask}
+                        updateSharedQuickTask={updateSharedQuickTask}
+                        top3Manual={top3Manual}
+                        setTop3SlotAtIndex={setTop3SlotAtIndex}
+                        removeQuickTask={removeQuickTask}
+                        removeSharedQuickTask={removeSharedQuickTask}
+                        reorderQuickTasks={reorderQuickTasks}
+                        promoteQuickTaskToProject={promoteQuickTaskToProject}
+                      />
+                    );
+                  })}
+                </motion.div>
+              ) : null
+            ))}
           </AnimatePresence>
           
           {allQuickTasks.length === 0 && (

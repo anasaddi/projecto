@@ -59,6 +59,11 @@ function getSlotLabel(slotKey) {
   return `${from} → ${to}`;
 }
 
+function parseMinutes(timeStr) {
+  const [h, m] = String(timeStr || '00:00').split(':').map(Number);
+  return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
+}
+
 // --- HABIT SELECTOR (UX/UI Ultra-Premium) - Portal per evitare clip nella card ---
 function HabitSelector({ activeHabits, onSelect, onClose, triggerRef }) {
   const ref = useRef(null);
@@ -191,6 +196,66 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
   const slotsForDay = useMemo(() => timelineRoutines[todayKey] || {}, [timelineRoutines, todayKey]);
   const currentSlotKey = getCurrentSlotKey();
   const isCollapsed = !timelinePanelExpanded;
+  const nowMinutes = useMemo(() => {
+    const d = new Date();
+    return d.getHours() * 60 + d.getMinutes();
+  }, [timelineProgress]);
+
+  const prayerMinutes = useMemo(() => {
+    const values = PRAYERS.map((p) => parseMinutes(PRAYER_TIMES[p]));
+    if (values.length) values.push(values[0] + 24 * 60);
+    return values;
+  }, [PRAYERS, PRAYER_TIMES]);
+
+  const getPrayerState = (idx, isDone) => {
+    const start = prayerMinutes[idx];
+    const end = prayerMinutes[idx + 1];
+    if (!Number.isFinite(start) || !Number.isFinite(end)) {
+      return {
+        badge: isDone ? 'Completata' : 'In attesa',
+        checkboxClass: isDone
+          ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)]'
+          : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-400 hover:border-indigo-400 hover:text-indigo-500',
+        labelClass: isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400',
+      };
+    }
+
+    if (!isDone) {
+      if (nowMinutes > end) {
+        return {
+          badge: 'In ritardo',
+          checkboxClass: 'bg-rose-50 dark:bg-rose-950/30 border-rose-300 dark:border-rose-700 text-rose-500 hover:border-rose-400',
+          labelClass: 'text-rose-600 dark:text-rose-400',
+        };
+      }
+      if (nowMinutes >= start && nowMinutes <= end) {
+        return {
+          badge: 'Ora',
+          checkboxClass: 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700 text-amber-500 hover:border-amber-400',
+          labelClass: 'text-amber-600 dark:text-amber-400',
+        };
+      }
+      return {
+        badge: 'In attesa',
+        checkboxClass: 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-400 hover:border-indigo-400 hover:text-indigo-500',
+        labelClass: 'text-zinc-600 dark:text-zinc-400',
+      };
+    }
+
+    if (nowMinutes < start) {
+      return {
+        badge: 'In anticipo',
+        checkboxClass: 'bg-sky-500 border-sky-400 text-white shadow-[0_0_15px_rgba(14,165,233,0.35)]',
+        labelClass: 'text-sky-600 dark:text-sky-400',
+      };
+    }
+
+    return {
+      badge: 'In orario',
+      checkboxClass: 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]',
+      labelClass: 'text-emerald-600 dark:text-emerald-400',
+    };
+  };
 
   // Calcolo progresso
   const progress = useMemo(() => {
@@ -279,6 +344,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                   <div className="grid grid-cols-[repeat(5,minmax(0,1fr))] gap-3">
                     {PRAYERS.map((prayer, i) => {
                       const isDone = todayPrayerLog[prayer];
+                      const prayerState = getPrayerState(i, !!isDone);
                       const slotKey = PRAYER_SLOTS[i];
                       const isCurrentSlot = currentSlotKey === slotKey;
                       const isPastSlot = PRAYER_SLOTS.indexOf(slotKey) < PRAYER_SLOTS.indexOf(currentSlotKey);
@@ -299,16 +365,16 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                               whileHover={{ scale: 1.08 }}
                               whileTap={{ scale: 0.92 }}
                               className={`relative z-10 w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border-2 ${
-                                isDone
-                                  ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]'
-                                  : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-400 hover:border-indigo-400 hover:text-indigo-500'
+                                prayerState.checkboxClass
                               }`}
+                              title={`${prayer} • ${prayerState.badge}`}
                             >
                               {isDone ? <Icons.Check className="w-5 h-5" /> : <div className="w-2.5 h-2.5 rounded-full bg-current opacity-40" />}
                             </motion.button>
                             <div className="flex flex-col items-center -mt-1">
-                              <span className={`text-xs font-black uppercase tracking-widest ${isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400'}`}>{prayer}</span>
+                              <span className={`text-xs font-black uppercase tracking-widest ${prayerState.labelClass}`}>{prayer}</span>
                               <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 font-mono mt-0.5">{PRAYER_TIMES[prayer]}</span>
+                              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-0.5">{prayerState.badge}</span>
                             </div>
 
                             {/* Slot card below */}

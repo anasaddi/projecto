@@ -79,17 +79,34 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
       const prayersDone = PRAYERS.reduce((acc, p) => acc + (prayerLog[p] ? 1 : 0), 0);
       const tasksDone = Math.min(3, (completionLog.quick?.length || 0) + (completionLog.project?.length || 0));
       const score = totalItems ? (habitsDone + prayersDone + tasksDone) / totalItems : 0;
-      days.push({ key, date: d, score, isToday: key === toDateKey(now) });
+      days.push({
+        key,
+        date: d,
+        score,
+        habitsDone,
+        habitsTotal: activeHabits.length,
+        prayersDone,
+        prayersTotal: PRAYERS.length,
+        tasksDone,
+        tasksTotal: 3,
+        isToday: key === toDateKey(now),
+      });
     }
     return days;
   }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, now, totalItems]);
 
   const getColor = (score) => {
-    if (score >= 0.9) return 'bg-emerald-600 dark:bg-emerald-500';
-    if (score >= 0.65) return 'bg-emerald-500 dark:bg-emerald-400';
-    if (score >= 0.4) return 'bg-amber-400 dark:bg-amber-500';
-    if (score > 0) return 'bg-amber-200 dark:bg-amber-500/40';
+    if (score >= 0.85) return 'bg-emerald-600 dark:bg-emerald-500';
+    if (score >= 0.55) return 'bg-amber-400 dark:bg-amber-500';
+    if (score > 0) return 'bg-rose-400 dark:bg-rose-500/70';
     return 'bg-zinc-100 dark:bg-white/[0.04]';
+  };
+
+  const getDayStatus = (score) => {
+    if (score >= 0.85) return 'Completa';
+    if (score >= 0.55) return 'Parziale';
+    if (score > 0) return 'Critica';
+    return 'Vuota';
   };
 
   const streak = useMemo(() => {
@@ -117,10 +134,10 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
       />
       <CardBody padding="normal" className="flex flex-col gap-4">
         <div className="grid grid-cols-10 gap-2">
-          {heatmapDays.map(({ key, score, isToday }) => (
+          {heatmapDays.map(({ key, score, isToday, habitsDone, habitsTotal, prayersDone, prayersTotal, tasksDone, tasksTotal }) => (
             <div
               key={key}
-              title={`${Math.round(score * 100)}% · ${key}`}
+              title={`${key}\nStato: ${getDayStatus(score)} (${Math.round(score * 100)}%)\nAbitudini: ${habitsDone}/${habitsTotal}\nPreghiere: ${prayersDone}/${prayersTotal}\nTop3: ${tasksDone}/${tasksTotal}`}
               className={`w-5 h-5 rounded-md ${getColor(score)} ${isToday ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-indigo-400 ring-offset-white dark:ring-offset-[#161920]' : ''} transition-colors`}
             />
           ))}
@@ -129,10 +146,9 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
           <span>Meno</span>
           <div className="flex items-center gap-0.5">
             <div className="w-3 h-3 rounded-[2px] bg-zinc-100 dark:bg-white/[0.04]" title="0%" />
-            <div className="w-3 h-3 rounded-[2px] bg-amber-200 dark:bg-amber-500/40" title="&gt;0%" />
-            <div className="w-3 h-3 rounded-[2px] bg-amber-400 dark:bg-amber-500" title="&ge;40%" />
-            <div className="w-3 h-3 rounded-[2px] bg-emerald-500 dark:bg-emerald-400" title="&ge;65%" />
-            <div className="w-3 h-3 rounded-[2px] bg-emerald-600 dark:bg-emerald-500" title="&ge;90%" />
+            <div className="w-3 h-3 rounded-[2px] bg-rose-400 dark:bg-rose-500/70" title="1-54% (Critica)" />
+            <div className="w-3 h-3 rounded-[2px] bg-amber-400 dark:bg-amber-500" title="55-84% (Parziale)" />
+            <div className="w-3 h-3 rounded-[2px] bg-emerald-600 dark:bg-emerald-500" title="≥85% (Completa)" />
           </div>
           <span>Più</span>
         </div>
