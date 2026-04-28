@@ -92,25 +92,25 @@ export function DayNavigationButtons() {
 
       {/* Mobile Navigation Bar */}
       <div className="fixed inset-x-3 bottom-3 z-50 md:hidden">
-        <div className="mx-auto flex max-w-[420px] items-center gap-2 rounded-2xl border border-white/10 bg-zinc-950/90 px-2 py-2 shadow-[0_16px_40px_rgba(15,23,42,0.35)] backdrop-blur-xl">
+        <div className="mx-auto flex max-w-[320px] items-center gap-1 rounded-full border border-white/10 bg-zinc-950/76 px-1 py-1 shadow-[0_10px_24px_rgba(15,23,42,0.22)] backdrop-blur-xl">
           <button
             type="button"
             onClick={handlePreviousDay}
             disabled={!canGoBack}
-            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-white/5 px-3 text-xs font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-30"
+            className="flex h-8 flex-1 items-center justify-center gap-1 rounded-full bg-white/5 px-2 text-[10px] font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-30"
             aria-label="Giorno precedente"
           >
-            <Icons.ChevronLeft className="h-4 w-4" />
+            <Icons.ChevronLeft className="h-3 w-3" />
             <span>Indietro</span>
           </button>
           {!isToday ? (
             <button
               type="button"
               onClick={handleBackToToday}
-              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-indigo-500"
+              className="flex h-8 flex-1 items-center justify-center gap-1 rounded-full bg-indigo-600 px-2 text-[10px] font-semibold text-white transition-colors hover:bg-indigo-500"
               aria-label="Torna a oggi"
             >
-              <Icons.Calendar className="h-4 w-4" />
+              <Icons.Calendar className="h-3 w-3" />
               <span>Oggi</span>
             </button>
           ) : null}
@@ -118,11 +118,11 @@ export function DayNavigationButtons() {
             type="button"
             onClick={handleNextDay}
             disabled={!canGoForward}
-            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-white/5 px-3 text-xs font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-30"
+            className="flex h-8 flex-1 items-center justify-center gap-1 rounded-full bg-white/5 px-2 text-[10px] font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-30"
             aria-label="Giorno successivo"
           >
             <span>Avanti</span>
-            <Icons.ChevronRight className="h-4 w-4" />
+            <Icons.ChevronRight className="h-3 w-3" />
           </button>
         </div>
       </div>

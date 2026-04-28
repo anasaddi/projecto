@@ -1,4 +1,5 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
@@ -18,7 +19,9 @@ export function QuickTaskRow({
 }) {
   const showToast = useToast();
   const rowRef = useRef(null);
+  const mobileTriggerRef = useRef(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMenuPos, setMobileMenuPos] = useState({ top: 0, left: 0, width: 0 });
   const taskId = isShared ? `shared-${task.shareId}-${task.id}` : task.id;
   const isFocusActive = false;
   
@@ -65,6 +68,16 @@ export function QuickTaskRow({
   useEffect(() => {
     if (!mobileMenuOpen) return undefined;
 
+    const updatePosition = () => {
+      const trigger = mobileTriggerRef.current;
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const width = 196;
+      const left = Math.max(12, Math.min(rect.right - width, window.innerWidth - width - 12));
+      const top = rect.bottom + 8;
+      setMobileMenuPos({ top, left, width });
+    };
+
     const handlePointerDown = (event) => {
       if (rowRef.current && !rowRef.current.contains(event.target)) {
         setMobileMenuOpen(false);
@@ -79,9 +92,14 @@ export function QuickTaskRow({
 
     document.addEventListener('pointerdown', handlePointerDown);
     document.addEventListener('keydown', handleEscape);
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    updatePosition();
     return () => {
       document.removeEventListener('pointerdown', handlePointerDown);
       document.removeEventListener('keydown', handleEscape);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
     };
   }, [mobileMenuOpen]);
 
@@ -90,6 +108,37 @@ export function QuickTaskRow({
     setMobileMenuOpen(false);
     act.onClick?.(event);
   };
+
+  const mobileMenu = useMemo(() => {
+    if (!mobileMenuOpen) return null;
+    return createPortal(
+      <div
+        className="fixed z-[9999] rounded-2xl border border-zinc-200 bg-white p-2 shadow-[0_18px_40px_rgba(15,23,42,0.16)] dark:border-white/[0.08] dark:bg-zinc-950"
+        style={{ top: mobileMenuPos.top, left: mobileMenuPos.left, width: mobileMenuPos.width }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-2 pb-2 text-[10px] font-black uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500">
+          Azioni task
+        </div>
+        <div className="flex flex-col gap-1">
+          {actions.map((act, i) => (
+            <button
+              key={i}
+              type="button"
+              className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-white/[0.06]"
+              onClick={(e) => triggerAction(act, e)}
+            >
+              <span className={`flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 ${act.className || ''}`}>
+                {act.icon}
+              </span>
+              <span className="min-w-0 truncate">{act.title}</span>
+            </button>
+          ))}
+        </div>
+      </div>,
+      document.body
+    );
+  }, [actions, mobileMenuOpen, mobileMenuPos.left, mobileMenuPos.top, mobileMenuPos.width]);
 
   return (
     <motion.div
@@ -207,6 +256,7 @@ export function QuickTaskRow({
       </div>
       <button
         type="button"
+        ref={mobileTriggerRef}
         className="md:hidden ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-500 shadow-sm transition-colors hover:bg-zinc-100 dark:border-white/[0.08] dark:bg-zinc-900 dark:text-zinc-300"
         onClick={(e) => {
           e.stopPropagation();
@@ -247,28 +297,7 @@ export function QuickTaskRow({
         })}
       </motion.div>
 
-      {mobileMenuOpen && (
-        <div className="absolute right-2 top-full z-30 mt-2 w-48 rounded-2xl border border-zinc-200 bg-white p-2 shadow-[0_18px_40px_rgba(15,23,42,0.16)] dark:border-white/[0.08] dark:bg-zinc-950 md:hidden">
-          <div className="px-2 pb-2 text-[10px] font-black uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500">
-            Azioni task
-          </div>
-          <div className="flex flex-col gap-1">
-            {actions.map((act, i) => (
-              <button
-                key={i}
-                type="button"
-                className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-white/[0.06]"
-                onClick={(e) => triggerAction(act, e)}
-              >
-                <span className={`flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 ${act.className || ''}`}>
-                  {act.icon}
-                </span>
-                <span className="min-w-0 truncate">{act.title}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {mobileMenu}
     </motion.div>
   );
 }

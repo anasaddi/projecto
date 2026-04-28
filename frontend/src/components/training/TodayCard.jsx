@@ -468,7 +468,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
   const sectionsGrid = (
     <div className="grid grid-cols-1 lg:grid-cols-3 lg:divide-x divide-zinc-100/80 dark:divide-white/[0.04]">
       {/* Strength Section */}
-      <div className="flex flex-col min-h-[280px] lg:min-h-[400px]">
+      <div className="flex flex-col min-h-0 lg:min-h-[400px]">
         <SectionHeader icon={Zap} color="text-indigo-500" label="Strength Focus" anasOnly={anasOnly} />
         <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
           {strengthEx.length > 0 ? strengthEx.map(ex => {
@@ -497,7 +497,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
       </div>
 
       {/* AW Section */}
-      <div className="flex flex-col min-h-[280px] lg:min-h-[400px]">
+      <div className="flex flex-col min-h-0 lg:min-h-[400px]">
         <SectionHeader icon={Target} color="text-amber-500" label="AW Specialization" anasOnly={anasOnly} />
         <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
           {awEx.length > 0 ? awEx.map(ex => {
@@ -558,7 +558,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
     return (
       <div className="animate-in fade-in duration-300">
         {sectionsGrid}
-        <div className="bg-zinc-50/30 dark:bg-black/20 px-6 py-3.5 border-t border-zinc-100/80 dark:border-white/[0.04] flex items-center justify-between">
+        <div className="bg-zinc-50/30 dark:bg-black/20 px-4 py-2.5 sm:px-6 sm:py-3.5 border-t border-zinc-100/80 dark:border-white/[0.04] flex items-center justify-between">
           {footerLegend}
           <div className="flex items-center gap-2 text-xs font-medium text-zinc-400/40 tracking-[0.2em] uppercase">
             <div className="w-1.5 h-1.5 rounded-full bg-indigo-500/30 animate-pulse" />

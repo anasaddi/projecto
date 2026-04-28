@@ -47,13 +47,15 @@ function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
 export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDate }) {
   const { config } = useGlobalConfig();
   const PRAYERS = config?.PRAYERS || ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+  const safeSelectedDate = selectedDate instanceof Date ? selectedDate : new Date(selectedDate || Date.now());
+  const selectedDateKey = toDateKey(startOfDay(safeSelectedDate));
 
   const totalItems = activeHabits.length + PRAYERS.length + 3;
   const historyLength = 28; // last 4 weeks
   const heatmapDays = useMemo(() => {
     const days = [];
     for (let i = 29; i >= 0; i--) {
-      const d = addDays(startOfDay(selectedDate), -i);
+      const d = addDays(startOfDay(safeSelectedDate), -i);
       const key = toDateKey(d);
       const taskLog = dailyTaskLogs[key] || {};
       const prayerLog = prayerLogs[key] || {};
@@ -72,11 +74,11 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
         prayersTotal: PRAYERS.length,
         tasksDone,
         tasksTotal: 3,
-        isSelected: key === toDateKey(selectedDate),
+        isSelected: key === selectedDateKey,
       });
     }
     return days;
-  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDate, totalItems]);
+  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDateKey, totalItems]);
 
   const getColor = (score) => {
     if (score >= 0.85) return 'bg-emerald-500 dark:bg-emerald-500';
@@ -121,7 +123,7 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
             <div
               key={key}
               title={`${key}\nStato: ${getDayStatus(score)} (${Math.round(score * 100)}%)\nAbitudini: ${habitsDone}/${habitsTotal}\nPreghiere: ${prayersDone}/${prayersTotal}\nTop3: ${tasksDone}/${tasksTotal}`}
-              className={`w-5 h-5 rounded-md ${getColor(score)} ${isSelected ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-indigo-400 ring-offset-white dark:ring-offset-[#131820]' : ''} transition-colors`}
+              className={`w-5 h-5 rounded-md ${getColor(score)} ${isSelected ? 'ring-4 ring-offset-2 ring-indigo-500 dark:ring-indigo-400 ring-offset-white dark:ring-offset-[#131820] shadow-[0_0_0_1px_rgba(99,102,241,0.35)]' : ''} transition-colors`}
             />
           ))}
         </div>

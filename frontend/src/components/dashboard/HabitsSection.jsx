@@ -67,7 +67,7 @@ function SortableHabitItem({ task, idx, todayTaskLog, isHovered, setHoveredHabit
       onMouseEnter={() => setHoveredHabitId(task.id)}
       onMouseLeave={() => setHoveredHabitId(null)}
       className={`
-        group flex items-center gap-2 rounded-2xl border border-transparent p-3
+        group ${isLocked ? 'hidden sm:flex' : 'flex'} items-center gap-2 rounded-2xl border border-transparent p-3
         ${isLocked ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}
         transition-colors duration-200
         ${isLocked
