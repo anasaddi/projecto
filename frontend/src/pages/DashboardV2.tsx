@@ -162,7 +162,7 @@ export default function DashboardV2(): React.ReactElement {
     const totalItems = activeHabits.length + PRAYERS.length + 3;
     let s = 0;
     for (let i = 0; i < 30; i++) {
-      const d = addDays(startOfDay(now), -i);
+      const d = addDays(startOfDay(selectedDate), -i);
       const key = toDateKey(d);
       const taskLog = (dailyTaskLogs[key] as { id: string; done: boolean }[]) || [];
       const taskLogMap: Record<string, boolean> = {};
@@ -180,7 +180,7 @@ export default function DashboardV2(): React.ReactElement {
       else break;
     }
     return s;
-  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, today, PRAYERS]);
+  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDate, PRAYERS]);
 
   const confirmId = confirmState && typeof confirmState === 'object' && 'id' in confirmState ? (confirmState as { id: string }).id : undefined;
   const confirmPayload = confirmState && typeof confirmState === 'object' && 'payload' in confirmState ? (confirmState as { payload?: { shareId?: string; projectId?: string; goalId?: string } }).payload : undefined;
@@ -214,7 +214,7 @@ export default function DashboardV2(): React.ReactElement {
           <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
             <PomodoroCompact />
             {isLoaded ? <QuickTasksSectionV2 /> : <QuickTaskSkeleton />}
-            <FocusHeatmap dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} now={now} />
+            <FocusHeatmap dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} selectedDate={selectedDate} />
           </div>
           <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
             {isLoaded ? <Top3SectionV2 /> : <Top3Skeleton />}

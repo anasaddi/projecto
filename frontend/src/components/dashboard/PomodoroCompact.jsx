@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from './Icons';
-import { POMODORO_STORAGE, toDateKey } from './DashboardUtils';
+import { POMODORO_STORAGE, toDateKey, parseSelectedDate } from './DashboardUtils';
 import { Card, CardHeader, Badge } from './Card';
 import { useDashboardStore } from '../../store/dashboardStore';
 
@@ -31,7 +31,9 @@ export function PomodoroCompact() {
 
   useEffect(() => { activePomodoroTaskRef.current = activePomodoroTask; }, [activePomodoroTask]);
 
-  const todayKey = toDateKey(new Date());
+  const selectedDate = useDashboardStore((s) => s.selectedDate);
+  const selectedKey = toDateKey(parseSelectedDate(selectedDate, new Date()));
+  const realTodayKey = toDateKey(new Date());
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.localStorage) return;
@@ -39,10 +41,13 @@ export function PomodoroCompact() {
       const stored = localStorage.getItem(POMODORO_STORAGE);
       if (stored) {
         const { date, sessions } = JSON.parse(stored);
-        if (date === todayKey) setSessionsToday(sessions || 0);
+        if (date === selectedKey) setSessionsToday(sessions || 0);
+        else setSessionsToday(0);
+      } else {
+        setSessionsToday(0);
       }
     } catch (err) {}
-  }, [todayKey]);
+  }, [selectedKey]);
 
   useEffect(() => {
     if (!completedRef.current) return;
@@ -64,9 +69,14 @@ export function PomodoroCompact() {
           completedRef.current = true;
           setStatus('idle');
           setSessionsToday((s) => {
-            const next = s + 1;
+            const isViewingToday = selectedKey === realTodayKey;
+            const next = isViewingToday ? s + 1 : s;
             if (typeof window !== 'undefined' && window.localStorage) {
-              try { localStorage.setItem(POMODORO_STORAGE, JSON.stringify({ date: todayKey, sessions: next })); } catch (err) {}
+              try {
+                const stored = localStorage.getItem(POMODORO_STORAGE);
+                const prev = stored ? (JSON.parse(stored).date === realTodayKey ? (JSON.parse(stored).sessions || 0) : 0) : 0;
+                localStorage.setItem(POMODORO_STORAGE, JSON.stringify({ date: realTodayKey, sessions: prev + 1 }));
+              } catch (err) {}
             }
             if (typeof window !== 'undefined' && window.Notification?.permission === 'granted') new window.Notification('Timer completato!');
             return next;
@@ -77,7 +87,7 @@ export function PomodoroCompact() {
       });
     }, 1000);
     return () => clearInterval(intervalRef.current);
-  }, [status, todayKey, selectedMinutes]);
+  }, [status, realTodayKey, selectedMinutes]);
 
   const totalSeconds = selectedMinutes * 60;
   const m = Math.floor(remaining / 60);

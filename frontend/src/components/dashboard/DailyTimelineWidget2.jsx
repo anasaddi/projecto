@@ -416,7 +416,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                                       >
                                         <TaskCheckbox done={r.done} onClick={() => toggleTimelineRoutine(todayKey, slotKey, r.id, !r.done)} />
                                         <span className={`text-xs font-semibold truncate transition-colors ${r.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}>
-                                          {habit ? habit.title : 'Rimosso'}
+                                          {r.title || 'Rimosso'}
                                         </span>
                                         <button
                                           type="button"

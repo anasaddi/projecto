@@ -15,6 +15,7 @@ import {
   buildDefaultLifeGoals,
   normalizeLifeGoals,
   toDateKey,
+  startOfDay,
   parseSelectedDate,
 } from '../components/dashboard/DashboardUtils';
 import { haptic } from '../utils/haptics';
@@ -66,6 +67,13 @@ const defaultInitial = {
 const loaded = loadState() as Partial<SyncData> | null;
 const initialState = loaded ? { ...defaultInitial, ...loaded } : defaultInitial;
 
+function clampSelectedDateToToday(value: Date | string | undefined, fallback = new Date()): Date {
+  const parsed = parseSelectedDate(value, fallback);
+  const today = startOfDay(new Date());
+  const normalized = startOfDay(parsed);
+  return normalized > today ? today : parsed;
+}
+
 const dashboardStore = create<any>()(
   syncMiddleware(
     immer((set: any, get: any) => ({
@@ -104,7 +112,7 @@ const dashboardStore = create<any>()(
         projectExpandedState: (initialState as any).projectExpandedState ?? {},
         activePomodoroTask: initialState.activePomodoroTask ?? null,
         sectionOrder: (initialState as any).sectionOrder ?? defaultInitial.sectionOrder,
-        selectedDate: parseSelectedDate(initialState.selectedDate, new Date()),
+        selectedDate: clampSelectedDateToToday(initialState.selectedDate, new Date()),
 
         setActivePomodoroTask: (task: { taskId: string; projectId?: string; quickTaskId?: string; shareId?: string; title: string } | null) =>
           set((s: unknown) => {
@@ -124,7 +132,7 @@ const dashboardStore = create<any>()(
         setSelectedDate: (date: Date) =>
           set((s: unknown) => {
             const state = s as { selectedDate: Date };
-            state.selectedDate = date;
+            state.selectedDate = clampSelectedDateToToday(date, new Date());
           }),
 
         navigateToPreviousDay: () =>
@@ -140,7 +148,7 @@ const dashboardStore = create<any>()(
             const state = s as { selectedDate: Date };
             const newDate = new Date(state.selectedDate);
             newDate.setDate(newDate.getDate() + 1);
-            state.selectedDate = newDate;
+            state.selectedDate = clampSelectedDateToToday(newDate, new Date());
           }),
 
         ...createUISlice(set),
@@ -198,7 +206,7 @@ const dashboardStore = create<any>()(
             if (data.dailyTaskLogs) state.dailyTaskLogs = data.dailyTaskLogs;
             if (data.prayerLogs) state.prayerLogs = data.prayerLogs;
             if (data.selectedDate !== undefined) {
-              state.selectedDate = parseSelectedDate(data.selectedDate, new Date());
+              state.selectedDate = clampSelectedDateToToday(data.selectedDate, new Date());
             }
             if (data.dailyCompletionLog) state.dailyCompletionLog = data.dailyCompletionLog;
             if (data.lifeGoals) state.lifeGoals = normalizeLifeGoals(data.lifeGoals, buildDefaultLifeGoals()) as LifeGoalsState;

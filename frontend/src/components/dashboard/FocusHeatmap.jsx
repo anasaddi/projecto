@@ -25,12 +25,12 @@ function startOfDay(date = new Date()) {
   return d;
 }
 
-function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, now, PRAYERS = DEFAULT_PRAYERS }) {
+function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDate, PRAYERS = DEFAULT_PRAYERS }) {
   const totalItems = activeHabits.length + PRAYERS.length + 3;
   const { weekAvg, monthAvg, bestDay, worstDay } = useMemo(() => {
     const days = [];
     for (let i = 29; i >= 0; i--) {
-      const d = addDays(startOfDay(now), -i);
+      const d = addDays(startOfDay(selectedDate), -i);
       const key = toDateKey(d);
       const taskLog = dailyTaskLogs[key] || {};
       const prayerLog = prayerLogs[key] || {};
@@ -49,7 +49,7 @@ function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
     const bestDay = withScore.length ? withScore.reduce((a, b) => a.score >= b.score ? a : b, { key: '', score: 0 }) : null;
     const worstDay = withScore.length ? withScore.reduce((a, b) => a.score <= b.score ? a : b, { key: '', score: 1 }) : null;
     return { weekAvg, monthAvg, bestDay, worstDay };
-  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, now, totalItems]);
+  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDate, totalItems]);
   
   return (
     <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800/60 flex flex-wrap gap-x-3 gap-y-1 text-xs">
@@ -61,7 +61,7 @@ function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
   );
 }
 
-export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, now }) {
+export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDate }) {
   const { config } = useGlobalConfig();
   const PRAYERS = config?.PRAYERS || ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
@@ -70,7 +70,7 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
   const heatmapDays = useMemo(() => {
     const days = [];
     for (let i = 29; i >= 0; i--) {
-      const d = addDays(startOfDay(now), -i);
+      const d = addDays(startOfDay(selectedDate), -i);
       const key = toDateKey(d);
       const taskLog = dailyTaskLogs[key] || {};
       const prayerLog = prayerLogs[key] || {};
@@ -89,11 +89,11 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
         prayersTotal: PRAYERS.length,
         tasksDone,
         tasksTotal: 3,
-        isToday: key === toDateKey(now),
+        isSelected: key === toDateKey(selectedDate),
       });
     }
     return days;
-  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, now, totalItems]);
+  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDate, totalItems]);
 
   const getColor = (score) => {
     if (score >= 0.85) return 'bg-emerald-600 dark:bg-emerald-500';
@@ -134,11 +134,11 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
       />
       <CardBody padding="normal" className="flex flex-col gap-4">
         <div className="grid grid-cols-10 gap-2">
-          {heatmapDays.map(({ key, score, isToday, habitsDone, habitsTotal, prayersDone, prayersTotal, tasksDone, tasksTotal }) => (
+          {heatmapDays.map(({ key, score, isSelected, habitsDone, habitsTotal, prayersDone, prayersTotal, tasksDone, tasksTotal }) => (
             <div
               key={key}
               title={`${key}\nStato: ${getDayStatus(score)} (${Math.round(score * 100)}%)\nAbitudini: ${habitsDone}/${habitsTotal}\nPreghiere: ${prayersDone}/${prayersTotal}\nTop3: ${tasksDone}/${tasksTotal}`}
-              className={`w-5 h-5 rounded-md ${getColor(score)} ${isToday ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-indigo-400 ring-offset-white dark:ring-offset-[#161920]' : ''} transition-colors`}
+              className={`w-5 h-5 rounded-md ${getColor(score)} ${isSelected ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-indigo-400 ring-offset-white dark:ring-offset-[#161920]' : ''} transition-colors`}
             />
           ))}
         </div>
@@ -152,7 +152,7 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
           </div>
           <span>Più</span>
         </div>
-        <LightAnalyticsInner dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} now={now} PRAYERS={PRAYERS} />
+        <LightAnalyticsInner dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} selectedDate={selectedDate} PRAYERS={PRAYERS} />
       </CardBody>
     </Card>
   );

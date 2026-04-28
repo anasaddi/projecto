@@ -33,12 +33,12 @@ export function PrayersCountdownsV2({
   const circumference = 2 * Math.PI * 40;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
-  // Build year progress from countdowns or compute it here
-  const now = new Date();
-  const startOfYear = new Date(now.getFullYear(), 0, 1);
-  const endOfYear = new Date(now.getFullYear() + 1, 0, 1);
-  const yearPct = (now.getTime() - startOfYear.getTime()) / (endOfYear.getTime() - startOfYear.getTime());
-  const yearRemaining = endOfYear.getTime() - now.getTime();
+  // Build year progress from selectedDate (falls back to now for today)
+  const yearRef = selectedDate instanceof Date && !Number.isNaN(selectedDate.getTime()) ? selectedDate : new Date();
+  const startOfYear = new Date(yearRef.getFullYear(), 0, 1);
+  const endOfYear = new Date(yearRef.getFullYear() + 1, 0, 1);
+  const yearPct = (yearRef.getTime() - startOfYear.getTime()) / (endOfYear.getTime() - startOfYear.getTime());
+  const yearRemaining = endOfYear.getTime() - yearRef.getTime();
   const yearDays = Math.floor(yearRemaining / (1000 * 60 * 60 * 24));
   const dateLabel = selectedDate instanceof Date && !Number.isNaN(selectedDate.getTime())
     ? selectedDate.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })

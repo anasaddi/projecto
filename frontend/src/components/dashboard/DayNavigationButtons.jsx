@@ -4,8 +4,6 @@ import { Icons } from './Icons';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { startOfDay, addDays, toDateKey, parseSelectedDate } from './DashboardUtils';
 
-const MAX_FUTURE_DAYS = 7; // Allow navigating up to 7 days into the future
-
 export function DayNavigationButtons() {
   const selectedDate = useDashboardStore((s) => s.selectedDate);
   const navigateToPreviousDay = useDashboardStore((s) => s.navigateToPreviousDay);
@@ -19,7 +17,7 @@ export function DayNavigationButtons() {
 
   // Calculate limits
   const minDate = startOfDay(addDays(today, -365)); // 1 year back
-  const maxDate = startOfDay(addDays(today, MAX_FUTURE_DAYS)); // 7 days forward
+  const maxDate = startOfDay(today); // never allow future dates
 
   const canGoBack = startOfDay(safeSelectedDate) > minDate;
   const canGoForward = startOfDay(safeSelectedDate) < maxDate;
@@ -54,13 +52,13 @@ export function DayNavigationButtons() {
                 animate={{ opacity: 1, x: 0 }}
                 whileHover={{ scale: 1.03, x: 10 }}
                 onClick={handlePreviousDay}
-                className="pointer-events-none relative flex h-40 w-14 items-center justify-center overflow-hidden rounded-r-[34px] border border-l-0 border-white/70 bg-gradient-to-b from-white/95 via-zinc-50/95 to-zinc-100/95 text-zinc-600 opacity-0 shadow-[0_18px_40px_rgba(15,23,42,0.16)] backdrop-blur-xl ring-1 ring-black/5 transition-all duration-300 ease-out hover:bg-indigo-50 dark:border-white/[0.08] dark:from-zinc-950/95 dark:via-zinc-900/90 dark:to-zinc-900/80 dark:text-zinc-300 dark:ring-white/[0.06] dark:hover:bg-indigo-500/10 group-hover:pointer-events-auto group-hover:opacity-100 group-hover:translate-x-0 translate-x-[-14px]"
+                className="pointer-events-none relative flex h-40 w-14 items-center justify-center overflow-hidden rounded-r-[34px] border border-l-0 border-white/70 bg-gradient-to-b from-white/95 via-zinc-50/95 to-zinc-100/95 text-white opacity-0 shadow-[0_18px_40px_rgba(15,23,42,0.16)] backdrop-blur-xl ring-1 ring-black/5 transition-all duration-300 ease-out hover:bg-indigo-50 dark:border-white/[0.08] dark:from-zinc-950/95 dark:via-zinc-900/90 dark:to-zinc-900/80 dark:text-white dark:ring-white/[0.06] dark:hover:bg-indigo-500/10 group-hover:pointer-events-auto group-hover:opacity-100 group-hover:translate-x-0 translate-x-[-14px]"
                 aria-label="Giorno precedente"
               >
                 <span className="absolute inset-y-3 left-0 w-px bg-gradient-to-b from-transparent via-indigo-400/50 to-transparent opacity-80" />
                 <span className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(99,102,241,0.16),transparent_62%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                <div className="relative flex h-20 w-8 items-center justify-center rounded-[999px] bg-white/80 shadow-inner shadow-zinc-200/80 ring-1 ring-black/5 dark:bg-white/[0.04] dark:shadow-none dark:ring-white/[0.06]">
-                  <Icons.ChevronLeft className="h-6 w-6" />
+                <div className="relative flex h-20 w-8 items-center justify-center rounded-[999px] bg-indigo-600/95 shadow-[0_10px_24px_rgba(79,70,229,0.35)] ring-1 ring-white/15 dark:bg-indigo-500/90 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)]">
+                  <Icons.ChevronLeft className="h-6 w-6 text-white drop-shadow-[0_1px_1px_rgba(15,23,42,0.35)]" />
                 </div>
               </motion.button>
             </div>
@@ -78,13 +76,13 @@ export function DayNavigationButtons() {
                 animate={{ opacity: 1, x: 0 }}
                 whileHover={{ scale: 1.03, x: -10 }}
                 onClick={handleNextDay}
-                className="pointer-events-none relative flex h-40 w-14 items-center justify-center overflow-hidden rounded-l-[34px] border border-r-0 border-white/70 bg-gradient-to-b from-white/95 via-zinc-50/95 to-zinc-100/95 text-zinc-600 opacity-0 shadow-[0_18px_40px_rgba(15,23,42,0.16)] backdrop-blur-xl ring-1 ring-black/5 transition-all duration-300 ease-out hover:bg-indigo-50 dark:border-white/[0.08] dark:from-zinc-950/95 dark:via-zinc-900/90 dark:to-zinc-900/80 dark:text-zinc-300 dark:ring-white/[0.06] dark:hover:bg-indigo-500/10 group-hover:pointer-events-auto group-hover:opacity-100 group-hover:translate-x-0 translate-x-[14px]"
+                className="pointer-events-none relative flex h-40 w-14 items-center justify-center overflow-hidden rounded-l-[34px] border border-r-0 border-white/70 bg-gradient-to-b from-white/95 via-zinc-50/95 to-zinc-100/95 text-white opacity-0 shadow-[0_18px_40px_rgba(15,23,42,0.16)] backdrop-blur-xl ring-1 ring-black/5 transition-all duration-300 ease-out hover:bg-indigo-50 dark:border-white/[0.08] dark:from-zinc-950/95 dark:via-zinc-900/90 dark:to-zinc-900/80 dark:text-white dark:ring-white/[0.06] dark:hover:bg-indigo-500/10 group-hover:pointer-events-auto group-hover:opacity-100 group-hover:translate-x-0 translate-x-[14px]"
                 aria-label="Giorno successivo"
               >
                 <span className="absolute inset-y-3 right-0 w-px bg-gradient-to-b from-transparent via-indigo-400/50 to-transparent opacity-80" />
                 <span className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(99,102,241,0.16),transparent_62%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                <div className="relative flex h-20 w-8 items-center justify-center rounded-[999px] bg-white/80 shadow-inner shadow-zinc-200/80 ring-1 ring-black/5 dark:bg-white/[0.04] dark:shadow-none dark:ring-white/[0.06]">
-                  <Icons.ChevronRight className="h-6 w-6" />
+                <div className="relative flex h-20 w-8 items-center justify-center rounded-[999px] bg-indigo-600/95 shadow-[0_10px_24px_rgba(79,70,229,0.35)] ring-1 ring-white/15 dark:bg-indigo-500/90 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)]">
+                  <Icons.ChevronRight className="h-6 w-6 text-white drop-shadow-[0_1px_1px_rgba(15,23,42,0.35)]" />
                 </div>
               </motion.button>
             </div>

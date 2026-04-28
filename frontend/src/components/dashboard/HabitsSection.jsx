@@ -17,7 +17,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
-import { toDateKey, addDays } from './DashboardUtils';
+import { toDateKey, addDays, parseSelectedDate } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { ThisWeekWidget } from './ThisWeekWidget';
 import { Card, CardHeader, Badge, ActionButton } from './Card';
@@ -225,7 +225,8 @@ export function HabitsSection() {
     reorderHabits
   } = store ?? {};
 
-  const now = useMemo(() => new Date(), []);
+  const selectedDate = useDashboardStore((s) => s.selectedDate);
+  const now = useMemo(() => parseSelectedDate(selectedDate, new Date()), [selectedDate]);
   const todayKey = useMemo(() => toDateKey(now), [now]);
   
   const todayTaskLog = useMemo(() => {
