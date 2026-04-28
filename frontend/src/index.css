@@ -442,4 +442,13 @@ input[type=number] {
     min-height: 44px;
     min-width: 44px;
   }
+
+  /* Scrollbar hide - for mobile horizontal scroll */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

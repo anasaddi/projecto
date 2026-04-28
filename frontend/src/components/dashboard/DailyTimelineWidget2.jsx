@@ -350,10 +350,10 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
               className="border-t border-zinc-100/80 bg-zinc-50/40 dark:border-zinc-800/60 dark:bg-white/[0.02]"
             >
               <div className="px-3 py-4 no-select-calendar sm:px-5 sm:py-5 md:px-6">
-                {/* Timeline: checkbox centered above gap between cards */}
+                {/* Timeline: mobile scrollable, desktop grid */}
                 <div className="relative">
-                  {/* Connecting line at checkbox height */}
-                  <div className="absolute top-5 left-0 right-0 h-[4px] rounded-full bg-zinc-300/60 dark:bg-zinc-700 overflow-hidden pointer-events-none shadow-sm">
+                  {/* Connecting line at checkbox height - hidden on mobile scroll */}
+                  <div className="hidden md:block absolute top-5 left-0 right-0 h-[4px] rounded-full bg-zinc-300/60 dark:bg-zinc-700 overflow-hidden pointer-events-none shadow-sm">
                     <motion.div
                       className="absolute inset-y-0 left-0 h-full bg-gradient-to-r from-emerald-600 to-indigo-600 rounded-full"
                       initial={false}
@@ -362,8 +362,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                     />
                   </div>
 
-                  {/* Two rows: checkboxes on top, cards below */}
-                  <div className="grid grid-cols-[repeat(5,minmax(0,1fr))] gap-3">
+                  {/* Mobile: horizontal scroll with snap. Desktop: 5-column grid */}
+                  <div className="flex md:grid md:grid-cols-5 gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0 md:overflow-visible md:pb-0">
                     {PRAYERS.map((prayer, i) => {
                       const isDone = todayPrayerLog[prayer];
                       const prayerState = getPrayerState(i, !!isDone);
@@ -379,21 +379,21 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
 
                       return (
                         <React.Fragment key={prayer}>
-                          <div className="flex flex-col items-center gap-3">
+                          <div className="flex flex-col items-center gap-3 min-w-[72px] md:min-w-0 snap-start">
                             <motion.button
                               onClick={() => togglePrayer?.(prayer, !isDone)}
-                              whileHover={{ scale: 1.08 }}
-                              whileTap={{ scale: 0.92 }}
-                              className={`relative z-10 w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border-2 ${prayerState.checkboxClass}`}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className={`relative z-10 w-12 h-12 md:w-10 md:h-10 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border-2 ${prayerState.checkboxClass}`}
                               title={`${prayer} • ${prayerState.badge}`}
                             >
-                              {isDone ? <Icons.Check className="w-5 h-5" /> : <div className="w-2.5 h-2.5 rounded-full bg-current opacity-40" />}
+                              {isDone ? <Icons.Check className="w-5 h-5 md:w-5 md:h-5" /> : <div className="w-3 h-3 md:w-2.5 md:h-2.5 rounded-full bg-current opacity-40" />}
                             </motion.button>
 
                             <div className="flex flex-col items-center -mt-1">
-                              <span className={`text-xs font-black uppercase tracking-widest ${prayerState.labelClass}`}>{prayer}</span>
-                              <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 font-mono mt-0.5">{PRAYER_TIMES[prayer]}</span>
-                              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-0.5">{prayerState.badge}</span>
+                              <span className={`text-sm md:text-xs font-black uppercase tracking-widest ${prayerState.labelClass}`}>{prayer}</span>
+                              <span className="text-sm md:text-xs font-bold text-zinc-400 dark:text-zinc-500 font-mono mt-0.5">{PRAYER_TIMES[prayer]}</span>
+                              <span className="text-xs md:text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-0.5">{prayerState.badge}</span>
                             </div>
 
                             {hasSlotCard && (
