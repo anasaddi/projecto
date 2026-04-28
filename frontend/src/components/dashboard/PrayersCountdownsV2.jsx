@@ -4,10 +4,10 @@ import { Card, CardHeader, Badge } from './Card';
 import { Icons } from './Icons';
 
 const TIME_BAR_CONFIGS = [
-  { key: 'Day',   gradient: 'from-amber-400 to-orange-400',   bg: 'bg-amber-50 dark:bg-amber-950/40',   label: 'Day',   ring: 'ring-amber-200 dark:ring-amber-800/40' },
-  { key: 'Week',  gradient: 'from-violet-400 to-purple-500',  bg: 'bg-violet-50 dark:bg-violet-950/40',  label: 'Week',  ring: 'ring-violet-200 dark:ring-violet-800/40' },
-  { key: 'Month', gradient: 'from-sky-400 to-cyan-400',       bg: 'bg-sky-50 dark:bg-sky-950/40',       label: 'Month', ring: 'ring-sky-200 dark:ring-sky-800/40' },
-  { key: 'Year',  gradient: 'from-emerald-400 to-teal-400',   bg: 'bg-emerald-50 dark:bg-emerald-950/40', label: 'Year',  ring: 'ring-emerald-200 dark:ring-emerald-800/40' },
+  { key: 'Day',   gradient: 'from-indigo-500 to-violet-500',   bg: 'bg-indigo-50 dark:bg-indigo-950/40',   label: 'Day',   ring: 'ring-indigo-200 dark:ring-indigo-800/40' },
+  { key: 'Week',  gradient: 'from-indigo-500 to-violet-500',  bg: 'bg-indigo-50 dark:bg-indigo-950/40',  label: 'Week',  ring: 'ring-indigo-200 dark:ring-indigo-800/40' },
+  { key: 'Month', gradient: 'from-indigo-500 to-violet-500',  bg: 'bg-indigo-50 dark:bg-indigo-950/40',  label: 'Month', ring: 'ring-indigo-200 dark:ring-indigo-800/40' },
+  { key: 'Year',  gradient: 'from-indigo-500 to-violet-500',  bg: 'bg-indigo-50 dark:bg-indigo-950/40',  label: 'Year',  ring: 'ring-indigo-200 dark:ring-indigo-800/40' },
 ];
 
 /**

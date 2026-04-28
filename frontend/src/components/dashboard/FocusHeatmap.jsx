@@ -96,10 +96,10 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
   }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDate, totalItems]);
 
   const getColor = (score) => {
-    if (score >= 0.85) return 'bg-emerald-600 dark:bg-emerald-500';
-    if (score >= 0.55) return 'bg-amber-400 dark:bg-amber-500';
-    if (score > 0) return 'bg-rose-400 dark:bg-rose-500/70';
-    return 'bg-zinc-100 dark:bg-white/[0.04]';
+    if (score >= 0.85) return 'bg-emerald-500 dark:bg-emerald-500';
+    if (score >= 0.55) return 'bg-amber-500 dark:bg-amber-500';
+    if (score > 0) return 'bg-rose-500 dark:bg-rose-500';
+    return 'bg-zinc-100 dark:bg-zinc-800';
   };
 
   const getDayStatus = (score) => {
@@ -138,17 +138,17 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
             <div
               key={key}
               title={`${key}\nStato: ${getDayStatus(score)} (${Math.round(score * 100)}%)\nAbitudini: ${habitsDone}/${habitsTotal}\nPreghiere: ${prayersDone}/${prayersTotal}\nTop3: ${tasksDone}/${tasksTotal}`}
-              className={`w-5 h-5 rounded-md ${getColor(score)} ${isSelected ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-indigo-400 ring-offset-white dark:ring-offset-[#161920]' : ''} transition-colors`}
+              className={`w-5 h-5 rounded-md ${getColor(score)} ${isSelected ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-indigo-400 ring-offset-white dark:ring-offset-[#131820]' : ''} transition-colors`}
             />
           ))}
         </div>
         <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
           <span>Meno</span>
           <div className="flex items-center gap-0.5">
-            <div className="w-3 h-3 rounded-[2px] bg-zinc-100 dark:bg-white/[0.04]" title="0%" />
-            <div className="w-3 h-3 rounded-[2px] bg-rose-400 dark:bg-rose-500/70" title="1-54% (Critica)" />
-            <div className="w-3 h-3 rounded-[2px] bg-amber-400 dark:bg-amber-500" title="55-84% (Parziale)" />
-            <div className="w-3 h-3 rounded-[2px] bg-emerald-600 dark:bg-emerald-500" title="≥85% (Completa)" />
+            <div className="w-3 h-3 rounded-[2px] bg-zinc-100 dark:bg-zinc-800" title="0%" />
+            <div className="w-3 h-3 rounded-[2px] bg-rose-500 dark:bg-rose-500" title="1-54% (Critica)" />
+            <div className="w-3 h-3 rounded-[2px] bg-amber-500 dark:bg-amber-500" title="55-84% (Parziale)" />
+            <div className="w-3 h-3 rounded-[2px] bg-emerald-500 dark:bg-emerald-500" title="≥85% (Completa)" />
           </div>
           <span>Più</span>
         </div>

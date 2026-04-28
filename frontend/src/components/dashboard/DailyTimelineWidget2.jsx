@@ -238,7 +238,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
     if (!isDone) {
       if (nowMinutes > end) {
         return {
-          badge: 'In ritardo',
+          badge: 'Mancante',
           checkboxClass: 'bg-rose-500 border-rose-400 text-white shadow-[0_0_12px_rgba(244,63,94,0.3)]',
           labelClass: 'text-rose-600 dark:text-rose-400',
         };
