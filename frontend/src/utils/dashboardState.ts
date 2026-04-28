@@ -7,6 +7,7 @@ export type DashboardPayloadLike = Record<string, unknown> & {
   projects?: unknown[];
   quickTasks?: unknown[];
   dailyCompletionLog?: Record<string, unknown> | unknown;
+  selectedDate?: unknown;
   top3Manual?: unknown;
   lifeGoals?: DashboardLifeGoalsLike | unknown;
   data?: unknown;
@@ -19,6 +20,7 @@ export function extractDashboardPayload(value: unknown): DashboardPayloadLike | 
     Array.isArray(candidate.dailyTaskTemplates) ||
     Array.isArray(candidate.projects) ||
     Array.isArray(candidate.quickTasks) ||
+    candidate.selectedDate != null ||
     candidate.lifeGoals != null ||
     candidate.top3Manual != null ||
     candidate.dailyCompletionLog != null;
@@ -32,8 +34,9 @@ export function hasMeaningfulDashboardData(value: unknown): boolean {
   const lifeGoals = payload.lifeGoals as DashboardLifeGoalsLike | undefined;
   return Boolean(
     (Array.isArray(payload.dailyTaskTemplates) && payload.dailyTaskTemplates.length > 0) ||
-      (Array.isArray(payload.projects) && payload.projects.length > 0) ||
-      (Array.isArray(payload.quickTasks) && payload.quickTasks.length > 0) ||
-      (Array.isArray(lifeGoals?.tiers) && lifeGoals.tiers.some((tier) => (tier?.goals?.length ?? 0) > 0))
+    (Array.isArray(payload.projects) && payload.projects.length > 0) ||
+    (Array.isArray(payload.quickTasks) && payload.quickTasks.length > 0) ||
+    payload.selectedDate != null ||
+    (Array.isArray(lifeGoals?.tiers) && lifeGoals.tiers.some((tier) => (tier?.goals?.length ?? 0) > 0))
   );
 }

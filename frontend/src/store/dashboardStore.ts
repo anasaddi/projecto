@@ -15,6 +15,7 @@ import {
   buildDefaultLifeGoals,
   normalizeLifeGoals,
   toDateKey,
+  parseSelectedDate,
 } from '../components/dashboard/DashboardUtils';
 import { haptic } from '../utils/haptics';
 import { logTimelineEvent } from './storeHelpers';
@@ -27,6 +28,7 @@ interface SyncData {
   dailyTaskLogs?: Record<string, unknown>;
   projects?: Project[];
   prayerLogs?: Record<string, unknown>;
+  selectedDate?: Date | string;
   top3Manual?: (Top3Slot | null)[];
   quickTasks?: QuickTask[];
   dailyCompletionLog?: Record<string, DayCompletionPayload>;
@@ -58,6 +60,7 @@ const defaultInitial = {
     center: ['top3', 'habits'],
     right: ['projects'],
   } as Record<string, string[]>,
+  selectedDate: new Date(),
 };
 
 const loaded = loadState() as Partial<SyncData> | null;
@@ -101,7 +104,7 @@ const dashboardStore = create<any>()(
         projectExpandedState: (initialState as any).projectExpandedState ?? {},
         activePomodoroTask: initialState.activePomodoroTask ?? null,
         sectionOrder: (initialState as any).sectionOrder ?? defaultInitial.sectionOrder,
-        selectedDate: new Date(),
+        selectedDate: parseSelectedDate(initialState.selectedDate, new Date()),
 
         setActivePomodoroTask: (task: { taskId: string; projectId?: string; quickTaskId?: string; shareId?: string; title: string } | null) =>
           set((s: unknown) => {
@@ -144,7 +147,17 @@ const dashboardStore = create<any>()(
         ...createHabitSlice(set, get),
         logTimelineCompletionEvent: (type: string, id: string, title: string, val: boolean) =>
           set((s: unknown) => {
-            logTimelineEvent(s as { dailyCompletionLog: Record<string, DayCompletionPayload> }, type as 'habit' | 'quick' | 'project' | 'shared_quick', id, title, val);
+            const state = s as { dailyCompletionLog: Record<string, DayCompletionPayload>; selectedDate?: Date | string };
+            logTimelineEvent(
+              state,
+              type as 'habit' | 'quick' | 'project' | 'shared_quick',
+              id,
+              title,
+              val,
+              undefined,
+              undefined,
+              toDateKey(parseSelectedDate(state.selectedDate, new Date()))
+            );
           }),
 
         setProjects: (val: unknown) =>
@@ -184,6 +197,9 @@ const dashboardStore = create<any>()(
             if (data.dailyTaskTemplates) state.dailyTaskTemplates = data.dailyTaskTemplates;
             if (data.dailyTaskLogs) state.dailyTaskLogs = data.dailyTaskLogs;
             if (data.prayerLogs) state.prayerLogs = data.prayerLogs;
+            if (data.selectedDate !== undefined) {
+              state.selectedDate = parseSelectedDate(data.selectedDate, new Date());
+            }
             if (data.dailyCompletionLog) state.dailyCompletionLog = data.dailyCompletionLog;
             if (data.lifeGoals) state.lifeGoals = normalizeLifeGoals(data.lifeGoals, buildDefaultLifeGoals()) as LifeGoalsState;
             if (data.timelineRoutines != null && typeof data.timelineRoutines === 'object') state.timelineRoutines = data.timelineRoutines;
@@ -219,9 +235,9 @@ const dashboardStore = create<any>()(
 
         togglePrayer: (name: string, val: boolean) =>
           set((s: unknown) => {
-            const state = s as { prayerLogs: Record<string, Record<string, boolean>> };
+            const state = s as { prayerLogs: Record<string, Record<string, boolean>>; selectedDate?: Date | string };
             if (val) haptic([50]);
-            const date = toDateKey(new Date());
+            const date = toDateKey(parseSelectedDate(state.selectedDate, new Date()));
             if (!state.prayerLogs[date]) state.prayerLogs[date] = {};
             state.prayerLogs[date][name] = val;
           }),

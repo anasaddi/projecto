@@ -36,6 +36,15 @@ export function startOfWeek(date = new Date()) {
 export function startOfMonth(date = new Date()) { return new Date(date.getFullYear(), date.getMonth(), 1); }
 export function startOfYear(date = new Date()) { return new Date(date.getFullYear(), 0, 1); }
 
+export function parseSelectedDate(value, fallback = new Date()) {
+  if (value instanceof Date) return value;
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+  return fallback;
+}
+
 export function formatCountdown(ms) {
   const safe = Math.max(0, ms);
   const totalSec = Math.floor(safe / 1000);
@@ -381,6 +390,7 @@ export function loadDashboardStateFromStorage(fallback = null) {
       dailyTaskLogs: parsed.dailyTaskLogs && typeof parsed.dailyTaskLogs === 'object' ? parsed.dailyTaskLogs : fb.dailyTaskLogs,
       projects: Array.isArray(parsed.projects) ? parsed.projects : fb.projects,
       prayerLogs: parsed.prayerLogs && typeof parsed.prayerLogs === 'object' ? parsed.prayerLogs : fb.prayerLogs,
+      selectedDate: parseSelectedDate(parsed.selectedDate, fb.selectedDate || new Date()),
       top3Manual: top3Normalized,
       quickTasks: Array.isArray(parsed.quickTasks) ? parsed.quickTasks : fb.quickTasks,
       dailyCompletionLog: parsed.dailyCompletionLog && typeof parsed.dailyCompletionLog === 'object' ? parsed.dailyCompletionLog : fb.dailyCompletionLog,

@@ -11,6 +11,7 @@ import type {
 import {
   toDateKey,
   getCurrentSlotKey,
+  parseSelectedDate,
 } from '../../components/dashboard/DashboardUtils';
 import { haptic } from '../../utils/haptics';
 
@@ -20,6 +21,7 @@ export interface HabitSliceDeps {
   dailyTaskLogs: Record<string, DailyTaskLogEntry[]>;
   dailyCompletionLog: Record<string, DayCompletionPayload>;
   lifeGoals: { tiers: Array<{ goals: Array<{ id: string; done: boolean }> }> } | null;
+  selectedDate?: Date | string;
 }
 
 export type HabitSliceSet = (fn: (state: HabitSliceDeps & HabitSliceActions) => void) => void;
@@ -33,7 +35,7 @@ function logTimelineEvent(
   val: boolean
 ): void {
   if (!title) return;
-  const todayKey = toDateKey(new Date());
+  const todayKey = toDateKey(parseSelectedDate(s.selectedDate, new Date()));
   const slotKey = getCurrentSlotKey();
   if (!s.dailyCompletionLog[todayKey]) {
     s.dailyCompletionLog[todayKey] = { quick: [], project: [], events: [] };
@@ -95,7 +97,7 @@ export function createHabitSlice(
         const t = s.dailyTaskTemplates.find((x) => x.id === id);
         if (t) logTimelineEvent(s, 'habit', id, t.title, done);
 
-        const date = toDateKey(new Date());
+        const date = toDateKey(parseSelectedDate(s.selectedDate, new Date()));
         if (!s.dailyTaskLogs[date]) s.dailyTaskLogs[date] = [];
         if (done) {
           const existing = s.dailyTaskLogs[date].find((x) => x.id === id);

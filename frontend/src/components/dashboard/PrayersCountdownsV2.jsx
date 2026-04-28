@@ -40,6 +40,9 @@ export function PrayersCountdownsV2({
   const yearPct = (now.getTime() - startOfYear.getTime()) / (endOfYear.getTime() - startOfYear.getTime());
   const yearRemaining = endOfYear.getTime() - now.getTime();
   const yearDays = Math.floor(yearRemaining / (1000 * 60 * 60 * 24));
+  const dateLabel = selectedDate instanceof Date && !Number.isNaN(selectedDate.getTime())
+    ? selectedDate.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })
+    : (formattedDate || (isToday ? 'Oggi' : 'Data selezionata'));
 
   const allBars = [
     ...(Array.isArray(countdowns) ? countdowns : []),
@@ -54,12 +57,18 @@ export function PrayersCountdownsV2({
         title="Focus Score"
         subtitle={isToday ? "Progressi giornalieri" : formattedDate || "Progressi"}
         action={
-          focusStreak > 0 ? (
-            <Badge variant="warning" size="sm">
-              <Icons.Flame className="h-3 w-3 mr-1" />
-              {focusStreak} giorni
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Badge variant="default" size="sm" className="whitespace-nowrap">
+              <Icons.Calendar className="h-3 w-3 mr-1" />
+              {dateLabel}
             </Badge>
-          ) : undefined
+            {focusStreak > 0 ? (
+              <Badge variant="warning" size="sm" className="whitespace-nowrap">
+                <Icons.Flame className="h-3 w-3 mr-1" />
+                {focusStreak} giorni
+              </Badge>
+            ) : null}
+          </div>
         }
       />
       <div className="p-4 sm:p-5">
@@ -67,7 +76,7 @@ export function PrayersCountdownsV2({
 
           {/* Section 1: Focus Score - Animated SVG Circle */}
           <div className="flex items-center gap-4 w-full sm:flex-1 sm:min-w-0">
-            <div className="relative w-20 h-20 shrink-0">
+            <div className="relative h-20 w-20 shrink-0 sm:h-20 sm:w-20">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="8" className="text-zinc-200 dark:text-zinc-800" />
                 <motion.circle
@@ -101,12 +110,12 @@ export function PrayersCountdownsV2({
           <div className="hidden sm:block h-12 w-px bg-zinc-200 dark:bg-white/[0.06] shrink-0" />
 
           {/* Section 2: Time Period Progress Bars */}
-          <div className="grid grid-cols-2 sm:flex sm:items-center gap-3 w-full sm:w-auto sm:gap-4">
+          <div className="grid grid-cols-2 gap-3 w-full sm:w-auto sm:flex sm:items-center sm:gap-4">
             {allBars.map((bar) => {
               const cfg = TIME_BAR_CONFIGS.find(c => c.key === bar.label) || TIME_BAR_CONFIGS[0];
               const pct = Math.min(1, Math.max(0, bar.pct ?? 0));
               return (
-                <div key={bar.label} className={`flex flex-col gap-1.5 px-3 py-2 rounded-2xl ring-1 ${cfg.bg} ${cfg.ring} min-w-[72px]`}>
+                <div key={bar.label} className={`flex min-w-0 flex-col gap-1.5 rounded-2xl ring-1 ${cfg.bg} ${cfg.ring} px-3 py-2 sm:min-w-[76px]`}>
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400">{bar.label}</span>
                     <span className="text-[10px] font-bold tabular-nums text-zinc-400 dark:text-zinc-500">{Math.round(pct * 100)}%</span>

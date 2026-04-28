@@ -1,6 +1,7 @@
 import type { Project, TaskNode } from '../../types/dashboard';
 import {
   toDateKey,
+  parseSelectedDate,
   updateNodeInTree,
   removeNodeFromTree,
   collectNodeAndDescendantIds,
@@ -15,6 +16,7 @@ export type ProjectGet = () => {
   lifeGoals: { tiers: Array<{ goals: Array<{ id: string; tasks: TaskNode[] }> }> } | null;
   dailyCompletionLog: Record<string, { quick?: string[]; project?: string[] }>;
   top3Manual: unknown[];
+  selectedDate?: Date | string;
 };
 
 export function createProjectSlice(set: ProjectSet, get: ProjectGet) {
@@ -106,12 +108,13 @@ export function createProjectSlice(set: ProjectSet, get: ProjectGet) {
           lifeGoals: { tiers: Array<{ goals: Array<{ id: string; tasks: TaskNode[] }> }> } | null;
           dailyCompletionLog: Record<string, { quick?: string[]; project?: string[] }>;
           sharedDashboards: Array<{ share_id: string; data?: Record<string, unknown> }>;
+          selectedDate?: Date | string;
         };
         if (val) haptic([50]);
         const p = state.projects.find((x) => x.id === projectId);
         if (p) {
           const title = findTaskTitle(p.tasks, taskId);
-          logTimelineEvent(state, 'project', taskId, title ?? '', val, p.title);
+          logTimelineEvent(state, 'project', taskId, title ?? '', val, p.title, undefined, toDateKey(parseSelectedDate(state.selectedDate, new Date())));
           p.tasks = updateNodeInTree(p.tasks, taskId, (n: TaskNode) => ({ ...n, done: val })) as TaskNode[];
           if (p.lifeGoalId) {
             for (const tier of state.lifeGoals?.tiers ?? []) {
@@ -138,7 +141,7 @@ export function createProjectSlice(set: ProjectSet, get: ProjectGet) {
             });
           });
         }
-        const todayKey = toDateKey(new Date());
+        const todayKey = toDateKey(parseSelectedDate(state.selectedDate, new Date()));
         const day = state.dailyCompletionLog[todayKey] || { quick: [], project: [] };
         const key = `${projectId}:${taskId}`;
         const nextProject = val

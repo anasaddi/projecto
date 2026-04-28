@@ -1,5 +1,6 @@
 import { api } from '../api/client';
 import { STORAGE_KEY, BC_CHANNEL } from '../components/dashboard/DashboardUtils';
+import { parseSelectedDate } from '../components/dashboard/DashboardUtils';
 import { saveLocalState, addToSyncQueue, getSyncQueue, clearSyncQueue } from '../db/localDb';
 
 let syncTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -7,6 +8,15 @@ let persistTimeout: ReturnType<typeof setTimeout> | null = null;
 let isApplyingFromBC = false;
 let isApplyingFromBCQueue: unknown[] = [];  // Buffer BC updates while applying
 let bc: BroadcastChannel | null = null;
+
+function normalizeIncomingState(payload: unknown): unknown {
+  if (!payload || typeof payload !== 'object') return payload;
+  const next = { ...(payload as Record<string, unknown>) };
+  if ('selectedDate' in next && next.selectedDate !== undefined) {
+    next.selectedDate = parseSelectedDate(next.selectedDate as Date | string, new Date());
+  }
+  return next;
+}
 
 function getBroadcastChannel(): BroadcastChannel | null {
   if (bc) return bc;
@@ -46,6 +56,7 @@ interface SyncStateSlice {
   dailyTaskLogs?: Record<string, unknown>;
   projects?: unknown[];
   prayerLogs?: Record<string, unknown>;
+  selectedDate?: Date | string;
   top3Manual?: unknown[];
   quickTasks?: unknown[];
   dailyCompletionLog?: Record<string, unknown>;
@@ -81,6 +92,7 @@ export function syncMiddleware(config: any): any {
         projects: state.projects,
         projectOrder: Array.isArray(state.projects) ? (state.projects as { id?: string }[]).map((p) => p.id) : [],
         prayerLogs: state.prayerLogs,
+        selectedDate: state.selectedDate instanceof Date ? state.selectedDate.toISOString() : state.selectedDate ?? new Date().toISOString(),
         top3Manual: state.top3Manual,
         quickTasks: state.quickTasks,
         dailyCompletionLog: state.dailyCompletionLog,
@@ -122,7 +134,7 @@ export function syncMiddleware(config: any): any {
               if (isApplyingFromBCQueue.length > 0 && channel) {
                 const queued = isApplyingFromBCQueue.splice(0);
                 for (const data of queued) {
-                  set((_: unknown) => data);
+                  set((_: unknown) => normalizeIncomingState(data));
                 }
               }
             });
@@ -143,18 +155,18 @@ export function syncMiddleware(config: any): any {
         const s = e?.data;
         if (!s) return;
         if (isApplyingFromBC) {
-          isApplyingFromBCQueue.push(s);
+          isApplyingFromBCQueue.push(normalizeIncomingState(s));
           return;
         }
         // Defer to next task to avoid blocking the message handler
         setTimeout(() => {
           isApplyingFromBC = true;
-          set(s);
+          set(normalizeIncomingState(s));
           queueMicrotask(() => {
             isApplyingFromBC = false;
             if (isApplyingFromBCQueue.length > 0) {
               const queued = isApplyingFromBCQueue.splice(0);
-              for (const data of queued) set(data);
+              for (const data of queued) set(normalizeIncomingState(data));
             }
           });
         }, 0);

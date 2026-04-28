@@ -1,5 +1,5 @@
 import type { QuickTask, DayCompletionPayload } from '../../types/dashboard';
-import { toDateKey, uid } from '../../components/dashboard/DashboardUtils';
+import { toDateKey, uid, parseSelectedDate } from '../../components/dashboard/DashboardUtils';
 import { haptic } from '../../utils/haptics';
 import { logTimelineEvent } from '../storeHelpers';
 
@@ -9,6 +9,7 @@ export type QuickTaskGet = () => {
   projects: Array<{ id: string; title: string; tasks: unknown[]; ordinal?: number; active?: boolean; lifeGoalId?: string; deadline?: string }>;
   dailyCompletionLog: Record<string, DayCompletionPayload>;
   lifeGoals: { tiers: Array<{ goals: Array<{ id: string; done: boolean }> }> } | null;
+  selectedDate?: Date | string;
   sharedDashboards: Array<{ share_id: string; data?: { quickTasks?: QuickTask[]; projects?: unknown[]; chat?: unknown[] } }>;
   updateSharedDashboardData: (shareId: string, updater: (d: { projects: unknown[]; quickTasks: QuickTask[]; chat: unknown[] }) => unknown) => void;
 };
@@ -17,7 +18,7 @@ export function createQuickTaskSlice(set: QuickTaskSet, get: QuickTaskGet) {
   return {
     toggleQuickTask: (id: string, val: boolean) =>
       set((s: unknown) => {
-        const state = s as { quickTasks: QuickTask[]; dailyCompletionLog: Record<string, DayCompletionPayload>; lifeGoals: { tiers: Array<{ goals: Array<{ id: string; done: boolean }> }> } | null };
+        const state = s as { quickTasks: QuickTask[]; dailyCompletionLog: Record<string, DayCompletionPayload>; lifeGoals: { tiers: Array<{ goals: Array<{ id: string; done: boolean }> }> } | null; selectedDate?: Date | string };
         if (val) haptic([50]);
         const t = state.quickTasks.find((x) => x.id === id);
         if (t) {
@@ -31,9 +32,9 @@ export function createQuickTaskSlice(set: QuickTaskSet, get: QuickTaskGet) {
               }
             }
           }
-          logTimelineEvent(state, 'quick', id, t.title, val);
+          logTimelineEvent(state, 'quick', id, t.title, val, null, undefined, toDateKey(parseSelectedDate(state.selectedDate, new Date())));
         }
-        const todayKey = toDateKey(new Date());
+        const todayKey = toDateKey(parseSelectedDate(state.selectedDate, new Date()));
         const day = state.dailyCompletionLog[todayKey] || { quick: [], project: [] };
         const nextQuick = val
           ? day.quick?.includes(id)
@@ -105,7 +106,17 @@ export function createQuickTaskSlice(set: QuickTaskSet, get: QuickTaskGet) {
       const sd = state.sharedDashboards?.find((x: { share_id: string }) => x.share_id === shareId);
       const title = sd?.data?.quickTasks?.find((t: { id: string }) => t.id === taskId)?.title;
       set((s: unknown) => {
-        logTimelineEvent(s as { dailyCompletionLog: Record<string, DayCompletionPayload> }, 'shared_quick', taskId, title ?? '', val);
+        const timelineState = s as { dailyCompletionLog: Record<string, DayCompletionPayload>; selectedDate?: Date | string };
+        logTimelineEvent(
+          timelineState,
+          'shared_quick',
+          taskId,
+          title ?? '',
+          val,
+          null,
+          undefined,
+          toDateKey(parseSelectedDate(timelineState.selectedDate, new Date()))
+        );
       });
       get().updateSharedDashboardData(shareId, (data) => ({
         ...data,

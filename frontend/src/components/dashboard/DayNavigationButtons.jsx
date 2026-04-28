@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from './Icons';
 import { useDashboardStore } from '../../store/dashboardStore';
-import { startOfDay, addDays, toDateKey } from './DashboardUtils';
+import { startOfDay, addDays, toDateKey, parseSelectedDate } from './DashboardUtils';
 
 const MAX_FUTURE_DAYS = 7; // Allow navigating up to 7 days into the future
 
@@ -12,19 +12,17 @@ export function DayNavigationButtons() {
   const navigateToNextDay = useDashboardStore((s) => s.navigateToNextDay);
   const setSelectedDate = useDashboardStore((s) => s.setSelectedDate);
 
-  const [hoverLeft, setHoverLeft] = useState(false);
-  const [hoverRight, setHoverRight] = useState(false);
-
   const today = new Date();
   const todayKey = toDateKey(today);
-  const selectedKey = toDateKey(selectedDate);
+  const safeSelectedDate = selectedDate instanceof Date ? selectedDate : new Date(selectedDate ?? today);
+  const selectedKey = toDateKey(safeSelectedDate);
 
   // Calculate limits
   const minDate = startOfDay(addDays(today, -365)); // 1 year back
   const maxDate = startOfDay(addDays(today, MAX_FUTURE_DAYS)); // 7 days forward
 
-  const canGoBack = startOfDay(selectedDate) > minDate;
-  const canGoForward = startOfDay(selectedDate) < maxDate;
+  const canGoBack = startOfDay(safeSelectedDate) > minDate;
+  const canGoForward = startOfDay(safeSelectedDate) < maxDate;
 
   const isToday = selectedKey === todayKey;
 
@@ -48,53 +46,47 @@ export function DayNavigationButtons() {
     <>
       {/* Left Navigation Button */}
       <AnimatePresence>
-        {hoverLeft && canGoBack && (
-          <motion.button
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -20, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            onClick={handlePreviousDay}
-            onMouseEnter={() => setHoverLeft(true)}
-            onMouseLeave={() => setHoverLeft(false)}
-            className="fixed left-0 top-1/2 -translate-y-1/2 z-50 p-3 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm border-r border-zinc-200 dark:border-zinc-700 shadow-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
-            aria-label="Giorno precedente"
-          >
-            <Icons.ChevronLeft className="w-6 h-6 text-zinc-600 dark:text-zinc-300" />
-          </motion.button>
+        {canGoBack && (
+          <div className="group fixed left-0 top-0 bottom-0 z-50 hidden w-20 md:block">
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1">
+              <motion.button
+                initial={false}
+                animate={{ opacity: 1, x: 0 }}
+                whileHover={{ scale: 1.04, x: 4 }}
+                onClick={handlePreviousDay}
+                className="pointer-events-none relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-r-[22px] border border-l-0 border-white/70 bg-gradient-to-b from-white/95 via-white/90 to-zinc-50/90 text-zinc-600 opacity-0 shadow-[0_14px_30px_rgba(15,23,42,0.12)] backdrop-blur-xl ring-1 ring-black/5 transition-all duration-200 ease-out hover:bg-indigo-50 dark:border-white/[0.08] dark:from-zinc-950/95 dark:via-zinc-900/90 dark:to-zinc-900/80 dark:text-zinc-300 dark:ring-white/[0.06] dark:hover:bg-indigo-500/10 group-hover:pointer-events-auto group-hover:opacity-100 group-hover:translate-x-0 translate-x-[-14px]"
+                aria-label="Giorno precedente"
+              >
+                <span className="absolute inset-y-0 left-0 w-px bg-gradient-to-b from-transparent via-indigo-400/40 to-transparent opacity-70" />
+                <span className="absolute inset-0 bg-gradient-to-r from-indigo-500/8 via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                <Icons.ChevronLeft className="h-6 w-6" />
+              </motion.button>
+            </div>
+          </div>
         )}
       </AnimatePresence>
 
       {/* Right Navigation Button */}
       <AnimatePresence>
-        {hoverRight && canGoForward && (
-          <motion.button
-            initial={{ x: 20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 20, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            onClick={handleNextDay}
-            onMouseEnter={() => setHoverRight(true)}
-            onMouseLeave={() => setHoverRight(false)}
-            className="fixed right-0 top-1/2 -translate-y-1/2 z-50 p-3 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm border-l border-zinc-200 dark:border-zinc-700 shadow-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
-            aria-label="Giorno successivo"
-          >
-            <Icons.ChevronRight className="w-6 h-6 text-zinc-600 dark:text-zinc-300" />
-          </motion.button>
+        {canGoForward && (
+          <div className="group fixed right-0 top-0 bottom-0 z-50 hidden w-20 md:block">
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1">
+              <motion.button
+                initial={false}
+                animate={{ opacity: 1, x: 0 }}
+                whileHover={{ scale: 1.04, x: -4 }}
+                onClick={handleNextDay}
+                className="pointer-events-none relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-l-[22px] border border-r-0 border-white/70 bg-gradient-to-b from-white/95 via-white/90 to-zinc-50/90 text-zinc-600 opacity-0 shadow-[0_14px_30px_rgba(15,23,42,0.12)] backdrop-blur-xl ring-1 ring-black/5 transition-all duration-200 ease-out hover:bg-indigo-50 dark:border-white/[0.08] dark:from-zinc-950/95 dark:via-zinc-900/90 dark:to-zinc-900/80 dark:text-zinc-300 dark:ring-white/[0.06] dark:hover:bg-indigo-500/10 group-hover:pointer-events-auto group-hover:opacity-100 group-hover:translate-x-0 translate-x-[14px]"
+                aria-label="Giorno successivo"
+              >
+                <span className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-indigo-400/40 to-transparent opacity-70" />
+                <span className="absolute inset-0 bg-gradient-to-l from-indigo-500/8 via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                <Icons.ChevronRight className="h-6 w-6" />
+              </motion.button>
+            </div>
+          </div>
         )}
       </AnimatePresence>
-
-      {/* Hover detection zones (invisible) */}
-      <div
-        className="fixed left-0 top-0 bottom-0 w-20 z-40"
-        onMouseEnter={() => setHoverLeft(true)}
-        onMouseLeave={() => setHoverLeft(false)}
-      />
-      <div
-        className="fixed right-0 top-0 bottom-0 w-20 z-40"
-        onMouseEnter={() => setHoverRight(true)}
-        onMouseLeave={() => setHoverRight(false)}
-      />
 
       {/* Back to Today Button (shown when not on today) */}
       <AnimatePresence>
@@ -105,7 +97,7 @@ export function DayNavigationButtons() {
             exit={{ y: 20, opacity: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             onClick={handleBackToToday}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg text-sm font-semibold transition-colors flex items-center gap-2"
+            className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-indigo-400/20 bg-indigo-600 px-3 py-2 text-[11px] font-semibold text-white shadow-[0_12px_32px_rgba(79,70,229,0.35)] transition-colors hover:bg-indigo-700 sm:bottom-6 sm:px-4 sm:py-2 sm:text-sm"
             aria-label="Torna a oggi"
           >
             <Icons.Calendar className="w-4 h-4" />

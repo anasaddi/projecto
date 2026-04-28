@@ -32,7 +32,7 @@ export function createTimelineSlice(set: TimelineSet) {
           if (done) haptic([50]);
           const habit = state.dailyTaskTemplates?.find((h) => h.id === r.habitId);
           const title = habit?.title ?? 'Micro-vittoria';
-          logTimelineEvent(state, 'habit', routineId, title, done, null, slotKey);
+          logTimelineEvent(state, 'habit', routineId, title, done, null, slotKey, dateKey);
         }
       }),
 
@@ -46,7 +46,7 @@ export function createTimelineSlice(set: TimelineSet) {
         state.timelineRoutines[dateKey][slotKey] = state.timelineRoutines[dateKey][slotKey].filter(
           (x) => x.id !== routineId
         );
-        logTimelineEvent(state, 'habit', routineId, '', false, null, slotKey);
+        logTimelineEvent(state, 'habit', routineId, '', false, null, slotKey, dateKey);
       }),
   };
 }
