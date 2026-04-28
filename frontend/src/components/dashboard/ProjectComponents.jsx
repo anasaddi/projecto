@@ -69,11 +69,11 @@ export function StandardProjectCard({
 
   return (
     <Card 
-      className={`group relative flex flex-col overflow-hidden ${sharedWorkspaceChrome ? 'rounded-[24px] border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.22),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,250,252,0.86))] dark:bg-[radial-gradient(circle_at_top_left,rgba(129,140,248,0.09),transparent_38%),linear-gradient(180deg,rgba(21,26,34,0.97),rgba(15,20,29,0.97))] hover:border-white/15' : ''} ${isMenuOpen ? 'z-50' : 'z-auto'} ${expanded ? 'ring-1 ring-zinc-200/80 dark:ring-white/[0.08]' : ''}`}
+      className={`group relative flex flex-col overflow-hidden ${PROJECT_CARD_STYLES.container.base} ${PROJECT_CARD_STYLES.container.hover} ${sharedWorkspaceChrome ? 'rounded-[24px] border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.22),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,250,252,0.86))] dark:bg-[radial-gradient(circle_at_top_left,rgba(129,140,248,0.09),transparent_38%),linear-gradient(180deg,rgba(21,26,34,0.97),rgba(15,20,29,0.97))] hover:border-white/15' : ''} ${isMenuOpen ? 'z-50' : 'z-auto'} ${expanded ? PROJECT_CARD_STYLES.container.expanded : ''}`}
       glow={expanded}
     >
       <div
-        className={`group/header flex cursor-pointer items-start gap-3 ${sharedWorkspaceChrome ? 'px-4 pb-4 pt-8' : 'p-5'}`}
+        className={`group/header flex cursor-pointer items-start gap-3 ${sharedWorkspaceChrome ? 'px-4 pb-4 pt-8' : PROJECT_CARD_STYLES.header.base}`}
         onClick={() => {
           const next = !expanded;
           setExpanded(next);
@@ -245,7 +245,7 @@ export function StandardProjectCard({
         <div
           className={
             taskListClassName ??
-            'border-t border-zinc-100/80 px-4 pb-4 pt-3 space-y-2 dark:border-zinc-700/40'
+            PROJECT_CARD_STYLES.taskList.base
           }
         >
           {renderTasks()}

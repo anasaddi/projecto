@@ -2,6 +2,7 @@
 import { motion } from 'framer-motion';
 import { Icons } from './Icons';
 import { Badge, ProgressBar, ActionButton } from './Card';
+import { KebabMenu } from './DashboardComponents';
 import { useLongPressActions } from '../../hooks/useLongPressActions';
 import { PROJECT_CARD_STYLES, getAccentColor } from './ProjectCardStyles';
 
@@ -28,6 +29,28 @@ export function LifeGoalCard({
       ...(!isProject && (isInTop3 || (hasFreeTop3Slot && !goal.done)) ? [{ icon: <Icons.Target className="h-2.5 w-2.5" />, onClick: () => onToggleTop3(goal.id), title: isInTop3 ? 'Rimuovi dai Top 3' : 'Top 3', className: isInTop3 ? 'text-amber-600 bg-amber-100 dark:text-amber-300 dark:bg-amber-500/30 dark:ring-1 dark:ring-amber-400/50' : '' }] : []),
       { icon: <Icons.Calendar className="h-2.5 w-2.5" />, onClick: () => { setDeadlineInput(goal.deadline || ''); setDeadlineEditing(goal.id); }, title: 'Scadenza', className: goal.deadline ? 'text-amber-500 bg-amber-50 dark:text-amber-300 dark:bg-amber-500/30 dark:ring-1 dark:ring-amber-400/50' : '' },
       { icon: <Icons.X className="h-2.5 w-2.5" />, onClick: () => onDelete(goal.id), title: 'Elimina', className: 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20' },
+    ];
+    const kebabItems = [
+      {
+        label: isLinkedToQuick ? 'Rimuovi da Quick Tasks' : 'Sincronizza con Quick Tasks',
+        icon: <Icons.Zap className="h-3.5 w-3.5" />,
+        onClick: () => onPromoteQuick(goal.id),
+      },
+      ...(!isProject && (isInTop3 || (hasFreeTop3Slot && !goal.done))
+        ? [{ label: isInTop3 ? 'Rimuovi dai Top 3' : 'Top 3', icon: <Icons.Target className="h-3.5 w-3.5" />, onClick: () => onToggleTop3(goal.id) }]
+        : []),
+      'divider',
+      {
+        label: 'Scadenza',
+        icon: <Icons.Calendar className="h-3.5 w-3.5" />,
+        onClick: () => { setDeadlineInput(goal.deadline || ''); setDeadlineEditing(goal.id); },
+      },
+      {
+        label: 'Elimina',
+        icon: <Icons.X className="h-3.5 w-3.5" />,
+        danger: true,
+        onClick: () => onDelete(goal.id),
+      },
     ];
     const { active: lgActive, barRef: lgBarRef, zoneProps: lgZoneProps, getActionProps: lgGetActionProps, handledByPointerUpRef: lgHandledRef } = useLongPressActions({ actions: compactActions });
 
@@ -80,7 +103,7 @@ export function LifeGoalCard({
           <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${getDeadlineColorClass(goal.deadline, goal.done)}`}>{formatDeadline(goal.deadline)}</span>
         )}
 
-        <div ref={lgBarRef} className={`flex shrink-0 items-center gap-0.5 transition-opacity touch-manipulation ${lgActive ? 'opacity-100' : 'opacity-0 group-hover/goal:opacity-100'}`}>
+        <div ref={lgBarRef} className={`hidden shrink-0 items-center gap-0.5 transition-opacity touch-manipulation md:flex ${lgActive ? 'opacity-100' : 'opacity-0 group-hover/goal:opacity-100'}`}>
           {compactActions.map((act, i) => {
             const ap = lgGetActionProps(i);
             return (
@@ -89,6 +112,10 @@ export function LifeGoalCard({
               </button>
             );
           })}
+        </div>
+
+        <div className="ml-auto md:hidden">
+          <KebabMenu items={kebabItems} alwaysVisible />
         </div>
 
         {deadlineEditing === goal.id && (

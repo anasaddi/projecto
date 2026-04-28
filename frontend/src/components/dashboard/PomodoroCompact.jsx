@@ -236,13 +236,13 @@ export function PomodoroCompact() {
             </div>
 
             {/* Preset chips */}
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-nowrap gap-1 overflow-x-auto pb-1 scrollbar-hide sm:flex-wrap sm:overflow-visible sm:pb-0">
               {PRESETS.map(({ label, minutes }) => (
                 <button
                   key={minutes}
                   onClick={() => handleSelectPreset(minutes)}
                   disabled={!isIdle}
-                  className={`px-2 py-0.5 rounded-lg text-[11px] font-bold transition-all ${
+                  className={`shrink-0 px-2 py-0.5 rounded-lg text-[11px] font-bold transition-all ${
                     selectedMinutes === minutes
                       ? 'bg-indigo-600 text-white shadow-sm'
                       : 'bg-zinc-100 dark:bg-white/[0.05] text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/[0.09] disabled:opacity-40 disabled:cursor-not-allowed'

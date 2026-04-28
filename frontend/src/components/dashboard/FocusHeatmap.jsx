@@ -118,7 +118,8 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
         }
       />
       <CardBody padding="normal" className="flex flex-col gap-4">
-        <div className="grid grid-cols-10 gap-2">
+        <div className="overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
+          <div className="grid min-w-[280px] grid-cols-10 gap-2">
           {heatmapDays.map(({ key, score, isSelected, habitsDone, habitsTotal, prayersDone, prayersTotal, tasksDone, tasksTotal }) => (
             <div
               key={key}
@@ -126,6 +127,7 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
               className={`w-5 h-5 rounded-md ${getColor(score)} ${isSelected ? 'ring-4 ring-offset-2 ring-indigo-500 dark:ring-indigo-400 ring-offset-white dark:ring-offset-[#131820] shadow-[0_0_0_1px_rgba(99,102,241,0.35)]' : ''} transition-colors`}
             />
           ))}
+          </div>
         </div>
         <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
           <span>Meno</span>
