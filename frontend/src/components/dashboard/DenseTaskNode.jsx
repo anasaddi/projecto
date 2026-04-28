@@ -34,13 +34,13 @@ function formatDeadline(v) {
 }
 
 function getDeadlineColorClass(deadlineKey, isDone) {
-  if (!deadlineKey || isDone) return 'text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50';
+  if (!deadlineKey || isDone) return 'text-zinc-500 bg-zinc-100 dark:bg-zinc-800';
   const today = startOfDay(new Date());
   const dead = fromDateKey(deadlineKey);
-  if (!dead) return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20';
+  if (!dead) return 'text-amber-500 dark:text-amber-400 bg-amber-100 dark:bg-amber-950';
   const daysUntil = Math.round((dead - today) / 86400000);
-  if (daysUntil < 0) return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
-  return 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-900/20';
+  if (daysUntil < 0) return 'text-rose-500 dark:text-rose-400 bg-rose-100 dark:bg-rose-950';
+  return 'text-emerald-500 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950';
 }
 
 /** Pill “premium” meta — workspace shared / emphasized */

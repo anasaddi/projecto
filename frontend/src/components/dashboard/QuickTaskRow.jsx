@@ -22,9 +22,9 @@ export function QuickTaskRow({
   
   const priority = task.priority || 'medium';
   const priorityColors = {
-    high: 'bg-red-500',
+    high: 'bg-rose-500',
     medium: 'bg-amber-500',
-    low: 'bg-zinc-400',
+    low: 'bg-zinc-500',
   };
   const actions = [
     {
@@ -40,20 +40,20 @@ export function QuickTaskRow({
       },
       title: pinned ? 'Rimuovi dai Top 3' : 'Aggiungi ai Top 3',
       className: pinned
-        ? '!rounded-full !bg-transparent !shadow-none !ring-0 !p-1 text-amber-500 hover:!bg-transparent dark:text-amber-300'
-        : '!rounded-full !bg-transparent !shadow-none !ring-0 !p-1 text-amber-400 hover:!bg-transparent hover:text-amber-500 dark:text-amber-400 dark:hover:text-amber-300',
+        ? '!rounded-full !bg-transparent !shadow-none !ring-0 !p-1 text-amber-500 hover:!bg-transparent dark:text-amber-400'
+        : '!rounded-full !bg-transparent !shadow-none !ring-0 !p-1 text-amber-500 hover:!bg-transparent hover:text-amber-500 dark:text-amber-400 dark:hover:text-amber-400',
     },
     {
       icon: <Icons.ArrowUpRight className="h-3 w-3" />,
       onClick: () => promoteQuickTaskToProject?.(task.id),
       title: 'Promuovi a progetto',
-      className: 'text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/20',
+      className: 'text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950',
     },
     {
       icon: <Icons.X className="h-3 w-3" />,
       onClick: () => isShared ? removeSharedQuickTask(task.shareId, task.id) : removeQuickTask(task.id),
       title: 'Elimina',
-      className: 'text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20',
+      className: 'text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950',
     },
   ].filter(Boolean);
 

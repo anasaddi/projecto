@@ -71,28 +71,28 @@ function SortableHabitItem({ task, idx, todayTaskLog, isHovered, setHoveredHabit
         ${isLocked ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}
         transition-colors duration-200
         ${isLocked
-          ? 'border-amber-200/70 bg-amber-50/60 dark:border-amber-700/40 dark:bg-amber-950/15'
+          ? 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950'
           : isHovered
-            ? 'border-zinc-200/70 bg-zinc-100/90 dark:border-white/[0.06] dark:bg-white/[0.04]'
+            ? 'border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900'
             : 'bg-transparent'}
         ${isDragging ? 'opacity-50' : ''}
       `}
     >
       {isLocked ? (
         <div className="w-4 flex justify-center">
-          <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/40">
-            <Icons.Lock className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+          <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-amber-100 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
+            <Icons.Lock className="h-3 w-3 text-amber-500 dark:text-amber-400" />
           </span>
         </div>
       ) : (
         <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-          <Icons.GripVertical className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+          <Icons.GripVertical className="h-4 w-4 text-zinc-500 dark:text-zinc-500" />
         </div>
       )}
 
       <TaskCheckbox 
         done={isDone} 
-        className={isLocked ? 'opacity-45 cursor-not-allowed' : ''}
+        className={isLocked ? 'opacity-50 cursor-not-allowed' : ''}
         onClick={() => !isLocked && toggleDailyTask(task.id, !isDone)} 
       />
 
@@ -119,7 +119,7 @@ function SortableHabitItem({ task, idx, todayTaskLog, isHovered, setHoveredHabit
               if (e.key === 'Escape') setHabitEditingId(null); 
             }}
             onClick={(e) => e.stopPropagation()}
-            className="flex-1 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-sm text-zinc-900 outline-none dark:border-white/[0.08] dark:bg-zinc-800 dark:text-zinc-100"
+            className="flex-1 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-sm text-zinc-900 outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           />
         ) : (
           <div className="flex-1 flex flex-col">
@@ -132,9 +132,9 @@ function SortableHabitItem({ task, idx, todayTaskLog, isHovered, setHoveredHabit
               title={task.title}
               className={`cursor-pointer select-text text-sm leading-relaxed break-words [overflow-wrap:anywhere] transition-colors ${
                 isLocked
-                  ? 'text-zinc-400 dark:text-zinc-500 italic'
+                  ? 'text-zinc-500 dark:text-zinc-500 italic'
                   : isDone
-                    ? 'text-zinc-400 line-through dark:text-zinc-500'
+                    ? 'text-zinc-500 line-through dark:text-zinc-500'
                     : 'text-zinc-700 dark:text-zinc-200'
               }`}
             >
@@ -145,11 +145,8 @@ function SortableHabitItem({ task, idx, todayTaskLog, isHovered, setHoveredHabit
               {last7Days.map((d, i) => (
                 <div
                   key={d.date}
-                  className="w-1.5 h-1.5 rounded-full"
+                  className={`w-1.5 h-1.5 rounded-full ${d.done ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
                   title={d.date}
-                  style={{
-                    backgroundColor: d.done ? '#10b981' : 'rgba(161, 161, 170, 0.3)',
-                  }}
                 />
               ))}
             </div>
