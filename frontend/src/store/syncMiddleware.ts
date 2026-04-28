@@ -12,9 +12,8 @@ let bc: BroadcastChannel | null = null;
 function normalizeIncomingState(payload: unknown): unknown {
   if (!payload || typeof payload !== 'object') return payload;
   const next = { ...(payload as Record<string, unknown>) };
-  if ('selectedDate' in next && next.selectedDate !== undefined) {
-    next.selectedDate = parseSelectedDate(next.selectedDate as Date | string, new Date());
-  }
+  // selectedDate is UI-only navigation state — never overwrite from BC/sync
+  delete next.selectedDate;
   return next;
 }
 

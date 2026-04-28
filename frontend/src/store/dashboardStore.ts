@@ -205,9 +205,7 @@ const dashboardStore = create<any>()(
             if (data.dailyTaskTemplates) state.dailyTaskTemplates = data.dailyTaskTemplates;
             if (data.dailyTaskLogs) state.dailyTaskLogs = data.dailyTaskLogs;
             if (data.prayerLogs) state.prayerLogs = data.prayerLogs;
-            if (data.selectedDate !== undefined) {
-              state.selectedDate = clampSelectedDateToToday(data.selectedDate, new Date());
-            }
+            // selectedDate is UI-only (navigation state); do not overwrite from server sync
             if (data.dailyCompletionLog) state.dailyCompletionLog = data.dailyCompletionLog;
             if (data.lifeGoals) state.lifeGoals = normalizeLifeGoals(data.lifeGoals, buildDefaultLifeGoals()) as LifeGoalsState;
             if (data.timelineRoutines != null && typeof data.timelineRoutines === 'object') state.timelineRoutines = data.timelineRoutines;

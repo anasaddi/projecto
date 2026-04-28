@@ -220,8 +220,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
         badge: isDone ? 'Completata' : 'Mancante',
         checkboxClass: isDone
           ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)]'
-          : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-400 ring-2 ring-indigo-500 ring-offset-2 shadow-md hover:border-indigo-400 hover:text-indigo-500',
-        labelClass: isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400',
+          : 'bg-rose-500 border-rose-400 text-white shadow-[0_0_12px_rgba(244,63,94,0.3)]',
+        labelClass: isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400',
       };
     }
 
@@ -239,21 +239,21 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
       if (nowMinutes > end) {
         return {
           badge: 'In ritardo',
-          checkboxClass: 'bg-rose-50 dark:bg-rose-950/30 border-rose-300 dark:border-rose-700 text-rose-500 ring-2 ring-rose-500 ring-offset-2 shadow-md hover:border-rose-400',
+          checkboxClass: 'bg-rose-500 border-rose-400 text-white shadow-[0_0_12px_rgba(244,63,94,0.3)]',
           labelClass: 'text-rose-600 dark:text-rose-400',
         };
       }
       if (nowMinutes >= start && nowMinutes <= end) {
         return {
           badge: 'Ora',
-          checkboxClass: 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700 text-amber-500 ring-2 ring-amber-500 ring-offset-2 shadow-md hover:border-amber-400',
+          checkboxClass: 'bg-amber-500 border-amber-400 text-white shadow-[0_0_12px_rgba(245,158,11,0.3)]',
           labelClass: 'text-amber-600 dark:text-amber-400',
         };
       }
       return {
         badge: 'In attesa',
-        checkboxClass: 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-400 ring-2 ring-indigo-500 ring-offset-2 shadow-md hover:border-indigo-400 hover:text-indigo-500',
-        labelClass: 'text-zinc-600 dark:text-zinc-400',
+        checkboxClass: 'bg-indigo-500 border-indigo-400 text-white shadow-[0_0_12px_rgba(99,102,241,0.3)]',
+        labelClass: 'text-indigo-600 dark:text-indigo-400',
       };
     }
 
