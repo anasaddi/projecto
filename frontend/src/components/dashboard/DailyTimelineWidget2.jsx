@@ -217,11 +217,11 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
 
     if (!isToday) {
       return {
-        badge: isDone ? 'Completata' : 'Mancante',
+        badge: isDone ? 'In ritardo' : 'Mancante',
         checkboxClass: isDone
-          ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)]'
+          ? 'bg-amber-500 border-amber-400 text-white shadow-[0_0_12px_rgba(245,158,11,0.3)]'
           : 'bg-rose-500 border-rose-400 text-white shadow-[0_0_12px_rgba(244,63,94,0.3)]',
-        labelClass: isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400',
+        labelClass: isDone ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400',
       };
     }
 
