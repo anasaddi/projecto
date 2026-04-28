@@ -107,6 +107,13 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
             PROJECTO
           </span>
         </Link>
+
+        {isDashboard && stats && (
+          <span className="ml-1 flex md:hidden items-center rounded-full bg-zinc-100 dark:bg-zinc-700 px-2.5 py-1 text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">
+            {stats.doneFocusItems} / {stats.totalFocusItems}
+          </span>
+        )}
+
         <nav className="hidden md:flex items-center gap-1 rounded-xl bg-zinc-50 dark:bg-zinc-700/50 p-1">
           {navLinks.map(({ to, label, active }) => (
             <Link
@@ -172,7 +179,7 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
             <motion.span
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
+              className="hidden md:flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400"
             >
               <Icons.Check className="h-3.5 w-3.5" />
               Salvato
