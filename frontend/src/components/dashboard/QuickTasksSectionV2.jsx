@@ -5,6 +5,7 @@ import { useDashboardStore } from '../../store/dashboardStore';
 import { Card, CardHeader, Badge } from './Card';
 import { QuickTaskRow } from './QuickTaskRow';
 import { AddItemInputBar } from './AddItemInputBar';
+import { MS } from '../../constants';
 
 export function QuickTasksSectionV2() {
   const [hoveredTaskId, setHoveredTaskId] = useState(null);
@@ -50,7 +51,7 @@ export function QuickTasksSectionV2() {
   const groupedQuickTasks = useMemo(() => {
     const withIndex = allQuickTasks.map((task, originalIdx) => ({ task, originalIdx }));
     const nowTs = Date.now();
-    const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
+    const twoDaysMs = MS.DAY * 2;
 
     const parseDeadline = (deadline) => {
       if (!deadline) return Number.POSITIVE_INFINITY;

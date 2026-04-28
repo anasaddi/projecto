@@ -3,27 +3,10 @@ import { Icons } from './Icons';
 
 import { useGlobalConfig } from '../../context/GlobalConfigContext';
 import { Card, CardHeader, CardBody } from './Card';
+import { toDateKey, addDays, startOfDay } from './DashboardUtils';
+import { DASHBOARD } from '../../constants';
 
-const DEFAULT_PRAYERS = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
-
-function toDateKey(date = new Date()) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function addDays(date, days) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
-function startOfDay(date = new Date()) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
+const DEFAULT_PRAYERS = DASHBOARD.DEFAULT_PRAYERS;
 
 function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDate, PRAYERS = DEFAULT_PRAYERS }) {
   const totalItems = activeHabits.length + PRAYERS.length + 3;

@@ -1,29 +1,5 @@
 ﻿import React, { useMemo } from 'react';
-
-function toDateKey(date = new Date()) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function addDays(date, days) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
-function startOfDay(date = new Date()) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function startOfWeek(date = new Date()) {
-  const d = startOfDay(date);
-  const mondayOffset = (d.getDay() + 6) % 7;
-  return addDays(d, -mondayOffset);
-}
+import { toDateKey, addDays, startOfDay, startOfWeek } from './DashboardUtils';
 
 export function ThisWeekWidget({ dailyTaskLogs, activeHabits, now }) {
   const weekDays = useMemo(() => {

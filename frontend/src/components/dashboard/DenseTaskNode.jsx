@@ -3,45 +3,20 @@ import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
 import { useLongPressActions } from '../../hooks/useLongPressActions';
 import { useDashboardStore } from '../../store/dashboardStore';
-import { updateNodeInTree, removeNodeFromTree, createTaskNode, formatDeadlineDisplay } from './DashboardUtils';
+import {
+  updateNodeInTree,
+  removeNodeFromTree,
+  createTaskNode,
+  formatDeadlineDisplay,
+  toDateKey,
+  startOfDay,
+  fromDateKey,
+  formatDeadline,
+  getDeadlineColorClass,
+  MAX_TASK_DEPTH,
+} from './DashboardUtils';
 import { getCollabIdentity, collabDisplayName } from '../../utils/collabIdentity';
 import { useToast } from '../../context/ToastContext';
-
-const MAX_TASK_DEPTH = 2;
-
-function toDateKey(date = new Date()) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-function startOfDay(date = new Date()) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function fromDateKey(v) {
-  if (!v) return null;
-  const [y, m, d] = String(v).split('-').map(Number);
-  return y && m && d ? new Date(y, m - 1, d) : null;
-}
-
-function formatDeadline(v) {
-  const d = fromDateKey(v);
-  return d ? `${d.getDate()}/${d.getMonth() + 1}` : '';
-}
-
-function getDeadlineColorClass(deadlineKey, isDone) {
-  if (!deadlineKey || isDone) return 'text-zinc-500 bg-zinc-100 dark:bg-zinc-800';
-  const today = startOfDay(new Date());
-  const dead = fromDateKey(deadlineKey);
-  if (!dead) return 'text-amber-500 dark:text-amber-400 bg-amber-100 dark:bg-amber-950';
-  const daysUntil = Math.round((dead - today) / 86400000);
-  if (daysUntil < 0) return 'text-rose-500 dark:text-rose-400 bg-rose-100 dark:bg-rose-950';
-  return 'text-emerald-500 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950';
-}
 
 /** Pill “premium” meta — workspace shared / emphasized */
 function assigneeMetaStyles(wb) {

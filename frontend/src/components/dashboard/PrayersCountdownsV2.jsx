@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardHeader, Badge } from './Card';
 import { Icons } from './Icons';
+import { MS } from '../../constants';
 
 const TIME_BAR_CONFIGS = [
   { key: 'Day',   gradient: 'from-indigo-500 to-violet-500',   bg: 'bg-indigo-50 dark:bg-indigo-950/40',   label: 'Day',   ring: 'ring-indigo-200 dark:ring-indigo-800/40' },
@@ -39,7 +40,7 @@ export function PrayersCountdownsV2({
   const endOfYear = new Date(yearRef.getFullYear() + 1, 0, 1);
   const yearPct = (yearRef.getTime() - startOfYear.getTime()) / (endOfYear.getTime() - startOfYear.getTime());
   const yearRemaining = endOfYear.getTime() - yearRef.getTime();
-  const yearDays = Math.floor(yearRemaining / (1000 * 60 * 60 * 24));
+  const yearDays = Math.floor(yearRemaining / MS.DAY);
   const dateLabel = selectedDate instanceof Date && !Number.isNaN(selectedDate.getTime())
     ? selectedDate.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })
     : (formattedDate || (isToday ? 'Oggi' : 'Data selezionata'));

@@ -1,8 +1,10 @@
-export const STORAGE_KEY = 'km-dashboard-v2';
-export const BC_CHANNEL = 'km-dashboard-v2-sync';
+import { STORAGE_KEYS, BC_CHANNEL as BC_CHAN, POMODORO, MS } from '../../constants';
+
+export const STORAGE_KEY = STORAGE_KEYS.DASHBOARD;
+export const BC_CHANNEL = BC_CHAN;
 export const MAX_TASK_DEPTH = 2;
-export const POMODORO_STORAGE = 'km-pomodoro-v2';
-export const POMODORO_DURATION = 25 * 60;
+export const POMODORO_STORAGE = STORAGE_KEYS.POMODORO;
+export const POMODORO_DURATION = POMODORO.WORK_MINUTES * 60;
 
 export function uid(prefix = 'id') {
   return `${prefix}-${Math.random().toString(36).slice(2, 9)}-${Date.now().toString(36)}`;
@@ -178,7 +180,7 @@ export function getDeadlineColorClass(deadlineKey, isDone) {
   const today = startOfDay(new Date());
   const dead = fromDateKey(deadlineKey);
   if (!dead) return 'text-amber-500 dark:text-amber-400 bg-amber-100 dark:bg-amber-950';
-  const daysUntil = Math.round((dead - today) / 86400000);
+  const daysUntil = Math.round((dead - today) / MS.DAY);
   if (daysUntil < 0) return 'text-rose-500 dark:text-rose-400 bg-rose-100 dark:bg-rose-950';
   if (daysUntil <= 2) return 'text-rose-500 dark:text-rose-400 bg-rose-100 dark:bg-rose-950';
   if (daysUntil <= 7) return 'text-amber-500 dark:text-amber-400 bg-amber-100 dark:bg-amber-950';
