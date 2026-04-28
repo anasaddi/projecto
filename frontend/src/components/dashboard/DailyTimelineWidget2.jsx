@@ -257,6 +257,14 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
       };
     }
 
+    // isDone = true from here
+    if (nowMinutes > end) {
+      return {
+        badge: 'In ritardo',
+        checkboxClass: 'bg-amber-500 border-amber-400 text-white shadow-[0_0_12px_rgba(245,158,11,0.3)]',
+        labelClass: 'text-amber-600 dark:text-amber-400',
+      };
+    }
     if (nowMinutes < start) {
       return {
         badge: 'In anticipo',
