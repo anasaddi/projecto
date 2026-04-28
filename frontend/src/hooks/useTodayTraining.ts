@@ -249,7 +249,7 @@ function calculateProgressPercent(
   return Math.min(100, Math.round((totalCompleted / totalExpected) * 100)) || 0;
 }
 
-export function useTodayTraining(): UseTodayTrainingReturn {
+export function useTodayTraining(forDate?: string): UseTodayTrainingReturn {
   const [selectedDay, setSelectedDay] = useState<DayTemplate | null>(null);
   const [allProgressions, setAllProgressions] = useState<Record<string, ProgressionData>>({});
   const [awProgram, setAwProgram] = useState<AwProgram | null>(null);
@@ -265,13 +265,16 @@ export function useTodayTraining(): UseTodayTrainingReturn {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
+      setSelectedDay(null);
+      setAllProgressions({});
+      setAwProgram(null);
 
       try {
-        const today = new Date().toISOString().slice(0, 10);
-        setSelectedDate(today);
+        const targetDate = (forDate || new Date().toISOString().slice(0, 10)).slice(0, 10);
+        setSelectedDate(targetDate);
 
         const [todayRes, progressionsRes, awProgramRes] = await Promise.all([
-          api.training.getToday().catch((err) => {
+          api.training.getToday(targetDate).catch((err) => {
             console.warn('[useTodayTraining] Failed to fetch today:', err);
             return null;
           }),
@@ -294,7 +297,7 @@ export function useTodayTraining(): UseTodayTrainingReturn {
         } else if (groupedHypertrophy.length || groupedStrength.length) {
           const response = todayData ?? {};
           setSelectedDay({
-            template_id: response.template_id || today,
+            template_id: response.template_id || targetDate,
             day_name: response.day_name || 'Today',
             exercises: [...groupedHypertrophy, ...groupedStrength],
           });
@@ -324,7 +327,7 @@ export function useTodayTraining(): UseTodayTrainingReturn {
 
     fetchData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount
+  }, [forDate]);
 
   // Calculate progress percentage
   const progressPercent = useMemo(() => {

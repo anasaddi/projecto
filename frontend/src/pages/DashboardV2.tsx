@@ -205,7 +205,7 @@ export default function DashboardV2(): React.ReactElement {
           isToday={isToday}
         />
 
-        <DailyTimelineWidget2 PRAYERS={PRAYERS} todayKey={todayKey} todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} />
+        <DailyTimelineWidget2 PRAYERS={PRAYERS} todayKey={todayKey} todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} isToday={isToday} />
 
         {/* Training Section - Full Width */}
         <TodayCardDashboard />

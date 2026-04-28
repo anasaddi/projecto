@@ -125,7 +125,7 @@ function HabitSelector({ activeHabits, onSelect, onClose, triggerRef }) {
 }
 
 // --- WIDGET PRINCIPALE ---
-export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, togglePrayer }) {
+export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, togglePrayer, isToday = true }) {
   const store = useDashboardStore();
   const {
     timelineRoutines,
@@ -194,7 +194,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
   const activeHabits = useMemo(() => dailyTaskTemplates.filter(t => !t.locked), [dailyTaskTemplates]);
   const eventsToday = useMemo(() => dailyCompletionLog[todayKey]?.events || [], [dailyCompletionLog, todayKey]);
   const slotsForDay = useMemo(() => timelineRoutines[todayKey] || {}, [timelineRoutines, todayKey]);
-  const currentSlotKey = getCurrentSlotKey();
+  const currentSlotKey = isToday ? getCurrentSlotKey() : null;
   const isCollapsed = !timelinePanelExpanded;
   const toggleTimelinePanel = () => {
     const current = useDashboardStore.getState().timelinePanelExpanded;
@@ -214,6 +214,17 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
   const getPrayerState = (idx, isDone) => {
     const start = prayerMinutes[idx];
     const end = prayerMinutes[idx + 1];
+
+    if (!isToday) {
+      return {
+        badge: isDone ? 'Completata' : 'Mancante',
+        checkboxClass: isDone
+          ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)]'
+          : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-400 ring-2 ring-indigo-500 ring-offset-2 shadow-md hover:border-indigo-400 hover:text-indigo-500',
+        labelClass: isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400',
+      };
+    }
+
     if (!Number.isFinite(start) || !Number.isFinite(end)) {
       return {
         badge: isDone ? 'Completata' : 'In attesa',
@@ -277,6 +288,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
     return { doneSteps, totalSteps, pct: totalSteps ? doneSteps / totalSteps : 0 };
   }, [PRAYERS, todayPrayerLog, slotsForDay]);
 
+  const timelineFill = isToday ? timelineProgress : progress.pct;
+
   return (
     <div className="relative z-10 w-full min-w-0">
       <Card className="flex flex-col overflow-hidden rounded-3xl">
@@ -336,7 +349,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                     <motion.div
                       className="absolute inset-y-0 left-0 h-full bg-gradient-to-r from-emerald-600 to-indigo-600 rounded-full"
                       initial={false}
-                      animate={{ width: `${timelineProgress * 100}%` }}
+                      animate={{ width: `${timelineFill * 100}%` }}
                       transition={{ duration: 0.8, ease: "easeInOut" }}
                     />
                   </div>
@@ -347,8 +360,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                       const isDone = todayPrayerLog[prayer];
                       const prayerState = getPrayerState(i, !!isDone);
                       const slotKey = PRAYER_SLOTS[i];
-                      const isCurrentSlot = currentSlotKey === slotKey;
-                      const isPastSlot = PRAYER_SLOTS.indexOf(slotKey) < PRAYER_SLOTS.indexOf(currentSlotKey);
+                      const isCurrentSlot = isToday && currentSlotKey === slotKey;
+                      const isPastSlot = isToday && currentSlotKey ? PRAYER_SLOTS.indexOf(slotKey) < PRAYER_SLOTS.indexOf(currentSlotKey) : false;
                       const hasSlotCard = !!slotKey;
 
                       const routines = slotsForDay[slotKey] || [];
@@ -358,37 +371,30 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
 
                       return (
                         <React.Fragment key={prayer}>
-                          {/* Column: checkbox + optional card */}
                           <div className="flex flex-col items-center gap-3">
-                            {/* Prayer checkbox - centered */}
                             <motion.button
                               onClick={() => togglePrayer?.(prayer, !isDone)}
                               whileHover={{ scale: 1.08 }}
                               whileTap={{ scale: 0.92 }}
-                              className={`relative z-10 w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border-2 ${
-                                prayerState.checkboxClass
-                              }`}
+                              className={`relative z-10 w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border-2 ${prayerState.checkboxClass}`}
                               title={`${prayer} • ${prayerState.badge}`}
                             >
                               {isDone ? <Icons.Check className="w-5 h-5" /> : <div className="w-2.5 h-2.5 rounded-full bg-current opacity-40" />}
                             </motion.button>
+
                             <div className="flex flex-col items-center -mt-1">
                               <span className={`text-xs font-black uppercase tracking-widest ${prayerState.labelClass}`}>{prayer}</span>
                               <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 font-mono mt-0.5">{PRAYER_TIMES[prayer]}</span>
                               <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-0.5">{prayerState.badge}</span>
                             </div>
 
-                            {/* Slot card below */}
                             {hasSlotCard && (
-                              <div className={`w-full transition-all duration-500 ${
-                                isCurrentSlot ? 'opacity-100 z-30' : isPastSlot ? 'opacity-60 hover:opacity-100' : 'opacity-40 hover:opacity-100'
-                              }`}>
+                              <div className={`w-full transition-all duration-500 ${isCurrentSlot ? 'opacity-100 z-30' : isPastSlot ? 'opacity-60 hover:opacity-100' : 'opacity-40 hover:opacity-100'}`}>
                                 <div className={`flex flex-col bg-white dark:bg-zinc-900/80 backdrop-blur-xl border rounded-2xl overflow-hidden transition-all duration-300 ${
                                   isCurrentSlot
                                     ? 'border-indigo-400/60 shadow-[0_8px_30px_rgba(99,102,241,0.15)] ring-1 ring-indigo-500/10'
                                     : 'border-zinc-200/80 dark:border-zinc-800 shadow-lg shadow-zinc-200/20 dark:shadow-black/20 hover:border-zinc-300 dark:hover:border-zinc-700'
                                 }`}>
-                                  {/* Slot Header */}
                                   <div className={`px-3 py-2 flex items-center justify-between border-b ${isCurrentSlot ? 'bg-indigo-50/50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20' : 'bg-zinc-50 dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800'}`}>
                                     <span className={`text-xs font-black uppercase tracking-[0.12em] flex items-center gap-1.5 ${isCurrentSlot ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-500'}`}>
                                       {isCurrentSlot && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />}

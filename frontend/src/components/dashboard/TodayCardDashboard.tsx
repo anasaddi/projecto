@@ -68,10 +68,14 @@ export function TodayCardDashboard({ defaultExpanded = true }: TodayCardDashboar
     typeof s.todayTrainingExpanded === 'boolean' ? s.todayTrainingExpanded : defaultExpanded
   );
   const setTodayTrainingExpanded = useDashboardStore((s) => s.setTodayTrainingExpanded);
+  const dashboardSelectedDate = useDashboardStore((s) => s.selectedDate);
   const toggleTodayTrainingExpanded = () => {
     const current = useDashboardStore.getState().todayTrainingExpanded;
     setTodayTrainingExpanded(!current);
   };
+  const selectedDateKey = dashboardSelectedDate instanceof Date
+    ? dashboardSelectedDate.toISOString().slice(0, 10)
+    : (typeof dashboardSelectedDate === 'string' ? dashboardSelectedDate.slice(0, 10) : undefined);
   const {
     selectedDay,
     allProgressions,
@@ -81,7 +85,7 @@ export function TodayCardDashboard({ defaultExpanded = true }: TodayCardDashboar
     loading,
     error,
     onProgressionChange,
-  } = useTodayTraining();
+  } = useTodayTraining(selectedDateKey);
 
   // Show visible fallback when there's no workout today or if an error occurs
   if ((error && !loading) || (!loading && !selectedDay?.exercises?.length && !error)) {
