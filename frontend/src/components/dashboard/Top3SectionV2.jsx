@@ -199,7 +199,7 @@ export function Top3SectionV2() {
   };
 
   return (
-    <Card className="flex flex-col shrink-0">
+    <Card className="flex flex-col shrink-0 min-h-0">
       <CardHeader
         icon={Icons.Target}
         iconColor="text-amber-500"
@@ -213,7 +213,7 @@ export function Top3SectionV2() {
         bordered={true}
       />
       
-      <div className="p-4 pt-3 flex flex-col gap-3">
+      <div className="px-3 py-3 sm:p-4 sm:pt-3 flex flex-col gap-3">
         {[0, 1, 2].map((idx) => {
           const slot = top3Resolved[idx];
           const filled = slot && !slot.missing;
@@ -236,18 +236,18 @@ export function Top3SectionV2() {
               }}
               onDragLeave={() => setDragOverIndex((current) => (current === idx ? null : current))}
               onDrop={(e) => onDrop(e, idx)}
-              className={`relative overflow-hidden min-h-[4rem] rounded-2xl border transition-all duration-200
+              className={`relative overflow-hidden min-h-[3.25rem] sm:min-h-[4rem] rounded-2xl border transition-all duration-200
                 ${isDragOver ? 'scale-[1.02]' : 'scale-100'}
                 ${getSlotStyles(isDragOver, filled, isDone, idx)}
               `}
             >
               {/* Large number watermark - more prominent */}
-              <span className={`absolute -right-2 -bottom-4 text-[5rem] font-black pointer-events-none select-none leading-none z-0 ${filled ? (SLOT_COLORS[idx]?.watermark || 'text-zinc-200/50 dark:text-white/[0.05]') : 'text-zinc-200/50 dark:text-white/[0.05]'}`}>
+              <span className={`absolute -right-2 -bottom-4 text-[3.5rem] sm:text-[5rem] font-black pointer-events-none select-none leading-none z-0 ${filled ? (SLOT_COLORS[idx]?.watermark || 'text-zinc-200/50 dark:text-white/[0.05]') : 'text-zinc-200/50 dark:text-white/[0.05]'}`}>
                 {idx + 1}
               </span>
               
               {filled ? (
-                <div className="relative z-10 flex items-start gap-3 px-3 py-3 h-full">
+                <div className="relative z-10 flex items-start gap-2.5 px-2.5 py-2.5 sm:gap-3 sm:px-3 sm:py-3 h-full">
                   <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
                     <TaskCheckbox done={isDone} onClick={() => toggleTop3Slot(slot)} />
                   </div>
@@ -257,13 +257,13 @@ export function Top3SectionV2() {
                     className="flex flex-col flex-1 min-w-0 cursor-pointer pr-1"
                   >
                     <span
-                      className={`font-semibold break-words leading-snug text-sm ${isDone ? 'line-through text-zinc-400 dark:text-zinc-500' : (SLOT_COLORS[idx]?.accent || 'text-zinc-800 dark:text-zinc-100')}`}
+                      className={`font-semibold break-words leading-snug text-[13px] sm:text-sm ${isDone ? 'line-through text-zinc-400 dark:text-zinc-500' : (SLOT_COLORS[idx]?.accent || 'text-zinc-800 dark:text-zinc-100')}`}
                       title={slot.title}
                     >
                       {slot.title}
                     </span>
                     {slot.projectTitle && (
-                      <span className="mt-0.5 text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                      <span className="mt-0.5 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                         {slot.projectTitle}
                       </span>
                     )}
@@ -283,7 +283,7 @@ export function Top3SectionV2() {
                     onClick={() => showToast?.('Trascina un task qui per aggiungerlo ai Top 3', { type: 'info' })}
                     className="pointer-events-auto flex items-center justify-center gap-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
                   >
-                    <span className="text-xs font-medium">+ slot libero</span>
+                    <span className="text-[11px] sm:text-xs font-medium">+ slot libero</span>
                   </button>
                 </div>
               )}

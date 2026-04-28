@@ -1,4 +1,4 @@
-﻿import React from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
@@ -17,6 +17,8 @@ export function QuickTaskRow({
   reorderQuickTasks, promoteQuickTaskToProject,
 }) {
   const showToast = useToast();
+  const rowRef = useRef(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const taskId = isShared ? `shared-${task.shareId}-${task.id}` : task.id;
   const isFocusActive = false;
   
@@ -60,8 +62,38 @@ export function QuickTaskRow({
   const { active, barRef, zoneProps, getActionProps, handledByPointerUpRef } = useLongPressActions({ actions });
   const showActions = pinned || isHovered || active;
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (rowRef.current && !rowRef.current.contains(event.target)) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [mobileMenuOpen]);
+
+  const triggerAction = (act, event) => {
+    event?.stopPropagation?.();
+    setMobileMenuOpen(false);
+    act.onClick?.(event);
+  };
+
   return (
     <motion.div
+      ref={rowRef}
       layout
       initial={{ opacity: 0, y: -10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -159,7 +191,7 @@ export function QuickTaskRow({
               setQuickTaskEditingTitle(task.title);
             }}
             title={task.title}
-            className={`min-w-0 flex-1 cursor-pointer text-sm font-semibold leading-snug truncate transition-colors ${task.done ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-800 dark:text-zinc-200'}`}
+            className={`min-w-0 flex-1 cursor-pointer text-sm font-semibold leading-snug break-words md:truncate transition-colors ${task.done ? 'text-zinc-400 line-through dark:text-zinc-500' : 'text-zinc-800 dark:text-zinc-200'}`}
           >
             {task.title}
             {isShared && task.sharedTitle && (
@@ -173,9 +205,21 @@ export function QuickTaskRow({
           </span>
         )}
       </div>
+      <button
+        type="button"
+        className="md:hidden ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-500 shadow-sm transition-colors hover:bg-zinc-100 dark:border-white/[0.08] dark:bg-zinc-900 dark:text-zinc-300"
+        onClick={(e) => {
+          e.stopPropagation();
+          setMobileMenuOpen((v) => !v);
+        }}
+        aria-label="Azioni task"
+      >
+        <Icons.MoreHorizontal className="h-4 w-4" />
+      </button>
+
       <motion.div
         ref={barRef}
-        className="flex items-center gap-0.5 touch-manipulation shrink-0 overflow-hidden"
+        className="hidden md:flex items-center gap-0.5 touch-manipulation shrink-0 overflow-hidden"
         initial={false}
         animate={{
           opacity: showActions ? 1 : 0,
@@ -202,6 +246,29 @@ export function QuickTaskRow({
           );
         })}
       </motion.div>
+
+      {mobileMenuOpen && (
+        <div className="absolute right-2 top-full z-30 mt-2 w-48 rounded-2xl border border-zinc-200 bg-white p-2 shadow-[0_18px_40px_rgba(15,23,42,0.16)] dark:border-white/[0.08] dark:bg-zinc-950 md:hidden">
+          <div className="px-2 pb-2 text-[10px] font-black uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500">
+            Azioni task
+          </div>
+          <div className="flex flex-col gap-1">
+            {actions.map((act, i) => (
+              <button
+                key={i}
+                type="button"
+                className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-white/[0.06]"
+                onClick={(e) => triggerAction(act, e)}
+              >
+                <span className={`flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 ${act.className || ''}`}>
+                  {act.icon}
+                </span>
+                <span className="min-w-0 truncate">{act.title}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

@@ -363,7 +363,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                   </div>
 
                   {/* Mobile: horizontal scroll with snap. Desktop: 5-column grid */}
-                  <div className="flex md:grid md:grid-cols-5 gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0 md:overflow-visible md:pb-0">
+                  <div className="flex md:grid md:grid-cols-5 gap-2 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0 md:overflow-visible md:pb-0">
                     {PRAYERS.map((prayer, i) => {
                       const isDone = todayPrayerLog[prayer];
                       const prayerState = getPrayerState(i, !!isDone);
@@ -379,25 +379,30 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
 
                       return (
                         <React.Fragment key={prayer}>
-                          <div className="flex flex-col items-center gap-3 min-w-[72px] md:min-w-0 snap-start">
+                          <div className="flex flex-col items-center gap-2 min-w-[72px] md:min-w-0 snap-start">
                             <motion.button
                               onClick={() => togglePrayer?.(prayer, !isDone)}
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              className={`relative z-10 w-12 h-12 md:w-10 md:h-10 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border-2 ${prayerState.checkboxClass}`}
+                              className={`relative z-10 w-11 h-11 md:w-10 md:h-10 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border-2 ${prayerState.checkboxClass}`}
                               title={`${prayer} • ${prayerState.badge}`}
                             >
-                              {isDone ? <Icons.Check className="w-5 h-5 md:w-5 md:h-5" /> : <div className="w-3 h-3 md:w-2.5 md:h-2.5 rounded-full bg-current opacity-40" />}
+                              {isDone ? <Icons.Check className="w-4 h-4 md:w-5 md:h-5" /> : <div className="w-2.5 h-2.5 md:w-2.5 md:h-2.5 rounded-full bg-current opacity-40" />}
                             </motion.button>
 
-                            <div className="flex flex-col items-center -mt-1">
-                              <span className={`text-sm md:text-xs font-black uppercase tracking-widest ${prayerState.labelClass}`}>{prayer}</span>
-                              <span className="text-sm md:text-xs font-bold text-zinc-400 dark:text-zinc-500 font-mono mt-0.5">{PRAYER_TIMES[prayer]}</span>
-                              <span className="text-xs md:text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-0.5">{prayerState.badge}</span>
+                            <div className="flex flex-col items-center -mt-1 leading-tight">
+                              <span className={`text-[11px] md:text-xs font-black uppercase tracking-widest ${prayerState.labelClass}`}>{prayer}</span>
+                              <span className="text-[11px] md:text-xs font-bold text-zinc-400 dark:text-zinc-500 font-mono mt-0.5">{PRAYER_TIMES[prayer]}</span>
+                              <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-0.5 whitespace-nowrap">{prayerState.badge}</span>
+                            </div>
+
+                            <div className="sm:hidden flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 whitespace-nowrap">
+                              <span>{getSlotLabel(slotKey)}</span>
+                              {slotTotal > 0 && <span className="text-indigo-500">{slotDone}/{slotTotal}</span>}
                             </div>
 
                             {hasSlotCard && (
-                              <div className={`w-full transition-all duration-500 ${isCurrentSlot ? 'opacity-100 z-30' : isPastSlot ? 'opacity-60 hover:opacity-100' : 'opacity-40 hover:opacity-100'}`}>
+                              <div className={`hidden sm:block w-full transition-all duration-500 ${isCurrentSlot ? 'opacity-100 z-30' : isPastSlot ? 'opacity-60 hover:opacity-100' : 'opacity-40 hover:opacity-100'}`}>
                                 <div className={`flex flex-col bg-white dark:bg-zinc-900/80 backdrop-blur-xl border rounded-2xl overflow-hidden transition-all duration-300 ${
                                   isCurrentSlot
                                     ? 'border-indigo-400/60 shadow-[0_8px_30px_rgba(99,102,241,0.15)] ring-1 ring-indigo-500/10'

@@ -111,13 +111,13 @@ export function PrayersCountdownsV2({
           <div className="hidden sm:block h-12 w-px bg-zinc-200 dark:bg-white/[0.06] shrink-0" />
 
           {/* Section 2: Time Period Progress Bars */}
-          <div className="grid grid-cols-2 gap-3 w-full sm:w-auto sm:flex sm:items-center sm:gap-4">
+          <div className="flex w-full gap-2 overflow-x-auto pb-1 sm:w-auto sm:flex-wrap sm:overflow-visible sm:gap-4 scrollbar-hide">
             {allBars.map((bar) => {
               const cfg = TIME_BAR_CONFIGS.find(c => c.key === bar.label) || TIME_BAR_CONFIGS[0];
               const pct = Math.min(1, Math.max(0, bar.pct ?? 0));
               return (
-                <div key={bar.label} className={`flex min-w-0 flex-col gap-1.5 rounded-2xl ring-1 ${cfg.bg} ${cfg.ring} px-3 py-2 sm:min-w-[76px]`}>
-                  <div className="flex items-center justify-between gap-2">
+                <div key={bar.label} className={`flex w-[92px] shrink-0 flex-col gap-1.5 rounded-2xl ring-1 ${cfg.bg} ${cfg.ring} px-3 py-2 sm:w-auto sm:min-w-[76px]`}>
+                  <div className="flex items-center justify-between gap-2 whitespace-nowrap">
                     <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400">{bar.label}</span>
                     <span className="text-[10px] font-bold tabular-nums text-zinc-400 dark:text-zinc-500">{Math.round(pct * 100)}%</span>
                   </div>

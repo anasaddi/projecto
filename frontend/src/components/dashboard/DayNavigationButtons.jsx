@@ -90,6 +90,43 @@ export function DayNavigationButtons() {
         )}
       </AnimatePresence>
 
+      {/* Mobile Navigation Bar */}
+      <div className="fixed inset-x-3 bottom-3 z-50 md:hidden">
+        <div className="mx-auto flex max-w-[420px] items-center gap-2 rounded-2xl border border-white/10 bg-zinc-950/90 px-2 py-2 shadow-[0_16px_40px_rgba(15,23,42,0.35)] backdrop-blur-xl">
+          <button
+            type="button"
+            onClick={handlePreviousDay}
+            disabled={!canGoBack}
+            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-white/5 px-3 text-xs font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-30"
+            aria-label="Giorno precedente"
+          >
+            <Icons.ChevronLeft className="h-4 w-4" />
+            <span>Indietro</span>
+          </button>
+          {!isToday ? (
+            <button
+              type="button"
+              onClick={handleBackToToday}
+              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-indigo-500"
+              aria-label="Torna a oggi"
+            >
+              <Icons.Calendar className="h-4 w-4" />
+              <span>Oggi</span>
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={handleNextDay}
+            disabled={!canGoForward}
+            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-white/5 px-3 text-xs font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-30"
+            aria-label="Giorno successivo"
+          >
+            <span>Avanti</span>
+            <Icons.ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
       {/* Back to Today Button (shown when not on today) */}
       <AnimatePresence>
         {!isToday && (
@@ -99,7 +136,7 @@ export function DayNavigationButtons() {
             exit={{ y: 20, opacity: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             onClick={handleBackToToday}
-            className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-indigo-400/20 bg-indigo-600 px-3 py-2 text-[11px] font-semibold text-white shadow-[0_12px_32px_rgba(79,70,229,0.35)] transition-colors hover:bg-indigo-700 sm:bottom-6 sm:px-4 sm:py-2 sm:text-sm"
+            className="hidden md:flex fixed bottom-4 left-1/2 z-50 -translate-x-1/2 items-center gap-2 rounded-full border border-indigo-400/20 bg-indigo-600 px-3 py-2 text-[11px] font-semibold text-white shadow-[0_12px_32px_rgba(79,70,229,0.35)] transition-colors hover:bg-indigo-700 sm:bottom-6 sm:px-4 sm:py-2 sm:text-sm"
             aria-label="Torna a oggi"
           >
             <Icons.Calendar className="w-4 h-4" />

@@ -273,30 +273,30 @@ function ExRow({ exerciseId, exerciseName, badge, badgeBg, anasC, flavioC, anasW
 function SectionHeader({ icon: Icon, color, label, showRepsLabels, anasOnly = false }) {
   return (
     <div className="flex flex-col bg-zinc-50/80 dark:bg-white/[0.03] border-b border-zinc-200/50 dark:border-white/[0.08]">
-      <div className="flex items-center justify-between px-5 py-4">
+      <div className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-4">
         <div className="flex items-center gap-3">
           <div className={`p-2 rounded-xl shadow-inner ${color.replace('text-', 'bg-').replace('-500', '-500/10')}`}>
             <Icon size={14} className={`${color} drop-shadow-sm`} />
           </div>
-          <span className="text-xs font-black uppercase tracking-[0.25em] text-zinc-400 dark:text-zinc-500">{label}</span>
+          <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.22em] sm:tracking-[0.25em] text-zinc-400 dark:text-zinc-500">{label}</span>
         </div>
-        <div className="flex items-center gap-4 sm:gap-8 shrink-0">
-          <span className="text-xs font-black text-indigo-500/60 tracking-[0.2em] uppercase w-[70px] text-center">Anas</span>
+        <div className="flex items-center gap-3 sm:gap-8 shrink-0">
+          <span className="text-[10px] sm:text-xs font-black text-indigo-500/60 tracking-[0.18em] sm:tracking-[0.2em] uppercase w-[58px] sm:w-[70px] text-center">Anas</span>
           {!anasOnly && <span className="text-xs font-black text-violet-500/60 tracking-[0.2em] uppercase w-[70px] text-center">Flavio</span>}
         </div>
       </div>
-      <div className="flex items-center justify-end px-5 py-1.5 bg-black/[0.02] dark:bg-white/[0.01] border-t border-zinc-100/50 dark:border-white/[0.02]">
-        <div className="flex items-center gap-4 sm:gap-8 shrink-0">
-          <div className="flex items-center gap-1.5 w-[70px] justify-center">
-            <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">KG</span>
+      <div className="flex items-center justify-end px-4 py-1.5 bg-black/[0.02] dark:bg-white/[0.01] border-t border-zinc-100/50 dark:border-white/[0.02] sm:px-5">
+        <div className="flex items-center gap-3 sm:gap-8 shrink-0">
+          <div className="flex items-center gap-1 w-[58px] sm:w-[70px] justify-center">
+            <span className="text-[10px] sm:text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-10 sm:w-12 text-center">KG</span>
             {showRepsLabels && <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">REP</span>}
-            <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-6 text-center">✓</span>
+            <span className="text-[10px] sm:text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-5 sm:w-6 text-center">✓</span>
           </div>
           {!anasOnly && (
-            <div className="flex items-center gap-1.5 w-[70px] justify-center">
-              <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">KG</span>
+            <div className="flex items-center gap-1 w-[58px] sm:w-[70px] justify-center">
+              <span className="text-[10px] sm:text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-10 sm:w-12 text-center">KG</span>
               {showRepsLabels && <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">REP</span>}
-              <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-6 text-center">✓</span>
+              <span className="text-[10px] sm:text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-5 sm:w-6 text-center">✓</span>
             </div>
           )}
         </div>
@@ -468,7 +468,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
   const sectionsGrid = (
     <div className="grid grid-cols-1 lg:grid-cols-3 lg:divide-x divide-zinc-100/80 dark:divide-white/[0.04]">
       {/* Strength Section */}
-      <div className="flex flex-col min-h-[400px]">
+      <div className="flex flex-col min-h-[280px] lg:min-h-[400px]">
         <SectionHeader icon={Zap} color="text-indigo-500" label="Strength Focus" anasOnly={anasOnly} />
         <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
           {strengthEx.length > 0 ? strengthEx.map(ex => {
@@ -488,7 +488,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
               />
             );
           }) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
+            <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
               <Zap size={24} className="text-zinc-300" />
               <span className="text-xs font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
             </div>
@@ -497,7 +497,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
       </div>
 
       {/* AW Section */}
-      <div className="flex flex-col min-h-[400px]">
+      <div className="flex flex-col min-h-[280px] lg:min-h-[400px]">
         <SectionHeader icon={Target} color="text-amber-500" label="AW Specialization" anasOnly={anasOnly} />
         <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
           {awEx.length > 0 ? awEx.map(ex => {
@@ -515,7 +515,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
               />
             );
           }) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
+            <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
               <Target size={24} className="text-zinc-300" />
               <span className="text-xs font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
             </div>
@@ -524,7 +524,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
       </div>
 
       {/* Hypertrophy Section */}
-      <div className="flex flex-col min-h-[400px]">
+      <div className="flex flex-col min-h-[280px] lg:min-h-[400px]">
         <SectionHeader icon={Dumbbell} color="text-emerald-500" label="Hypertrophy Foundation" showRepsLabels anasOnly={anasOnly} />
         <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
           {hypEx.length > 0 ? hypEx.map(ex => {
@@ -544,7 +544,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
               />
             );
           }) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
+            <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
               <Dumbbell size={24} className="text-zinc-300" />
               <span className="text-xs font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
             </div>
