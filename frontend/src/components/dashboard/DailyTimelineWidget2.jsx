@@ -363,7 +363,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                   </div>
 
                   {/* Mobile: horizontal scroll with padding preserved. Desktop: 5-column grid */}
-                  <div className="flex md:grid md:grid-cols-5 gap-11 md:gap-8 pb-2 overflow-x-auto scrollbar-hide px-2 md:mx-0 md:px-0 md:overflow-visible md:pb-0">
+                  <div className="flex md:grid md:grid-cols-5 gap-11 md:gap-8 pb-2 overflow-x-auto scrollbar-hide px-4 md:mx-0 md:px-4 md:overflow-visible md:pb-0">
                     {PRAYERS.map((prayer, i) => {
                       const isDone = todayPrayerLog[prayer];
                       const prayerState = getPrayerState(i, !!isDone);

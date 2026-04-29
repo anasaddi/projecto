@@ -69,11 +69,11 @@ export function StandardProjectCard({
 
   return (
     <Card 
-      className={`group relative flex flex-col overflow-hidden ${PROJECT_CARD_STYLES.container.base} ${PROJECT_CARD_STYLES.container.hover} ${sharedWorkspaceChrome ? 'rounded-[24px] border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.22),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,250,252,0.86))] dark:bg-[radial-gradient(circle_at_top_left,rgba(129,140,248,0.09),transparent_38%),linear-gradient(180deg,rgba(21,26,34,0.97),rgba(15,20,29,0.97))] hover:border-white/15' : ''} ${isMenuOpen ? 'z-50' : 'z-auto'} ${expanded ? PROJECT_CARD_STYLES.container.expanded : ''}`}
+      className={`group relative flex flex-col overflow-hidden rounded-3xl border border-zinc-200/70 bg-white shadow-sm transition-all hover:border-zinc-300 hover:shadow-[0_26px_60px_-36px_rgba(79,70,229,0.22)] dark:border-white/[0.08] dark:bg-[#0b0e14]/70 dark:shadow-none ${sharedWorkspaceChrome ? 'rounded-[24px] border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.22),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,250,252,0.86))] dark:bg-[radial-gradient(circle_at_top_left,rgba(129,140,248,0.09),transparent_38%),linear-gradient(180deg,rgba(21,26,34,0.97),rgba(15,20,29,0.97))] hover:border-white/15' : ''} ${isMenuOpen ? 'z-50' : 'z-auto'} ${expanded ? 'ring-1 ring-zinc-200/80 dark:ring-white/[0.08] shadow-[0_16px_32px_-22px_rgba(99,102,241,0.18)]' : ''}`}
       glow={expanded}
     >
       <div
-        className={`group/header flex cursor-pointer items-start gap-3 ${sharedWorkspaceChrome ? 'px-4 pb-4 pt-8' : PROJECT_CARD_STYLES.header.base}`}
+        className={`group/header flex cursor-pointer items-start gap-3 ${sharedWorkspaceChrome ? 'px-4 pb-4 pt-8' : 'p-4'}`}
         onClick={() => {
           const next = !expanded;
           setExpanded(next);
@@ -199,7 +199,7 @@ export function StandardProjectCard({
               </Link>
             )}
             <div onClick={(e) => e.stopPropagation()}>
-              <KebabMenu items={menuItems} onOpenChange={setIsMenuOpen} />
+              <KebabMenu items={menuItems} onOpenChange={setIsMenuOpen} alwaysVisible />
             </div>
             <motion.div
               animate={{ rotate: expanded ? 180 : 0 }}
@@ -326,6 +326,7 @@ export function CompactProjectCard({
           items={menuItems}
           isOpen={isMenuOpen}
           setIsOpen={setIsMenuOpen}
+          alwaysVisible
         />
       </div>
     </div>
