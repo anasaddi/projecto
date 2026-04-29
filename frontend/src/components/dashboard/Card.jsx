@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 
 const baseClasses = `
   relative overflow-hidden
-  rounded-3xl
+  rounded-[1.4rem] sm:rounded-3xl
   border border-zinc-200/70 dark:border-white/[0.08]
   bg-white/[0.9] dark:bg-[#131820]/90
   backdrop-blur-2xl
@@ -54,11 +54,11 @@ export function CardHeader({
   className = '' 
 }) {
   return (
-    <div className={`flex items-center justify-between gap-4 border-b border-zinc-100/80 p-5 dark:border-white/[0.04] ${className}`}>
-      <div className="flex min-w-0 items-center gap-3.5">
+    <div className={`flex items-center justify-between gap-3 border-b border-zinc-100/80 p-4 sm:gap-4 sm:p-5 dark:border-white/[0.04] ${className}`}>
+      <div className="flex min-w-0 items-center gap-3 sm:gap-3.5">
         {Icon && (
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-zinc-100/90 dark:bg-white/[0.05] ${iconColor} shadow-sm ring-1 ring-white/60 dark:ring-white/[0.04]`}>
-            <Icon className="h-4 w-4" />
+          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[1rem] sm:h-10 sm:w-10 sm:rounded-2xl bg-zinc-100/90 dark:bg-white/[0.05] ${iconColor} shadow-sm ring-1 ring-white/60 dark:ring-white/[0.04]`}>
+            <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </div>
         )}
         <div className="min-w-0">
@@ -76,8 +76,8 @@ export function CardBody({ children, className = '', padding = 'normal' }) {
   const paddingClasses = {
     none: '',
     small: 'p-3',
-    normal: 'p-5',
-    large: 'p-6'
+    normal: 'p-4 sm:p-5',
+    large: 'p-5 sm:p-6'
   };
   
   return (

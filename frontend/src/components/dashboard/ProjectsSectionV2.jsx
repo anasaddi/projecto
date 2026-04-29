@@ -62,9 +62,9 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
             <CreateProjectCard onClick={createProject} />
           </div>
         ) : (
-          <div className={`flex flex-col ${denseMode ? 'gap-3' : 'gap-4'}`}>
+          <div className={`flex flex-col ${denseMode ? 'gap-3' : 'gap-3 sm:gap-4'}`}>
             {/* Personal Projects */}
-            <div className={`flex flex-col ${denseMode ? 'gap-3' : 'gap-4'}`}>
+            <div className={`flex flex-col ${denseMode ? 'gap-3' : 'gap-3 sm:gap-4'}`}>
               {projects.map((project, idx) => {
                 const actualStats = countTreeStats(project.tasks);
                 const percentage = Math.round(actualStats.ratio * 100);
@@ -154,15 +154,15 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
                 );
               })}
               
-              <div className={`flex ${denseMode ? 'min-h-[4.75rem]' : 'min-h-[5.5rem]'}`}>
+              <div className={`flex ${denseMode ? 'min-h-[4.75rem]' : 'min-h-[5rem] sm:min-h-[5.5rem]'}`}>
                 <CreateProjectCard onClick={createProject} className="flex-1" />
               </div>
             </div>
 
             {/* Shared Projects */}
             {hasShared && (
-              <div className={`flex flex-col ${denseMode ? 'gap-3' : 'gap-4'}`}>
-                <div className="flex items-center gap-3 py-2">
+              <div className={`flex flex-col ${denseMode ? 'gap-3' : 'gap-3 sm:gap-4'}`}>
+                <div className="flex items-center gap-3 py-1.5 sm:py-2">
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-500/10">
                       <Icons.MessageCircle className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />

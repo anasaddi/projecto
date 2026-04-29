@@ -67,7 +67,7 @@ function SortableHabitItem({ task, idx, todayTaskLog, isHovered, setHoveredHabit
       onMouseEnter={() => setHoveredHabitId(task.id)}
       onMouseLeave={() => setHoveredHabitId(null)}
       className={`
-        group ${isLocked ? 'hidden sm:flex' : 'flex'} items-center gap-2 rounded-2xl border border-transparent p-3
+        group ${isLocked ? 'hidden sm:flex' : 'flex'} items-center gap-2 rounded-2xl border border-transparent p-2.5 sm:p-3
         ${isLocked ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}
         transition-colors duration-200
         ${isLocked
@@ -156,7 +156,7 @@ function SortableHabitItem({ task, idx, todayTaskLog, isHovered, setHoveredHabit
 
       {/* Actions */}
       <motion.div 
-        className="flex items-center gap-0.5"
+        className="hidden md:flex items-center gap-0.5"
         initial={false}
         animate={{ 
           opacity: inTimeline || isHovered ? 1 : 0,
@@ -267,7 +267,7 @@ export function HabitsSection() {
         }
       />
 
-      <div className="p-4 pt-3 flex flex-col gap-3">
+      <div className="p-4 pt-3 flex flex-col gap-2.5 sm:gap-3">
         {/* Input */}
         <AddItemInputBar
           value={habitDraft}
@@ -280,7 +280,7 @@ export function HabitsSection() {
         {/* Habits list */}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={dailyTaskTemplates} strategy={verticalListSortingStrategy}>
-            <div className="flex flex-col gap-1 flex-1 min-h-[120px] overflow-y-auto custom-scrollbar pr-1">
+            <div className="flex flex-col gap-1 flex-1 min-h-[120px] overflow-y-auto custom-scrollbar pr-0.5 sm:pr-1">
               <AnimatePresence mode="popLayout">
                 {dailyTaskTemplates.length === 0 ? (
                   <motion.div

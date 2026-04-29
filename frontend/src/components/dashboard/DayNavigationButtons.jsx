@@ -4,6 +4,9 @@ import { Icons } from './Icons';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { startOfDay, addDays, toDateKey, parseSelectedDate } from './DashboardUtils';
 
+const WEEKDAYS_SHORT = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+const MONTHS_SHORT = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+
 export function DayNavigationButtons() {
   const selectedDate = useDashboardStore((s) => s.selectedDate);
   const navigateToPreviousDay = useDashboardStore((s) => s.navigateToPreviousDay);
@@ -39,6 +42,16 @@ export function DayNavigationButtons() {
   const handleBackToToday = () => {
     setSelectedDate(new Date());
   };
+
+  // Format date for mobile navbar
+  const formatMobileDate = (date) => {
+    const day = date.getDate();
+    const weekday = WEEKDAYS_SHORT[date.getDay()];
+    const month = MONTHS_SHORT[date.getMonth()];
+    return { day, weekday, month };
+  };
+
+  const { day, weekday, month } = formatMobileDate(safeSelectedDate);
 
   return (
     <>
@@ -90,40 +103,56 @@ export function DayNavigationButtons() {
         )}
       </AnimatePresence>
 
-      {/* Mobile Navigation Bar */}
-      <div className="fixed inset-x-3 bottom-3 z-50 md:hidden">
-        <div className="mx-auto flex max-w-[320px] items-center gap-1 rounded-full border border-white/10 bg-zinc-950/76 px-1 py-1 shadow-[0_10px_24px_rgba(15,23,42,0.22)] backdrop-blur-xl">
-          <button
+      {/* Mobile Navigation Bar - Redesigned */}
+      <div className="fixed inset-x-0 bottom-0 z-50 md:hidden">
+        {/* Safe area padding for notched devices */}
+        <div className="flex items-center justify-between gap-2 border-t border-white/[0.08] bg-gradient-to-b from-zinc-950/90 to-zinc-950 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_32px_rgba(0,0,0,0.4)] backdrop-blur-2xl">
+          {/* Previous Day Button */}
+          <motion.button
             type="button"
             onClick={handlePreviousDay}
             disabled={!canGoBack}
-            className="flex h-8 flex-1 items-center justify-center gap-1 rounded-full bg-white/5 px-2 text-[10px] font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-30"
+            whileTap={canGoBack ? { scale: 0.92 } : {}}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/[0.06] text-white transition-all disabled:opacity-25 disabled:grayscale active:bg-white/[0.10]"
             aria-label="Giorno precedente"
           >
-            <Icons.ChevronLeft className="h-3 w-3" />
-            <span>Indietro</span>
-          </button>
-          {!isToday ? (
-            <button
-              type="button"
-              onClick={handleBackToToday}
-              className="flex h-8 flex-1 items-center justify-center gap-1 rounded-full bg-indigo-600 px-2 text-[10px] font-semibold text-white transition-colors hover:bg-indigo-500"
-              aria-label="Torna a oggi"
-            >
-              <Icons.Calendar className="h-3 w-3" />
-              <span>Oggi</span>
-            </button>
-          ) : null}
+            <Icons.ChevronLeft className="h-5 w-5" />
+          </motion.button>
+
+          {/* Center Date Display */}
           <button
+            type="button"
+            onClick={handleBackToToday}
+            className="flex min-w-0 flex-1 flex-col items-center justify-center rounded-2xl px-3 py-1.5 transition-colors active:bg-white/[0.04]"
+          >
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-lg font-bold text-white">{day}</span>
+              <span className="text-xs font-medium uppercase tracking-wide text-zinc-400">{month}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-medium text-zinc-500">{weekday}</span>
+              {isToday && (
+                <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+              )}
+              {!isToday && (
+                <span className="rounded-full bg-indigo-500/20 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-indigo-400">
+                  Oggi
+                </span>
+              )}
+            </div>
+          </button>
+
+          {/* Next Day Button */}
+          <motion.button
             type="button"
             onClick={handleNextDay}
             disabled={!canGoForward}
-            className="flex h-8 flex-1 items-center justify-center gap-1 rounded-full bg-white/5 px-2 text-[10px] font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-30"
+            whileTap={canGoForward ? { scale: 0.92 } : {}}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/[0.06] text-white transition-all disabled:opacity-25 disabled:grayscale active:bg-white/[0.10]"
             aria-label="Giorno successivo"
           >
-            <span>Avanti</span>
-            <Icons.ChevronRight className="h-3 w-3" />
-          </button>
+            <Icons.ChevronRight className="h-5 w-5" />
+          </motion.button>
         </div>
       </div>
 

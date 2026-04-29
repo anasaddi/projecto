@@ -105,7 +105,7 @@ export function LifeGoalsSection() {
                       {tier.goals.some(g => g.type === 'quick') && (
                         <div className="space-y-2">
                           <h4 className="px-0.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Micro movements</h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 auto-cols-fr">
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-cols-fr">
                             {tier.goals.filter(g => g.type === 'quick').map((goal) => (
                               <LifeGoalCard
                                 key={goal.id} goal={goal} compact
@@ -140,7 +140,7 @@ export function LifeGoalsSection() {
                       {tier.goals.some(g => g.type === 'project') && (
                         <div className="space-y-2">
                           <h4 className="px-0.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Macro progetti</h4>
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 auto-cols-fr">
+                          <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-2 lg:gap-3 auto-cols-fr">
                             {tier.goals.filter(g => g.type === 'project').map((goal) => {
                               const stats = countTreeStats(goal.tasks);
                               const percentage = Math.round(stats.ratio * 100);
@@ -203,18 +203,18 @@ export function LifeGoalsSection() {
                         </div>
                       )}
 
-                <div className="flex items-center gap-2 pt-1">
+                <div className="flex flex-wrap items-center gap-2 pt-1">
                   <button
                     type="button"
                     onClick={() => { const title = window.prompt("Quick goal:"); if (title) addGoalToTier(tier.id, title, 'General', 'quick'); }}
-                    className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-600 transition-all hover:bg-zinc-200 dark:bg-white/[0.05] dark:text-zinc-400 dark:hover:bg-white/[0.08]"
+                    className="flex items-center gap-1.5 rounded-lg bg-zinc-100 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-600 transition-all hover:bg-zinc-200 dark:bg-white/[0.05] dark:text-zinc-400 dark:hover:bg-white/[0.08]"
                   >
                     <Icons.Plus className="h-3 w-3" /> Quick
                   </button>
                   <button
                     type="button"
                     onClick={() => { const title = window.prompt("Progetto:"); if (title) addGoalToTier(tier.id, title, 'General', 'project'); }}
-                    className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-white shadow-md shadow-indigo-500/25 transition-all hover:shadow-lg hover:shadow-indigo-500/30 dark:from-indigo-500/90 dark:to-violet-600/90"
+                    className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-white shadow-md shadow-indigo-500/25 transition-all hover:shadow-lg hover:shadow-indigo-500/30 dark:from-indigo-500/90 dark:to-violet-600/90"
                   >
                     <Icons.Plus className="h-3 w-3" /> Project
                   </button>

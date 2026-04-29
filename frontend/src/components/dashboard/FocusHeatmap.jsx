@@ -3,17 +3,17 @@ import { Icons } from './Icons';
 
 import { useGlobalConfig } from '../../context/GlobalConfigContext';
 import { Card, CardHeader, CardBody } from './Card';
-import { toDateKey, addDays, startOfDay } from './DashboardUtils';
+import { toDateKey, addDays, startOfDay, parseSelectedDate } from './DashboardUtils';
 import { DASHBOARD } from '../../constants';
 
 const DEFAULT_PRAYERS = DASHBOARD.DEFAULT_PRAYERS;
 
-function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDate, PRAYERS = DEFAULT_PRAYERS }) {
+function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, anchorDate, PRAYERS = DEFAULT_PRAYERS }) {
   const totalItems = activeHabits.length + PRAYERS.length + 3;
   const { weekAvg, monthAvg, bestDay, worstDay } = useMemo(() => {
     const days = [];
     for (let i = 29; i >= 0; i--) {
-      const d = addDays(startOfDay(selectedDate), -i);
+      const d = addDays(startOfDay(anchorDate), -i);
       const key = toDateKey(d);
       const taskLog = dailyTaskLogs[key] || {};
       const prayerLog = prayerLogs[key] || {};
@@ -32,7 +32,7 @@ function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
     const bestDay = withScore.length ? withScore.reduce((a, b) => a.score >= b.score ? a : b, { key: '', score: 0 }) : null;
     const worstDay = withScore.length ? withScore.reduce((a, b) => a.score <= b.score ? a : b, { key: '', score: 1 }) : null;
     return { weekAvg, monthAvg, bestDay, worstDay };
-  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDate, totalItems]);
+  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, anchorDate, totalItems]);
   
   return (
     <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800/60 flex flex-wrap gap-x-3 gap-y-1 text-xs">
@@ -44,18 +44,18 @@ function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
   );
 }
 
-export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDate }) {
+export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDate, onSelectDate }) {
   const { config } = useGlobalConfig();
   const PRAYERS = config?.PRAYERS || ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
-  const safeSelectedDate = selectedDate instanceof Date ? selectedDate : new Date(selectedDate || Date.now());
+  const safeSelectedDate = parseSelectedDate(selectedDate, new Date());
   const selectedDateKey = toDateKey(startOfDay(safeSelectedDate));
+  const anchorDate = startOfDay(new Date());
 
   const totalItems = activeHabits.length + PRAYERS.length + 3;
-  const historyLength = 28; // last 4 weeks
   const heatmapDays = useMemo(() => {
     const days = [];
     for (let i = 29; i >= 0; i--) {
-      const d = addDays(startOfDay(safeSelectedDate), -i);
+      const d = addDays(anchorDate, -i);
       const key = toDateKey(d);
       const taskLog = dailyTaskLogs[key] || {};
       const prayerLog = prayerLogs[key] || {};
@@ -78,7 +78,7 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
       });
     }
     return days;
-  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDateKey, totalItems]);
+  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDateKey, totalItems, anchorDate]);
 
   const getColor = (score) => {
     if (score >= 0.85) return 'bg-emerald-500 dark:bg-emerald-500';
@@ -120,11 +120,14 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
       <CardBody padding="normal" className="flex flex-col gap-4">
         <div className="overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
           <div className="grid min-w-[280px] grid-cols-10 gap-2">
-          {heatmapDays.map(({ key, score, isSelected, habitsDone, habitsTotal, prayersDone, prayersTotal, tasksDone, tasksTotal }) => (
-            <div
+          {heatmapDays.map(({ key, date, score, isSelected, habitsDone, habitsTotal, prayersDone, prayersTotal, tasksDone, tasksTotal }) => (
+            <button
               key={key}
+              type="button"
               title={`${key}\nStato: ${getDayStatus(score)} (${Math.round(score * 100)}%)\nAbitudini: ${habitsDone}/${habitsTotal}\nPreghiere: ${prayersDone}/${prayersTotal}\nTop3: ${tasksDone}/${tasksTotal}`}
-              className={`w-5 h-5 rounded-md ${getColor(score)} ${isSelected ? 'ring-4 ring-offset-2 ring-indigo-500 dark:ring-indigo-400 ring-offset-white dark:ring-offset-[#131820] shadow-[0_0_0_1px_rgba(99,102,241,0.35)]' : ''} transition-colors`}
+              onClick={() => onSelectDate?.(date)}
+              className={`h-5 w-5 rounded-md ${getColor(score)} ${isSelected ? 'ring-4 ring-offset-2 ring-indigo-500 dark:ring-indigo-400 ring-offset-white dark:ring-offset-[#131820] shadow-[0_0_0_1px_rgba(99,102,241,0.35)]' : ''} transition-colors hover:scale-[1.04] focus:outline-none focus:ring-2 focus:ring-indigo-400/70 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-[#131820]`}
+              aria-label={`Seleziona il giorno ${key}`}
             />
           ))}
           </div>
@@ -139,7 +142,7 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
           </div>
           <span>Più</span>
         </div>
-        <LightAnalyticsInner dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} selectedDate={selectedDate} PRAYERS={PRAYERS} />
+        <LightAnalyticsInner dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} anchorDate={anchorDate} PRAYERS={PRAYERS} />
       </CardBody>
     </Card>
   );

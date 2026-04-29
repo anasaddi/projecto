@@ -1091,14 +1091,14 @@ export default function SharedProjects() {
         onConfirm={() => updateLocal({ chat: [] })}
         onCancel={() => setConfirmResetChat(false)}
       />
-      <div className={`${SHARED_CONTENT_CLASS} flex flex-col gap-6 py-6 pb-12 2xl:flex-row 2xl:items-start`}>
+      <div className={`${SHARED_CONTENT_CLASS} flex flex-col gap-4 py-4 pb-12 sm:gap-6 sm:py-6 2xl:flex-row 2xl:items-start`}>
 
         {/* MAIN CONTENT: PROJECTS */}
-        <div className="order-2 min-w-0 flex-[2] space-y-6 2xl:order-1">
-          <header className="mb-6 rounded-[32px] border border-white/10 bg-white/5 backdrop-blur-md p-5 shadow-xl dark:bg-zinc-900/30 md:p-6">
-            <div className="mb-5 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+        <div className="order-2 min-w-0 flex-[2] space-y-4 sm:space-y-6 2xl:order-1">
+          <header className="mb-4 rounded-[24px] sm:mb-6 sm:rounded-[32px] border border-white/10 bg-white/5 backdrop-blur-md p-4 shadow-xl dark:bg-zinc-900/30 sm:p-5 md:p-6">
+            <div className="mb-4 flex flex-col justify-between gap-4 sm:mb-5 sm:gap-5 md:flex-row md:items-end">
               <div className="space-y-2">
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3">
                   {/* Avatar colored by user identity */}
                   <div 
                     className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
@@ -1112,7 +1112,7 @@ export default function SharedProjects() {
                   <input
                     value={dashboard.title}
                     onChange={(e) => updateLocal({ title: e.target.value })}
-                    className="w-full rounded-2xl border border-transparent bg-transparent px-2 py-1 text-2xl font-semibold tracking-tight text-gray-900 outline-none transition-colors dark:text-white sm:w-auto md:text-3xl"
+                    className="w-full rounded-2xl border border-transparent bg-transparent px-1 py-0.5 text-xl font-semibold tracking-tight text-gray-900 outline-none transition-colors dark:text-white sm:w-auto sm:px-2 sm:py-1 sm:text-2xl md:text-3xl"
                   />
                   <span className="rounded-full border border-indigo-200/80 bg-indigo-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/20 dark:text-indigo-300">
                     Shared
@@ -1163,9 +1163,9 @@ export default function SharedProjects() {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-[26px] border border-zinc-200/70 bg-zinc-50/70 p-5 shadow-inner dark:border-white/[0.06] dark:bg-white/[0.02]"
+                className="rounded-[22px] border border-zinc-200/70 bg-zinc-50/70 p-4 shadow-inner dark:border-white/[0.06] dark:bg-white/[0.02] sm:rounded-[26px] sm:p-5"
               >
-                <div className="flex items-center justify-between mb-4">
+                <div className="mb-3 flex items-center justify-between sm:mb-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-indigo-500 text-white shadow-sm">
                       <Icons.Target className="w-5 h-5" />
@@ -1193,8 +1193,8 @@ export default function SharedProjects() {
             )}
           </header>
 
-          <section className="overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.82] shadow-[0_24px_60px_-40px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:bg-[linear-gradient(180deg,rgba(18,23,31,0.96),rgba(12,16,23,0.98))] dark:shadow-[0_30px_70px_-42px_rgba(0,0,0,0.62)]">
-            <div className="flex items-center justify-between gap-4 border-b border-zinc-200/60 px-5 py-4 dark:border-white/[0.06] md:px-6">
+          <section className="overflow-hidden rounded-[24px] sm:rounded-[30px] border border-white/10 bg-white/[0.82] shadow-[0_24px_60px_-40px_rgba(15,23,42,0.24)] backdrop-blur-2xl dark:bg-[linear-gradient(180deg,rgba(18,23,31,0.96),rgba(12,16,23,0.98))] dark:shadow-[0_30px_70px_-42px_rgba(0,0,0,0.62)]">
+            <div className="flex items-center justify-between gap-3 border-b border-zinc-200/60 px-4 py-3.5 dark:border-white/[0.06] sm:gap-4 sm:px-5 sm:py-4 md:px-6">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-indigo-200/70 bg-indigo-500/10 text-indigo-600 shadow-sm dark:border-indigo-500/25 dark:bg-indigo-500/12 dark:text-indigo-300">
                   <Icons.FileText className="h-5 w-5" />
@@ -1238,7 +1238,7 @@ export default function SharedProjects() {
                   transition={{ duration: 0.24, ease: [0.32, 0.72, 0, 1] }}
                   className="overflow-hidden"
                 >
-                  <div className="space-y-2 px-5 py-4 md:px-6">
+                  <div className="space-y-2 px-4 py-3.5 sm:px-5 sm:py-4 md:px-6">
                     {normalizeSharedNotes(dashboard.notes).length === 0 ? (
                       <div className="rounded-2xl border border-dashed border-zinc-200/70 bg-zinc-50/60 px-6 py-8 text-center dark:border-white/[0.08] dark:bg-white/[0.02]">
                         <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Nessuna nota ancora.</p>
@@ -1260,7 +1260,7 @@ export default function SharedProjects() {
             </AnimatePresence>
           </section>
 
-          <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 2xl:grid-cols-2">
             {dashboard.projects.map((proj, pIdx) => {
               const dragPayload = { type: 'project', fromIndex: pIdx };
               const stats = countTreeStatsUtil(proj.tasks);
@@ -1406,9 +1406,9 @@ export default function SharedProjects() {
         </div>
 
         {/* SIDEBAR: QUICK TASKS + CHAT */}
-        <aside className="order-1 w-full shrink-0 space-y-4 2xl:sticky 2xl:top-6 2xl:order-2 2xl:w-[16rem] 2xl:self-start">
+        <aside className="order-1 w-full shrink-0 space-y-3 sm:space-y-4 2xl:sticky 2xl:top-6 2xl:order-2 2xl:w-[16rem] 2xl:self-start">
           {/* QUICK TASKS */}
-          <div className="flex min-h-[340px] flex-col rounded-2xl sm:rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-4 sm:p-6 shadow-lg backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-2xl">
+          <div className="flex min-h-[300px] flex-col rounded-2xl sm:rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-4 sm:min-h-[340px] sm:p-6 shadow-lg backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-2xl">
             <div className="flex items-center gap-2 mb-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
                 <Icons.Zap className="w-4 h-4" />
@@ -1436,7 +1436,7 @@ export default function SharedProjects() {
                 </button>
               </div>
 
-              <div className="space-y-2 flex-1 overflow-y-auto custom-scrollbar pr-1.5 max-h-[320px]">
+              <div className="space-y-2 flex-1 overflow-y-auto custom-scrollbar pr-1 max-h-[280px] sm:max-h-[320px]">
                 <AnimatePresence initial={false}>
                   {dashboard.quickTasks.map((task) => (
                     <motion.div
@@ -1507,7 +1507,7 @@ export default function SharedProjects() {
           </div>
 
           {/* CHAT BOX */}
-          <div className="flex min-h-[420px] flex-col rounded-2xl sm:rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-4 sm:p-6 shadow-lg backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-2xl">
+          <div className="flex min-h-[360px] flex-col rounded-2xl sm:rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-4 sm:min-h-[420px] sm:p-6 shadow-lg backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-2xl">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
@@ -1529,7 +1529,7 @@ export default function SharedProjects() {
               )}
             </div>
 
-            <div ref={chatScrollRef} className="flex-1 overflow-y-auto space-y-3 pr-2 max-h-[380px] custom-scrollbar">
+            <div ref={chatScrollRef} className="flex-1 overflow-y-auto space-y-2.5 pr-1.5 max-h-[300px] sm:max-h-[380px] custom-scrollbar">
               {dashboard.chat.map((msg) => {
                 const isMe = msg.senderId === localStorage.getItem('km-chat-sender-id');
                 // Colore univoco basato sull'ID del mittente per chi non sono io

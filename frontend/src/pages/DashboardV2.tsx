@@ -195,7 +195,7 @@ export default function DashboardV2(): React.ReactElement {
       
       {/* Redundant header removed - items moved to Layout and PrayersCountdowns */}
 
-      <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-5 py-5 pb-24 md:pb-6 md:py-6 flex-1 min-h-0 relative z-10`}>
+      <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-4 py-4 pb-24 md:gap-5 md:pb-6 md:py-6 flex-1 min-h-0 relative z-10`}>
         <PrayersCountdownsV2
           countdowns={countdowns as { label: string; remaining: string; pct: number }[]}
           todayFocusScore={todayFocusScore}
@@ -210,11 +210,11 @@ export default function DashboardV2(): React.ReactElement {
         {/* Training Section - Full Width */}
         <TodayCardDashboard />
 
-        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 pb-1">
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-3 pb-1 md:gap-4">
           <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
             <PomodoroCompact />
             {isLoaded ? <QuickTasksSectionV2 /> : <QuickTaskSkeleton />}
-            <FocusHeatmap dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} selectedDate={selectedDate} />
+            <FocusHeatmap dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
           </div>
           <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
             {isLoaded ? <Top3SectionV2 /> : <Top3Skeleton />}
