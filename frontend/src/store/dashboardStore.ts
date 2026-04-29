@@ -65,7 +65,10 @@ const defaultInitial = {
 };
 
 const loaded = loadState() as Partial<SyncData> | null;
-const initialState = loaded ? { ...defaultInitial, ...loaded } : defaultInitial;
+// selectedDate è sempre resettato a oggi al refresh, non salvato in localStorage
+const initialState = loaded 
+  ? { ...defaultInitial, ...loaded, selectedDate: new Date() } 
+  : defaultInitial;
 
 function clampSelectedDateToToday(value: Date | string | undefined, fallback = new Date()): Date {
   const parsed = parseSelectedDate(value, fallback);

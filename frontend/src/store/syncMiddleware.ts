@@ -91,7 +91,7 @@ export function syncMiddleware(config: any): any {
         projects: state.projects,
         projectOrder: Array.isArray(state.projects) ? (state.projects as { id?: string }[]).map((p) => p.id) : [],
         prayerLogs: state.prayerLogs,
-        selectedDate: state.selectedDate instanceof Date ? state.selectedDate.toISOString() : state.selectedDate ?? new Date().toISOString(),
+        // selectedDate è UI-only: non salvare, al refresh è sempre oggi
         top3Manual: state.top3Manual,
         quickTasks: state.quickTasks,
         dailyCompletionLog: state.dailyCompletionLog,

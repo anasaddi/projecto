@@ -349,7 +349,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               className="border-t border-zinc-100/80 bg-zinc-50/40 dark:border-zinc-800/60 dark:bg-white/[0.02]"
             >
-              <div className="px-2.5 py-4 no-select-calendar sm:px-5 sm:py-5 md:px-6">
+              <div className="px-4 py-4 no-select-calendar sm:px-5 sm:py-5 md:px-6">
                 {/* Timeline: mobile scrollable, desktop grid */}
                 <div className="relative">
                   {/* Connecting line at checkbox height - hidden on mobile scroll */}
@@ -363,7 +363,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                   </div>
 
                   {/* Mobile: horizontal scroll with snap. Desktop: 5-column grid */}
-                  <div className="flex md:grid md:grid-cols-5 gap-8 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide -mx-2.5 px-2.5 md:mx-0 md:px-0 md:overflow-visible md:pb-0">
+                  <div className="flex md:grid md:grid-cols-5 gap-8 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible md:pb-0">
                     {PRAYERS.map((prayer, i) => {
                       const isDone = todayPrayerLog[prayer];
                       const prayerState = getPrayerState(i, !!isDone);

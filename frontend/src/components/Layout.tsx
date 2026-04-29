@@ -94,25 +94,28 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
     >
       {(isAdmin || !isSharedProject) && (
         <header className={cn(
-          'sticky top-4 z-50 mx-4 mt-4 flex shrink-0 items-center gap-3 md:gap-6',
+          'sticky top-4 z-50 mx-4 mt-4 flex shrink-0 flex-col md:flex-row md:items-center gap-2 md:gap-6',
           'rounded-3xl border border-zinc-200 dark:border-zinc-700',
           'bg-white/90 dark:bg-zinc-800/90 backdrop-blur-xl shadow-lg',
           'px-5 py-3'
         )}>
-        <Link to="/" className="flex items-center gap-2 shrink-0 group">
-          <div className="group-hover:shadow-indigo-500/40 group-active:scale-95 transition-all">
-            <AppLogo size="xs" />
-          </div>
-          <span className="font-semibold tracking-tight text-zinc-800 group-hover:text-indigo-600 dark:text-zinc-100 dark:group-hover:text-indigo-400">
-            PROJECTO
-          </span>
-        </Link>
+          {/* Logo row - separato su mobile */}
+          <div className="flex items-center justify-between w-full md:w-auto">
+            <Link to="/" className="flex items-center gap-2 shrink-0 group">
+              <div className="group-hover:shadow-indigo-500/40 group-active:scale-95 transition-all">
+                <AppLogo size="xs" />
+              </div>
+              <span className="font-semibold tracking-tight text-zinc-800 group-hover:text-indigo-600 dark:text-zinc-100 dark:group-hover:text-indigo-400">
+                PROJECTO
+              </span>
+            </Link>
 
-        {isDashboard && stats && (
-          <span className="ml-1 flex md:hidden items-center rounded-full bg-zinc-100 dark:bg-zinc-700 px-2.5 py-1 text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">
-            {stats.doneFocusItems} / {stats.totalFocusItems}
-          </span>
-        )}
+            {isDashboard && stats && (
+              <span className="flex md:hidden items-center rounded-full bg-zinc-100 dark:bg-zinc-700 px-2.5 py-1 text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">
+                {stats.doneFocusItems} / {stats.totalFocusItems}
+              </span>
+            )}
+          </div>
 
         <nav className="hidden md:flex items-center gap-1 rounded-xl bg-zinc-50 dark:bg-zinc-700/50 p-1">
           {navLinks.map(({ to, label, active }) => (
@@ -131,7 +134,8 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
           ))}
         </nav>
 
-        <div className="flex md:hidden items-center gap-1 overflow-x-auto">
+        {/* Mobile nav - riga separata sotto il logo */}
+        <div className="flex md:hidden items-center gap-1 overflow-x-auto -mx-1 px-1 pb-1 md:pb-0 border-t border-zinc-100 dark:border-zinc-700/50 pt-2">
           {navLinks.map(({ to, label, active }) => (
             <Link
               key={to}
