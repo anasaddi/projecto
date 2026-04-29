@@ -72,7 +72,7 @@ export function PrayersCountdownsV2({
           </div>
         }
       />
-      <div className="p-4 sm:p-6">
+      <div className="px-4 sm:px-6 py-4 sm:py-6">
         <div className="flex flex-col gap-4 sm:gap-6">
 
           {/* Section 1: Focus Score - Animated SVG Circle */}

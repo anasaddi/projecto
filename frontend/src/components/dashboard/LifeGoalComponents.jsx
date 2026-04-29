@@ -115,7 +115,7 @@ export function LifeGoalCard({
         </div>
 
         <div className="ml-auto md:hidden">
-          <KebabMenu items={kebabItems} alwaysVisible />
+          <KebabMenu items={kebabItems} />
         </div>
 
         {deadlineEditing === goal.id && (
