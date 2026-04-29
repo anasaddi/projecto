@@ -432,7 +432,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                     </div>
 
                     {/* Mobile: single prayer with animation */}
-                    <div className="md:hidden min-w-[100vw] snap-center px-2">
+                    <div className="md:hidden w-full">
                       <AnimatePresence mode="wait" initial={false}>
                         <motion.div
                           key={currentPrayerIndex}
@@ -440,7 +440,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                           animate={{ opacity: 1, x: 0, scale: 1 }}
                           exit={{ opacity: 0, x: direction > 0 ? -50 : 50, scale: 0.95 }}
                           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                          className="flex flex-col items-center gap-3"
+                          className="flex flex-col items-center gap-3 px-2"
                         >
                           {(() => {
                             const i = currentPrayerIndex;
