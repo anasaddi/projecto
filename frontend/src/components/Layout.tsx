@@ -139,7 +139,7 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
         </nav>
 
         {/* Mobile nav - compact row on the right */}
-        <div className="flex md:hidden flex-1 items-center justify-end gap-1 overflow-x-auto scrollbar-hide pl-2">
+        <div className="flex md:hidden flex-1 min-w-0 items-center justify-end gap-1 overflow-x-auto scrollbar-hide pl-2">
           {navLinks.map(({ to, label, active }) => (
             <Link
               key={to}
