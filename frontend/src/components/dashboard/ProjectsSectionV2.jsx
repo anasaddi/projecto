@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icons } from './Icons';
-import { StandardProjectCard, CreateProjectCard, CompactProjectCard } from './ProjectComponents';
+import { StandardProjectCard, CreateProjectCard } from './ProjectComponents';
 import { ProjectCard } from './ProjectCard';
 import { DenseTaskNode } from './DenseTaskNode';
 import { createTaskNode, countTreeStats, getDeadlineColorClass, formatDeadline } from './DashboardUtils';

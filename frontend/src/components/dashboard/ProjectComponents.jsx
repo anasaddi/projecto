@@ -60,14 +60,14 @@ export function StandardProjectCard({
                 autoFocus
                 onBlur={(e) => { 
                   const v = e.target.value.trim();
-                  if (v && v !== project.title) onTitleChange(v); 
+                  if (v && v !== project.title) onTitleChange?.(v); 
                   setIsEditing(false); 
                 }}
                 onKeyDown={(e) => { 
                   if (e.key === 'Enter' && !e.shiftKey) { 
                     e.preventDefault(); 
                     const v = e.currentTarget.value.trim();
-                    if (v && v !== project.title) onTitleChange(v); 
+                    if (v && v !== project.title) onTitleChange?.(v); 
                     setIsEditing(false); 
                   } 
                   if (e.key === 'Escape') setIsEditing(false); 
@@ -134,7 +134,7 @@ export function StandardProjectCard({
                   danger 
                   onClick={(e) => { 
                     e.stopPropagation(); 
-                    onDelete(project.id || project._id); 
+                    onDelete?.(project.id || project._id); 
                   }} 
                   title="Elimina"
                 >
