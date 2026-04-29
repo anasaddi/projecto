@@ -141,6 +141,13 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
   const [selectorOpenSlot, setSelectorOpenSlot] = useState(null);
   const winTriggerRef = useRef(null);
   const { times: PRAYER_TIMES, locationName } = usePrayerTimes();
+
+  // Tick every 60s so time-dependent memos stay fresh
+  const [minuteTick, setMinuteTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setMinuteTick(t => t + 1), 60_000);
+    return () => clearInterval(id);
+  }, []);
   
   // Calculate timeline progress based on actual prayer times
   const timelineProgress = useMemo(() => {
@@ -164,7 +171,6 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
     
     // Find current position in the day cycle
     let progress = 0;
-    const totalDayMinutes = 24 * 60;
     
     for (let i = 0; i < prayerMinutes.length - 1; i++) {
       const start = prayerMinutes[i];
@@ -181,15 +187,15 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
       } else if (currentMinutes < start && i === 0) {
         // Before Fajr (late night, in Isha-Fajr slot)
         const elapsed = currentMinutes + (24 * 60 - prayerMinutes[4]);
-        const slotDuration = prayerMinutes[5] - prayerMinutes[4];
-        const slotProgress = elapsed / slotDuration;
+        const slotDuration2 = prayerMinutes[5] - prayerMinutes[4];
+        const slotProgress = elapsed / slotDuration2;
         progress = (4 + slotProgress) / (PRAYERS.length - 1);
         break;
       }
     }
     
     return Math.min(1, Math.max(0, progress));
-  }, [PRAYER_TIMES]);
+  }, [PRAYER_TIMES, minuteTick]);
   
   const activeHabits = useMemo(() => dailyTaskTemplates.filter(t => !t.locked), [dailyTaskTemplates]);
   const eventsToday = useMemo(() => dailyCompletionLog[todayKey]?.events || [], [dailyCompletionLog, todayKey]);
@@ -203,7 +209,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
   const nowMinutes = useMemo(() => {
     const d = new Date();
     return d.getHours() * 60 + d.getMinutes();
-  }, [timelineProgress]);
+  }, [minuteTick]);
 
   const prayerMinutes = useMemo(() => {
     const values = PRAYERS.map((p) => parseMinutes(PRAYER_TIMES[p]));
