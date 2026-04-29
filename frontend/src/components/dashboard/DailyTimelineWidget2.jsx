@@ -362,8 +362,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                     />
                   </div>
 
-                  {/* Mobile: flex row, no scroll. Desktop: 5-column grid */}
-                  <div className="flex md:grid md:grid-cols-5 gap-3 sm:gap-4 md:gap-8 justify-between pb-2 -mx-4 px-5 md:mx-0 md:px-0 md:pb-0">
+                  {/* Mobile: horizontal scroll with padding preserved. Desktop: 5-column grid */}
+                  <div className="flex md:grid md:grid-cols-5 gap-3 sm:gap-4 md:gap-8 pb-2 overflow-x-auto scrollbar-hide px-5 md:mx-0 md:px-0 md:overflow-visible md:pb-0">
                     {PRAYERS.map((prayer, i) => {
                       const isDone = todayPrayerLog[prayer];
                       const prayerState = getPrayerState(i, !!isDone);
@@ -379,7 +379,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
 
                       return (
                         <React.Fragment key={prayer}>
-                          <div className="flex flex-col items-center gap-1.5 flex-1 md:min-w-0">
+                          <div className="flex flex-col items-center gap-1.5 min-w-[60px] md:min-w-0">
                             <motion.button
                               onClick={() => togglePrayer?.(prayer, !isDone)}
                               whileHover={{ scale: 1.05 }}

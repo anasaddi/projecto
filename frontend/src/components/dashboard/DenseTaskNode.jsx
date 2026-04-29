@@ -605,19 +605,19 @@ export function DenseTaskNode({
           </>
         ) : (
         <>
-        <div className="flex min-w-0 w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-          <div className="flex min-w-0 w-full flex-1 flex-wrap items-center gap-x-2 gap-y-1 py-0.5" onClick={() => !editing && onToggle(node.id, !node.done)}>
+        <div className="flex min-w-0 w-0 flex-1 items-center gap-1 sm:gap-2">
+          <div className="flex min-w-0 w-full flex-1 items-center flex-wrap gap-x-2 gap-y-0.5" onClick={() => !editing && onToggle(node.id, !node.done)}>
             {editing ? (
               <input
                 autoFocus
                 defaultValue={node.title}
                 onBlur={(e) => { onRename(node.id, e.target.value); setEditing(false); }}
                 onKeyDown={(e) => { if (e.key === 'Enter') { onRename(node.id, e.target.value); setEditing(false); } if (e.key === 'Escape') setEditing(false); }}
-                className="min-w-0 w-full flex-1 bg-transparent border-b border-indigo-400 outline-none py-0.5 text-sm text-zinc-900 dark:text-zinc-100"
+                className="min-w-0 w-full flex-1 bg-transparent border-b border-indigo-400 outline-none py-0 text-sm text-zinc-900 dark:text-zinc-100"
               />
             ) : (
               <span
-                className="block w-full min-w-0 text-sm leading-5 font-medium [overflow-wrap:normal] break-words text-zinc-700 dark:text-zinc-300"
+                className="block w-full min-w-0 text-sm leading-4 font-medium [overflow-wrap:normal] break-words text-zinc-700 dark:text-zinc-300"
                 title={node.title}
               >
                 {node.title}

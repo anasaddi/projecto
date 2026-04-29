@@ -256,7 +256,7 @@ export function StandardProjectCard({
 }
 
 /**
- * Compact Project Card for limited spaces
+ * Compact Project Card for limited spaces - clean unified style
  */
 export function CompactProjectCard({
   project,
@@ -273,26 +273,23 @@ export function CompactProjectCard({
       onClick={onClick}
       whileHover={{ scale: 1.01, y: -1 }}
       whileTap={{ scale: 0.99 }}
-      className="group w-full rounded-2xl border border-zinc-200/65 bg-white/[0.92] p-3 text-left shadow-[0_14px_40px_-28px_rgba(15,23,42,0.2)] backdrop-blur-xl transition-all duration-300 hover:border-zinc-300/80 hover:shadow-[0_20px_48px_-32px_rgba(99,102,241,0.18)] dark:border-white/[0.07] dark:bg-[#141922]/92 dark:shadow-[0_20px_50px_-36px_rgba(0,0,0,0.55)] dark:hover:border-white/[0.12] dark:hover:shadow-[0_24px_56px_-36px_rgba(99,102,241,0.12)]"
+      className="group w-full rounded-xl border border-zinc-200/60 bg-white p-3 text-left shadow-sm transition-all duration-200 hover:border-zinc-300 hover:shadow-md dark:border-white/[0.06] dark:bg-zinc-900/80 dark:hover:border-white/[0.10] dark:hover:bg-zinc-800/80"
     >
-      <div className="flex items-start gap-3">
-        <div className={`mt-0.5 h-11 w-1 shrink-0 rounded-full bg-gradient-to-b ${accentColor.bar} shadow-[0_0_12px_-2px_rgba(99,102,241,0.35)] dark:shadow-[0_0_14px_-2px_rgba(129,140,248,0.25)]`} />
+      <div className="flex items-center gap-3">
+        <div className={`h-8 w-1 shrink-0 rounded-full bg-gradient-to-b ${accentColor.bar}`} />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold leading-snug tracking-tight text-zinc-900 [overflow-wrap:anywhere] break-words dark:text-zinc-100">
+          <p className="text-sm font-medium leading-snug text-zinc-900 dark:text-zinc-100 line-clamp-1">
             {project.title}
           </p>
-          <div className="mt-2.5 flex items-center gap-2.5">
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-zinc-100/90 ring-1 ring-zinc-200/40 dark:bg-white/[0.06] dark:ring-white/[0.05]">
+          <div className="mt-1.5 flex items-center gap-2">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-100 dark:bg-white/[0.06]">
               <div
                 className={`h-full rounded-full bg-gradient-to-r ${accentColor.bar} transition-[width] duration-500 ease-out`}
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <span className={`shrink-0 text-xs font-bold tabular-nums ${accentColor.text}`}>{pct}%</span>
+            <span className={`shrink-0 text-[10px] font-semibold tabular-nums ${accentColor.text}`}>{pct}%</span>
           </div>
-          <p className="mt-1.5 text-xs font-medium uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500">
-            Avanzamento progetto
-          </p>
         </div>
       </div>
     </motion.button>

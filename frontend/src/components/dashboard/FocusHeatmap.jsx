@@ -126,7 +126,7 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
               type="button"
               title={`${key}\nStato: ${getDayStatus(score)} (${Math.round(score * 100)}%)\nAbitudini: ${habitsDone}/${habitsTotal}\nPreghiere: ${prayersDone}/${prayersTotal}\nTop3: ${tasksDone}/${tasksTotal}`}
               onClick={() => onSelectDate?.(date)}
-              className={`h-5 w-5 rounded-md ${getColor(score)} ${isSelected ? 'ring-4 ring-offset-2 ring-indigo-500 dark:ring-indigo-400 ring-offset-white dark:ring-offset-[#131820] shadow-[0_0_0_1px_rgba(99,102,241,0.35)]' : ''} transition-colors hover:scale-[1.04] focus:outline-none focus:ring-2 focus:ring-indigo-400/70 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-[#131820]`}
+              className={`h-5 w-5 rounded-md ${getColor(score)} ${isSelected ? 'ring-2 ring-offset-1 ring-indigo-500 dark:ring-indigo-400 ring-offset-white dark:ring-offset-[#131820]' : ''} transition-colors hover:scale-[1.04] focus:outline-none focus:ring-2 focus:ring-indigo-400/70 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-[#131820]`}
               aria-label={`Seleziona il giorno ${key}`}
             />
           ))}

@@ -134,8 +134,8 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
           ))}
         </nav>
 
-        {/* Mobile nav - riga separata sotto il logo, compatta */}
-        <div className="flex md:hidden items-center gap-0.5 -mx-1 px-1 pb-1 md:pb-0 border-t border-zinc-100 dark:border-zinc-700/50 pt-2">
+        {/* Mobile nav - riga separata sotto il logo, compatta e centrata */}
+        <div className="flex md:hidden items-center justify-center gap-0.5 -mx-1 px-1 pb-1 md:pb-0 border-t border-zinc-100 dark:border-zinc-700/50 pt-2">
           {navLinks.map(({ to, label, active }) => (
             <Link
               key={to}
