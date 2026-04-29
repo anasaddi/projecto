@@ -97,7 +97,6 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
                       else if (p.type === 'quick' && p.quickTaskId) moveQuickTaskToProject(p.quickTaskId, project.id);
                     }}
                   >
-                    {!!projectExpandedState[project.id] ? (
                       <StandardProjectCard
                         project={project}
                         stats={actualStats}
@@ -151,26 +150,6 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
                           </>
                         )}
                       />
-                    ) : (
-                      <CompactProjectCard
-                        project={project}
-                        percentage={percentage}
-                        accent={accent}
-                        onClick={() => setProjectExpandedState((prev) => ({ ...prev, [project.id]: true }))}
-                        onTitleChange={(val) => updateProject(project.id, p => ({ ...p, title: val }))}
-                        onDelete={() => setConfirmState?.({ id: 'deleteProject', payload: { projectId: project.id } })}
-                        onDeadlineClick={(val) => {
-                          updateProject(project.id, p => ({ ...p, deadline: val.trim() || undefined }));
-                          setProjectDeadlineEditing(null);
-                        }}
-                        projectDeadlineEditing={projectDeadlineEditing}
-                        projectDeadlineInput={projectDeadlineInput}
-                        setProjectDeadlineInput={setProjectDeadlineInput}
-                        setProjectDeadlineEditing={setProjectDeadlineEditing}
-                        getDeadlineColorClass={getDeadlineColorClass}
-                        formatDeadline={formatDeadline}
-                      />
-                    )}
                   </ProjectCard>
                 );
               })}

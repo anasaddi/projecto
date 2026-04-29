@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Icons } from './Icons';
 import { KebabMenu } from './DashboardComponents';
 import { getDeadlinePastLabel } from './DashboardUtils';
-import { Card, ProgressBar, Badge } from './Card';
+import { ProgressBar, Badge, ActionButton } from './Card';
 import { PROJECT_CARD_STYLES, getAccentColor } from './ProjectCardStyles';
 
 export function StandardProjectCard({
@@ -26,237 +26,172 @@ export function StandardProjectCard({
   renderTasks,
   defaultExpanded = false,
   onToggleExpand,
-  /** Workspace shared: pulsante elimina progetto visibile (non solo nel kebab) */
   showExplicitProjectDelete = false,
-  /** Classi aggiuntive per l'area lista task (es. shared più compatta) */
   taskListClassName,
-  /** Header / barra più compatta e card leggermente più "tight" (workspace /shared) */
   sharedWorkspaceChrome = false,
-  /** Additional menu items to add to the kebab menu */
   extraMenuItems = [],
-  /** Source project ID if this is a synced copy */
   sourceProjectId,
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [titleDraft, setTitleDraft] = useState(project.title);
-  const titleFocusedRef = useRef(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    if (!titleFocusedRef.current) setTitleDraft(project.title);
-  }, [project.id, project.title]);
+    setExpanded(defaultExpanded);
+  }, [defaultExpanded]);
 
   const accentColor = getAccentColor(accent);
   const totalTasks = stats?.total ?? 0;
-  const completedTasks = stats?.done ?? 0;
-
-  const menuItems = [
-    {
-      label: project.deadline ? 'Modifica scadenza' : 'Aggiungi scadenza',
-      icon: <Icons.Calendar className="h-3.5 w-3.5" />,
-      onClick: () => { setProjectDeadlineInput(project.deadline || ''); setProjectDeadlineEditing(project.id); }
-    },
-    ...(showExplicitProjectDelete
-      ? []
-      : [
-          'divider',
-          { label: 'Elimina progetto', icon: <Icons.X className="h-3.5 w-3.5" />, danger: true, onClick: () => onDelete(project.id) }
-        ]),
-    ...extraMenuItems,
-  ];
-
-  const isPastDeadline = getDeadlinePastLabel(project.deadline);
+  const completedTasks = stats?.done ?? stats?.completed ?? 0;
+  const isProjectDone = totalTasks > 0 && completedTasks === totalTasks;
 
   return (
     <div 
-      className={`${PROJECT_CARD_STYLES.container.base} ${sharedWorkspaceChrome ? 'rounded-[24px] border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.22),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,250,252,0.86))] dark:bg-[radial-gradient(circle_at_top_left,rgba(129,140,248,0.09),transparent_38%),linear-gradient(180deg,rgba(21,26,34,0.97),rgba(15,20,29,0.97))] hover:border-white/15' : ''} ${isMenuOpen ? 'z-50' : 'z-auto'}`}
+      className={`${PROJECT_CARD_STYLES.container.base} ${sharedWorkspaceChrome ? 'rounded-[24px] border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.22),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,250,252,0.86))] dark:bg-[radial-gradient(circle_at_top_left,rgba(129,140,248,0.09),transparent_38%),linear-gradient(180deg,rgba(21,26,34,0.97),rgba(15,20,29,0.97))] hover:border-white/15' : ''} ${projectDeadlineEditing === project.id ? 'z-30' : 'z-auto'}`}
     >
-      <div
-        className={`group/header flex cursor-pointer items-start gap-3 ${sharedWorkspaceChrome ? 'px-4 pb-4 pt-8' : 'p-4'}`}
-        onClick={() => {
-          const next = !expanded;
-          setExpanded(next);
-          onToggleExpand?.(next);
-        }}
-      >
-        {sharedWorkspaceChrome ? (
-          <div className={`h-3 w-3 shrink-0 rounded-full bg-gradient-to-br ${accentColor.bar} ${accentColor.glow}`} />
-        ) : (
-          <div className={`h-12 w-1.5 shrink-0 self-center rounded-full bg-gradient-to-b ${accentColor.bar} shadow-sm`} />
-        )}
+      <div className="flex items-start gap-3 p-4">
+        <div className={`mt-0.5 h-12 w-1.5 shrink-0 rounded-full bg-gradient-to-b ${accentColor.bar}`} />
 
-        <div className="min-w-0 flex-1 flex items-center justify-between gap-3">
-          <div className={`min-w-0 flex-1 ${sharedWorkspaceChrome ? 'flex flex-col gap-2' : 'flex flex-wrap items-center gap-2'}`}>
-            <div className={`min-w-0 ${sharedWorkspaceChrome ? 'flex items-center justify-between gap-3' : 'flex min-w-0 flex-1 flex-wrap items-center gap-2'}`}>
-              <div className="min-w-0 flex-1">
-                <textarea
-                  ref={(el) => {
-                    if (el) {
-                      el.style.height = 'auto';
-                      el.style.height = `${el.scrollHeight}px`;
-                    }
-                  }}
-                  value={titleDraft}
-                  onFocus={() => { titleFocusedRef.current = true; }}
-                  onBlur={() => {
-                    titleFocusedRef.current = false;
-                    const v = titleDraft.trim();
-                    if (v !== project.title) onTitleChange(v);
-                  }}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    setTitleDraft(e.target.value);
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  rows={1}
-                  className={`min-h-[1.5rem] w-full min-w-[80px] resize-none overflow-visible bg-transparent ${sharedWorkspaceChrome ? 'py-1 text-sm' : 'py-0.5 text-sm'} font-semibold leading-snug tracking-tight text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100`}
-                />
-              </div>
-            </div>
-
-            {sharedWorkspaceChrome ? (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                {project.deadline && projectDeadlineEditing !== project.id && (
-                  <Badge variant={isPastDeadline ? 'danger' : 'warning'} size="sm">
-                    <Icons.Calendar className="h-3 w-3" />
-                    <span>{formatDeadline(project.deadline)}</span>
-                    {isPastDeadline && <span className="ml-0.5">!</span>}
-                  </Badge>
-                )}
-                {sourceProjectId && (
-                  <Badge variant="success" size="sm">
-                    <Icons.Share2 className="h-3 w-3" />
-                    <span>Sincronizzato</span>
-                  </Badge>
-                )}
-                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">
-                  {completedTasks}/{totalTasks || 0} task fatte
-                </span>
-              </div>
-            ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                {project.deadline && projectDeadlineEditing !== project.id && (
-                  <Badge variant={isPastDeadline ? 'danger' : 'warning'} size="sm">
-                    <Icons.Calendar className="h-3 w-3" />
-                    <span>{formatDeadline(project.deadline)}</span>
-                    {isPastDeadline && <span className="ml-0.5">!</span>}
-                  </Badge>
-                )}
-                {sourceProjectId && (
-                  <Badge variant="success" size="sm">
-                    <Icons.Share2 className="h-3 w-3" />
-                    <span>Sincronizzato</span>
-                  </Badge>
-                )}
-              </div>
-            )}
-
-            {sharedWorkspaceChrome ? (
-              <div className="flex items-center gap-2.5">
-                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10 dark:bg-white/[0.08]">
-                  <motion.div
-                    className={`h-full rounded-full bg-gradient-to-r ${accentColor.bar}`}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${percentage}%` }}
-                    transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
-                  />
-                </div>
-                <span className={`shrink-0 text-xs font-bold tabular-nums ${accentColor.text}`}>
-                  {percentage}%
-                </span>
-              </div>
-            ) : (
-              <div className="min-w-[100px] flex-1 sm:max-w-[180px]">
-                <ProgressBar value={percentage} max={100} size="sm" showLabel color={accent} />
-              </div>
-            )}
-          </div>
-
-          <div className={`flex shrink-0 items-center gap-2 ${sharedWorkspaceChrome ? 'ml-auto pl-4' : 'pl-2'}`}>
-            {showExplicitProjectDelete && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(project.id);
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            {isEditing ? (
+              <textarea
+                defaultValue={project.title}
+                rows={1}
+                autoFocus
+                onBlur={(e) => { 
+                  const v = e.target.value.trim();
+                  if (v && v !== project.title) onTitleChange(v); 
+                  setIsEditing(false); 
                 }}
-                className={`rounded-xl border border-transparent p-2 text-zinc-400 transition-all hover:border-rose-500/15 hover:bg-rose-500/10 hover:text-rose-500 dark:text-zinc-500 dark:hover:border-rose-500/20 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 ${sharedWorkspaceChrome ? 'opacity-100 sm:pointer-events-none sm:opacity-0 sm:group-hover/header:pointer-events-auto sm:group-hover/header:opacity-100' : ''}`}
-                title="Elimina progetto"
-                aria-label="Elimina progetto"
+                onKeyDown={(e) => { 
+                  if (e.key === 'Enter' && !e.shiftKey) { 
+                    e.preventDefault(); 
+                    const v = e.currentTarget.value.trim();
+                    if (v && v !== project.title) onTitleChange(v); 
+                    setIsEditing(false); 
+                  } 
+                  if (e.key === 'Escape') setIsEditing(false); 
+                }}
+                className={`min-h-[1.5rem] w-full resize-none overflow-hidden bg-transparent py-0.5 text-sm font-semibold leading-snug tracking-tight outline-none break-words ${
+                  isProjectDone ? 'text-zinc-400 line-through' : 'text-zinc-900 dark:text-zinc-50'
+                }`}
+                style={{ minHeight: '1.5rem' }}
+                onInput={(e) => { 
+                  const t = e.target; 
+                  t.style.height = 'auto'; 
+                  t.style.height = `${Math.min(t.scrollHeight, 96)}px`; 
+                }}
+              />
+            ) : (
+              <div
+                className={`min-h-[1.5rem] w-full text-sm font-semibold leading-snug tracking-tight cursor-pointer overflow-hidden text-ellipsis ${
+                  isProjectDone ? 'text-zinc-400 line-through' : 'text-zinc-900 dark:text-zinc-50'
+                }`}
+                title={project.title}
+                onDoubleClick={() => setIsEditing(true)}
               >
-                <Icons.Trash2 className="h-4 w-4" />
-              </button>
+                {project.title}
+              </div>
             )}
-            {isShared && (
-              <Link
-                to={`/shared/${shareId}`}
-                onClick={(e) => e.stopPropagation()}
-                className="rounded-xl border border-transparent p-2 text-zinc-400 transition-colors hover:border-zinc-200 hover:bg-zinc-100/90 hover:text-indigo-500 dark:hover:border-white/[0.08] dark:hover:bg-white/[0.06]"
-                title="Apri condivisa"
+
+            <div className="flex shrink-0 items-center gap-1 pl-2">
+              {isShared && (
+                <Link
+                  to={`/shared/${shareId}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="rounded-xl border border-transparent p-1.5 text-zinc-400 transition-colors hover:border-zinc-200 hover:bg-zinc-100/90 hover:text-indigo-500 dark:hover:border-white/[0.08] dark:hover:bg-white/[0.06]"
+                  title="Apri condivisa"
+                >
+                  <Icons.ExternalLink className="h-3 w-3" />
+                </Link>
+              )}
+              <ActionButton 
+                size="sm" 
+                onClick={() => { 
+                  const next = !expanded; 
+                  setExpanded(next); 
+                  onToggleExpand?.(next); 
+                }} 
+                className={expanded ? 'text-zinc-800 bg-zinc-100 dark:text-zinc-100 dark:bg-indigo-500/30 dark:ring-1 dark:ring-indigo-400/50' : ''} 
+                title={expanded ? 'Chiudi task' : 'Apri task'}
               >
-                <Icons.ExternalLink className="h-3.5 w-3.5" />
-              </Link>
-            )}
-            <div onClick={(e) => e.stopPropagation()}>
-              <KebabMenu items={menuItems} onOpenChange={setIsMenuOpen} alwaysVisible />
+                <Icons.ChevronDown className={`h-3 w-3 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+              </ActionButton>
+              <ActionButton 
+                size="sm" 
+                onClick={() => { 
+                  setProjectDeadlineInput(project.deadline || ''); 
+                  setProjectDeadlineEditing(project.id); 
+                }} 
+                className={project.deadline ? 'text-amber-500 bg-amber-50 dark:text-amber-300 dark:bg-amber-500/30 dark:ring-1 dark:ring-amber-400/50' : ''} 
+                title="Scadenza"
+              >
+                <Icons.Calendar className="h-3 w-3" />
+              </ActionButton>
+              {(showExplicitProjectDelete || onDelete) && (
+                <ActionButton 
+                  size="sm" 
+                  danger 
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    onDelete(project.id || project._id); 
+                  }} 
+                  title="Elimina"
+                >
+                  <Icons.X className="h-3 w-3" />
+                </ActionButton>
+              )}
             </div>
-            <motion.div
-              animate={{ rotate: expanded ? 180 : 0 }}
-              transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
-              className="rounded-xl border border-transparent p-1.5 text-zinc-400 transition-colors group-hover/header:bg-zinc-100/90 group-hover/header:text-zinc-600 dark:group-hover/header:bg-white/[0.06] dark:group-hover/header:text-zinc-300"
-            >
-              <Icons.ChevronDown className="h-4 w-4" />
-            </motion.div>
           </div>
-        </div>
 
-        <div className="hidden self-stretch border-l border-zinc-100 dark:border-white/[0.04] lg:block" />
-
-        <div className="flex shrink-0 items-center self-stretch pl-0 lg:pl-1">
-          {projectDeadlineEditing === project.id && (
-            <input
-              type="date"
-              value={projectDeadlineInput}
-              onChange={(e) => setProjectDeadlineInput(e.target.value)}
-              onBlur={() => onDeadlineClick(projectDeadlineInput)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') onDeadlineClick(projectDeadlineInput);
-                if (e.key === 'Escape') setProjectDeadlineEditing(null);
-              }}
-              autoFocus
-              onClick={(e) => e.stopPropagation()}
-              className="w-28 rounded-lg border border-zinc-200 bg-zinc-100 px-2 py-1 text-xs text-zinc-900 outline-none dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-zinc-100"
-            />
-          )}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Badge variant="default" size="sm">
+              <span className={accentColor.text}>{isShared ? 'Shared' : 'Project'}</span>
+            </Badge>
+            <Badge variant={percentage === 100 && stats?.total > 0 ? 'success' : 'primary'} size="sm">
+              {completedTasks}/{totalTasks} task
+            </Badge>
+            {project.deadline && (
+              <Badge variant={isProjectDone ? 'default' : 'warning'} size="sm">
+                <Icons.Calendar className="h-3 w-3" />
+                <span>{formatDeadline(project.deadline)}</span>
+              </Badge>
+            )}
+            <div className="min-w-[120px] flex-1 sm:max-w-[220px]">
+              <ProgressBar value={percentage} max={100} size="sm" showLabel color={accent} />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Tasks - expandable */}
-      <motion.div
-        initial={false}
-        animate={{ 
-          height: expanded ? 'auto' : 0,
-          opacity: expanded ? 1 : 0
-        }}
-        transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-        className="overflow-hidden"
-      >
-        <div
-          className={
-            taskListClassName ??
-            PROJECT_CARD_STYLES.taskList.base
-          }
-        >
-          {renderTasks()}
+      {projectDeadlineEditing === project.id && (
+        <div className="absolute inset-x-0 bottom-0 z-20 rounded-b-[28px] border-t bg-white p-3 shadow-xl dark:border-white/10 dark:bg-zinc-800">
+          <input 
+            type="date" 
+            value={projectDeadlineInput} 
+            onChange={(e) => setProjectDeadlineInput(e.target.value)} 
+            onBlur={() => onDeadlineClick(projectDeadlineInput)} 
+            onKeyDown={(e) => { 
+              if (e.key === 'Enter') onDeadlineClick(projectDeadlineInput); 
+              if (e.key === 'Escape') setProjectDeadlineEditing(null); 
+            }} 
+            autoFocus 
+            className="w-full bg-zinc-50 dark:bg-black/20 border border-zinc-200 dark:border-white/10 rounded px-2 py-1 text-xs outline-none" 
+          />
         </div>
-      </motion.div>
+      )}
+
+      {expanded && (
+        <div className="rounded-b-[28px] border-t border-zinc-100 bg-zinc-50/70 p-4 dark:border-white/[0.04] dark:bg-black/20">
+          <div className="flex flex-col gap-1">
+            {renderTasks()}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-/**
- * Compact Project Card for limited spaces - clean unified style
- */
 export function CompactProjectCard({
   project,
   percentage,
@@ -275,7 +210,6 @@ export function CompactProjectCard({
   const accentColor = getAccentColor(accent);
   const pct = Math.min(100, Math.max(0, Math.round(percentage)));
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [titleDraft, setTitleDraft] = useState(project.title);
 
   const isPastDeadline = getDeadlinePastLabel?.(project.deadline);
   const menuItems = [
@@ -332,9 +266,6 @@ export function CompactProjectCard({
   );
 }
 
-/**
- * Project creation placeholder card
- */
 export function CreateProjectCard({ onClick, className = '' }) {
   return (
     <motion.button
