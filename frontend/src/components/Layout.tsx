@@ -122,16 +122,11 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
           </div>
 
         <nav className="hidden md:flex items-center gap-1 rounded-xl bg-zinc-50 dark:bg-zinc-700/50 p-1">
-          {navLinks.map(({ to, label, active }) => (
+          {navLinks.filter(({ active }) => !active).map(({ to, label }) => (
             <Link
               key={to}
               to={to}
-              className={cn(
-                'px-3 py-2 text-sm font-medium rounded-lg',
-                active
-                  ? 'bg-zinc-900 dark:bg-zinc-600 text-white'
-                  : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
-              )}
+              className="px-3 py-2 text-sm font-medium rounded-lg text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
             >
               {label}
             </Link>
@@ -140,16 +135,11 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
 
         {/* Mobile nav - compact row on the right */}
         <div className="flex md:hidden flex-1 min-w-0 items-center justify-end gap-1 overflow-x-auto scrollbar-hide pl-2">
-          {navLinks.map(({ to, label, active }) => (
+          {navLinks.filter(({ active }) => !active).map(({ to, label }) => (
             <Link
               key={to}
               to={to}
-              className={cn(
-                'px-2 py-1 text-[10px] font-medium rounded-md whitespace-nowrap',
-                active
-                  ? 'bg-zinc-900 dark:bg-zinc-600 text-white'
-                  : 'text-zinc-500 dark:text-zinc-400'
-              )}
+              className="px-2 py-1 text-[10px] font-medium rounded-md whitespace-nowrap text-zinc-500 dark:text-zinc-400"
             >
               {label}
             </Link>
