@@ -6,7 +6,7 @@
 export const PROJECT_CARD_STYLES = {
   // Container styles
   container: {
-    base: 'group relative flex flex-col overflow-hidden rounded-[1.6rem] border border-zinc-200/70 bg-white shadow-[0_14px_30px_-24px_rgba(15,23,42,0.18)] transition-all duration-200 dark:border-white/[0.08] dark:bg-[radial-gradient(circle_at_top_left,rgba(129,140,248,0.05),transparent_36%),#0b0e14]',
+    base: 'group relative flex flex-col overflow-hidden rounded-3xl border border-zinc-200/70 bg-white shadow-sm transition-all hover:border-zinc-300 hover:shadow-[0_26px_60px_-36px_rgba(79,70,229,0.22)] dark:border-white/[0.08] dark:bg-[#0b0e14]/70 dark:shadow-none',
     hover: 'hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-[0_18px_40px_-24px_rgba(15,23,42,0.22)] dark:hover:border-white/[0.12]',
     expanded: 'ring-1 ring-zinc-200/80 dark:ring-white/[0.08] shadow-[0_16px_32px_-22px_rgba(99,102,241,0.18)]',
   },
