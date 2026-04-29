@@ -262,25 +262,56 @@ export function CompactProjectCard({
   project,
   percentage,
   accent = 'indigo',
-  onClick
+  onClick,
+  onTitleChange,
+  onDelete,
+  onDeadlineClick,
+  projectDeadlineEditing,
+  projectDeadlineInput,
+  setProjectDeadlineInput,
+  setProjectDeadlineEditing,
+  getDeadlineColorClass,
+  formatDeadline,
 }) {
   const accentColor = getAccentColor(accent);
   const pct = Math.min(100, Math.max(0, Math.round(percentage)));
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(project.title);
+
+  const isPastDeadline = getDeadlinePastLabel?.(project.deadline);
+  const menuItems = [
+    {
+      label: project.deadline ? 'Modifica scadenza' : 'Aggiungi scadenza',
+      icon: <Icons.Calendar className="h-3.5 w-3.5" />,
+      onClick: () => { setProjectDeadlineInput?.(project.deadline || ''); setProjectDeadlineEditing?.(project.id); }
+    },
+    'divider',
+    { label: 'Elimina progetto', icon: <Icons.X className="h-3.5 w-3.5" />, danger: true, onClick: () => onDelete?.(project.id) }
+  ];
 
   return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      whileHover={{ scale: 1.01, y: -1 }}
-      whileTap={{ scale: 0.99 }}
-      className="group w-full rounded-2xl border border-zinc-200/70 bg-white px-3 py-2 text-left shadow-sm transition-all duration-200 hover:border-zinc-300 hover:shadow-md dark:border-white/[0.08] dark:bg-[#0b0e14]/70 dark:hover:border-white/[0.10] dark:hover:bg-zinc-800/80"
-    >
+    <div className="group relative w-full rounded-2xl border border-zinc-200/70 bg-white px-3 py-2 shadow-sm transition-all duration-200 hover:border-zinc-300 hover:shadow-md dark:border-white/[0.08] dark:bg-[#0b0e14]/70 dark:hover:border-white/[0.10] dark:hover:bg-zinc-800/80">
       <div className="flex items-center gap-3">
         <div className={`h-8 w-1 shrink-0 rounded-full bg-gradient-to-b ${accentColor.bar}`} />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold leading-relaxed text-zinc-900 dark:text-zinc-100 line-clamp-1">
-            {project.title}
-          </p>
+          {projectDeadlineEditing === project.id ? (
+            <input
+              type="text"
+              value={projectDeadlineInput}
+              onChange={(e) => setProjectDeadlineInput(e.target.value)}
+              onBlur={() => { onDeadlineClick?.(projectDeadlineInput); setProjectDeadlineEditing(null); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { onDeadlineClick?.(projectDeadlineInput); setProjectDeadlineEditing(null); } if (e.key === 'Escape') setProjectDeadlineEditing(null); }}
+              autoFocus
+              className="w-full bg-transparent text-sm font-semibold leading-relaxed text-zinc-900 dark:text-zinc-100 outline-none"
+            />
+          ) : (
+            <p
+              className="text-sm font-semibold leading-relaxed text-zinc-900 dark:text-zinc-100 line-clamp-1 cursor-pointer"
+              onClick={onClick}
+            >
+              {project.title}
+            </p>
+          )}
           <div className="mt-1 flex items-center gap-2">
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-100 dark:bg-white/[0.06]">
               <div
@@ -291,8 +322,14 @@ export function CompactProjectCard({
             <span className={`shrink-0 text-[10px] font-semibold tabular-nums ${accentColor.text}`}>{pct}%</span>
           </div>
         </div>
+        <KebabMenu
+          items={menuItems}
+          isOpen={isMenuOpen}
+          setIsOpen={setIsMenuOpen}
+          alwaysVisible
+        />
       </div>
-    </motion.button>
+    </div>
   );
 }
 

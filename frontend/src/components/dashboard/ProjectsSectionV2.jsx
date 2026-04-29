@@ -157,6 +157,18 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
                         percentage={percentage}
                         accent={accent}
                         onClick={() => setProjectExpandedState((prev) => ({ ...prev, [project.id]: true }))}
+                        onTitleChange={(val) => updateProject(project.id, p => ({ ...p, title: val }))}
+                        onDelete={() => setConfirmState?.({ id: 'deleteProject', payload: { projectId: project.id } })}
+                        onDeadlineClick={(val) => {
+                          updateProject(project.id, p => ({ ...p, deadline: val.trim() || undefined }));
+                          setProjectDeadlineEditing(null);
+                        }}
+                        projectDeadlineEditing={projectDeadlineEditing}
+                        projectDeadlineInput={projectDeadlineInput}
+                        setProjectDeadlineInput={setProjectDeadlineInput}
+                        setProjectDeadlineEditing={setProjectDeadlineEditing}
+                        getDeadlineColorClass={getDeadlineColorClass}
+                        formatDeadline={formatDeadline}
                       />
                     )}
                   </ProjectCard>
