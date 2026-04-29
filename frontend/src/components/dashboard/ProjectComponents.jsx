@@ -290,7 +290,7 @@ export function CompactProjectCard({
   ];
 
   return (
-    <div className="group relative w-full rounded-2xl border border-zinc-200/70 bg-white px-3 py-2 shadow-sm transition-all duration-200 hover:border-zinc-300 hover:shadow-md dark:border-white/[0.08] dark:bg-transparent dark:hover:border-white/[0.10] dark:hover:bg-zinc-800/80">
+    <div className="group relative w-full rounded-2xl border border-zinc-200/70 px-3 py-2 shadow-sm transition-all duration-200 hover:border-zinc-300 hover:shadow-md dark:border-white/[0.08] dark:bg-transparent dark:hover:border-white/[0.10] dark:hover:bg-zinc-800/80">
       <div className="flex items-center gap-3">
         <div className={`h-8 w-1 shrink-0 rounded-full bg-gradient-to-b ${accentColor.bar}`} />
         <div className="min-w-0 flex-1">
