@@ -207,29 +207,18 @@ function KgInput({ value, onChange, placeholder = "00" }) {
   );
 }
 
-function MuscDot({ exerciseId, remoteMap, configMap }) {
-  const mapToUse = remoteMap || {};
-  const group = getDominantGroup(mapToUse[exerciseId] || [], configMap?.MUSCLE_GROUP_MAP);
-  const accent = configMap?.GROUP_ACCENT_DOT?.[group] || 'bg-zinc-200 dark:bg-zinc-800';
-  return (
-    <div className={`w-1.5 h-6 rounded-full shrink-0 ${accent} transition-all duration-500`} style={{ opacity: 0.8 }} />
-  );
-}
-
 function ExRow({ exerciseId, exerciseName, badge, badgeBg, anasC, flavioC, anasW, flavioW, anasR, flavioR, remoteMap, configMap, onToggle, onWeight, onReps, anasOnly = false }) {
   const bothDone = anasC && flavioC;
 
   return (
-    <div className={`relative flex items-center gap-3 py-3.5 px-4 transition-all duration-500 border-b border-zinc-100/50 dark:border-white/[0.04] last:border-0
+    <div className={`relative flex items-center gap-3 py-2 px-3 transition-all duration-500 border-b border-zinc-100/50 dark:border-white/[0.04] last:border-0
       ${bothDone ? 'bg-zinc-50/50 dark:bg-black/20' : 'hover:bg-zinc-100/30 dark:hover:bg-white/[0.02]'}`}
     >
-      <MuscDot exerciseId={exerciseId} remoteMap={remoteMap} configMap={configMap} />
-
       <div className="flex-1 min-w-0 pr-2">
         <div className={`text-sm font-bold leading-tight tracking-tight capitalize truncate transition-all duration-500 ${bothDone ? 'text-zinc-400 dark:text-zinc-600' : 'text-zinc-900 dark:text-zinc-100'}`}>
           {exerciseName}
         </div>
-        <div className="flex items-center gap-2 mt-1 overflow-hidden">
+        <div className="flex items-center gap-2 mt-0.5 overflow-hidden">
           <span className={`text-xs scale-90 font-black tracking-[0.15em] text-white px-1.5 py-0.5 rounded-md uppercase shadow-sm ${badgeBg} opacity-90 shrink-0`}>
             {badge}
           </span>

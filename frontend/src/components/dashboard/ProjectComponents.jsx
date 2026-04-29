@@ -266,22 +266,22 @@ export function CompactProjectCard({
 }) {
   const accentColor = getAccentColor(accent);
   const pct = Math.min(100, Math.max(0, Math.round(percentage)));
-  
+
   return (
     <motion.button
       type="button"
       onClick={onClick}
       whileHover={{ scale: 1.01, y: -1 }}
       whileTap={{ scale: 0.99 }}
-      className="group w-full rounded-xl border border-zinc-200/60 bg-white p-3 text-left shadow-sm transition-all duration-200 hover:border-zinc-300 hover:shadow-md dark:border-white/[0.06] dark:bg-zinc-900/80 dark:hover:border-white/[0.10] dark:hover:bg-zinc-800/80"
+      className="group w-full rounded-2xl border border-zinc-200/70 bg-white px-3 py-2 text-left shadow-sm transition-all duration-200 hover:border-zinc-300 hover:shadow-md dark:border-white/[0.08] dark:bg-[#0b0e14]/70 dark:hover:border-white/[0.10] dark:hover:bg-zinc-800/80"
     >
       <div className="flex items-center gap-3">
         <div className={`h-8 w-1 shrink-0 rounded-full bg-gradient-to-b ${accentColor.bar}`} />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium leading-snug text-zinc-900 dark:text-zinc-100 line-clamp-1">
+          <p className="text-sm font-semibold leading-relaxed text-zinc-900 dark:text-zinc-100 line-clamp-1">
             {project.title}
           </p>
-          <div className="mt-1.5 flex items-center gap-2">
+          <div className="mt-1 flex items-center gap-2">
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-100 dark:bg-white/[0.06]">
               <div
                 className={`h-full rounded-full bg-gradient-to-r ${accentColor.bar} transition-[width] duration-500 ease-out`}

@@ -100,7 +100,7 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
           'px-5 py-3'
         )}>
           {/* Logo row - separato su mobile */}
-          <div className="flex items-center justify-between w-full md:w-auto">
+          <div className="flex items-center justify-center w-full md:w-auto md:justify-start">
             <Link to="/" className="flex items-center gap-2 shrink-0 group">
               <div className="group-hover:shadow-indigo-500/40 group-active:scale-95 transition-all">
                 <AppLogo size="xs" />
@@ -109,12 +109,6 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
                 PROJECTO
               </span>
             </Link>
-
-            {isDashboard && stats && (
-              <span className="flex md:hidden items-center rounded-full bg-zinc-100 dark:bg-zinc-700 px-2.5 py-1 text-[10px] font-semibold text-zinc-600 dark:text-zinc-300">
-                {stats.doneFocusItems} / {stats.totalFocusItems}
-              </span>
-            )}
           </div>
 
         <nav className="hidden md:flex items-center gap-1 rounded-xl bg-zinc-50 dark:bg-zinc-700/50 p-1">

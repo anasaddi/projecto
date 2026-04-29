@@ -73,11 +73,11 @@ export function PrayersCountdownsV2({
         }
       />
       <div className="p-4 sm:p-5">
-        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+        <div className="flex flex-col gap-4 sm:gap-6">
 
           {/* Section 1: Focus Score - Animated SVG Circle */}
-          <div className="flex items-center justify-center gap-4 w-full sm:flex-1 sm:min-w-0 sm:justify-start">
-            <div className="relative h-20 w-20 shrink-0 sm:h-20 sm:w-20">
+          <div className="flex items-center justify-center gap-4 w-full sm:justify-start">
+            <div className="relative h-20 w-20 shrink-0">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="8" className="text-zinc-200 dark:text-zinc-800" />
                 <motion.circle
@@ -102,13 +102,11 @@ export function PrayersCountdownsV2({
                 <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">{percentage}%</span>
               </div>
             </div>
-            <div className="flex flex-col gap-1 flex-1">
+            <div className="flex flex-col gap-1 flex-1 sm:hidden">
               <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 tabular-nums">{percentage}%</span>
               <span className="text-xs text-zinc-500 dark:text-zinc-400">completato oggi</span>
             </div>
           </div>
-
-          <div className="hidden sm:block h-12 w-px bg-zinc-200 dark:bg-white/[0.06] shrink-0" />
 
           {/* Section 2: Time Period Progress Bars - compact, no scroll */}
           <div className="flex w-full justify-between gap-1 sm:gap-2">

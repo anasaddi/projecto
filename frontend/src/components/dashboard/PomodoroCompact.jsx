@@ -176,7 +176,7 @@ export function PomodoroCompact() {
                 {timeLeft}
               </span>
             </div>
-            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 mb-2">
               {[1, 2, 3].map((step) => {
                 const reached = checkpoint >= step;
                 const pulsing = checkpointPulse === step;
@@ -194,7 +194,7 @@ export function PomodoroCompact() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 flex-1 min-w-0">
+          <div className="flex flex-col gap-3 flex-1 min-w-0 mb-2">
             {/* Controls */}
             <div className="flex items-center gap-2">
               {isIdle && (
