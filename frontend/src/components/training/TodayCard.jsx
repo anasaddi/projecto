@@ -267,7 +267,7 @@ function SectionHeader({ icon: Icon, color, label, showRepsLabels, anasOnly = fa
           <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.22em] sm:tracking-[0.25em] text-zinc-400 dark:text-zinc-500">{label}</span>
         </div>
         <div className="flex items-center gap-3 sm:gap-8 shrink-0">
-          <span className="text-[10px] sm:text-xs font-black text-indigo-500/60 tracking-[0.18em] sm:tracking-[0.2em] uppercase w-[58px] sm:w-[70px] text-center">Anas</span>
+          <span className="text-[10px] sm:text-xs font-black text-indigo-500/60 tracking-[0.18em] sm:tracking-[0.2em] uppercase w-[58px] sm:w-[70px] text-center"></span>
           {!anasOnly && <span className="text-xs font-black text-violet-500/60 tracking-[0.2em] uppercase w-[70px] text-center">Flavio</span>}
         </div>
       </div>

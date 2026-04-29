@@ -88,7 +88,7 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
     <div
       className={cn(
         'min-h-screen text-zinc-900 dark:text-zinc-100 transition-colors',
-        isSharedProject ? 'bg-transparent' : 'bg-white dark:bg-zinc-900',
+        isSharedProject ? 'bg-transparent' : 'bg-white dark:bg-transparent',
         isWorkspace && 'flex flex-col'
       )}
     >
