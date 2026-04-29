@@ -104,10 +104,10 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
     >
       {(isAdmin || !isSharedProject) && (
         <header className={cn(
-          'sticky top-3 md:top-4 z-50 mx-3 md:mx-4 mt-3 md:mt-4 flex shrink-0 items-center justify-between gap-2 md:gap-6',
-          'rounded-2xl md:rounded-3xl border border-zinc-200 dark:border-zinc-700',
+          'sticky top-3 md:top-4 z-50 mx-3 md:mx-4 mt-3 md:mt-4 flex shrink-0 items-center justify-between gap-2 md:gap-4',
+          'rounded-2xl md:rounded-2xl border border-zinc-200 dark:border-zinc-700',
           'bg-white/90 dark:bg-zinc-800/90 backdrop-blur-xl shadow-lg',
-          'px-3 py-2 md:px-5 md:py-3'
+          'px-3 py-2 md:px-4 md:py-2.5'
         )}>
           {/* Logo */}
           <div className="flex items-center justify-start shrink-0">
@@ -121,13 +121,13 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
             </Link>
           </div>
 
-        <nav className="hidden md:flex items-center gap-2">
+        <nav className="hidden md:flex items-center gap-1">
           {navLinks.map(({ to, label, active }) => (
             <Link
               key={to}
               to={to}
               className={cn(
-                'px-4 py-2 text-sm font-medium rounded-xl transition-colors',
+                'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors',
                 active
                   ? 'bg-zinc-900 dark:bg-zinc-600 text-white'
                   : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
