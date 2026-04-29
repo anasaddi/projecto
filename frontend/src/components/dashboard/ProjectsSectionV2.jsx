@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icons } from './Icons';
-import { StandardProjectCard, CreateProjectCard } from './ProjectComponents';
+import { StandardProjectCard, CreateProjectCard, CompactProjectCard } from './ProjectComponents';
 import { ProjectCard } from './ProjectCard';
 import { DenseTaskNode } from './DenseTaskNode';
 import { createTaskNode, countTreeStats, getDeadlineColorClass, formatDeadline } from './DashboardUtils';
@@ -97,59 +97,68 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
                       else if (p.type === 'quick' && p.quickTaskId) moveQuickTaskToProject(p.quickTaskId, project.id);
                     }}
                   >
-                    <StandardProjectCard
-                      project={project}
-                      stats={actualStats}
-                      percentage={percentage}
-                      accent={accent}
-                      isShared={false}
-                      onTitleChange={(val) => updateProject(project.id, p => ({ ...p, title: val }))}
-                      onDelete={() => setConfirmState?.({ id: 'deleteProject', payload: { projectId: project.id } })}
-                      extraMenuItems={syncMenuItems}
-                      onDeadlineClick={(val) => {
-                        updateProject(project.id, p => ({ ...p, deadline: val.trim() || undefined }));
-                        setProjectDeadlineEditing(null);
-                      }}
-                      projectDeadlineEditing={projectDeadlineEditing}
-                      projectDeadlineInput={projectDeadlineInput}
-                      setProjectDeadlineInput={setProjectDeadlineInput}
-                      setProjectDeadlineEditing={setProjectDeadlineEditing}
-                      getDeadlineColorClass={getDeadlineColorClass}
-                      formatDeadline={formatDeadline}
-                      defaultExpanded={!!projectExpandedState[project.id]}
-                      onToggleExpand={(val) => setProjectExpandedState((prev) => ({ ...prev, [project.id]: val }))}
-                      renderTasks={() => (
-                        <>
-                          {project.tasks?.map((node, tIdx) => (
-                            <DenseTaskNode
-                              key={node.id}
-                              node={node}
-                              depth={0}
-                              projectId={project.id}
-                              projectAccent={accent}
-                              targetIndex={tIdx}
-                              targetParentId={null}
-                              showWorkingByBadge={false}
-                            />
-                          ))}
-                          <div className="pt-2">
-                            <AddItemInputBar
-                              value={projectTaskDrafts[project.id] ?? ''}
-                              onChange={(val) => setProjectTaskDrafts(prev => ({ ...prev, [project.id]: val }))}
-                              onSubmit={() => {
-                                const title = (projectTaskDrafts[project.id] ?? '').trim();
-                                if (title) {
-                                  updateProject(project.id, p => ({ ...p, tasks: [...(p.tasks || []), createTaskNode(title)] }));
-                                  setProjectTaskDrafts(prev => ({ ...prev, [project.id]: '' }));
-                                }
-                              }}
-                              placeholder="Aggiungi task..."
-                              buttonColor="indigo"
-                            />
-                          </div>
-                        </>
-                      )}
-                    />
+                    {!!projectExpandedState[project.id] ? (
+                      <StandardProjectCard
+                        project={project}
+                        stats={actualStats}
+                        percentage={percentage}
+                        accent={accent}
+                        isShared={false}
+                        onTitleChange={(val) => updateProject(project.id, p => ({ ...p, title: val }))}
+                        onDelete={() => setConfirmState?.({ id: 'deleteProject', payload: { projectId: project.id } })}
+                        extraMenuItems={syncMenuItems}
+                        onDeadlineClick={(val) => {
+                          updateProject(project.id, p => ({ ...p, deadline: val.trim() || undefined }));
+                          setProjectDeadlineEditing(null);
+                        }}
+                        projectDeadlineEditing={projectDeadlineEditing}
+                        projectDeadlineInput={projectDeadlineInput}
+                        setProjectDeadlineInput={setProjectDeadlineInput}
+                        setProjectDeadlineEditing={setProjectDeadlineEditing}
+                        getDeadlineColorClass={getDeadlineColorClass}
+                        formatDeadline={formatDeadline}
+                        defaultExpanded={!!projectExpandedState[project.id]}
+                        onToggleExpand={(val) => setProjectExpandedState((prev) => ({ ...prev, [project.id]: val }))}
+                        renderTasks={() => (
+                          <>
+                            {project.tasks?.map((node, tIdx) => (
+                              <DenseTaskNode
+                                key={node.id}
+                                node={node}
+                                depth={0}
+                                projectId={project.id}
+                                projectAccent={accent}
+                                targetIndex={tIdx}
+                                targetParentId={null}
+                                showWorkingByBadge={false}
+                              />
+                            ))}
+                            <div className="pt-2">
+                              <AddItemInputBar
+                                value={projectTaskDrafts[project.id] ?? ''}
+                                onChange={(val) => setProjectTaskDrafts(prev => ({ ...prev, [project.id]: val }))}
+                                onSubmit={() => {
+                                  const title = (projectTaskDrafts[project.id] ?? '').trim();
+                                  if (title) {
+                                    updateProject(project.id, p => ({ ...p, tasks: [...(p.tasks || []), createTaskNode(title)] }));
+                                    setProjectTaskDrafts(prev => ({ ...prev, [project.id]: '' }));
+                                  }
+                                }}
+                                placeholder="Aggiungi task..."
+                                buttonColor="indigo"
+                              />
+                            </div>
+                          </>
+                        )}
+                      />
+                    ) : (
+                      <CompactProjectCard
+                        project={project}
+                        percentage={percentage}
+                        accent={accent}
+                        onClick={() => setProjectExpandedState((prev) => ({ ...prev, [project.id]: true }))}
+                      />
+                    )}
                   </ProjectCard>
                 );
               })}
