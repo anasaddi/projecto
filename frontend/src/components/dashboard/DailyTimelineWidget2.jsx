@@ -141,6 +141,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
   const [selectorOpenSlot, setSelectorOpenSlot] = useState(null);
   const winTriggerRef = useRef(null);
   const { times: PRAYER_TIMES, locationName } = usePrayerTimes();
+  const [currentPrayerIndex, setCurrentPrayerIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
 
   // Tick every 60s so time-dependent memos stay fresh
   const [minuteTick, setMinuteTick] = useState(0);
@@ -148,6 +150,39 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
     const id = setInterval(() => setMinuteTick(t => t + 1), 60_000);
     return () => clearInterval(id);
   }, []);
+
+  // Calculate oldest missing prayer as starting point
+  useEffect(() => {
+    if (!isToday) {
+      setCurrentPrayerIndex(0);
+      return;
+    }
+    
+    // Find the oldest missing prayer
+    let oldestMissingIndex = 0;
+    for (let i = 0; i < PRAYERS.length; i++) {
+      if (!todayPrayerLog[PRAYERS[i]]) {
+        oldestMissingIndex = i;
+        break;
+      }
+    }
+    setCurrentPrayerIndex(oldestMissingIndex);
+  }, [isToday, todayPrayerLog, PRAYERS]);
+
+  // Handle swipe navigation
+  const handlePrevious = () => {
+    if (currentPrayerIndex > 0) {
+      setDirection(-1);
+      setCurrentPrayerIndex(currentPrayerIndex - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentPrayerIndex < PRAYERS.length - 1) {
+      setDirection(1);
+      setCurrentPrayerIndex(currentPrayerIndex + 1);
+    }
+  };
   
   // Calculate timeline progress based on actual prayer times
   const timelineProgress = useMemo(() => {
@@ -368,125 +403,286 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                     />
                   </div>
 
-                  {/* Mobile: horizontal scroll with snapping. Desktop: 5-column grid */}
-                  <div className="flex md:grid md:grid-cols-5 gap-6 md:gap-8 pb-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-4 md:mx-0 md:px-4 md:overflow-visible md:pb-0">
-                    {PRAYERS.map((prayer, i) => {
-                      const isDone = todayPrayerLog[prayer];
-                      const prayerState = getPrayerState(i, !!isDone);
-                      const slotKey = PRAYER_SLOTS[i];
-                      const isCurrentSlot = isToday && currentSlotKey === slotKey;
-                      const isPastSlot = isToday && currentSlotKey ? PRAYER_SLOTS.indexOf(slotKey) < PRAYER_SLOTS.indexOf(currentSlotKey) : false;
-                      const hasSlotCard = !!slotKey;
+                  {/* Mobile: single prayer with smooth transition. Desktop: 5-column grid */}
+                  <div className="md:grid md:grid-cols-5 gap-6 md:gap-8 pb-4 overflow-hidden md:overflow-visible md:pb-0 relative">
+                    {/* Mobile navigation */}
+                    <div className="md:hidden flex items-center justify-between mb-4 px-2">
+                      <button
+                        onClick={handlePrevious}
+                        disabled={currentPrayerIndex === 0}
+                        className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                      >
+                        <Icons.ChevronLeft className="w-5 h-5" />
+                      </button>
+                      <div className="flex gap-1">
+                        {PRAYERS.map((_, i) => (
+                          <div
+                            key={i}
+                            className={`w-2 h-2 rounded-full transition-all duration-300 ${i === currentPrayerIndex ? 'bg-indigo-500 w-6' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                          />
+                        ))}
+                      </div>
+                      <button
+                        onClick={handleNext}
+                        disabled={currentPrayerIndex === PRAYERS.length - 1}
+                        className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                      >
+                        <Icons.ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
 
-                      const routines = slotsForDay[slotKey] || [];
-                      const events = eventsToday.filter(e => e.slotKey === slotKey);
-                      const slotTotal = routines.length;
-                      const slotDone = routines.filter(r => r.done).length;
+                    {/* Mobile: single prayer with animation. Desktop: all prayers */}
+                    <div className="md:hidden">
+                      <AnimatePresence mode="wait" initial={false}>
+                        <motion.div
+                          key={currentPrayerIndex}
+                          initial={{ opacity: 0, x: direction > 0 ? 50 : -50, scale: 0.95 }}
+                          animate={{ opacity: 1, x: 0, scale: 1 }}
+                          exit={{ opacity: 0, x: direction > 0 ? -50 : 50, scale: 0.95 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                          className="flex flex-col items-center gap-3"
+                        >
+                          {(() => {
+                            const i = currentPrayerIndex;
+                            const prayer = PRAYERS[i];
+                            const isDone = todayPrayerLog[prayer];
+                            const prayerState = getPrayerState(i, !!isDone);
+                            const slotKey = PRAYER_SLOTS[i];
+                            const isCurrentSlot = isToday && currentSlotKey === slotKey;
+                            const isPastSlot = isToday && currentSlotKey ? PRAYER_SLOTS.indexOf(slotKey) < PRAYER_SLOTS.indexOf(currentSlotKey) : false;
+                            const hasSlotCard = !!slotKey;
 
-                      return (
-                        <React.Fragment key={prayer}>
-                          <div className="flex flex-col items-center gap-2 min-w-[180px] snap-center md:min-w-0">
-                            <motion.button
-                              onClick={() => togglePrayer?.(prayer, !isDone)}
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              className={`relative z-10 w-9 h-9 md:w-10 md:h-10 rounded-xl md:rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border-2 ${prayerState.checkboxClass}`}
-                              title={`${prayer} • ${prayerState.badge}`}
-                            >
-                              {isDone ? <Icons.Check className="w-3.5 h-3.5 md:w-5 md:h-5" /> : <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-current opacity-40" />}
-                            </motion.button>
+                            const routines = slotsForDay[slotKey] || [];
+                            const events = eventsToday.filter(e => e.slotKey === slotKey);
+                            const slotTotal = routines.length;
+                            const slotDone = routines.filter(r => r.done).length;
 
-                            <div className="flex flex-col items-center leading-tight mb-1">
-                              <span className={`text-xs font-black uppercase tracking-wider md:tracking-widest ${prayerState.labelClass}`}>{prayer}</span>
-                              <span className="text-[10px] md:text-xs font-bold text-zinc-400 dark:text-zinc-500 font-mono mt-0">{PRAYER_TIMES[prayer]}</span>
-                              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 whitespace-nowrap">{prayerState.badge}</span>
-                            </div>
+                            return (
+                              <>
+                                <motion.button
+                                  onClick={() => togglePrayer?.(prayer, !isDone)}
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  className={`relative z-10 w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border-2 ${prayerState.checkboxClass}`}
+                                  title={`${prayer} • ${prayerState.badge}`}
+                                >
+                                  {isDone ? <Icons.Check className="w-6 h-6" /> : <div className="w-3 h-3 rounded-full bg-current opacity-40" />}
+                                </motion.button>
 
-                            {hasSlotCard && (
-                              <div className={`w-full transition-all duration-500 ${isCurrentSlot ? 'opacity-100 z-30 scale-105 md:scale-100' : isPastSlot ? 'opacity-70 hover:opacity-100' : 'opacity-50 hover:opacity-100'}`}>
-                                <div className={`flex flex-col bg-white dark:bg-zinc-900/80 backdrop-blur-xl border rounded-2xl overflow-hidden transition-all duration-300 ${
-                                  isCurrentSlot
-                                    ? 'border-indigo-400/60 shadow-[0_8px_30px_rgba(99,102,241,0.15)] ring-1 ring-indigo-500/10'
-                                    : 'border-zinc-200/80 dark:border-zinc-800 shadow-lg shadow-zinc-200/20 dark:shadow-black/20 hover:border-zinc-300 dark:hover:border-zinc-700'
-                                }`}>
-                                  <div className={`px-3 py-2 flex items-center justify-between border-b ${isCurrentSlot ? 'bg-indigo-50/50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20' : 'bg-zinc-50 dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800'}`}>
-                                    <span className={`text-xs font-black uppercase tracking-[0.12em] flex items-center gap-1.5 ${isCurrentSlot ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-500'}`}>
-                                      {isCurrentSlot && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />}
-                                      {getSlotLabel(slotKey)}
-                                    </span>
-                                    {slotTotal > 0 && (
-                                      <span className="text-xs font-bold text-zinc-400 bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded shadow-sm">{slotDone}/{slotTotal}</span>
-                                    )}
-                                  </div>
+                                <div className="flex flex-col items-center leading-tight mb-1">
+                                  <span className={`text-lg font-black uppercase tracking-wider ${prayerState.labelClass}`}>{prayer}</span>
+                                  <span className="text-sm font-bold text-zinc-400 dark:text-zinc-500 font-mono mt-0">{PRAYER_TIMES[prayer]}</span>
+                                  <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 whitespace-nowrap">{prayerState.badge}</span>
+                                </div>
 
-                                  <div className="p-2.5 flex flex-col gap-1.5 min-h-[72px]">
-                                    {routines.map((r, ri) => (
-                                      <motion.div
-                                        key={r.id}
-                                        initial={{ opacity: 0, x: -5 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: ri * 0.05 }}
-                                        className="group/task flex items-center gap-2 p-1.5 rounded-xl hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors relative"
-                                      >
-                                        <TaskCheckbox done={r.done} onClick={() => toggleTimelineRoutine(todayKey, slotKey, r.id, !r.done)} />
-                                        <span className={`text-xs font-semibold truncate transition-colors ${r.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}>
-                                          {r.title || 'Rimosso'}
+                                {hasSlotCard && (
+                                  <div className={`w-full max-w-xs transition-all duration-500 ${isCurrentSlot ? 'opacity-100 z-30 scale-105' : isPastSlot ? 'opacity-70 hover:opacity-100' : 'opacity-50 hover:opacity-100'}`}>
+                                    <div className={`flex flex-col bg-white dark:bg-zinc-900/80 backdrop-blur-xl border rounded-2xl overflow-hidden transition-all duration-300 ${
+                                      isCurrentSlot
+                                        ? 'border-indigo-400/60 shadow-[0_8px_30px_rgba(99,102,241,0.15)] ring-1 ring-indigo-500/10'
+                                        : 'border-zinc-200/80 dark:border-zinc-800 shadow-lg shadow-zinc-200/20 dark:shadow-black/20 hover:border-zinc-300 dark:hover:border-zinc-700'
+                                    }`}>
+                                      <div className={`px-4 py-3 flex items-center justify-between border-b ${isCurrentSlot ? 'bg-indigo-50/50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20' : 'bg-zinc-50 dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800'}`}>
+                                        <span className={`text-sm font-black uppercase tracking-[0.12em] flex items-center gap-1.5 ${isCurrentSlot ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-500'}`}>
+                                          {isCurrentSlot && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />}
+                                          {getSlotLabel(slotKey)}
                                         </span>
-                                        <button
-                                          type="button"
-                                          onClick={() => removeTimelineRoutine(todayKey, slotKey, r.id)}
-                                          className="absolute right-1 opacity-70 sm:opacity-0 sm:group-hover/task:opacity-100 p-1 text-zinc-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
-                                          aria-label="Rimuovi da timeline"
-                                        >
-                                          <Icons.X className="w-3 h-3" />
-                                        </button>
-                                      </motion.div>
-                                    ))}
-
-                                    <div className="relative mt-0.5">
-                                      <button
-                                        ref={selectorOpenSlot === slotKey ? (el) => { winTriggerRef.current = el; } : undefined}
-                                        onClick={() => setSelectorOpenSlot(selectorOpenSlot === slotKey ? null : slotKey)}
-                                        className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700/80 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-indigo-500 hover:border-indigo-300 hover:bg-indigo-50/50 dark:hover:bg-indigo-500/10 transition-all"
-                                      >
-                                        <Icons.Plus className="w-3 h-3" /> Win
-                                      </button>
-                                      <AnimatePresence>
-                                        {selectorOpenSlot === slotKey && (
-                                          <HabitSelector
-                                            activeHabits={activeHabits}
-                                            onSelect={(habitId) => addTimelineRoutine(todayKey, slotKey, habitId)}
-                                            onClose={() => setSelectorOpenSlot(null)}
-                                            triggerRef={winTriggerRef}
-                                          />
+                                        {slotTotal > 0 && (
+                                          <span className="text-sm font-bold text-zinc-400 bg-white dark:bg-zinc-800 px-2 py-0.5 rounded shadow-sm">{slotDone}/{slotTotal}</span>
                                         )}
-                                      </AnimatePresence>
+                                      </div>
+
+                                      <div className="p-3 flex flex-col gap-1.5 min-h-[72px]">
+                                        {routines.map((r, ri) => (
+                                          <motion.div
+                                            key={r.id}
+                                            initial={{ opacity: 0, x: -5 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: ri * 0.05 }}
+                                            className="group/task flex items-center gap-2 p-2 rounded-xl hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors relative"
+                                          >
+                                            <TaskCheckbox done={r.done} onClick={() => toggleTimelineRoutine(todayKey, slotKey, r.id, !r.done)} />
+                                            <span className={`text-sm font-semibold truncate transition-colors ${r.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}>
+                                              {r.title || 'Rimosso'}
+                                            </span>
+                                            <button
+                                              type="button"
+                                              onClick={() => removeTimelineRoutine(todayKey, slotKey, r.id)}
+                                              className="absolute right-1 opacity-70 group-hover/task:opacity-100 p-1 text-zinc-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                                              aria-label="Rimuovi da timeline"
+                                            >
+                                              <Icons.X className="w-3 h-3" />
+                                            </button>
+                                          </motion.div>
+                                        ))}
+
+                                        <div className="relative mt-0.5">
+                                          <button
+                                            ref={selectorOpenSlot === slotKey ? (el) => { winTriggerRef.current = el; } : undefined}
+                                            onClick={() => setSelectorOpenSlot(selectorOpenSlot === slotKey ? null : slotKey)}
+                                            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700/80 text-sm font-bold uppercase tracking-widest text-zinc-400 hover:text-indigo-500 hover:border-indigo-300 hover:bg-indigo-50/50 dark:hover:bg-indigo-500/10 transition-all"
+                                          >
+                                            <Icons.Plus className="w-3 h-3" /> Win
+                                          </button>
+                                          <AnimatePresence>
+                                            {selectorOpenSlot === slotKey && (
+                                              <HabitSelector
+                                                activeHabits={activeHabits}
+                                                onSelect={(habitId) => addTimelineRoutine(todayKey, slotKey, habitId)}
+                                                onClose={() => setSelectorOpenSlot(null)}
+                                                triggerRef={winTriggerRef}
+                                              />
+                                            )}
+                                          </AnimatePresence>
+                                        </div>
+                                      </div>
+
+                                      {events.length > 0 && (
+                                        <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-3">
+                                          <div className="text-sm font-black uppercase tracking-[0.2em] text-emerald-600/80 dark:text-emerald-400/80 mb-1.5">Completati</div>
+                                          <div className="flex flex-col gap-1">
+                                            {events.map((e, ei) => (
+                                              <div key={ei} className="flex items-start gap-1.5 bg-white dark:bg-zinc-800 p-2 rounded-lg border border-emerald-100 dark:border-emerald-900/30 shadow-sm">
+                                                <Icons.CheckCircle className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />
+                                                <div className="flex flex-col flex-1 min-w-0">
+                                                  <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200 leading-tight truncate">{e.title}</span>
+                                                  <span className="text-xs text-zinc-400 font-mono">{new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
 
-                                  {events.length > 0 && (
-                                    <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-2.5">
-                                      <div className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600/80 dark:text-emerald-400/80 mb-1.5">Completati</div>
-                                      <div className="flex flex-col gap-1">
-                                        {events.map((e, ei) => (
-                                          <div key={ei} className="flex items-start gap-1.5 bg-white dark:bg-zinc-800 p-1.5 rounded-lg border border-emerald-100 dark:border-emerald-900/30 shadow-sm">
-                                            <Icons.CheckCircle className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />
-                                            <div className="flex flex-col flex-1 min-w-0">
-                                              <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 leading-tight truncate">{e.title}</span>
-                                              <span className="text-xs text-zinc-400 font-mono">{new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                            </div>
-                                          </div>
-                                        ))}
+                    {/* Desktop: show all prayers */}
+                    <div className="hidden md:grid md:grid-cols-5 gap-6 md:gap-8 md:overflow-visible">
+                      {PRAYERS.map((prayer, i) => {
+                        const isDone = todayPrayerLog[prayer];
+                        const prayerState = getPrayerState(i, !!isDone);
+                        const slotKey = PRAYER_SLOTS[i];
+                        const isCurrentSlot = isToday && currentSlotKey === slotKey;
+                        const isPastSlot = isToday && currentSlotKey ? PRAYER_SLOTS.indexOf(slotKey) < PRAYER_SLOTS.indexOf(currentSlotKey) : false;
+                        const hasSlotCard = !!slotKey;
+
+                        const routines = slotsForDay[slotKey] || [];
+                        const events = eventsToday.filter(e => e.slotKey === slotKey);
+                        const slotTotal = routines.length;
+                        const slotDone = routines.filter(r => r.done).length;
+
+                        return (
+                          <React.Fragment key={prayer}>
+                            <div className="flex flex-col items-center gap-2">
+                              <motion.button
+                                onClick={() => togglePrayer?.(prayer, !isDone)}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className={`relative z-10 w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border-2 ${prayerState.checkboxClass}`}
+                                title={`${prayer} • ${prayerState.badge}`}
+                              >
+                                {isDone ? <Icons.Check className="w-5 h-5" /> : <div className="w-2.5 h-2.5 rounded-full bg-current opacity-40" />}
+                              </motion.button>
+
+                              <div className="flex flex-col items-center leading-tight mb-1">
+                                <span className={`text-xs font-black uppercase tracking-widest ${prayerState.labelClass}`}>{prayer}</span>
+                                <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 font-mono mt-0">{PRAYER_TIMES[prayer]}</span>
+                                <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 whitespace-nowrap">{prayerState.badge}</span>
+                              </div>
+
+                              {hasSlotCard && (
+                                <div className={`w-full transition-all duration-500 ${isCurrentSlot ? 'opacity-100 z-30 scale-105' : isPastSlot ? 'opacity-70 hover:opacity-100' : 'opacity-50 hover:opacity-100'}`}>
+                                  <div className={`flex flex-col bg-white dark:bg-zinc-900/80 backdrop-blur-xl border rounded-2xl overflow-hidden transition-all duration-300 ${
+                                    isCurrentSlot
+                                      ? 'border-indigo-400/60 shadow-[0_8px_30px_rgba(99,102,241,0.15)] ring-1 ring-indigo-500/10'
+                                      : 'border-zinc-200/80 dark:border-zinc-800 shadow-lg shadow-zinc-200/20 dark:shadow-black/20 hover:border-zinc-300 dark:hover:border-zinc-700'
+                                  }`}>
+                                    <div className={`px-3 py-2 flex items-center justify-between border-b ${isCurrentSlot ? 'bg-indigo-50/50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20' : 'bg-zinc-50 dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800'}`}>
+                                      <span className={`text-xs font-black uppercase tracking-[0.12em] flex items-center gap-1.5 ${isCurrentSlot ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-500'}`}>
+                                        {isCurrentSlot && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />}
+                                        {getSlotLabel(slotKey)}
+                                      </span>
+                                      {slotTotal > 0 && (
+                                        <span className="text-xs font-bold text-zinc-400 bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded shadow-sm">{slotDone}/{slotTotal}</span>
+                                      )}
+                                    </div>
+
+                                    <div className="p-2.5 flex flex-col gap-1.5 min-h-[72px]">
+                                      {routines.map((r, ri) => (
+                                        <motion.div
+                                          key={r.id}
+                                          initial={{ opacity: 0, x: -5 }}
+                                          animate={{ opacity: 1, x: 0 }}
+                                          transition={{ delay: ri * 0.05 }}
+                                          className="group/task flex items-center gap-2 p-1.5 rounded-xl hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-colors relative"
+                                        >
+                                          <TaskCheckbox done={r.done} onClick={() => toggleTimelineRoutine(todayKey, slotKey, r.id, !r.done)} />
+                                          <span className={`text-xs font-semibold truncate transition-colors ${r.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}>
+                                            {r.title || 'Rimosso'}
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={() => removeTimelineRoutine(todayKey, slotKey, r.id)}
+                                            className="absolute right-1 opacity-70 sm:opacity-0 sm:group-hover/task:opacity-100 p-1 text-zinc-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                                            aria-label="Rimuovi da timeline"
+                                          >
+                                            <Icons.X className="w-3 h-3" />
+                                          </button>
+                                        </motion.div>
+                                      ))}
+
+                                      <div className="relative mt-0.5">
+                                        <button
+                                          ref={selectorOpenSlot === slotKey ? (el) => { winTriggerRef.current = el; } : undefined}
+                                          onClick={() => setSelectorOpenSlot(selectorOpenSlot === slotKey ? null : slotKey)}
+                                          className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700/80 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-indigo-500 hover:border-indigo-300 hover:bg-indigo-50/50 dark:hover:bg-indigo-500/10 transition-all"
+                                        >
+                                          <Icons.Plus className="w-3 h-3" /> Win
+                                        </button>
+                                        <AnimatePresence>
+                                          {selectorOpenSlot === slotKey && (
+                                            <HabitSelector
+                                              activeHabits={activeHabits}
+                                              onSelect={(habitId) => addTimelineRoutine(todayKey, slotKey, habitId)}
+                                              onClose={() => setSelectorOpenSlot(null)}
+                                              triggerRef={winTriggerRef}
+                                            />
+                                          )}
+                                        </AnimatePresence>
                                       </div>
                                     </div>
-                                  )}
+
+                                    {events.length > 0 && (
+                                      <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-2.5">
+                                        <div className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600/80 dark:text-emerald-400/80 mb-1.5">Completati</div>
+                                        <div className="flex flex-col gap-1">
+                                          {events.map((e, ei) => (
+                                            <div key={ei} className="flex items-start gap-1.5 bg-white dark:bg-zinc-800 p-1.5 rounded-lg border border-emerald-100 dark:border-emerald-900/30 shadow-sm">
+                                              <Icons.CheckCircle className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />
+                                              <div className="flex flex-col flex-1 min-w-0">
+                                                <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 leading-tight truncate">{e.title}</span>
+                                                <span className="text-xs text-zinc-400 font-mono">{new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            )}
-                          </div>
-                        </React.Fragment>
-                      );
-                    })}
+                              )}
+                            </div>
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
