@@ -122,11 +122,16 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
           </div>
 
         <nav className="hidden md:flex items-center gap-1 rounded-xl bg-zinc-50 dark:bg-zinc-700/50 p-1">
-          {navLinks.filter(({ active }) => !active).map(({ to, label }) => (
+          {navLinks.map(({ to, label, active }) => (
             <Link
               key={to}
               to={to}
-              className="px-3 py-2 text-sm font-medium rounded-lg text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+              className={cn(
+                'px-3 py-2 text-sm font-medium rounded-lg',
+                active
+                  ? 'bg-zinc-900 dark:bg-zinc-600 text-white'
+                  : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+              )}
             >
               {label}
             </Link>
