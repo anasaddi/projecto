@@ -198,7 +198,7 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
         className={cn(
           isWorkspace
             ? cn('flex w-full flex-col flex-1 min-h-0 overflow-y-auto', isSharedProject ? 'px-0' : 'px-0')
-            : 'w-full p-4 md:p-6'
+            : 'w-full'
         )}
       >
         {children}

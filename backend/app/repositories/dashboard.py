@@ -112,8 +112,8 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
         q = q.filter(DashboardState.user_id == user_id)
     else:
         q = q.filter(DashboardState.user_id.is_(None))
-    res_ds = await db.execute(q)
-    ds = res_ds.scalar_one_or_none()
+    res_ds = await db.execute(q.order_by(DashboardState.updated_at.desc()))
+    ds = res_ds.scalars().first()
     ds_data = _parse_json(ds.data, {}) if ds else {}
     lg_collapsed = ds_data.get("lifeGoals", {}).get("collapsed", False)
     timeline_routines = ds_data.get("timelineRoutines") if isinstance(ds_data.get("timelineRoutines"), dict) else {}
@@ -168,8 +168,8 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
         q = q.filter(DashboardState.user_id == user_id)
     else:
         q = q.filter(DashboardState.user_id.is_(None))
-    res_ds = await db.execute(q)
-    ds = res_ds.scalar_one_or_none()
+    res_ds = await db.execute(q.order_by(DashboardState.updated_at.desc()))
+    ds = res_ds.scalars().first()
 
     if not ds:
         ds = DashboardState(key=key, user_id=user_id, data={})

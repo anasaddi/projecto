@@ -76,7 +76,7 @@ export function PrayersCountdownsV2({
         <div className="flex flex-col gap-4 sm:gap-6">
 
           {/* Section 1: Focus Score - Animated SVG Circle */}
-          <div className="flex items-center justify-center gap-4 w-full">
+          <div className="flex items-center justify-center gap-4 w-full sm:justify-center">
             <div className="relative h-20 w-20 shrink-0">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="8" className="text-zinc-200 dark:text-zinc-800" />
