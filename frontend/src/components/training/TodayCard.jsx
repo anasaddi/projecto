@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useCallback, useRef } from 'react';
+import React, { useMemo, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Target, Dumbbell } from 'lucide-react';
 
@@ -436,20 +436,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
     ? new Date(safeDate + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
     : selectedDay?.day_name || '';
 
-  const footerLegend = (
-    <div className="flex items-center gap-6 sm:gap-8 lg:gap-10">
-      {[
-        { dot: 'bg-indigo-500', label: 'Forza' },
-        { dot: 'bg-amber-500', label: 'AW' },
-        { dot: 'bg-emerald-500', label: 'Ipertrofia' },
-      ].map(item => (
-        <div key={item.label} className="flex items-center gap-2.5">
-          <div className={`w-1.5 h-1.5 rounded-full ${item.dot}`} />
-          <span className="text-xs font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">{item.label}</span>
-        </div>
-      ))}
-    </div>
-  );
+  const footerLegend = null;
 
   const sectionsGrid = (
     <div className="grid grid-cols-1 lg:grid-cols-3 lg:divide-x divide-zinc-100/80 dark:divide-white/[0.04]">

@@ -51,7 +51,7 @@ export const PROJECT_CARD_STYLES = {
   
   // Task list container
   taskList: {
-    base: 'border-t border-zinc-100/80 px-4 pb-4 pt-3 space-y-2 dark:border-zinc-700/40 sm:px-5',
+    base: 'rounded-b-[28px] border-t border-zinc-100 bg-zinc-50/70 p-4 dark:border-white/[0.04] dark:bg-black/20 flex flex-col gap-1',
   },
   
   // Action buttons
