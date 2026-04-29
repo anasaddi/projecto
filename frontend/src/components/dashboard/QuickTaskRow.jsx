@@ -1,8 +1,8 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { Icons } from './Icons';
-import { TaskCheckbox } from './DashboardComponents';
+import { TaskCheckbox, KebabMenu } from './DashboardComponents';
 import { formatDeadline, getDeadlineColorClass } from './DashboardUtils';
 import { useLongPressActions } from '../../hooks/useLongPressActions';
 import { useToast } from '../../context/ToastContext';
@@ -254,18 +254,20 @@ export function QuickTaskRow({
           </span>
         )}
       </div>
-      <button
-        type="button"
-        ref={mobileTriggerRef}
-        className="md:hidden ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-500 shadow-sm transition-colors hover:bg-zinc-100 dark:border-white/[0.08] dark:bg-zinc-900 dark:text-zinc-300"
-        onClick={(e) => {
-          e.stopPropagation();
-          setMobileMenuOpen((v) => !v);
-        }}
-        aria-label="Azioni task"
-      >
-        <Icons.MoreHorizontal className="h-4 w-4" />
-      </button>
+      <div className="md:hidden ml-1" onClick={(e) => e.stopPropagation()}>
+        <KebabMenu
+          alwaysVisible
+          items={[
+            { label: 'Azioni task', isHeader: true },
+            ...actions.map(act => ({
+              label: act.title,
+              icon: act.icon,
+              onClick: act.onClick,
+              danger: act.title === 'Elimina'
+            }))
+          ]}
+        />
+      </div>
 
       <motion.div
         ref={barRef}
