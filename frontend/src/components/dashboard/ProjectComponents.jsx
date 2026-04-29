@@ -146,7 +146,7 @@ export function StandardProjectCard({
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Badge variant="default" size="sm">
-              <span className={accentColor.text}>{isShared ? 'Shared' : 'Project'}</span>
+              <span className={accentColor.text}>{isShared ? 'Shared' : 'Personal'}</span>
             </Badge>
             <Badge variant={percentage === 100 && stats?.total > 0 ? 'success' : 'primary'} size="sm">
               {completedTasks}/{totalTasks} task
