@@ -362,8 +362,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                     />
                   </div>
 
-                  {/* Mobile: horizontal scroll with snap. Desktop: 5-column grid */}
-                  <div className="flex md:grid md:grid-cols-5 gap-8 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible md:pb-0">
+                  {/* Mobile: flex row, no scroll. Desktop: 5-column grid */}
+                  <div className="flex md:grid md:grid-cols-5 gap-3 sm:gap-4 md:gap-8 justify-between pb-2 -mx-4 px-5 md:mx-0 md:px-0 md:pb-0">
                     {PRAYERS.map((prayer, i) => {
                       const isDone = todayPrayerLog[prayer];
                       const prayerState = getPrayerState(i, !!isDone);
@@ -379,21 +379,21 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
 
                       return (
                         <React.Fragment key={prayer}>
-                          <div className="flex flex-col items-center gap-2 min-w-[72px] md:min-w-0 snap-start">
+                          <div className="flex flex-col items-center gap-1.5 flex-1 md:min-w-0">
                             <motion.button
                               onClick={() => togglePrayer?.(prayer, !isDone)}
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              className={`relative z-10 w-11 h-11 md:w-10 md:h-10 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border-2 ${prayerState.checkboxClass}`}
+                              className={`relative z-10 w-9 h-9 md:w-10 md:h-10 rounded-xl md:rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border-2 ${prayerState.checkboxClass}`}
                               title={`${prayer} • ${prayerState.badge}`}
                             >
-                              {isDone ? <Icons.Check className="w-4 h-4 md:w-5 md:h-5" /> : <div className="w-2.5 h-2.5 md:w-2.5 md:h-2.5 rounded-full bg-current opacity-40" />}
+                              {isDone ? <Icons.Check className="w-3.5 h-3.5 md:w-5 md:h-5" /> : <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-current opacity-40" />}
                             </motion.button>
 
-                            <div className="flex flex-col items-center -mt-1 leading-tight">
-                              <span className={`text-[11px] md:text-xs font-black uppercase tracking-widest ${prayerState.labelClass}`}>{prayer}</span>
-                              <span className="text-[11px] md:text-xs font-bold text-zinc-400 dark:text-zinc-500 font-mono mt-0.5">{PRAYER_TIMES[prayer]}</span>
-                              <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mt-0.5 whitespace-nowrap">{prayerState.badge}</span>
+                            <div className="flex flex-col items-center leading-tight">
+                              <span className={`text-[10px] md:text-xs font-black uppercase tracking-wider md:tracking-widest ${prayerState.labelClass}`}>{prayer}</span>
+                              <span className="text-[10px] md:text-xs font-bold text-zinc-400 dark:text-zinc-500 font-mono mt-0">{PRAYER_TIMES[prayer]}</span>
+                              <span className="text-[8px] md:text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 whitespace-nowrap">{prayerState.badge}</span>
                             </div>
 
                             <div className="sm:hidden flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 whitespace-nowrap">

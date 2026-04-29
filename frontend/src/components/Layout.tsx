@@ -134,14 +134,14 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
           ))}
         </nav>
 
-        {/* Mobile nav - riga separata sotto il logo */}
-        <div className="flex md:hidden items-center gap-1 overflow-x-auto -mx-1 px-1 pb-1 md:pb-0 border-t border-zinc-100 dark:border-zinc-700/50 pt-2">
+        {/* Mobile nav - riga separata sotto il logo, compatta */}
+        <div className="flex md:hidden items-center gap-0.5 -mx-1 px-1 pb-1 md:pb-0 border-t border-zinc-100 dark:border-zinc-700/50 pt-2">
           {navLinks.map(({ to, label, active }) => (
             <Link
               key={to}
               to={to}
               className={cn(
-                'px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap',
+                'px-2 py-1 text-[10px] font-medium rounded-md whitespace-nowrap',
                 active
                   ? 'bg-zinc-900 dark:bg-zinc-600 text-white'
                   : 'text-zinc-500 dark:text-zinc-400'
@@ -192,7 +192,7 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
           <Button
             variant="ghost"
             onClick={() => setIsDark((d) => !d)}
-            className="h-10 w-10 p-0 rounded-xl"
+            className="hidden md:flex h-10 w-10 p-0 rounded-xl"
             aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
           >
             {isDark ? '☀️' : '🌙'}
