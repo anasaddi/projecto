@@ -403,10 +403,10 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                     />
                   </div>
 
-                  {/* Mobile: single prayer with smooth transition. Desktop: 5-column grid */}
-                  <div className="flex md:grid md:grid-cols-5 gap-6 md:gap-8 pb-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-4 md:mx-0 md:px-4 md:overflow-visible md:pb-0">
+                  {/* Mobile: single prayer with smooth transition */}
+                  <div className="md:hidden flex flex-col">
                     {/* Mobile navigation */}
-                    <div className="md:hidden flex items-center justify-between mb-4 px-2 sticky left-0 right-0 z-20 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl py-2">
+                    <div className="flex items-center justify-between mb-4 px-2 sticky left-0 right-0 z-20 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl py-2">
                       <button
                         onClick={handlePrevious}
                         disabled={currentPrayerIndex === 0}
@@ -432,7 +432,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                     </div>
 
                     {/* Mobile: single prayer with animation */}
-                    <div className="md:hidden w-full">
+                    <div className="w-full px-2">
                       <AnimatePresence mode="wait" initial={false}>
                         <motion.div
                           key={currentPrayerIndex}
@@ -440,7 +440,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                           animate={{ opacity: 1, x: 0, scale: 1 }}
                           exit={{ opacity: 0, x: direction > 0 ? -50 : 50, scale: 0.95 }}
                           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                          className="flex flex-col items-center gap-3 px-2"
+                          className="flex flex-col items-center gap-3"
                         >
                           {(() => {
                             const i = currentPrayerIndex;
@@ -562,8 +562,10 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                         </motion.div>
                       </AnimatePresence>
                     </div>
+                  </div>
 
-                    {/* Desktop: show all prayers in grid */}
+                  {/* Desktop: show all prayers in grid */}
+                  <div className="hidden md:grid md:grid-cols-5 gap-6 md:gap-8 pb-4 md:overflow-visible md:pb-0">
                     {PRAYERS.map((prayer, i) => {
                       const isDone = todayPrayerLog[prayer];
                       const prayerState = getPrayerState(i, !!isDone);
@@ -579,7 +581,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
 
                       return (
                         <React.Fragment key={prayer}>
-                          <div className="hidden md:flex flex-col items-center gap-2 min-w-0">
+                          <div className="flex flex-col items-center gap-2 min-w-0">
                             <motion.button
                               onClick={() => togglePrayer?.(prayer, !isDone)}
                               whileHover={{ scale: 1.05 }}
