@@ -217,6 +217,7 @@ async def health():
 
 
 @app.get("/keepalive")
+@app.head("/keepalive")
 async def keepalive():
     """Keepalive endpoint to prevent Render free tier sleep."""
     return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
