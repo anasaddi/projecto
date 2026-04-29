@@ -195,7 +195,7 @@ export default function DashboardV2(): React.ReactElement {
       
       {/* Redundant header removed - items moved to Layout and PrayersCountdowns */}
 
-      <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-4 py-4 pb-24 md:gap-5 md:pb-6 md:py-6 flex-1 min-h-0 relative z-10`}>
+      <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-4 py-4 pb-[calc(6rem+env(safe-area-inset-bottom))] md:gap-5 md:pb-6 md:py-6 flex-1 min-h-0 relative z-10`}>
         <PrayersCountdownsV2
           countdowns={countdowns as { label: string; remaining: string; pct: number }[]}
           todayFocusScore={todayFocusScore}

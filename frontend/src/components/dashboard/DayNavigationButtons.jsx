@@ -13,19 +13,25 @@ export function DayNavigationButtons() {
   const navigateToNextDay = useDashboardStore((s) => s.navigateToNextDay);
   const setSelectedDate = useDashboardStore((s) => s.setSelectedDate);
 
-  // Theme toggle state
-  const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem('km-theme');
-    if (saved) return saved === 'dark';
-    return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches;
-  });
+  // Theme — synced with Layout via custom event (single source of truth)
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDark);
-    localStorage.setItem('km-theme', isDark ? 'dark' : 'light');
-  }, [isDark]);
+    const handler = () => {
+      const saved = localStorage.getItem('km-theme');
+      setIsDark(saved === 'dark');
+    };
+    window.addEventListener('theme-changed', handler);
+    return () => window.removeEventListener('theme-changed', handler);
+  }, []);
 
-  const toggleTheme = () => setIsDark((d) => !d);
+  const toggleTheme = () => {
+    const next = !isDark;
+    setIsDark(next);
+    localStorage.setItem('km-theme', next ? 'dark' : 'light');
+    document.documentElement.classList.toggle('dark', next);
+    window.dispatchEvent(new Event('theme-changed'));
+  };
 
   const today = new Date();
   const todayKey = toDateKey(today);

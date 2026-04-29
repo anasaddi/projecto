@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 
 /**
@@ -218,9 +218,9 @@ export function ActionButton({
   };
   
   const sizeClasses = {
-    sm: 'p-1',
-    md: 'p-1.5',
-    lg: 'p-2'
+    sm: 'p-1.5 sm:p-1',
+    md: 'p-2 sm:p-1.5',
+    lg: 'p-2.5 sm:p-2'
   };
   
   const iconSize = {

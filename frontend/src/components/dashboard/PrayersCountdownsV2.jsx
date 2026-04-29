@@ -102,19 +102,15 @@ export function PrayersCountdownsV2({
                 <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">{percentage}%</span>
               </div>
             </div>
-            <div className="flex flex-col gap-1 flex-1 sm:hidden">
-              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 tabular-nums">{percentage}%</span>
-              <span className="text-xs text-zinc-500 dark:text-zinc-400">completato oggi</span>
-            </div>
           </div>
 
-          {/* Section 2: Time Period Progress Bars - compact, no scroll */}
-          <div className="flex w-full justify-between gap-1 sm:gap-2">
+          {/* Section 2: Time Period Progress Bars - 2x2 grid on mobile, row on desktop */}
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:w-full sm:justify-between sm:gap-2">
             {allBars.map((bar) => {
               const cfg = TIME_BAR_CONFIGS.find(c => c.key === bar.label) || TIME_BAR_CONFIGS[0];
               const pct = Math.min(1, Math.max(0, bar.pct ?? 0));
               return (
-                <div key={bar.label} className="flex flex-1 min-w-0 flex-col gap-1 rounded-xl ring-1 px-2 py-1.5 sm:px-4 sm:py-2.5">
+                <div key={bar.label} className="flex flex-col gap-1.5 rounded-xl ring-1 px-3 py-2 sm:flex-1 sm:min-w-0 sm:gap-1 sm:px-4 sm:py-2.5">
                   <div className="flex items-center justify-between gap-1 whitespace-nowrap">
                     <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{bar.label}</span>
                     <span className="text-[9px] sm:text-[11px] font-bold tabular-nums text-zinc-400 dark:text-zinc-500">{Math.round(pct * 100)}%</span>

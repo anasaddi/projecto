@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { motion } from 'framer-motion';
 import { Icons } from './Icons';
 
 /**
@@ -108,13 +109,13 @@ export function KebabMenu({ items, onOpenChange, alwaysVisible = false }) {
           ref={btnRef}
           type="button"
           onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
-          className={`dashboard-action-btn rounded-xl px-2.5 py-2 ${alwaysVisible ? 'opacity-100 bg-zinc-100/80 dark:bg-white/[0.06] hover:bg-zinc-200/80 dark:hover:bg-white/[0.1]' : 'opacity-0 group-hover:opacity-100'}`}
+          className={`dashboard-action-btn rounded-xl px-2.5 py-2 sm:px-2 sm:py-1.5 ${alwaysVisible ? 'opacity-100 bg-zinc-100/80 dark:bg-white/[0.06] hover:bg-zinc-200/80 dark:hover:bg-white/[0.1]' : 'opacity-0 group-hover:opacity-100'}`}
           title="Azioni (Elimina progetto, scadenza)"
         >
           <Icons.MoreHorizontal className="h-3.5 w-3.5" />
         </button>
       </div>
-      {createPortal(dropdown, document.body)}
+      {dropdown && typeof document !== 'undefined' ? createPortal(dropdown, document.body) : null}
     </>
   );
 }

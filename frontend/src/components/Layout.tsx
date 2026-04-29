@@ -56,6 +56,16 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
+  // Sync when mobile bottom bar toggles theme
+  useEffect(() => {
+    const handler = () => {
+      const saved = localStorage.getItem('km-theme');
+      if (saved) setIsDark(saved === 'dark');
+    };
+    window.addEventListener('theme-changed', handler);
+    return () => window.removeEventListener('theme-changed', handler);
+  }, []);
+
   const isGuest = localStorage.getItem('km-user-role') === 'guest';
   const isAdmin =
     localStorage.getItem('km-user-role') === 'admin' && !!localStorage.getItem('km-admin-token');
@@ -94,13 +104,13 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
     >
       {(isAdmin || !isSharedProject) && (
         <header className={cn(
-          'sticky top-4 z-50 mx-4 mt-4 flex shrink-0 flex-col md:flex-row md:items-center gap-2 md:gap-6',
-          'rounded-3xl border border-zinc-200 dark:border-zinc-700',
+          'sticky top-3 md:top-4 z-50 mx-3 md:mx-4 mt-3 md:mt-4 flex shrink-0 items-center justify-between gap-2 md:gap-6',
+          'rounded-2xl md:rounded-3xl border border-zinc-200 dark:border-zinc-700',
           'bg-white/90 dark:bg-zinc-800/90 backdrop-blur-xl shadow-lg',
-          'px-5 py-3'
+          'px-3 py-2 md:px-5 md:py-3'
         )}>
-          {/* Logo row - separato su mobile */}
-          <div className="flex items-center justify-center w-full md:w-auto md:justify-start">
+          {/* Logo */}
+          <div className="flex items-center justify-start shrink-0">
             <Link to="/" className="flex items-center gap-2 shrink-0 group">
               <div className="group-hover:shadow-indigo-500/40 group-active:scale-95 transition-all">
                 <AppLogo size="xs" />
@@ -128,8 +138,8 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
           ))}
         </nav>
 
-        {/* Mobile nav - riga separata sotto il logo, compatta e centrata */}
-        <div className="flex md:hidden items-center justify-center gap-0.5 px-1 pt-3 md:pt-0 border-t border-zinc-100 dark:border-zinc-700/50 pb-0">
+        {/* Mobile nav - compact row on the right */}
+        <div className="flex md:hidden flex-1 items-center justify-end gap-1 overflow-x-auto scrollbar-hide pl-2">
           {navLinks.map(({ to, label, active }) => (
             <Link
               key={to}
@@ -151,7 +161,7 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
             {stats.doneFocusItems} / {stats.totalFocusItems}
           </span>
         )}
-        <div className="flex items-center gap-3 ml-auto">
+        <div className="flex items-center gap-2 md:gap-3 shrink-0">
           {isSharedProject && isNextcode && (
             <div
               className="hidden sm:flex items-center gap-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-700 p-0.5"
@@ -185,7 +195,14 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
           )}
           <Button
             variant="ghost"
-            onClick={() => setIsDark((d) => !d)}
+            onClick={() => {
+              setIsDark((d) => {
+                const next = !d;
+                localStorage.setItem('km-theme', next ? 'dark' : 'light');
+                setTimeout(() => window.dispatchEvent(new Event('theme-changed')), 0);
+                return next;
+              });
+            }}
             className="hidden md:flex h-10 w-10 p-0 rounded-xl"
             aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
           >

@@ -368,8 +368,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                     />
                   </div>
 
-                  {/* Mobile: horizontal scroll with padding preserved. Desktop: 5-column grid */}
-                  <div className="flex md:grid md:grid-cols-5 gap-12 md:gap-8 pb-2 overflow-x-auto scrollbar-hide px-4 md:mx-0 md:px-4 md:overflow-visible md:pb-0">
+                  {/* Mobile: horizontal scroll with snapping. Desktop: 5-column grid */}
+                  <div className="flex md:grid md:grid-cols-5 gap-6 md:gap-8 pb-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-4 md:mx-0 md:px-4 md:overflow-visible md:pb-0">
                     {PRAYERS.map((prayer, i) => {
                       const isDone = todayPrayerLog[prayer];
                       const prayerState = getPrayerState(i, !!isDone);
@@ -385,7 +385,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
 
                       return (
                         <React.Fragment key={prayer}>
-                          <div className="flex flex-col items-center gap-1.5 min-w-[60px] md:min-w-0">
+                          <div className="flex flex-col items-center gap-2 min-w-[180px] snap-center md:min-w-0">
                             <motion.button
                               onClick={() => togglePrayer?.(prayer, !isDone)}
                               whileHover={{ scale: 1.05 }}
@@ -396,19 +396,14 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                               {isDone ? <Icons.Check className="w-3.5 h-3.5 md:w-5 md:h-5" /> : <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-current opacity-40" />}
                             </motion.button>
 
-                            <div className="flex flex-col items-center leading-tight">
-                              <span className={`text-[10px] md:text-xs font-black uppercase tracking-wider md:tracking-widest ${prayerState.labelClass}`}>{prayer}</span>
+                            <div className="flex flex-col items-center leading-tight mb-1">
+                              <span className={`text-xs font-black uppercase tracking-wider md:tracking-widest ${prayerState.labelClass}`}>{prayer}</span>
                               <span className="text-[10px] md:text-xs font-bold text-zinc-400 dark:text-zinc-500 font-mono mt-0">{PRAYER_TIMES[prayer]}</span>
-                              <span className="text-[8px] md:text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 whitespace-nowrap">{prayerState.badge}</span>
-                            </div>
-
-                            <div className="sm:hidden flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 whitespace-nowrap">
-                              <span>{getSlotLabel(slotKey)}</span>
-                              {slotTotal > 0 && <span className="text-indigo-500">{slotDone}/{slotTotal}</span>}
+                              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 whitespace-nowrap">{prayerState.badge}</span>
                             </div>
 
                             {hasSlotCard && (
-                              <div className={`hidden sm:block w-full transition-all duration-500 ${isCurrentSlot ? 'opacity-100 z-30' : isPastSlot ? 'opacity-60 hover:opacity-100' : 'opacity-40 hover:opacity-100'}`}>
+                              <div className={`w-full transition-all duration-500 ${isCurrentSlot ? 'opacity-100 z-30 scale-105 md:scale-100' : isPastSlot ? 'opacity-70 hover:opacity-100' : 'opacity-50 hover:opacity-100'}`}>
                                 <div className={`flex flex-col bg-white dark:bg-zinc-900/80 backdrop-blur-xl border rounded-2xl overflow-hidden transition-all duration-300 ${
                                   isCurrentSlot
                                     ? 'border-indigo-400/60 shadow-[0_8px_30px_rgba(99,102,241,0.15)] ring-1 ring-indigo-500/10'
