@@ -1317,7 +1317,8 @@ export default function SharedProjects() {
                     stats={stats}
                     percentage={percentage}
                     accent={accent}
-                    isShared={false}
+                    isShared={true}
+                    hideShareLink={true}
                     showExplicitProjectDelete
                     sharedWorkspaceChrome
                     onTitleChange={(val) => updateProject(proj.id, p => ({ ...p, title: val }))}

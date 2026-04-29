@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Icons } from './Icons';
 import { Badge, ProgressBar, ActionButton } from './Card';
@@ -84,8 +84,20 @@ export function LifeGoalCard({
             defaultValue={goal.title}
             rows={1}
             autoFocus
-            onBlur={(e) => { onRename(goal.id, e.target.value); setIsEditing(false); }}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onRename(goal.id, e.currentTarget.value); setIsEditing(false); } if (e.key === 'Escape') setIsEditing(false); }}
+            onBlur={(e) => { 
+              const v = e.target.value.trim();
+              if (v && v !== goal.title) onRename?.(goal.id, v); 
+              setIsEditing(false); 
+            }}
+            onKeyDown={(e) => { 
+              if (e.key === 'Enter' && !e.shiftKey) { 
+                e.preventDefault(); 
+                const v = e.currentTarget.value.trim();
+                if (v && v !== goal.title) onRename?.(goal.id, v); 
+                setIsEditing(false); 
+              } 
+              if (e.key === 'Escape') setIsEditing(false); 
+            }}
             className={`min-w-0 flex-1 resize-none overflow-hidden bg-transparent py-0 text-sm font-semibold leading-relaxed outline-none break-words ${goal.done ? 'text-zinc-400 line-through' : 'text-zinc-800 dark:text-zinc-200'}`}
             onInput={(e) => { const t = e.target; t.style.height = 'auto'; t.style.height = `${Math.min(t.scrollHeight, 80)}px`; }}
           />
@@ -146,8 +158,20 @@ export function LifeGoalCard({
                 defaultValue={goal.title}
                 rows={1}
                 autoFocus
-                onBlur={(e) => { onRename(goal.id, e.target.value); setIsEditingExpanded(false); }}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onRename(goal.id, e.currentTarget.value); setIsEditingExpanded(false); } if (e.key === 'Escape') setIsEditingExpanded(false); }}
+                onBlur={(e) => { 
+                  const v = e.target.value.trim();
+                  if (v && v !== goal.title) onRename?.(goal.id, v); 
+                  setIsEditingExpanded(false); 
+                }}
+                onKeyDown={(e) => { 
+                  if (e.key === 'Enter' && !e.shiftKey) { 
+                    e.preventDefault(); 
+                    const v = e.currentTarget.value.trim();
+                    if (v && v !== goal.title) onRename?.(goal.id, v); 
+                    setIsEditingExpanded(false); 
+                  } 
+                  if (e.key === 'Escape') setIsEditingExpanded(false); 
+                }}
                 className={`min-h-[1.5rem] w-full resize-none overflow-hidden bg-transparent py-0.5 text-sm font-semibold leading-snug tracking-tight outline-none break-words ${
                   goal.done ? 'text-zinc-400 line-through' : 'text-zinc-900 dark:text-zinc-50'
                 }`}
@@ -167,7 +191,7 @@ export function LifeGoalCard({
             )}
 
             <div className="flex shrink-0 items-center gap-1 pl-2">
-              <ActionButton size="sm" onClick={() => onPromoteProject(goal.id)} className={isLinkedToProject ? 'text-indigo-500 bg-indigo-50 dark:text-indigo-300 dark:bg-indigo-500/30 dark:ring-1 dark:ring-indigo-400/50' : ''} title={isLinkedToProject ? 'Rimuovi da Progetti' : 'Sincronizza con Progetti'}>
+              <ActionButton size="sm" onClick={() => onPromoteProject?.(goal.id)} className={isLinkedToProject ? 'text-indigo-500 bg-indigo-50 dark:text-indigo-300 dark:bg-indigo-500/30 dark:ring-1 dark:ring-indigo-400/50' : ''} title={isLinkedToProject ? 'Rimuovi da Progetti' : 'Sincronizza con Progetti'}>
                 <Icons.Target className="h-3 w-3" />
               </ActionButton>
               <ActionButton size="sm" onClick={() => setShowTasks(!showTasks)} className={showTasks ? 'text-zinc-800 bg-zinc-100 dark:text-zinc-100 dark:bg-indigo-500/30 dark:ring-1 dark:ring-indigo-400/50' : ''} title={showTasks ? 'Chiudi task' : 'Apri task'}>
@@ -176,7 +200,7 @@ export function LifeGoalCard({
               <ActionButton size="sm" onClick={() => { setDeadlineInput(goal.deadline || ''); setDeadlineEditing(goal.id); }} className={goal.deadline ? 'text-amber-500 bg-amber-50 dark:text-amber-300 dark:bg-amber-500/30 dark:ring-1 dark:ring-amber-400/50' : ''} title="Scadenza">
                 <Icons.Calendar className="h-3 w-3" />
               </ActionButton>
-              <ActionButton size="sm" danger onClick={() => onDelete(goal.id)} title="Elimina">
+              <ActionButton size="sm" danger onClick={() => onDelete?.(goal.id)} title="Elimina">
                 <Icons.X className="h-3 w-3" />
               </ActionButton>
             </div>
@@ -187,7 +211,7 @@ export function LifeGoalCard({
               <span className={accentText}>Life Goal</span>
             </Badge>
             <Badge variant={percentage === 100 && stats?.total > 0 ? 'success' : 'primary'} size="sm">
-              {stats?.done ?? 0}/{stats?.total ?? 0} task
+              {stats?.completed ?? stats?.done ?? 0}/{stats?.total ?? 0} task
             </Badge>
             {goal.deadline && (
               <Badge variant={goal.done ? 'default' : 'warning'} size="sm">
