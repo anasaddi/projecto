@@ -71,7 +71,7 @@ function SortableHabitItem({ task, idx, todayTaskLog, isHovered, setHoveredHabit
         ${isLocked ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}
         transition-colors duration-200
         ${isLocked
-          ? 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/50'
+          ? 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30'
           : isHovered
             ? 'border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900'
             : 'bg-transparent'}
