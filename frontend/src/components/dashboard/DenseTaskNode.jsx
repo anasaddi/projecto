@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useCallback } from 'react';
 import { Icons } from './Icons';
-import { TaskCheckbox } from './DashboardComponents';
+import { TaskCheckbox, KebabMenu } from './DashboardComponents';
 import { useLongPressActions } from '../../hooks/useLongPressActions';
 import { useDashboardStore } from '../../store/dashboardStore';
 import {
@@ -641,27 +641,50 @@ export function DenseTaskNode({
             )}
           </div>
 
-        <div
-          ref={barRef}
-          className={`flex w-full shrink-0 items-center justify-end gap-0.5 sm:w-auto sm:shrink-0 sm:justify-end sm:pt-0.5 transition-all duration-200 touch-manipulation ${longPressActive || (!hideTop3Button && isTop3) ? 'opacity-100 visible' : 'opacity-0 invisible group-hover/row:opacity-100 group-hover/row:visible'}`}
-        >
-          {taskActions.map((act, i) => {
-            const ap = getActionProps(i);
-            return (
-              <button
-                key={i}
-                data-action-idx={i}
-                type="button"
-                onClick={(e) => { if (handledByPointerUpRef.current) { e.preventDefault(); return; } e.stopPropagation(); act.onClick(e); }}
-                title={act.title}
-                aria-label={act.title}
-                className={`dashboard-action-btn ${act.className || ''} ${ap.className || ''}`}
-              >
-                {act.icon}
-              </button>
-            );
-          })}
-        </div>
+          {/* Kebab menu sempre visibile su mobile, hover su desktop */}
+          <div className="flex shrink-0 items-center">
+            <KebabMenu
+              items={[
+                !node.done && !isFocusActive && {
+                  label: 'Inizia Focus',
+                  icon: <Icons.Clock className="h-3.5 w-3.5" />,
+                  onClick: () => setActivePomodoroTask({ taskId: node.id, projectId, title: node.title }),
+                },
+                !hideTop3Button && (isTop3 || hasFreeTop3Slot) && {
+                  label: isTop3 ? 'Rimuovi da Focus' : 'Pin a Focus',
+                  icon: <Icons.Target className="h-3.5 w-3.5" />,
+                  onClick: () => onToggleTop3(projectId, node.id),
+                },
+                !node.done && {
+                  label: wb === me ? 'Rilascia task' : (wb ? `Prendi da ${collabDisplayName(wb)}` : 'Assegna a me'),
+                  icon: <Icons.User className="h-3.5 w-3.5" />,
+                  onClick: () => onWorking(node.id, wb === me ? null : me),
+                },
+                canAddChild && !node.done && {
+                  label: 'Aggiungi subtask',
+                  icon: <Icons.Plus className="h-3.5 w-3.5" />,
+                  onClick: () => setOpenAdd(true),
+                },
+                {
+                  label: 'Scadenza',
+                  icon: <Icons.Calendar className="h-3.5 w-3.5" />,
+                  onClick: () => setShowDeadline(true),
+                },
+                {
+                  label: 'Rinomina',
+                  icon: <Icons.Edit2 className="h-3.5 w-3.5" />,
+                  onClick: () => setEditing(true),
+                },
+                'divider',
+                {
+                  label: 'Elimina',
+                  icon: <Icons.X className="h-3.5 w-3.5" />,
+                  danger: true,
+                  onClick: () => onDelete(node.id),
+                },
+              ].filter(Boolean)}
+            />
+          </div>
         </div>
         </>
         )}

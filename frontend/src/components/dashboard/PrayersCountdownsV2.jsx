@@ -5,10 +5,10 @@ import { Icons } from './Icons';
 import { MS } from '../../constants';
 
 const TIME_BAR_CONFIGS = [
-  { key: 'Day',   gradient: 'from-indigo-500 to-violet-500',   bg: 'bg-indigo-50 dark:bg-indigo-950/40',   label: 'Day',   ring: 'ring-indigo-200 dark:ring-indigo-800/40' },
-  { key: 'Week',  gradient: 'from-indigo-500 to-violet-500',  bg: 'bg-indigo-50 dark:bg-indigo-950/40',  label: 'Week',  ring: 'ring-indigo-200 dark:ring-indigo-800/40' },
-  { key: 'Month', gradient: 'from-indigo-500 to-violet-500',  bg: 'bg-indigo-50 dark:bg-indigo-950/40',  label: 'Month', ring: 'ring-indigo-200 dark:ring-indigo-800/40' },
-  { key: 'Year',  gradient: 'from-indigo-500 to-violet-500',  bg: 'bg-indigo-50 dark:bg-indigo-950/40',  label: 'Year',  ring: 'ring-indigo-200 dark:ring-indigo-800/40' },
+  { key: 'Day',   gradient: 'from-indigo-500 to-violet-500',   bg: 'bg-transparent',   label: 'Day',   ring: 'ring-zinc-200 dark:ring-white/[0.08]' },
+  { key: 'Week',  gradient: 'from-indigo-500 to-violet-500',  bg: 'bg-transparent',  label: 'Week',  ring: 'ring-zinc-200 dark:ring-white/[0.08]' },
+  { key: 'Month', gradient: 'from-indigo-500 to-violet-500',  bg: 'bg-transparent',  label: 'Month', ring: 'ring-zinc-200 dark:ring-white/[0.08]' },
+  { key: 'Year',  gradient: 'from-indigo-500 to-violet-500',  bg: 'bg-transparent',  label: 'Year',  ring: 'ring-zinc-200 dark:ring-white/[0.08]' },
 ];
 
 /**
@@ -110,18 +110,18 @@ export function PrayersCountdownsV2({
 
           <div className="hidden sm:block h-12 w-px bg-zinc-200 dark:bg-white/[0.06] shrink-0" />
 
-          {/* Section 2: Time Period Progress Bars */}
-          <div className="flex w-full gap-2 overflow-x-auto pb-1 sm:w-auto sm:flex-wrap sm:overflow-visible sm:gap-4 scrollbar-hide">
+          {/* Section 2: Time Period Progress Bars - compact, no scroll */}
+          <div className="flex w-full justify-between gap-1 sm:gap-2">
             {allBars.map((bar) => {
               const cfg = TIME_BAR_CONFIGS.find(c => c.key === bar.label) || TIME_BAR_CONFIGS[0];
               const pct = Math.min(1, Math.max(0, bar.pct ?? 0));
               return (
-                <div key={bar.label} className={`flex w-[92px] shrink-0 flex-col gap-1.5 rounded-2xl ring-1 ${cfg.bg} ${cfg.ring} px-3 py-2 sm:w-auto sm:min-w-[76px]`}>
-                  <div className="flex items-center justify-between gap-2 whitespace-nowrap">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400">{bar.label}</span>
-                    <span className="text-[10px] font-bold tabular-nums text-zinc-400 dark:text-zinc-500">{Math.round(pct * 100)}%</span>
+                <div key={bar.label} className="flex flex-1 min-w-0 flex-col gap-1 rounded-xl ring-1 px-2 py-1.5 sm:px-3 sm:py-2">
+                  <div className="flex items-center justify-between gap-1 whitespace-nowrap">
+                    <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{bar.label}</span>
+                    <span className="text-[9px] sm:text-[10px] font-bold tabular-nums text-zinc-400 dark:text-zinc-500">{Math.round(pct * 100)}%</span>
                   </div>
-                  <div className="h-1.5 w-full rounded-full bg-zinc-200/70 dark:bg-zinc-800/80 overflow-hidden">
+                  <div className="h-1 sm:h-1.5 w-full rounded-full bg-zinc-200/70 dark:bg-zinc-800/80 overflow-hidden">
                     <motion.div
                       className={`h-full rounded-full bg-gradient-to-r ${cfg.gradient}`}
                       initial={false}
@@ -129,7 +129,7 @@ export function PrayersCountdownsV2({
                       transition={{ duration: 1, ease: 'easeOut' }}
                     />
                   </div>
-                  <span className="text-xs font-black tabular-nums text-zinc-900 dark:text-zinc-100">{bar.remaining}</span>
+                  <span className="text-[10px] sm:text-xs font-bold tabular-nums text-zinc-900 dark:text-zinc-100">{bar.remaining}</span>
                 </div>
               );
             })}

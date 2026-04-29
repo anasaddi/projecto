@@ -97,47 +97,47 @@ export function LifeGoalsSection() {
                 onDrop={moveGoalToTier}
               >
                 {tier.goals.length === 0 && (
-                        <div className="relative flex min-h-[3rem] items-center justify-center overflow-hidden rounded-xl border border-dashed border-zinc-200/80 dark:border-white/[0.1] bg-zinc-50/40 dark:bg-white/[0.02] transition-all group/empty hover:border-indigo-400/40 dark:hover:border-indigo-500/30">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 transition-colors group-hover/empty:text-indigo-500 dark:group-hover/empty:text-indigo-400">Trascina o aggiungi obiettivi</span>
-                        </div>
-                      )}
+                  <div className="relative flex min-h-[3rem] items-center justify-center overflow-hidden rounded-xl border border-dashed border-zinc-200/80 dark:border-white/[0.1] bg-zinc-50/40 dark:bg-white/[0.02] transition-all group/empty hover:border-indigo-400/40 dark:hover:border-indigo-500/30">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 transition-colors group-hover/empty:text-indigo-500 dark:group-hover/empty:text-indigo-400">Trascina o aggiungi obiettivi</span>
+                  </div>
+                )}
 
-                      {tier.goals.some(g => g.type === 'quick') && (
-                        <div className="space-y-2">
-                          <h4 className="px-0.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Micro movements</h4>
-                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-cols-fr">
-                            {tier.goals.filter(g => g.type === 'quick').map((goal) => (
-                              <LifeGoalCard
-                                key={goal.id} goal={goal} compact
-                                accent={tier.id === 'tier-1' ? 'emerald' : tier.id === 'tier-2' ? 'sky' : 'violet'} stats={{}} percentage={0}
-                                onToggle={(gid, val) => {
-                                  updateGoal(gid, g => ({ ...g, done: val }));
-                                  const qt = quickTasks.find(t => t.lifeGoalId === gid && !t.parentId);
-                                  if (qt) toggleQuickTask(qt.id, val);
-                                  else setQuickTasks(prev => prev.map(t => t.lifeGoalId === gid ? { ...t, done: val } : t));
-                                }}
-                                onDelete={(gid) => setConfirmState?.({ id: 'deleteGoal', payload: { goalId: gid } })}
-                                onRename={(gid, val, type) => updateGoal(gid, g => ({ ...g, title: val, type: type || g.type }))}
-                                onDeadline={(gid, val) => updateGoal(gid, g => ({ ...g, deadline: val || null }))}
-                                onDeadlineClick={(gid, val) => { updateGoal(gid, g => ({ ...g, deadline: val.trim() || null })); setGoalDeadlineEditing(null); }}
-                                deadlineEditing={goalDeadlineEditing} deadlineInput={goalDeadlineInput}
-                                setDeadlineInput={setGoalDeadlineInput} setDeadlineEditing={setGoalDeadlineEditing}
-                                getDeadlineColorClass={getDeadlineColorClass} formatDeadline={formatDeadline}
-                                onToggleTop3={handleToggleTop3}
-                                isInTop3={getTop3IndexForGoal(goal.id) !== -1}
-                                hasFreeTop3Slot={top3Manual.some(s => !s)}
-                                onPromoteProject={handlePromoteProject}
-                                onPromoteQuick={handlePromoteQuick}
-                                isLinkedToProject={projects.some((project) => project.lifeGoalId === goal.id)}
-                                isLinkedToQuick={quickTasks.some((task) => task.lifeGoalId === goal.id && !task.parentId)}
-                                renderTasks={() => null}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                {tier.goals.some(g => g.type === 'quick') && (
+                  <div className="flex flex-col gap-1">
+                    <h4 className="px-0.5 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">Micro movements</h4>
+                    <div className="flex flex-col gap-1">
+                      {tier.goals.filter(g => g.type === 'quick').map((goal) => (
+                        <LifeGoalCard
+                          key={goal.id} goal={goal} compact
+                          accent={tier.id === 'tier-1' ? 'emerald' : tier.id === 'tier-2' ? 'sky' : 'violet'} stats={{}} percentage={0}
+                          onToggle={(gid, val) => {
+                            updateGoal(gid, g => ({ ...g, done: val }));
+                            const qt = quickTasks.find(t => t.lifeGoalId === gid && !t.parentId);
+                            if (qt) toggleQuickTask(qt.id, val);
+                            else setQuickTasks(prev => prev.map(t => t.lifeGoalId === gid ? { ...t, done: val } : t));
+                          }}
+                          onDelete={(gid) => setConfirmState?.({ id: 'deleteGoal', payload: { goalId: gid } })}
+                          onRename={(gid, val, type) => updateGoal(gid, g => ({ ...g, title: val, type: type || g.type }))}
+                          onDeadline={(gid, val) => updateGoal(gid, g => ({ ...g, deadline: val || null }))}
+                          onDeadlineClick={(gid, val) => { updateGoal(gid, g => ({ ...g, deadline: val.trim() || null })); setGoalDeadlineEditing(null); }}
+                          deadlineEditing={goalDeadlineEditing} deadlineInput={goalDeadlineInput}
+                          setDeadlineInput={setGoalDeadlineInput} setDeadlineEditing={setGoalDeadlineEditing}
+                          getDeadlineColorClass={getDeadlineColorClass} formatDeadline={formatDeadline}
+                          onToggleTop3={handleToggleTop3}
+                          isInTop3={getTop3IndexForGoal(goal.id) !== -1}
+                          hasFreeTop3Slot={top3Manual.some(s => !s)}
+                          onPromoteProject={handlePromoteProject}
+                          onPromoteQuick={handlePromoteQuick}
+                          isLinkedToProject={projects.some((project) => project.lifeGoalId === goal.id)}
+                          isLinkedToQuick={quickTasks.some((task) => task.lifeGoalId === goal.id && !task.parentId)}
+                          renderTasks={() => null}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-                      {tier.goals.some(g => g.type === 'project') && (
+                {tier.goals.some(g => g.type === 'project') && (
                         <div className="space-y-2">
                           <h4 className="px-0.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Macro progetti</h4>
                           <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-2 lg:gap-3 auto-cols-fr">
