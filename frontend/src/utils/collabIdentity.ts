@@ -44,5 +44,5 @@ export function setCollabIdentity(id: CollabIdentity): void {
 }
 
 export function collabDisplayName(id: CollabIdentity): string {
-  return id === 'anas' ? 'Anas' : 'Othmane';
+  return id === 'anas' ? '' : 'Othmane';
 }
