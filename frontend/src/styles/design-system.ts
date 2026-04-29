@@ -48,7 +48,7 @@ export const colors = {
     DEFAULT: 'bg-amber-500',
     dark: 'bg-amber-600',
     text: 'text-amber-600 dark:text-amber-400',
-    border: 'border-amber-200 dark:border-amber-800',
+    border: 'border-amber-200 dark:border-amber-700/50',
   },
   
   // Semantic Colors - Error
