@@ -154,7 +154,7 @@ export function TodayCardDashboard({ defaultExpanded = true }: TodayCardDashboar
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             className="overflow-hidden"
           >
-            <div className="p-4 pt-0">
+            <div className="p-2 pt-0">
               {loading ? (
                 <TodayCardSkeleton />
               ) : (

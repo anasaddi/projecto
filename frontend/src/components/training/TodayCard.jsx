@@ -212,10 +212,7 @@ function MuscDot({ exerciseId, remoteMap, configMap }) {
   const group = getDominantGroup(mapToUse[exerciseId] || [], configMap?.MUSCLE_GROUP_MAP);
   const accent = configMap?.GROUP_ACCENT_DOT?.[group] || 'bg-zinc-200 dark:bg-zinc-800';
   return (
-    <div className="relative">
-      <div className={`w-1.5 h-6 rounded-full shrink-0 ${accent} transition-all duration-500`} style={{ opacity: 0.8 }} />
-      <div className={`absolute inset-0 w-1.5 h-6 rounded-full blur-[2px] opacity-40 ${accent}`} />
-    </div>
+    <div className={`w-1.5 h-6 rounded-full shrink-0 ${accent} transition-all duration-500`} style={{ opacity: 0.8 }} />
   );
 }
 
@@ -232,7 +229,7 @@ function ExRow({ exerciseId, exerciseName, badge, badgeBg, anasC, flavioC, anasW
         <div className={`text-sm font-bold leading-tight tracking-tight capitalize truncate transition-all duration-500 ${bothDone ? 'text-zinc-400 dark:text-zinc-600' : 'text-zinc-900 dark:text-zinc-100'}`}>
           {exerciseName}
         </div>
-        <div className="flex items-center gap-2 mt-1.5 overflow-hidden">
+        <div className="flex items-center gap-2 mt-1 overflow-hidden">
           <span className={`text-xs scale-90 font-black tracking-[0.15em] text-white px-1.5 py-0.5 rounded-md uppercase shadow-sm ${badgeBg} opacity-90 shrink-0`}>
             {badge}
           </span>

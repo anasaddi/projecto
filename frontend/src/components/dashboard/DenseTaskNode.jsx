@@ -644,6 +644,7 @@ export function DenseTaskNode({
           {/* Kebab menu sempre visibile su mobile, hover su desktop */}
           <div className="flex shrink-0 items-center">
             <KebabMenu
+              alwaysVisible
               items={[
                 !node.done && !isFocusActive && {
                   label: 'Inizia Focus',
