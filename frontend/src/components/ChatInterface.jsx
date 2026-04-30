@@ -51,6 +51,7 @@ const ChatInterface = () => {
       ] : null;
 
       // Call OpenRouter Video Generation API with Kling Pro
+      console.log('Sending video generation request...');
       const response = await fetch('https://openrouter.ai/api/v1/videos', {
         method: 'POST',
         headers: {
@@ -63,6 +64,15 @@ const ChatInterface = () => {
           frame_images: frameImages
         })
       });
+
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`API request failed: ${response.status} - ${errorText}`);
+      }
 
       const data = await response.json();
       
