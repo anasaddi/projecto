@@ -42,8 +42,16 @@ const ChatInterface = () => {
     setIsLoading(true);
 
     try {
-      // Call OpenRouter API with Kling Pro model (or alternative chat model)
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      // Prepare frame images from attached files
+      const frameImages = attachedFiles.length > 0 ? [
+        {
+          frame_type: 'first_frame',
+          image_url: attachedFiles[0].name // In real implementation, you'd upload the file first
+        }
+      ] : null;
+
+      // Call OpenRouter Video Generation API with Kling Pro
+      const response = await fetch('https://openrouter.ai/api/v1/videos', {
         method: 'POST',
         headers: {
           'Authorization': 'Bearer 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',
@@ -51,31 +59,89 @@ const ChatInterface = () => {
         },
         body: JSON.stringify({
           model: 'kwaivgi/kling-v3.0-pro',
-          messages: [
-            ...messages.map(m => ({ role: m.role, content: m.content })),
-            { role: 'user', content: input }
-          ]
+          prompt: input,
+          frame_images: frameImages
         })
       });
 
       const data = await response.json();
-      const assistantMessage = {
-        role: 'assistant',
-        content: data.choices[0].message.content,
-        timestamp: new Date().toISOString()
-      };
+      
+      if (data.id && data.polling_url) {
+        const assistantMessage = {
+          role: 'assistant',
+          content: `🎬 Video generation started!\nJob ID: ${data.id}\nPolling for completion...`,
+          jobId: data.id,
+          pollingUrl: data.polling_url,
+          timestamp: new Date().toISOString()
+        };
 
-      setMessages(prev => [...prev, assistantMessage]);
+        setMessages(prev => [...prev, assistantMessage]);
+        
+        // Start polling for video completion
+        pollForVideo(data.polling_url, data.id);
+      } else {
+        throw new Error('Invalid response from video API');
+      }
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error generating video:', error);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Mi dispiace, c\'è stato un errore. Riprova.',
+        content: 'Mi dispiace, c\'è stato un errore nella generazione video. Riprova.',
         timestamp: new Date().toISOString()
       }]);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const pollForVideo = async (pollingUrl, jobId) => {
+    const maxAttempts = 60; // 5 minutes with 5-second intervals
+    let attempts = 0;
+
+    const poll = async () => {
+      try {
+        const response = await fetch(pollingUrl, {
+          headers: {
+            'Authorization': 'Bearer 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'
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'completed') {
+          const videoUrls = data.unsigned_urls || [];
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: `✅ Video completato!\n\nVideo URLs:\n${videoUrls.map(url => `• ${url}`).join('\n')}`,
+            videoUrls: videoUrls,
+            timestamp: new Date().toISOString()
+          }]);
+        } else if (data.status === 'failed') {
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: `❌ Video generation failed: ${data.error || 'Unknown error'}`,
+            timestamp: new Date().toISOString()
+          }]);
+        } else if (attempts < maxAttempts) {
+          attempts++;
+          setTimeout(poll, 5000); // Poll every 5 seconds
+        } else {
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: '⏱️ Video generation timed out. Controlla più tardi.',
+            timestamp: new Date().toISOString()
+          }]);
+        }
+      } catch (error) {
+        console.error('Error polling video status:', error);
+        if (attempts < maxAttempts) {
+          attempts++;
+          setTimeout(poll, 5000);
+        }
+      }
+    };
+
+    poll();
   };
 
   const handleKeyPress = (e) => {
@@ -89,7 +155,10 @@ const ChatInterface = () => {
     <div className="flex flex-col h-full bg-white dark:bg-zinc-900 rounded-3xl overflow-hidden shadow-xl border border-zinc-200 dark:border-zinc-800">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
-        <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Chat AI</h2>
+        <div>
+          <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Video Generator AI</h2>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Kling Pro - Genera video da testo</p>
+        </div>
         <button
           onClick={() => setMessages([])}
           className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
@@ -103,8 +172,8 @@ const ChatInterface = () => {
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-zinc-400 dark:text-zinc-600">
             <Send className="w-12 h-12 mb-4" />
-            <p className="text-lg">Inizia una conversazione</p>
-            <p className="text-sm mt-2">Scrivi un messaggio o carica un file</p>
+            <p className="text-lg">Genera video con Kling Pro</p>
+            <p className="text-sm mt-2">Descrivi il video che vuoi creare</p>
           </div>
         )}
 
@@ -133,6 +202,30 @@ const ChatInterface = () => {
                 </div>
               )}
               <p className="whitespace-pre-wrap">{message.content}</p>
+              {message.videoUrls && message.videoUrls.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {message.videoUrls.map((url, i) => (
+                    <div key={i}>
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline block"
+                      >
+                        🎥 Video {i + 1}
+                      </a>
+                      <video
+                        controls
+                        className="mt-2 rounded-lg max-w-full"
+                        style={{ maxHeight: '300px' }}
+                      >
+                        <source src={url} type="video/mp4" />
+                        Il tuo browser non supporta il video.
+                      </video>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -191,7 +284,7 @@ const ChatInterface = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Scrivi un messaggio..."
+            placeholder="Descrivi il video che vuoi creare..."
             className="flex-1 px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400"
             disabled={isLoading}
           />
