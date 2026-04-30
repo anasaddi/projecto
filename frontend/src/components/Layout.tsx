@@ -18,10 +18,11 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
   const isYouTube = pathname === '/youtube';
   const isDashboard = pathname === '/dashboard';
   const isTraining = pathname === '/training';
+  const isChat = pathname === '/chat';
   const isShared = pathname.startsWith('/shared');
   const isSharedProject = pathname.startsWith('/shared/') && pathname !== '/shared';
   const isNextcode = pathname.startsWith('/shared/nextcode');
-  const isWorkspace = isYouTube || isDashboard || isTraining || isShared;
+  const isWorkspace = isYouTube || isDashboard || isTraining || isShared || isChat;
   const { stats } = useDashboardStats() || { stats: { doneFocusItems: 0, totalFocusItems: 0 } };
 
   const lastSavedAt = useDashboardStore((s) => s.lastSavedAt);
@@ -92,6 +93,7 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
     { to: '/shared', label: 'Condivisi', active: isShared },
     ...(trainingAllowed ? [{ to: '/training', label: 'Training', active: isTraining }] : []),
     { to: '/youtube', label: 'Transcript', active: isYouTube },
+    { to: '/chat', label: 'Chat', active: isChat },
   ];
 
   return (
