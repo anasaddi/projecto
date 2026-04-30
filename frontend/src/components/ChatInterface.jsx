@@ -50,6 +50,14 @@ const ChatInterface = () => {
         }
       ] : null;
 
+      const requestBody = {
+        model: 'kwaivgi/kling-v3.0-pro',
+        prompt: input,
+        frame_images: frameImages
+      };
+
+      console.log('Request body:', requestBody);
+
       // Call OpenRouter Video Generation API with Kling Pro
       console.log('Sending video generation request...');
       const response = await fetch('https://openrouter.ai/api/v1/videos', {
@@ -58,11 +66,7 @@ const ChatInterface = () => {
           'Authorization': 'Bearer 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',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          model: 'kwaivgi/kling-v3.0-pro',
-          prompt: input,
-          frame_images: frameImages
-        })
+        body: JSON.stringify(requestBody)
       });
 
       console.log('Response status:', response.status);
