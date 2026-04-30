@@ -82,12 +82,32 @@ const ChatInterface = () => {
 
       // Check if Kling Pro is available
       const modelsData = await modelsResponse.json();
-      const klingProAvailable = modelsData.some(m => m.id === 'kwaivgi/kling-v3.0-pro');
-      console.log('Kling Pro available:', klingProAvailable);
+      console.log('Models data type:', typeof modelsData);
+      console.log('Models data:', Array.isArray(modelsData) ? `Array with ${modelsData.length} models` : 'Not an array');
+      
+      if (Array.isArray(modelsData)) {
+        const klingProAvailable = modelsData.some(m => m.id === 'kwaivgi/kling-v3.0-pro');
+        console.log('Kling Pro available:', klingProAvailable);
 
-      if (!klingProAvailable) {
-        console.log('Available video models:', modelsData.filter(m => m.id.includes('video') || m.id.includes('kling')));
-        throw new Error('Kling Pro model not available with this API key');
+        if (!klingProAvailable) {
+          console.log('Available video models:', modelsData.filter(m => m.id.includes('video') || m.id.includes('kling')));
+          throw new Error('Kling Pro model not available with this API key');
+        }
+      } else {
+        console.log('Models data structure:', Object.keys(modelsData));
+        // Check if models are in a data property
+        if (modelsData.data && Array.isArray(modelsData.data)) {
+          const klingProAvailable = modelsData.data.some(m => m.id === 'kwaivgi/kling-v3.0-pro');
+          console.log('Kling Pro available:', klingProAvailable);
+
+          if (!klingProAvailable) {
+            console.log('Available video models:', modelsData.data.filter(m => m.id.includes('video') || m.id.includes('kling')));
+            throw new Error('Kling Pro model not available with this API key');
+          }
+        } else {
+          console.log('Full models response:', JSON.stringify(modelsData).substring(0, 500));
+          throw new Error('Unexpected models response structure');
+        }
       }
 
       // Call OpenRouter Video Generation API with Kling Pro
