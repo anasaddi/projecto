@@ -103,13 +103,10 @@ export function PrayersCountdownsV2({
               </div>
             </div>
             
-            <div className="text-center sm:text-left">
-              <h4 className="text-[18px] font-bold text-zinc-800 dark:text-dark-textPrimary">
-                {percentage === 100 ? 'Giornata perfetta!' : percentage > 70 ? 'Ottimo lavoro finora!' : percentage > 30 ? 'Sei sulla buona strada.' : 'Inizia una sessione per costruire momentum.'}
+            <div className="text-center sm:text-left flex flex-col justify-center">
+              <h4 className="text-[18px] font-bold text-zinc-800 dark:text-dark-textPrimary leading-tight">
+                {percentage === 100 ? 'Giornata perfetta!' : percentage > 70 ? 'Ottimo lavoro finora!' : percentage > 30 ? 'Sei sulla buona strada.' : 'Pronto per iniziare'}
               </h4>
-              <p className="mt-1 text-[14px] text-zinc-500 dark:text-dark-textSecondary font-medium max-w-sm">
-                {isToday ? 'Completa le tue priorità e mantieni la costanza giornaliera.' : 'Riepilogo del focus per questa giornata.'}
-              </p>
             </div>
           </div>
 

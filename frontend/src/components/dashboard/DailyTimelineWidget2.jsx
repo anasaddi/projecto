@@ -406,26 +406,29 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                   {/* Mobile: single prayer with smooth transition */}
                   <div className="md:hidden flex flex-col">
                     {/* Mobile navigation */}
-                    <div className="flex items-center justify-center mb-4 px-2 sticky left-0 right-0 z-20 bg-zinc-50/90 dark:bg-[#0b0e14]/90 backdrop-blur-xl py-2 border-b border-zinc-200/50 dark:border-dark-borderSubtle">
-                      <div className="flex gap-3 overflow-x-auto no-scrollbar px-2 py-1 w-full justify-between sm:justify-center">
-                        {PRAYERS.map((prayer, i) => {
-                          const isDone = todayPrayerLog[prayer];
-                          const isSelected = i === currentPrayerIndex;
-                          return (
-                            <button
-                              key={i}
-                              onClick={() => {
-                                setDirection(i > currentPrayerIndex ? 1 : -1);
-                                setCurrentPrayerIndex(i);
-                              }}
-                              className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${isSelected ? 'opacity-100 scale-105' : 'opacity-50 hover:opacity-100'}`}
-                            >
-                               <div className={`w-3 h-3 rounded-full transition-colors ${isSelected ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]' : isDone ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]' : 'border-2 border-zinc-300 dark:border-zinc-700 bg-transparent'}`} />
-                               <span className={`text-[10px] font-bold uppercase tracking-widest ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : isDone ? 'text-emerald-600 dark:text-emerald-500' : 'text-zinc-500'}`}>{prayer}</span>
-                            </button>
-                          );
-                        })}
+                    <div className="flex items-center justify-between mb-4 px-2 sticky left-0 right-0 z-20 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl py-2">
+                      <button
+                        onClick={handlePrevious}
+                        disabled={currentPrayerIndex === 0}
+                        className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                      >
+                        <Icons.ChevronLeft className="w-5 h-5" />
+                      </button>
+                      <div className="flex gap-1">
+                        {PRAYERS.map((_, i) => (
+                          <div
+                            key={i}
+                            className={`w-2 h-2 rounded-full transition-all duration-300 ${i === currentPrayerIndex ? 'bg-indigo-500 w-6' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                          />
+                        ))}
                       </div>
+                      <button
+                        onClick={handleNext}
+                        disabled={currentPrayerIndex === PRAYERS.length - 1}
+                        className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                      >
+                        <Icons.ChevronRight className="w-5 h-5" />
+                      </button>
                     </div>
 
                     {/* Mobile: single prayer with animation */}
