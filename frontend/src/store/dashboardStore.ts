@@ -61,6 +61,7 @@ const defaultInitial = {
     center: ['top3', 'habits'],
     right: ['projects'],
   } as Record<string, string[]>,
+  lockedHabitsCollapsed: false,
   selectedDate: new Date(),
 };
 
@@ -112,6 +113,7 @@ const dashboardStore = create<any>()(
         sharedDashboards: [] as unknown[],
         timelinePanelExpanded: initialState.timelinePanelExpanded !== false,
         todayTrainingExpanded: initialState.todayTrainingExpanded !== false,
+        lockedHabitsCollapsed: !!(initialState as any).lockedHabitsCollapsed,
         projectExpandedState: (initialState as any).projectExpandedState ?? {},
         activePomodoroTask: initialState.activePomodoroTask ?? null,
         sectionOrder: (initialState as any).sectionOrder ?? defaultInitial.sectionOrder,

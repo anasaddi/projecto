@@ -400,6 +400,7 @@ export function loadDashboardStateFromStorage(fallback = null) {
       timelineRoutines: parsed.timelineRoutines && typeof parsed.timelineRoutines === 'object' ? parsed.timelineRoutines : fb.timelineRoutines,
       timelinePanelExpanded: parsed.timelinePanelExpanded !== undefined ? parsed.timelinePanelExpanded : true,
       todayTrainingExpanded: parsed.todayTrainingExpanded !== undefined ? parsed.todayTrainingExpanded : fb.todayTrainingExpanded,
+      lockedHabitsCollapsed: parsed.lockedHabitsCollapsed !== undefined ? parsed.lockedHabitsCollapsed : false,
       projectExpandedState: parsed.projectExpandedState && typeof parsed.projectExpandedState === 'object' ? parsed.projectExpandedState : fb.projectExpandedState,
       sectionOrder: parsed.sectionOrder && typeof parsed.sectionOrder === 'object' ? parsed.sectionOrder : fb.sectionOrder,
       activePomodoroTask: parsed.activePomodoroTask !== undefined ? parsed.activePomodoroTask : fb.activePomodoroTask,
