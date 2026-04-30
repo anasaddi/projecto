@@ -86,10 +86,10 @@ const ChatInterface = () => {
       console.error('Error generating video:', error);
       const errorMessage = error.message || 'Unknown error';
       console.error('Error details:', errorMessage);
-      
+
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `❌ Errore nella generazione video:\n${errorMessage}\n\nDettagli tecnici:\n${JSON.stringify(error, null, 2)}`,
+        content: 'Errore nella generazione video: ' + errorMessage + '. Controlla la console per dettagli.',
         timestamp: new Date().toISOString()
       }]));
     } finally {
