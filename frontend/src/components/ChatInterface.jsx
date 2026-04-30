@@ -42,7 +42,7 @@ const ChatInterface = () => {
     setIsLoading(true);
 
     try {
-      // Call OpenRouter API
+      // Call OpenRouter API with Kling Pro model (or alternative chat model)
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -50,7 +50,7 @@ const ChatInterface = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'openai/gpt-4o-mini',
+          model: 'kwaivgi/kling-v3.0-pro',
           messages: [
             ...messages.map(m => ({ role: m.role, content: m.content })),
             { role: 'user', content: input }
