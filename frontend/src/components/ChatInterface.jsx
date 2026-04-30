@@ -66,7 +66,7 @@ const ChatInterface = () => {
       console.log('API Key length:', apiKey.length);
       console.log('API Key starts with:', apiKey.substring(0, 10));
 
-      // First, check if API key works with models endpoint
+      // First, check if API key works with models endpoint and if Kling Pro is available
       console.log('Testing API key with models endpoint...');
       const modelsResponse = await fetch('https://openrouter.ai/api/v1/models', {
         headers: {
@@ -78,6 +78,16 @@ const ChatInterface = () => {
         const errorText = await modelsResponse.text();
         console.error('Models API error:', errorText);
         throw new Error(`API key invalid: ${errorText}`);
+      }
+
+      // Check if Kling Pro is available
+      const modelsData = await modelsResponse.json();
+      const klingProAvailable = modelsData.some(m => m.id === 'kwaivgi/kling-v3.0-pro');
+      console.log('Kling Pro available:', klingProAvailable);
+
+      if (!klingProAvailable) {
+        console.log('Available video models:', modelsData.filter(m => m.id.includes('video') || m.id.includes('kling')));
+        throw new Error('Kling Pro model not available with this API key');
       }
 
       // Call OpenRouter Video Generation API with Kling Pro
