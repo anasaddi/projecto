@@ -160,21 +160,21 @@ const getDominantGroup = (muscles, map) => {
   return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
 };
 
-function Tick({ checked, onChange, accentBg }) {
+function Tick({ checked, onChange, accentBg, compact = false }) {
   return (
     <button
       type="button"
       onClick={onChange}
-      className={`relative w-6 h-6 rounded-xl flex items-center justify-center transition-all duration-500 shrink-0 transform active:scale-90
+      className={`relative ${compact ? 'w-5 h-5 rounded-lg' : 'w-6 h-6 rounded-xl'} flex items-center justify-center transition-all duration-500 shrink-0 transform active:scale-90
         ${checked
           ? `${accentBg} border-transparent shadow-[0_0_15px_-3px_rgba(79,70,229,0.5)] dark:shadow-[0_0_20px_-5px_rgba(79,70,229,0.6)]`
           : 'bg-zinc-100/80 dark:bg-white/[0.03] border border-zinc-200/50 dark:border-white/[0.05] hover:border-indigo-400/50 dark:hover:border-indigo-500/50'}`}
     >
-      <div className={`absolute inset-0 rounded-xl opacity-0 transition-opacity duration-500 ${checked ? 'opacity-20 animate-pulse bg-white' : ''}`} />
+      <div className={`absolute inset-0 ${compact ? 'rounded-lg' : 'rounded-xl'} opacity-0 transition-opacity duration-500 ${checked ? 'opacity-20 animate-pulse bg-white' : ''}`} />
       <svg
         viewBox="0 0 12 12"
         fill="none"
-        className={`w-3 h-3 transition-all duration-500 transform ${checked ? 'scale-100 opacity-100 rotate-0' : 'scale-50 opacity-0 -rotate-12'}`}
+        className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} transition-all duration-500 transform ${checked ? 'scale-100 opacity-100 rotate-0' : 'scale-50 opacity-0 -rotate-12'}`}
       >
         <motion.path
           initial={false}
@@ -191,7 +191,7 @@ function Tick({ checked, onChange, accentBg }) {
   );
 }
 
-function KgInput({ value, onChange, placeholder = "00" }) {
+function KgInput({ value, onChange, placeholder = "00", compact = false }) {
   return (
     <div className="relative group shrink-0">
       <input
@@ -200,29 +200,29 @@ function KgInput({ value, onChange, placeholder = "00" }) {
         value={value ?? ''}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="h-8 w-12 rounded-lg border border-zinc-200/50 bg-zinc-100/50 text-center text-xs font-black text-zinc-900 shadow-sm outline-none transition-colors duration-300 placeholder:text-zinc-300 tabular-nums group-hover:border-zinc-300 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-zinc-50 dark:placeholder:text-zinc-700 dark:group-hover:border-white/20"
+        className={`${compact ? 'h-7 w-10 text-[10px]' : 'h-8 w-12 text-xs'} rounded-lg border border-zinc-200/50 bg-zinc-100/50 text-center font-black text-zinc-900 shadow-sm outline-none transition-colors duration-300 placeholder:text-zinc-300 tabular-nums group-hover:border-zinc-300 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-zinc-50 dark:placeholder:text-zinc-700 dark:group-hover:border-white/20`}
       />
       <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-indigo-500 rounded-full scale-x-0 transition-transform duration-300 group-focus-within:scale-x-100 opacity-50" />
     </div>
   );
 }
 
-function ExRow({ exerciseId, exerciseName, badge, badgeBg, anasC, flavioC, anasW, flavioW, anasR, flavioR, remoteMap, configMap, onToggle, onWeight, onReps, anasOnly = false }) {
+function ExRow({ exerciseId, exerciseName, badge, badgeBg, anasC, flavioC, anasW, flavioW, anasR, flavioR, remoteMap, configMap, onToggle, onWeight, onReps, anasOnly = false, embedded = false }) {
   const bothDone = anasC && flavioC;
 
   return (
-    <div className={`relative flex items-center gap-3 py-2 px-3 transition-all duration-500 border-b border-zinc-100/50 dark:border-white/[0.04] last:border-0
+    <div className={`relative flex items-center gap-3 ${embedded ? 'py-1.5 px-3' : 'py-2 px-3'} transition-all duration-500 border-b border-zinc-100/50 dark:border-white/[0.04] last:border-0
       ${bothDone ? 'bg-zinc-50/50 dark:bg-black/20' : 'hover:bg-zinc-100/30 dark:hover:bg-white/[0.02]'}`}
     >
-      <div className="flex-1 min-w-0 pr-2">
-        <div className={`text-sm font-bold leading-tight tracking-tight capitalize truncate transition-all duration-500 ${bothDone ? 'text-zinc-400 dark:text-zinc-600' : 'text-zinc-900 dark:text-zinc-100'}`}>
+      <div className="flex-1 min-w-0 pr-1">
+        <div className={`${embedded ? 'text-xs' : 'text-sm'} font-bold leading-tight tracking-tight capitalize truncate transition-all duration-500 ${bothDone ? 'text-zinc-400 dark:text-zinc-600' : 'text-zinc-900 dark:text-zinc-100'}`}>
           {exerciseName}
         </div>
         <div className="flex items-center gap-2 mt-0.5 overflow-hidden">
-          <span className={`text-xs scale-90 font-black tracking-[0.15em] text-white px-1.5 py-0.5 rounded-md uppercase shadow-sm ${badgeBg} opacity-90 shrink-0`}>
+          <span className={`text-[9px] scale-90 font-black tracking-[0.1em] text-white px-1.5 py-0.5 rounded-md uppercase shadow-sm ${badgeBg} opacity-80 shrink-0`}>
             {badge}
           </span>
-          {bothDone && (
+          {bothDone && !embedded && (
             <div className="flex items-center gap-1 animate-in fade-in slide-in-from-left-2 duration-700 shrink-0">
               <div className="w-1 h-1 rounded-full bg-emerald-500" />
               <span className="text-xs scale-90 font-black text-emerald-500/80 uppercase tracking-widest">Perfetto</span>
@@ -231,20 +231,20 @@ function ExRow({ exerciseId, exerciseName, badge, badgeBg, anasC, flavioC, anasW
         </div>
       </div>
 
-      <div className="flex items-center gap-4 sm:gap-8 shrink-0">
+      <div className={`flex items-center ${embedded ? 'gap-2' : 'gap-4 sm:gap-8'} shrink-0`}>
         {/* Anas Column */}
-        <div className="flex items-center gap-1.5 min-w-[70px] justify-center">
-          <KgInput value={anasW} onChange={v => onWeight('anas', v)} />
-          {onReps && <KgInput value={anasR} onChange={v => onReps('anas', v)} placeholder="rep" />}
-          <Tick checked={anasC} onChange={() => onToggle('anas')} accentBg="bg-indigo-500" />
+        <div className={`flex items-center ${embedded ? 'gap-1 min-w-[50px]' : 'gap-1.5 min-w-[70px]'} justify-center`}>
+          <KgInput value={anasW} onChange={v => onWeight('anas', v)} compact={embedded} />
+          {onReps && <KgInput value={anasR} onChange={v => onReps('anas', v)} placeholder="rep" compact={embedded} />}
+          <Tick checked={anasC} onChange={() => onToggle('anas')} accentBg="bg-indigo-500" compact={embedded} />
         </div>
 
         {/* Flavio Column */}
         {!anasOnly && (
-          <div className="flex items-center gap-1.5 min-w-[70px] justify-center">
-            <KgInput value={flavioW} onChange={v => onWeight('flavio', v)} />
-            {onReps && <KgInput value={flavioR} onChange={v => onReps('flavio', v)} placeholder="rep" />}
-            <Tick checked={flavioC} onChange={() => onToggle('flavio')} accentBg="bg-violet-500" />
+          <div className={`flex items-center ${embedded ? 'gap-1 min-w-[50px]' : 'gap-1.5 min-w-[70px]'} justify-center`}>
+            <KgInput value={flavioW} onChange={v => onWeight('flavio', v)} compact={embedded} />
+            {onReps && <KgInput value={flavioR} onChange={v => onReps('flavio', v)} placeholder="rep" compact={embedded} />}
+            <Tick checked={flavioC} onChange={() => onToggle('flavio')} accentBg="bg-violet-500" compact={embedded} />
           </div>
         )}
       </div>
@@ -256,35 +256,15 @@ function ExRow({ exerciseId, exerciseName, badge, badgeBg, anasC, flavioC, anasW
   );
 }
 
-function SectionHeader({ icon: Icon, color, label, showRepsLabels, anasOnly = false }) {
+function SectionHeader({ icon: Icon, color, label, showRepsLabels, anasOnly = false, embedded = false }) {
   return (
     <div className="flex flex-col bg-zinc-50/80 dark:bg-white/[0.03] border-b border-zinc-200/50 dark:border-white/[0.08]">
-      <div className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-4">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-xl shadow-inner ${color.replace('text-', 'bg-').replace('-500', '-500/10')}`}>
-            <Icon size={14} className={`${color} drop-shadow-sm`} />
+      <div className={`flex items-center justify-between ${embedded ? 'px-3 py-2' : 'px-4 py-3 sm:px-5 sm:py-4'}`}>
+        <div className="flex items-center gap-2">
+          <div className={`${embedded ? 'p-1.5' : 'p-2'} rounded-xl shadow-inner ${color.replace('text-', 'bg-').replace('-500', '-500/10')}`}>
+            <Icon size={embedded ? 12 : 14} className={`${color} drop-shadow-sm`} />
           </div>
-          <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.22em] sm:tracking-[0.25em] text-zinc-400 dark:text-zinc-500">{label}</span>
-        </div>
-        <div className="flex items-center gap-3 sm:gap-8 shrink-0">
-          <span className="text-[10px] sm:text-xs font-black text-indigo-500/60 tracking-[0.18em] sm:tracking-[0.2em] uppercase w-[58px] sm:w-[70px] text-center"></span>
-          {!anasOnly && <span className="text-xs font-black text-violet-500/60 tracking-[0.2em] uppercase w-[70px] text-center">Flavio</span>}
-        </div>
-      </div>
-      <div className="flex items-center justify-end px-4 py-1.5 bg-black/[0.02] dark:bg-white/[0.01] border-t border-zinc-100/50 dark:border-white/[0.02] sm:px-5">
-        <div className="flex items-center gap-3 sm:gap-8 shrink-0">
-          <div className="flex items-center gap-1 w-[58px] sm:w-[70px] justify-center">
-            <span className="text-[10px] sm:text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-10 sm:w-12 text-center">KG</span>
-            {showRepsLabels && <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">REP</span>}
-            <span className="text-[10px] sm:text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-5 sm:w-6 text-center">✓</span>
-          </div>
-          {!anasOnly && (
-            <div className="flex items-center gap-1 w-[58px] sm:w-[70px] justify-center">
-              <span className="text-[10px] sm:text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-10 sm:w-12 text-center">KG</span>
-              {showRepsLabels && <span className="text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-12 text-center">REP</span>}
-              <span className="text-[10px] sm:text-xs scale-75 font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest w-5 sm:w-6 text-center">✓</span>
-            </div>
-          )}
+          <span className={`${embedded ? 'text-[9px]' : 'text-[10px] sm:text-xs'} font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500`}>{label}</span>
         </div>
       </div>
     </div>
@@ -441,8 +421,8 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
   const sectionsGrid = (
     <div className="grid grid-cols-1 lg:grid-cols-3 lg:divide-x divide-zinc-100/80 dark:divide-white/[0.04]">
       {/* Strength Section */}
-      <div className="flex flex-col min-h-0 lg:min-h-[400px]">
-        <SectionHeader icon={Zap} color="text-indigo-500" label="Strength Focus" anasOnly={anasOnly} />
+      <div className={`flex flex-col min-h-0 ${embedded ? 'lg:min-h-[300px]' : 'lg:min-h-[400px]'}`}>
+        <SectionHeader icon={Zap} color="text-indigo-500" label="Strength Focus" anasOnly={anasOnly} embedded={embedded} />
         <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
           {strengthEx.length > 0 ? strengthEx.map(ex => {
             const prog = allProgressions?.[ex.exercise_id];
@@ -458,20 +438,21 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
                 onToggle={a => toggleStrength(ex.exercise_id, a)}
                 onWeight={(a, v) => weightStrength(ex.exercise_id, a, v)}
                 anasOnly={anasOnly}
+                embedded={embedded}
               />
             );
           }) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
-              <Zap size={24} className="text-zinc-300" />
-              <span className="text-xs font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
+            <div className="flex-1 flex flex-col items-center justify-center p-4 opacity-30 grayscale gap-1">
+              <Zap size={16} className="text-zinc-300" />
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] italic">Riposo</span>
             </div>
           )}
         </div>
       </div>
 
       {/* AW Section */}
-      <div className="flex flex-col min-h-0 lg:min-h-[400px]">
-        <SectionHeader icon={Target} color="text-amber-500" label="AW Specialization" anasOnly={anasOnly} />
+      <div className={`flex flex-col min-h-0 ${embedded ? 'lg:min-h-[300px]' : 'lg:min-h-[400px]'}`}>
+        <SectionHeader icon={Target} color="text-amber-500" label="AW Special" anasOnly={anasOnly} embedded={embedded} />
         <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
           {awEx.length > 0 ? awEx.map(ex => {
             const { anasC, flavioC, anasW, flavioW } = getAwData(ex, allProgressions);
@@ -485,20 +466,21 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
                 onToggle={a => toggleAw(ex, a)}
                 onWeight={(a, v) => weightAw(ex, a, v)}
                 anasOnly={anasOnly}
+                embedded={embedded}
               />
             );
           }) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
-              <Target size={24} className="text-zinc-300" />
-              <span className="text-xs font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
+            <div className="flex-1 flex flex-col items-center justify-center p-4 opacity-30 grayscale gap-1">
+              <Target size={16} className="text-zinc-300" />
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] italic">Riposo</span>
             </div>
           )}
         </div>
       </div>
 
       {/* Hypertrophy Section */}
-      <div className="flex flex-col min-h-[280px] lg:min-h-[400px]">
-        <SectionHeader icon={Dumbbell} color="text-emerald-500" label="Hypertrophy Foundation" showRepsLabels anasOnly={anasOnly} />
+      <div className={`flex flex-col min-h-0 ${embedded ? 'lg:min-h-[300px]' : 'lg:min-h-[400px]'}`}>
+        <SectionHeader icon={Dumbbell} color="text-emerald-500" label="Hypertrophy" showRepsLabels={!embedded} anasOnly={anasOnly} embedded={embedded} />
         <div className="flex flex-col flex-1 divide-y divide-zinc-50 dark:divide-white/[0.02]">
           {hypEx.length > 0 ? hypEx.map(ex => {
             const prog = allProgressions?.[ex.exercise_id] || {};
@@ -514,12 +496,13 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
                 onWeight={(a, v) => weightHyper(ex.exercise_id, a, v)}
                 onReps={(a, v) => repsHyper(ex.exercise_id, a, v)}
                 anasOnly={anasOnly}
+                embedded={embedded}
               />
             );
           }) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 lg:p-12 opacity-30 grayscale gap-2">
-              <Dumbbell size={24} className="text-zinc-300" />
-              <span className="text-xs font-black uppercase tracking-[0.3em] italic">Riposo Attivo</span>
+            <div className="flex-1 flex flex-col items-center justify-center p-4 opacity-30 grayscale gap-1">
+              <Dumbbell size={16} className="text-zinc-300" />
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] italic">Riposo</span>
             </div>
           )}
         </div>

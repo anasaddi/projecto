@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   DndContext,
@@ -233,7 +233,17 @@ export function HabitsSection() {
     return map;
   }, [dailyTaskLogs, todayKey]);
 
+  const lockedHabitsCollapsed = useDashboardStore((s) => s.lockedHabitsCollapsed);
+  const setLockedHabitsCollapsed = useDashboardStore((s) => s.setLockedHabitsCollapsed);
+
   const activeHabits = useMemo(() => dailyTaskTemplates.filter((t) => !t.locked), [dailyTaskTemplates]);
+  const lockedHabits = useMemo(() => dailyTaskTemplates.filter((t) => t.locked), [dailyTaskTemplates]);
+  
+  const visibleHabits = useMemo(() => {
+    if (lockedHabitsCollapsed) return activeHabits;
+    return dailyTaskTemplates;
+  }, [dailyTaskTemplates, activeHabits, lockedHabitsCollapsed]);
+
   const todayDone = useMemo(() => activeHabits.reduce((acc, t) => acc + (todayTaskLog[t.id] ? 1 : 0), 0), [activeHabits, todayTaskLog]);
 
   const addHabit = () => {
@@ -261,13 +271,24 @@ export function HabitsSection() {
         title="Abitudini"
         subtitle="Routine giornaliere"
         action={
-          <Badge variant={todayDone === activeHabits.length && activeHabits.length > 0 ? 'success' : 'primary'} size="sm">
-            {todayDone}/{activeHabits.length}
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            {lockedHabits.length > 0 && (
+              <button
+                onClick={() => setLockedHabitsCollapsed(!lockedHabitsCollapsed)}
+                className={`p-1.5 rounded-lg transition-all ${lockedHabitsCollapsed ? 'bg-amber-500/10 text-amber-500' : 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]'}`}
+                title={lockedHabitsCollapsed ? "Mostra bloccate" : "Nascondi bloccate"}
+              >
+                {lockedHabitsCollapsed ? <Icons.EyeOff className="h-4 w-4" /> : <Icons.Eye className="h-4 w-4" />}
+              </button>
+            )}
+            <Badge variant={todayDone === activeHabits.length && activeHabits.length > 0 ? 'success' : 'primary'} size="sm">
+              {todayDone}/{activeHabits.length}
+            </Badge>
+          </div>
         }
       />
 
-      <div className="p-4 pt-3 flex flex-col gap-2.5 sm:gap-3">
+      <div className="p-4 pt-3 flex flex-col gap-2.5 sm:gap-3 flex-1 min-h-0 overflow-hidden">
         {/* Input */}
         <AddItemInputBar
           value={habitDraft}
@@ -279,10 +300,10 @@ export function HabitsSection() {
 
         {/* Habits list */}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={dailyTaskTemplates} strategy={verticalListSortingStrategy}>
-            <div className="flex flex-col gap-1 flex-1 min-h-[120px] overflow-y-auto custom-scrollbar pr-0.5 sm:pr-1">
+          <SortableContext items={visibleHabits} strategy={verticalListSortingStrategy}>
+            <div className="flex flex-col gap-1 flex-1 overflow-y-auto custom-scrollbar pr-0.5 sm:pr-1">
               <AnimatePresence mode="popLayout">
-                {dailyTaskTemplates.length === 0 ? (
+                {visibleHabits.length === 0 ? (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -297,26 +318,39 @@ export function HabitsSection() {
                     </div>
                   </motion.div>
                 ) : (
-                  dailyTaskTemplates.map((task, idx) => (
-                    <SortableHabitItem
-                      key={task.id}
-                      task={task}
-                      idx={idx}
-                      todayTaskLog={todayTaskLog}
-                      isHovered={hoveredHabitId === task.id}
-                      setHoveredHabitId={setHoveredHabitId}
-                      toggleDailyTask={toggleDailyTask}
-                      habitEditingId={habitEditingId}
-                      setHabitEditingId={setHabitEditingId}
-                      setHabitEditingTitle={setHabitEditingTitle}
-                      setDailyTaskTemplates={setDailyTaskTemplates}
-                      toggleHabitLock={toggleHabitLock}
-                      toggleHabitInTimeline={toggleHabitInTimeline}
-                      removeDailyTask={removeDailyTask}
-                      dailyTaskLogs={dailyTaskLogs}
-                      now={now}
-                    />
-                  ))
+                  <>
+                    {visibleHabits.map((task, idx) => (
+                      <SortableHabitItem
+                        key={task.id}
+                        task={task}
+                        idx={idx}
+                        todayTaskLog={todayTaskLog}
+                        isHovered={hoveredHabitId === task.id}
+                        setHoveredHabitId={setHoveredHabitId}
+                        toggleDailyTask={toggleDailyTask}
+                        habitEditingId={habitEditingId}
+                        setHabitEditingId={setHabitEditingId}
+                        setHabitEditingTitle={setHabitEditingTitle}
+                        setDailyTaskTemplates={setDailyTaskTemplates}
+                        toggleHabitLock={toggleHabitLock}
+                        toggleHabitInTimeline={toggleHabitInTimeline}
+                        removeDailyTask={removeDailyTask}
+                        dailyTaskLogs={dailyTaskLogs}
+                        now={now}
+                      />
+                    ))}
+                    {lockedHabitsCollapsed && lockedHabits.length > 0 && (
+                      <motion.button
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        onClick={() => setLockedHabitsCollapsed(false)}
+                        className="w-full py-2 px-3 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-amber-500 hover:bg-amber-500/5 rounded-xl transition-all border border-dashed border-zinc-200 dark:border-zinc-800 flex items-center justify-center gap-2 mt-1"
+                      >
+                        <Icons.Lock className="w-3 h-3" />
+                        {lockedHabits.length} Abitudini Bloccate Nascoste
+                      </motion.button>
+                    )}
+                  </>
                 )}
               </AnimatePresence>
             </div>

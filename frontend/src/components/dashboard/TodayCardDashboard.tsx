@@ -117,12 +117,12 @@ export function TodayCardDashboard({ defaultExpanded = true }: TodayCardDashboar
   const isToday = selectedDate?.slice(0, 10) === todayDateStr;
 
   return (
-    <Card className="flex flex-col overflow-hidden">
+    <Card className="flex flex-col overflow-hidden border-indigo-500/10 shadow-[0_8px_32px_-12px_rgba(79,70,229,0.15)]">
       <CardHeader
         icon={Dumbbell}
         iconColor="text-indigo-500"
         title="Training"
-        subtitle="Today's workout session"
+        subtitle={isExpanded ? "Sessione Odierna" : `${progressPercent}% completato`}
         action={
           <div className="flex items-center gap-2">
             {!loading && (
@@ -132,13 +132,13 @@ export function TodayCardDashboard({ defaultExpanded = true }: TodayCardDashboar
             )}
             <button
               onClick={toggleTodayTrainingExpanded}
-              className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors"
+              className={`p-1.5 rounded-lg transition-all ${isExpanded ? 'bg-indigo-500/10 text-indigo-500' : 'hover:bg-zinc-100 dark:hover:bg-white/[0.06] text-zinc-400'}`}
               aria-label={isExpanded ? 'Collapse' : 'Expand'}
             >
               {isExpanded ? (
-                <ChevronUp className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+                <ChevronUp className="h-4 w-4" />
               ) : (
-                <ChevronDown className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+                <ChevronDown className="h-4 w-4" />
               )}
             </button>
           </div>
@@ -154,7 +154,7 @@ export function TodayCardDashboard({ defaultExpanded = true }: TodayCardDashboar
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             className="overflow-hidden"
           >
-            <div className="pt-0">
+            <div className="border-t border-zinc-100 dark:border-white/[0.04]">
               {loading ? (
                 <TodayCardSkeleton />
               ) : (
