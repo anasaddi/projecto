@@ -19,7 +19,6 @@ const Training = lazy(() => import('./pages/Training2'));
 const Welcome = lazy(() => import('./pages/Welcome'));
 const Login = lazy(() => import('./pages/Login'));
 const SharedSectionGate = lazy(() => import('./components/shared/SharedSectionGate'));
-const Chat = lazy(() => import('./pages/Chat'));
 
 function RouteLoader(): React.ReactElement {
   return (
@@ -103,7 +102,6 @@ export default function App(): React.ReactElement {
                     <Route path="/dashboard" element={<AdminRoute><DashboardV2 /></AdminRoute>} />
                     <Route path="/dashboard2" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/dashboard3" element={<Navigate to="/dashboard" replace />} />
-                    <Route path="/chat" element={<AdminRoute><Chat /></AdminRoute>} />
                     <Route path="/shared" element={<SharedProjects />} />
                     <Route path="/shared/:shareId" element={<SharedProjects />} />
                     <Route
