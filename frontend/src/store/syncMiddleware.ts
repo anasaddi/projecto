@@ -27,6 +27,7 @@ function applyIncomingState(set: SetState, data: unknown): void {
     for (const key of Object.keys(incoming)) {
       draft[key] = incoming[key];
     }
+    return draft; // Must return the state for the raw Zustand set
   });
 }
 
@@ -114,12 +115,18 @@ export function syncMiddleware(config: any): any {
     }
 
     const wrappedSet: SetState = (args) => {
-      set(args);
-      const state = get() as SyncStateSlice & Record<string, unknown>;
-      if (!state.isLoaded || isApplyingFromBC) return;
+      // Ensure functional updates return the state to avoid setting store to undefined
+      const functionalArg = typeof args === 'function' 
+        ? (s: any) => {
+            const res = (args as Function)(s);
+            return res === undefined ? s : res;
+          }
+        : args;
 
-      // Debounce local persist + BC broadcast — snapshot is built lazily
-      // inside the timer so it always reflects the very latest state.
+      const result = set(functionalArg);
+      const state = get() as SyncStateSlice & Record<string, unknown>;
+      if (!state || !state.isLoaded || isApplyingFromBC) return result;
+
       if (persistTimeout) clearTimeout(persistTimeout);
       persistTimeout = setTimeout(() => {
         const fullState = buildFullState();
@@ -144,9 +151,8 @@ export function syncMiddleware(config: any): any {
         if (navigator.onLine) {
           try {
             await api.training.updateDashboardState(fullState, { timeout: 30_000 });
-            // Mutate the draft directly instead of replacing the whole state
             isApplyingFromBC = true;
-            set((s: unknown) => { (s as { lastSavedAt?: number }).lastSavedAt = Date.now(); });
+            set((s: any) => ({ ...s, lastSavedAt: Date.now() }));
             queueMicrotask(() => {
               isApplyingFromBC = false;
               if (isApplyingFromBCQueue.length > 0 && channel) {
