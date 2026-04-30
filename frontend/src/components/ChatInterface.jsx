@@ -66,6 +66,20 @@ const ChatInterface = () => {
       console.log('API Key length:', apiKey.length);
       console.log('API Key starts with:', apiKey.substring(0, 10));
 
+      // First, check if API key works with models endpoint
+      console.log('Testing API key with models endpoint...');
+      const modelsResponse = await fetch('https://openrouter.ai/api/v1/models', {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
+        }
+      });
+      console.log('Models response status:', modelsResponse.status);
+      if (!modelsResponse.ok) {
+        const errorText = await modelsResponse.text();
+        console.error('Models API error:', errorText);
+        throw new Error(`API key invalid: ${errorText}`);
+      }
+
       // Call OpenRouter Video Generation API with Kling Pro
       console.log('Sending video generation request...');
       const response = await fetch('https://openrouter.ai/api/v1/videos', {
