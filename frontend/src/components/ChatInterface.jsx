@@ -84,11 +84,12 @@ const ChatInterface = () => {
       }
     } catch (error) {
       console.error('Error generating video:', error);
-      setMessages(prev => [...prev, {
+      const errorMessage = {
         role: 'assistant',
         content: 'Errore nella generazione video. Controlla la console per dettagli.',
         timestamp: new Date().toISOString()
-      }]));
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
