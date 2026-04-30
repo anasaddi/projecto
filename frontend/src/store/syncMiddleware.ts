@@ -17,6 +17,19 @@ function normalizeIncomingState(payload: unknown): unknown {
   return next;
 }
 
+/** Apply incoming state by mutating the immer draft key-by-key instead of
+ *  replacing the whole state, which could drop in-flight local mutations. */
+function applyIncomingState(set: SetState, data: unknown): void {
+  if (!data || typeof data !== 'object') return;
+  const incoming = data as Record<string, unknown>;
+  set((s: unknown) => {
+    const draft = s as Record<string, unknown>;
+    for (const key of Object.keys(incoming)) {
+      draft[key] = incoming[key];
+    }
+  });
+}
+
 function getBroadcastChannel(): BroadcastChannel | null {
   if (bc) return bc;
   try {
@@ -80,30 +93,36 @@ export function syncMiddleware(config: any): any {
   const channel = getBroadcastChannel();
 
   return (set: SetState, get: GetState, api_store: unknown) => {
+    /** Build a plain snapshot of the persistable state from the live store. */
+    function buildFullState(): Record<string, unknown> {
+      const s = get() as SyncStateSlice & Record<string, unknown>;
+      return {
+        dailyTaskTemplates: s.dailyTaskTemplates,
+        dailyTaskLogs: s.dailyTaskLogs,
+        projects: s.projects,
+        projectOrder: Array.isArray(s.projects) ? (s.projects as { id?: string }[]).map((p) => p.id) : [],
+        prayerLogs: s.prayerLogs,
+        top3Manual: s.top3Manual,
+        quickTasks: s.quickTasks,
+        dailyCompletionLog: s.dailyCompletionLog,
+        lifeGoals: s.lifeGoals,
+        timelineRoutines: s.timelineRoutines ?? {},
+        projectExpandedState: s.projectExpandedState ?? {},
+        sectionOrder: s.sectionOrder,
+        activePomodoroTask: s.activePomodoroTask ?? null,
+      };
+    }
+
     const wrappedSet: SetState = (args) => {
       set(args);
       const state = get() as SyncStateSlice & Record<string, unknown>;
       if (!state.isLoaded || isApplyingFromBC) return;
 
-      const fullState = {
-        dailyTaskTemplates: state.dailyTaskTemplates,
-        dailyTaskLogs: state.dailyTaskLogs,
-        projects: state.projects,
-        projectOrder: Array.isArray(state.projects) ? (state.projects as { id?: string }[]).map((p) => p.id) : [],
-        prayerLogs: state.prayerLogs,
-        // selectedDate è UI-only: non salvare, al refresh è sempre oggi
-        top3Manual: state.top3Manual,
-        quickTasks: state.quickTasks,
-        dailyCompletionLog: state.dailyCompletionLog,
-        lifeGoals: state.lifeGoals,
-        timelineRoutines: state.timelineRoutines ?? {},
-        projectExpandedState: state.projectExpandedState ?? {},
-        sectionOrder: state.sectionOrder,
-        activePomodoroTask: state.activePomodoroTask ?? null,
-      };
-
+      // Debounce local persist + BC broadcast — snapshot is built lazily
+      // inside the timer so it always reflects the very latest state.
       if (persistTimeout) clearTimeout(persistTimeout);
       persistTimeout = setTimeout(() => {
+        const fullState = buildFullState();
         if (typeof window !== 'undefined' && window.localStorage) {
           try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(fullState));
@@ -121,19 +140,19 @@ export function syncMiddleware(config: any): any {
 
       if (syncTimeout) clearTimeout(syncTimeout);
       syncTimeout = setTimeout(async () => {
+        const fullState = buildFullState();
         if (navigator.onLine) {
           try {
             await api.training.updateDashboardState(fullState, { timeout: 30_000 });
-            // Use queueing microtask to reliably sequence the flag reset after state propagation
+            // Mutate the draft directly instead of replacing the whole state
             isApplyingFromBC = true;
-            set((s: unknown) => ({ ...(s as object), lastSavedAt: Date.now() }));
+            set((s: unknown) => { (s as { lastSavedAt?: number }).lastSavedAt = Date.now(); });
             queueMicrotask(() => {
               isApplyingFromBC = false;
-              // Flush any buffered BC updates that arrived during the sync
               if (isApplyingFromBCQueue.length > 0 && channel) {
                 const queued = isApplyingFromBCQueue.splice(0);
                 for (const data of queued) {
-                  set((_: unknown) => normalizeIncomingState(data));
+                  applyIncomingState(set, data);
                 }
               }
             });
@@ -160,12 +179,12 @@ export function syncMiddleware(config: any): any {
         // Defer to next task to avoid blocking the message handler
         setTimeout(() => {
           isApplyingFromBC = true;
-          set(normalizeIncomingState(s));
+          applyIncomingState(set, normalizeIncomingState(s));
           queueMicrotask(() => {
             isApplyingFromBC = false;
             if (isApplyingFromBCQueue.length > 0) {
               const queued = isApplyingFromBCQueue.splice(0);
-              for (const data of queued) set(normalizeIncomingState(data));
+              for (const data of queued) applyIncomingState(set, data);
             }
           });
         }, 0);

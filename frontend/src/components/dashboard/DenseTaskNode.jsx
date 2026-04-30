@@ -125,12 +125,9 @@ export function DenseTaskNode({
     (tid, val) => {
       if (onToggleProp) return onToggleProp(tid, val);
       if (isLifeGoal) {
+        // updateGoal already syncs linked projects & quick tasks via lifeGoalsSlice
+        // so we only need one atomic update here — NOT two separate set() calls
         updateGoal(goalId, (g) => ({ ...g, tasks: updateNodeInTree(g.tasks || [], tid, (n) => ({ ...n, done: val })) }));
-        setProjects((prev) =>
-          prev.map((p) =>
-            p.lifeGoalId === goalId ? { ...p, tasks: updateNodeInTree(p.tasks || [], tid, (n) => ({ ...n, done: val })) } : p
-          )
-        );
       } else if (isShared) {
         updateSharedDashboardProject(shareId, projectId, (p) => ({
           ...p,
@@ -140,7 +137,7 @@ export function DenseTaskNode({
         toggleProjectTask(projectId, tid, val);
       }
     },
-    [onToggleProp, isLifeGoal, goalId, isShared, shareId, projectId, toggleProjectTask, updateProject, updateGoal, setProjects, updateSharedDashboardProject]
+    [onToggleProp, isLifeGoal, goalId, isShared, shareId, projectId, toggleProjectTask, updateGoal, updateSharedDashboardProject]
   );
 
   const onDelete = useCallback(

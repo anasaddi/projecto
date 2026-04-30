@@ -105,23 +105,33 @@ export function createQuickTaskSlice(set: QuickTaskSet, get: QuickTaskGet) {
       const state = get();
       const sd = state.sharedDashboards?.find((x: { share_id: string }) => x.share_id === shareId);
       const title = sd?.data?.quickTasks?.find((t: { id: string }) => t.id === taskId)?.title;
+      // Single atomic set() — both timeline logging AND task toggle happen in one mutation
       set((s: unknown) => {
-        const timelineState = s as { dailyCompletionLog: Record<string, DayCompletionPayload>; selectedDate?: Date | string };
+        const draft = s as {
+          dailyCompletionLog: Record<string, DayCompletionPayload>;
+          selectedDate?: Date | string;
+          sharedDashboards: Array<{ share_id: string; data?: { projects?: unknown[]; quickTasks?: QuickTask[]; chat?: unknown[] } }>;
+        };
         logTimelineEvent(
-          timelineState,
+          draft,
           'shared_quick',
           taskId,
           title ?? '',
           val,
           null,
           undefined,
-          toDateKey(parseSelectedDate(timelineState.selectedDate, new Date()))
+          toDateKey(parseSelectedDate(draft.selectedDate, new Date()))
         );
+        const sharedDash = draft.sharedDashboards.find((x) => x.share_id === shareId);
+        if (sharedDash) {
+          const prevData = sharedDash.data || {};
+          sharedDash.data = {
+            projects: prevData.projects ?? [],
+            quickTasks: (prevData.quickTasks ?? []).map((t) => (t.id === taskId ? { ...t, done: val } : t)),
+            chat: prevData.chat ?? [],
+          } as typeof prevData;
+        }
       });
-      get().updateSharedDashboardData(shareId, (data) => ({
-        ...data,
-        quickTasks: (data.quickTasks || []).map((t) => (t.id === taskId ? { ...t, done: val } : t)),
-      }));
     },
 
     updateSharedQuickTask: (shareId: string, taskId: string, updater: (t: QuickTask) => Partial<QuickTask>) => {

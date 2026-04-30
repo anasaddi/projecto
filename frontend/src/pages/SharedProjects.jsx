@@ -613,24 +613,27 @@ export default function SharedProjects() {
       });
       return;
     }
+
     const dataPayload = msg.data || msg;
-    const serverProjects = Array.isArray(dataPayload.projects) ? dataPayload.projects : [];
-    const serverQuickTasks = Array.isArray(dataPayload.quickTasks) ? dataPayload.quickTasks : [];
-    const serverNotes = normalizeSharedNotes(dataPayload.notes);
-    const serverChat = Array.isArray(dataPayload.chat) ? dataPayload.chat : [];
-    const serverBonifici = Array.isArray(dataPayload.bonifici) ? dataPayload.bonifici : [];
-    const serverTitle = msg.title || "Progetti Condivisi";
-    setDashboard(prev => ({
-      ...prev,
-      projects: serverProjects,
-      quickTasks: serverQuickTasks,
-      notes: serverNotes,
-      chat: serverChat,
-      bonifici: serverBonifici,
-      title: serverTitle,
-      loading: false,
-      error: null
-    }));
+    const serverProjects = Array.isArray(dataPayload.projects) ? dataPayload.projects : null;
+    const serverQuickTasks = Array.isArray(dataPayload.quickTasks) ? dataPayload.quickTasks : null;
+    const serverNotes = Array.isArray(dataPayload.notes) ? normalizeSharedNotes(dataPayload.notes) : null;
+    const serverChat = Array.isArray(dataPayload.chat) ? dataPayload.chat : null;
+    const serverBonifici = Array.isArray(dataPayload.bonifici) ? dataPayload.bonifici : null;
+    const serverTitle = msg.title || null;
+
+    setDashboard(prev => {
+      const next = { ...prev };
+      if (serverProjects !== null) next.projects = serverProjects;
+      if (serverQuickTasks !== null) next.quickTasks = serverQuickTasks;
+      if (serverNotes !== null) next.notes = serverNotes;
+      if (serverChat !== null) next.chat = serverChat;
+      if (serverBonifici !== null) next.bonifici = serverBonifici;
+      if (serverTitle !== null) next.title = serverTitle;
+      next.loading = false;
+      next.error = null;
+      return next;
+    });
   };
 
   const connect = () => {
@@ -661,7 +664,6 @@ export default function SharedProjects() {
         const msg = JSON.parse(event.data);
         if (msg?.type === 'pong') return;
         if (msg?.type === 'server_restart') {
-          // Server is restarting — will auto-reconnect via onclose handler
           console.log('Server restart notification received');
           return;
         }
@@ -670,7 +672,6 @@ export default function SharedProjects() {
           return;
         }
         applyDashboardFromPayload(msg);
-        // Scroll a fondo gestito da useEffect su dashboard.chat.length
       } catch (e) {
         console.error("WS Parse error", e);
       }
@@ -690,7 +691,6 @@ export default function SharedProjects() {
     };
 
     ws.current.onerror = () => {
-      // onclose verrà chiamato dopo
     };
   };
 
@@ -699,21 +699,7 @@ export default function SharedProjects() {
     api.training.getSharedDashboard(id)
       .then((data) => {
         if (!mountedRef.current) return;
-        const payload = data?.data || data;
-        const projects = Array.isArray(payload?.projects) ? payload.projects : [];
-        const quickTasks = Array.isArray(payload?.quickTasks) ? payload.quickTasks : [];
-        const notes = normalizeSharedNotes(payload?.notes);
-        const chat = Array.isArray(payload?.chat) ? payload.chat : [];
-        const bonifici = Array.isArray(payload?.bonifici) ? payload.bonifici : [];
-        setDashboard(prev => ({
-          ...prev,
-          projects,
-          quickTasks,
-          notes,
-          chat,
-          bonifici,
-          title: data?.title || prev.title,
-        }));
+        applyDashboardFromPayload(data);
       })
       .catch(() => { });
   };
@@ -726,7 +712,6 @@ export default function SharedProjects() {
     return () => document.removeEventListener('visibilitychange', onVisibilityChange);
   }, [id]);
 
-  // BroadcastChannel: sync istantaneo tra tab SharedProjects (stesso share_id)
   useEffect(() => {
     if (!id) return;
     const bc = new BroadcastChannel(`km-shared-${id}`);
@@ -740,7 +725,6 @@ export default function SharedProjects() {
     return () => bc.close();
   }, [id]);
 
-  // Polling fallback quando WebSocket non connesso (aggiornamenti ogni 4s)
   useEffect(() => {
     if (!id || dashboard.isConnected) return;
     pollInterval.current = setInterval(refetchFromApi, 4000);
@@ -752,7 +736,6 @@ export default function SharedProjects() {
     };
   }, [id, dashboard.isConnected]);
 
-  // Caricamento iniziale via REST (fallback robusto se WS fallisce)
   useEffect(() => {
     mountedRef.current = true;
     if (!id) {
@@ -772,22 +755,7 @@ export default function SharedProjects() {
           setDashboard(prev => ({ ...prev, loading: false, error: null }));
           return;
         }
-        const projects = Array.isArray(payload?.projects) ? payload.projects : [];
-        const quickTasks = Array.isArray(payload?.quickTasks) ? payload.quickTasks : [];
-        const notes = normalizeSharedNotes(payload?.notes);
-        const chat = Array.isArray(payload?.chat) ? payload.chat : [];
-        const bonifici = Array.isArray(payload?.bonifici) ? payload.bonifici : [];
-        setDashboard(prev => ({
-          ...prev,
-          projects,
-          quickTasks,
-          notes,
-          chat,
-          bonifici,
-          title: data?.title || prev.title,
-          loading: false,
-          error: null
-        }));
+        applyDashboardFromPayload(data);
       })
       .catch((err) => {
         if (cancelled || !mountedRef.current) return;
@@ -821,41 +789,42 @@ export default function SharedProjects() {
     };
   }, [id]);
 
-  // Invio aggiornamenti: WebSocket + REST sempre (stessa comunicazione di project tasks). BroadcastChannel per sync tra tab.
-  const sendUpdate = (newState) => {
-    const data = {
-      projects: Array.isArray(newState.projects) ? newState.projects : [],
-      projectOrder: Array.isArray(newState.projects) ? newState.projects.map(p => p.id) : [],
-      quickTasks: Array.isArray(newState.quickTasks) ? newState.quickTasks : [],
-      notes: normalizeSharedNotes(newState.notes),
-      chat: Array.isArray(newState.chat) ? newState.chat : [],
-      bonifici: Array.isArray(newState.bonifici) ? newState.bonifici : [],
-    };
-    const payload = { type: 'sync', title: newState.title ?? '', data };
+  // Invio aggiornamenti debounced: WebSocket + REST + BC
+  useEffect(() => {
+    if (!id || dashboard.loading || applyingFromBCRef.current) return;
 
-    if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify(payload));
-    }
-    if (id) {
+    const timeoutId = setTimeout(() => {
+      const data = {
+        projects: Array.isArray(dashboard.projects) ? dashboard.projects : [],
+        projectOrder: Array.isArray(dashboard.projects) ? dashboard.projects.map(p => p.id) : [],
+        quickTasks: Array.isArray(dashboard.quickTasks) ? dashboard.quickTasks : [],
+        notes: normalizeSharedNotes(dashboard.notes),
+        chat: Array.isArray(dashboard.chat) ? dashboard.chat : [],
+        bonifici: Array.isArray(dashboard.bonifici) ? dashboard.bonifici : [],
+      };
+      const payload = { type: 'sync', title: dashboard.title ?? '', data };
+
+      if (ws.current?.readyState === WebSocket.OPEN) {
+        ws.current.send(JSON.stringify(payload));
+      }
       api.training.updateSharedDashboard(id, data, payload.title).catch(() => {});
-    }
-    if (!applyingFromBCRef.current && id) {
+      
       try {
         const bc = new BroadcastChannel(`km-shared-${id}`);
         bc.postMessage(payload);
         bc.close();
       } catch (_) { }
-    }
-  };
+    }, 400);
 
-  // Helper per aggiornare lo stato locale e inviare subito
+    return () => clearTimeout(timeoutId);
+  }, [id, dashboard.projects, dashboard.quickTasks, dashboard.notes, dashboard.chat, dashboard.bonifici, dashboard.title]);
+
+  // Helper per aggiornare lo stato locale in modo atomico
   const updateLocal = (updater) => {
-    const nextPartial = typeof updater === 'function' ? updater(dashboard) : updater;
-    const nextState = { ...dashboard, ...nextPartial };
-    setDashboard(nextState);
-
-    // Inviamo l'aggiornamento al server (fire and forget)
-    sendUpdate(nextState);
+    setDashboard(prev => {
+      const nextPartial = typeof updater === 'function' ? updater(prev) : updater;
+      return { ...prev, ...nextPartial };
+    });
   };
 
   const addQuickTask = (title) => {

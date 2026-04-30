@@ -1,4 +1,4 @@
-﻿import React, { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { Icons } from './Icons';
 import { LifeGoalCard } from './LifeGoalComponents';
 import { DenseTaskNode } from './DenseTaskNode';
@@ -112,9 +112,6 @@ export function LifeGoalsSection() {
                           accent={tier.id === 'tier-1' ? 'emerald' : tier.id === 'tier-2' ? 'sky' : 'violet'} stats={{}} percentage={0}
                           onToggle={(gid, val) => {
                             updateGoal(gid, g => ({ ...g, done: val }));
-                            const qt = quickTasks.find(t => t.lifeGoalId === gid && !t.parentId);
-                            if (qt) toggleQuickTask(qt.id, val);
-                            else setQuickTasks(prev => prev.map(t => t.lifeGoalId === gid ? { ...t, done: val } : t));
                           }}
                           onDelete={(gid) => setConfirmState?.({ id: 'deleteGoal', payload: { goalId: gid } })}
                           onRename={(gid, val, type) => updateGoal(gid, g => ({ ...g, title: val, type: type || g.type }))}
@@ -149,9 +146,6 @@ export function LifeGoalsSection() {
                                   key={goal.id} goal={goal} accent={tier.id === 'tier-1' ? 'emerald' : tier.id === 'tier-2' ? 'sky' : 'violet'} stats={stats} percentage={percentage}
                                   onToggle={(gid, val) => {
                                     updateGoal(gid, g => ({ ...g, done: val }));
-                                    const qt = quickTasks.find(t => t.lifeGoalId === gid && !t.parentId);
-                                    if (qt) toggleQuickTask(qt.id, val);
-                                    else setQuickTasks(prev => prev.map(t => t.lifeGoalId === gid ? { ...t, done: val } : t));
                                   }}
                                   onDelete={(gid) => setConfirmState?.({ id: 'deleteGoal', payload: { goalId: gid } })}
                                   onRename={(gid, val, type) => updateGoal(gid, g => ({ ...g, title: val, type: type || g.type }))}
