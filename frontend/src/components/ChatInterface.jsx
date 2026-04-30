@@ -48,13 +48,17 @@ const ChatInterface = () => {
           frame_type: 'first_frame',
           image_url: attachedFiles[0].name // In real implementation, you'd upload the file first
         }
-      ] : null;
+      ] : undefined;
 
       const requestBody = {
         model: 'kwaivgi/kling-v3.0-pro',
-        prompt: input,
-        frame_images: frameImages
+        prompt: input
       };
+
+      // Only add frame_images if they exist
+      if (frameImages) {
+        requestBody.frame_images = frameImages;
+      }
 
       console.log('Request body:', requestBody);
 
