@@ -210,18 +210,23 @@ export default function DashboardV2(): React.ReactElement {
         {/* Training Section - Full Width */}
         <TodayCardDashboard />
 
-        <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-3 pb-1 md:gap-4">
-          <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 pb-1">
+          {/* Colonna Sinistra: Today Tools (4 colonne su desktop) */}
+          <div className="flex flex-col gap-4 lg:col-span-4 order-1">
             <PomodoroCompact />
-            {isLoaded ? <QuickTasksSectionV2 /> : <QuickTaskSkeleton />}
-            <FocusHeatmap dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
-          </div>
-          <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
             {isLoaded ? <Top3SectionV2 /> : <Top3Skeleton />}
-            {isLoaded ? <HabitsSection /> : <HabitSkeleton />}
+            {isLoaded ? <QuickTasksSectionV2 /> : <QuickTaskSkeleton />}
           </div>
-          <div className="flex flex-col gap-4 min-h-0 lg:w-2/4">
+
+          {/* Colonna Centrale/Destra: Projects (8 colonne su desktop, si espande per riempire) */}
+          <div className="flex flex-col gap-4 lg:col-span-5 order-2">
             {isLoaded ? <ProjectsSectionV2 PROJECT_ACCENTS={PROJECT_ACCENTS} /> : <ProjectSkeleton />}
+          </div>
+
+          {/* Colonna Destra Estrema: Habits & Stats (3 colonne se usiamo 12) */}
+          <div className="flex flex-col gap-4 lg:col-span-3 order-3">
+            {isLoaded ? <HabitsSection /> : <HabitSkeleton />}
+            <FocusHeatmap dailyTaskLogs={dailyTaskLogs} prayerLogs={prayerLogs} dailyCompletionLog={dailyCompletionLog} activeHabits={activeHabits} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
           </div>
         </div>
 

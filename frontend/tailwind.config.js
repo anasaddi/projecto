@@ -8,15 +8,26 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
       },
       colors: {
         dark: {
-          bg: '#09090b',
-          card: '#18181b',
-          elevated: '#27272a',
-          border: '#27272a',
-          muted: '#3f3f46',
+          bg: '#080B12',
+          surface1: '#10151F',
+          surface2: '#151B26',
+          surface3: '#1B2230',
+          borderSubtle: '#242C3A',
+          borderStrong: '#33405A',
+          textPrimary: '#F4F7FB',
+          textSecondary: '#A7B0C0',
+          textMuted: '#6F7888',
+          violet: '#7C5CFF',
+          violetLight: '#9B82FF',
+          violetDark: '#4F38C8',
+          teal: '#16C7A3',
+          cyan: '#22B8F0',
+          amber: '#F59E0B',
+          rose: '#F43F5E',
         },
       },
       keyframes: {

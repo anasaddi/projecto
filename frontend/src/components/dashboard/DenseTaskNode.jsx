@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Icons } from './Icons';
 import { TaskCheckbox, KebabMenu } from './DashboardComponents';
 import { useLongPressActions } from '../../hooks/useLongPressActions';
@@ -427,8 +427,8 @@ export function DenseTaskNode({
           sharedWorkspaceTaskUI
             ? `items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 backdrop-blur-sm hover:bg-white/[0.05] dark:border-white/[0.05] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] ${node.done ? 'opacity-45' : ''}`
             : emphasizedTaskUI
-              ? 'min-h-[44px] items-start gap-3 rounded-xl border border-zinc-200/70 bg-white/80 px-3 py-2.5 shadow-sm hover:border-zinc-300/60 hover:bg-white dark:border-white/[0.05] dark:bg-white/[0.03] dark:hover:bg-white/[0.05]'
-              : 'min-h-[36px] items-center gap-2 rounded-lg px-2 py-1 hover:bg-zinc-100/80 dark:hover:bg-white/[0.04]'
+              ? 'min-h-[44px] items-start gap-3 rounded-xl border border-zinc-200/70 bg-white/80 px-3 py-2.5 shadow-sm hover:border-zinc-300/60 hover:bg-white dark:border-white/[0.05] dark:bg-white/[0.03] dark:hover:bg-dark-surface2'
+              : 'min-h-[36px] items-center gap-2 rounded-lg px-2 py-1 hover:bg-zinc-100/80 dark:hover:bg-dark-surface2'
         }`}
       >
         {/* Chevron + checkbox (colonna fissa) */}
@@ -462,7 +462,7 @@ export function DenseTaskNode({
                 />
               ) : (
                 <p
-                  className={`line-clamp-1 w-full min-w-0 text-left text-sm font-medium leading-snug text-zinc-100 ${node.done ? 'text-zinc-500' : ''}`}
+                  className={`line-clamp-1 w-full min-w-0 text-left text-sm font-medium leading-snug transition-all duration-300 ${node.done ? 'text-zinc-500 dark:text-dark-textMuted line-through decoration-zinc-500/50 dark:decoration-dark-textMuted/50' : 'text-zinc-100'}`}
                   title={node.title}
                 >
                   {node.title}
@@ -544,7 +544,7 @@ export function DenseTaskNode({
                 />
               ) : (
                 <p
-                  className={`w-full min-w-0 text-sm font-medium leading-5 text-left [overflow-wrap:normal] break-words ${node.done ? 'text-zinc-400 line-through' : 'text-zinc-900 dark:text-zinc-50'}`}
+                  className={`w-full min-w-0 text-sm font-medium leading-5 text-left [overflow-wrap:normal] break-words transition-all duration-300 ${node.done ? 'text-zinc-400 dark:text-dark-textMuted line-through decoration-zinc-400/50 dark:decoration-dark-textMuted/50' : 'text-zinc-900 dark:text-zinc-50'}`}
                   title={node.title}
                 >
                   {node.title}
@@ -617,7 +617,7 @@ export function DenseTaskNode({
               />
             ) : (
               <span
-                className="block w-full min-w-0 text-sm leading-4 font-medium [overflow-wrap:normal] break-words text-zinc-700 dark:text-zinc-300"
+                className={`block w-full min-w-0 text-sm leading-4 font-medium [overflow-wrap:normal] break-words transition-all duration-300 ${node.done ? 'text-zinc-400 dark:text-dark-textMuted line-through decoration-zinc-400/50 dark:decoration-dark-textMuted/50' : 'text-zinc-700 dark:text-zinc-300'}`}
                 title={node.title}
               >
                 {node.title}

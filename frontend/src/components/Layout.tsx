@@ -127,10 +127,10 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
               key={to}
               to={to}
               className={cn(
-                'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors',
+                'px-4 py-1.5 text-[14px] font-[600] rounded-full transition-all duration-200',
                 active
-                  ? 'bg-zinc-900 dark:bg-zinc-600 text-white'
-                  : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                  ? 'bg-zinc-900 text-white dark:bg-[rgba(124,92,255,0.16)] dark:text-white dark:border dark:border-[rgba(124,92,255,0.35)]'
+                  : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-transparent'
               )}
             >
               {label}

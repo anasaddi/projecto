@@ -1,4 +1,5 @@
-﻿import React from 'react';
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from './Icons';
 import { ProgressBar } from '../ui/CardV2';
 import { useToast } from '../../context/ToastContext';
@@ -63,7 +64,21 @@ export function LifeGoalTierRow({ tier, onToggleCollapse, onDrop, children }) {
         />
       </div>
 
-      {!tier.collapsed && <div className="animate-slide-down flex flex-col gap-4 px-4 pb-4 pt-3">{children}</div>}
+      <AnimatePresence initial={false}>
+        {!tier.collapsed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="flex flex-col gap-4 px-4 pb-4 pt-3">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

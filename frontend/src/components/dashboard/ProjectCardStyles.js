@@ -65,34 +65,34 @@ export const PROJECT_CARD_STYLES = {
 // Accent color configurations
 export const ACCENT_COLORS = {
   indigo: { 
-    bar: 'from-indigo-500 to-violet-500', 
-    text: 'text-indigo-600 dark:text-indigo-400',
-    glow: 'shadow-[0_0_14px_rgba(99,102,241,0.35)] dark:shadow-[0_0_18px_rgba(129,140,248,0.32)]' 
+    bar: 'from-dark-violet to-dark-violetLight', 
+    text: 'text-indigo-600 dark:text-dark-violetLight',
+    glow: 'shadow-sm dark:shadow-[0_0_15px_rgba(124,92,255,0.2)]' 
   },
   sky: { 
-    bar: 'from-sky-500 to-cyan-500', 
-    text: 'text-sky-600 dark:text-sky-400',
-    glow: 'shadow-[0_0_14px_rgba(14,165,233,0.32)] dark:shadow-[0_0_18px_rgba(56,189,248,0.28)]' 
+    bar: 'from-dark-cyan to-[#4DD0E1]', 
+    text: 'text-sky-600 dark:text-dark-cyan',
+    glow: 'shadow-sm dark:shadow-[0_0_15px_rgba(34,184,240,0.2)]' 
   },
   violet: { 
-    bar: 'from-violet-500 to-purple-500', 
-    text: 'text-violet-600 dark:text-violet-400',
-    glow: 'shadow-[0_0_14px_rgba(168,85,247,0.34)] dark:shadow-[0_0_18px_rgba(192,132,252,0.3)]' 
+    bar: 'from-dark-violet to-dark-violetLight', 
+    text: 'text-violet-600 dark:text-dark-violetLight',
+    glow: 'shadow-sm dark:shadow-[0_0_15px_rgba(124,92,255,0.2)]' 
   },
   emerald: { 
-    bar: 'from-emerald-500 to-teal-500', 
-    text: 'text-emerald-600 dark:text-emerald-400',
-    glow: 'shadow-[0_0_14px_rgba(16,185,129,0.3)] dark:shadow-[0_0_18px_rgba(52,211,153,0.26)]' 
+    bar: 'from-dark-teal to-[#26A69A]', 
+    text: 'text-emerald-600 dark:text-dark-teal',
+    glow: 'shadow-sm dark:shadow-[0_0_15px_rgba(22,199,163,0.2)]' 
   },
   amber: { 
-    bar: 'from-amber-500 to-orange-500', 
-    text: 'text-amber-600 dark:text-amber-400',
-    glow: 'shadow-[0_0_14px_rgba(245,158,11,0.28)] dark:shadow-[0_0_18px_rgba(251,191,36,0.24)]' 
+    bar: 'from-dark-amber to-[#FFCA28]', 
+    text: 'text-amber-600 dark:text-dark-amber',
+    glow: 'shadow-sm dark:shadow-[0_0_15px_rgba(245,158,11,0.2)]' 
   },
   rose: { 
-    bar: 'from-rose-500 to-pink-500', 
-    text: 'text-rose-600 dark:text-rose-400',
-    glow: 'shadow-[0_0_14px_rgba(244,63,94,0.28)] dark:shadow-[0_0_18px_rgba(251,113,133,0.24)]' 
+    bar: 'from-dark-rose to-[#EF5350]', 
+    text: 'text-rose-600 dark:text-dark-rose',
+    glow: 'shadow-sm dark:shadow-[0_0_15px_rgba(244,63,94,0.2)]' 
   },
 };
 

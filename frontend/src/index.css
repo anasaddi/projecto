@@ -8,7 +8,7 @@ html {
 
 body {
   margin: 0;
-  font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
   font-size: 1rem;
   font-weight: 400;
   background:
@@ -25,12 +25,8 @@ html.dark {
 }
 
 html.dark body {
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.25), transparent),
-    radial-gradient(ellipse 60% 40% at 80% 60%, rgba(139, 92, 246, 0.15), transparent),
-    radial-gradient(ellipse 50% 30% at 20% 80%, rgba(56, 189, 248, 0.1), transparent),
-    linear-gradient(180deg, #0a0a0f 0%, #0f0f16 50%, #0a0a0f 100%);
-  color: #e2e2e7;
+  background: #080B12;
+  color: #F4F7FB;
   background-attachment: fixed;
 }
 
@@ -365,56 +361,56 @@ input[type=number] {
 
   /* Panel: card contenitore principale */
   .dashboard-panel {
-    @apply rounded-xl border border-zinc-200 bg-white backdrop-blur-xl shadow-sm dark:border-zinc-700 dark:bg-zinc-900 dark:shadow-xl;
+    @apply rounded-[18px] border border-zinc-200 bg-white backdrop-blur-xl shadow-sm dark:border-dark-borderSubtle dark:bg-dark-surface1 dark:shadow-xl;
   }
 
   /* Panel muted: card annidata (nested) */
   .dashboard-panel-muted {
-    @apply rounded-lg border border-zinc-100 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800;
+    @apply rounded-[14px] border border-zinc-100 bg-zinc-50 dark:border-dark-borderSubtle dark:bg-dark-surface2;
   }
 
   /* Section title */
   .dashboard-section-title {
-    @apply text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400;
+    @apply text-sm font-bold tracking-wide text-zinc-500 dark:text-dark-textSecondary;
   }
 
   /* Chip: badge neutro */
   .dashboard-chip {
-    @apply inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300;
+    @apply inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:border-dark-borderSubtle dark:bg-dark-surface3 dark:text-dark-textSecondary;
   }
 
   /* Action button */
   .dashboard-action-btn {
-    @apply inline-flex items-center justify-center rounded-lg p-1.5 text-zinc-400 transition-all hover:bg-zinc-100 hover:text-zinc-700 active:scale-95 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100;
+    @apply inline-flex items-center justify-center rounded-lg p-1.5 text-zinc-400 transition-all hover:bg-zinc-100 hover:text-zinc-700 active:scale-95 dark:text-dark-textMuted dark:hover:bg-dark-surface3 dark:hover:text-dark-textPrimary;
   }
 
   /* Primary Button (Linear-like solid) */
   .primary-btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-all shadow-sm hover:bg-zinc-800 active:scale-95 dark:bg-indigo-500 dark:hover:bg-indigo-400;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-all shadow-sm hover:bg-zinc-800 active:scale-95 dark:bg-dark-violet dark:hover:bg-dark-violetLight;
   }
 
   /* Input — niente ring/bordo al focus */
   .dashboard-input {
-    @apply rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none transition-all shadow-sm placeholder:text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500;
+    @apply rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-800 outline-none transition-all shadow-sm placeholder:text-zinc-400 dark:border-dark-borderStrong dark:bg-dark-surface2 dark:text-dark-textPrimary dark:placeholder:text-dark-textMuted;
   }
 
   /* Seamless editing */
   .seamless-input {
-    @apply bg-transparent border-none outline-none ring-0 w-full placeholder:text-zinc-400 dark:placeholder:text-zinc-500 caret-indigo-500 dark:caret-indigo-400 transition-colors focus:bg-zinc-50 dark:focus:bg-zinc-800 rounded;
+    @apply bg-transparent border-none outline-none ring-0 w-full placeholder:text-zinc-400 dark:placeholder:text-dark-textMuted caret-indigo-500 dark:caret-dark-violet transition-colors focus:bg-zinc-50 dark:focus:bg-dark-surface3 rounded;
   }
 
   /* Row task standard */
   .task-row {
-    @apply flex min-h-[36px] items-center gap-3 rounded-lg px-2.5 py-1 font-medium text-sm transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800;
+    @apply flex min-h-[44px] md:min-h-[36px] items-center gap-3 rounded-lg px-2.5 py-1 font-medium text-sm transition-all hover:bg-zinc-100 dark:hover:bg-dark-surface2;
   }
 
   /* Checkbox universale */
   .task-checkbox {
-    @apply flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded border border-zinc-300 bg-white transition-all cursor-pointer shadow-sm dark:border-zinc-600 dark:bg-transparent dark:shadow-none hover:border-indigo-400 dark:hover:border-zinc-400;
+    @apply flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded border border-zinc-300 bg-white transition-all cursor-pointer shadow-sm dark:border-dark-textMuted dark:bg-transparent dark:shadow-none hover:border-indigo-400 dark:hover:border-dark-textSecondary;
   }
 
   .task-checkbox.checked {
-    @apply border-indigo-500 bg-indigo-500 text-white dark:border-indigo-500 dark:bg-indigo-500;
+    @apply border-indigo-500 bg-indigo-500 text-white dark:border-dark-violet dark:bg-dark-violet;
   }
 
   /* Focus visibile: tastiera su controlli interattivi (non campi testo/date) */

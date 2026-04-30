@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from './Icons';
 import { ProgressBar, Badge, ActionButton } from './Card';
 import { PROJECT_CARD_STYLES, getAccentColor } from './ProjectCardStyles';
@@ -71,8 +71,8 @@ export function StandardProjectCard({
                   } 
                   if (e.key === 'Escape') setIsEditing(false); 
                 }}
-                className={`min-h-[1.5rem] w-full resize-none overflow-hidden bg-transparent py-0.5 text-sm font-semibold leading-snug tracking-tight outline-none break-words ${
-                  isProjectDone ? 'text-zinc-400 line-through' : 'text-zinc-900 dark:text-zinc-50'
+                className={`min-h-[1.5rem] w-full resize-none overflow-hidden bg-transparent py-0.5 text-[15px] font-[650] leading-snug tracking-tight outline-none break-words ${
+                  isProjectDone ? 'text-zinc-400 line-through' : 'text-zinc-900 dark:text-dark-textPrimary'
                 }`}
                 style={{ minHeight: '1.5rem' }}
                 onInput={(e) => { 
@@ -83,8 +83,8 @@ export function StandardProjectCard({
               />
             ) : (
               <div
-                className={`min-h-[1.5rem] w-full text-sm font-semibold leading-snug tracking-tight cursor-pointer overflow-hidden text-ellipsis ${
-                  isProjectDone ? 'text-zinc-400 line-through' : 'text-zinc-900 dark:text-zinc-50'
+                className={`min-h-[1.5rem] w-full text-[15px] font-[650] leading-snug tracking-tight cursor-pointer overflow-hidden text-ellipsis ${
+                  isProjectDone ? 'text-zinc-400 line-through' : 'text-zinc-900 dark:text-dark-textPrimary'
                 }`}
                 title={project.title}
                 onDoubleClick={() => setIsEditing(true)}
@@ -111,7 +111,7 @@ export function StandardProjectCard({
                   setExpanded(next); 
                   onToggleExpand?.(next); 
                 }} 
-                className={expanded ? 'text-zinc-800 bg-zinc-100 dark:text-zinc-100 dark:bg-indigo-500/30 dark:ring-1 dark:ring-indigo-400/50' : ''} 
+                className={expanded ? 'text-zinc-800 bg-zinc-100 dark:text-dark-textPrimary dark:bg-dark-surface3 dark:ring-1 dark:ring-dark-borderStrong' : ''} 
                 title={expanded ? 'Chiudi task' : 'Apri task'}
               >
                 <Icons.ChevronDown className={`h-3 w-3 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
@@ -122,7 +122,7 @@ export function StandardProjectCard({
                   setProjectDeadlineInput(project.deadline || ''); 
                   setProjectDeadlineEditing(project.id); 
                 }} 
-                className={project.deadline ? 'text-amber-500 bg-amber-50 dark:text-amber-300 dark:bg-amber-500/30 dark:ring-1 dark:ring-amber-400/50' : ''} 
+                className={project.deadline ? 'text-amber-500 bg-amber-50 dark:text-dark-amber dark:bg-dark-amber/10 dark:ring-1 dark:ring-dark-amber/30' : ''} 
                 title="Scadenza"
               >
                 <Icons.Calendar className="h-3 w-3" />
@@ -180,13 +180,23 @@ export function StandardProjectCard({
         </div>
       )}
 
-      {expanded && (
-        <div className="rounded-b-[28px] border-t border-zinc-100 bg-zinc-50/70 p-4 dark:border-white/[0.04] dark:bg-black/20">
-          <div className="flex flex-col gap-1">
-            {renderTasks()}
-          </div>
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="rounded-b-[28px] border-t border-zinc-100 bg-zinc-50/70 p-4 dark:border-white/[0.04] dark:bg-black/20">
+              <div className="flex flex-col gap-1">
+                {renderTasks()}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -205,10 +215,10 @@ export function CreateProjectCard({ onClick, className = '' }) {
       </div>
       
       <div className="relative text-left flex flex-col justify-center">
-        <p className="text-xs font-bold tracking-tight text-zinc-700 transition-colors group-hover:text-indigo-600 dark:text-zinc-200 dark:group-hover:text-indigo-400 leading-tight">
+        <p className="text-[14px] font-[650] tracking-tight text-zinc-700 transition-colors group-hover:text-indigo-600 dark:text-dark-textPrimary dark:group-hover:text-dark-violetLight leading-tight">
           Nuovo Progetto
         </p>
-        <p className="text-xs font-medium text-zinc-400 dark:text-zinc-500 leading-tight mt-0.5">
+        <p className="text-[12px] font-medium text-zinc-400 dark:text-dark-textMuted leading-tight mt-0.5">
           Crea un'unità di lavoro
         </p>
       </div>

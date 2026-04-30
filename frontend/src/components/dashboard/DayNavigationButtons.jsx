@@ -123,39 +123,38 @@ export function DayNavigationButtons() {
         )}
       </AnimatePresence>
 
-      {/* Mobile Navigation Bar - Redesigned with Theme Toggle */}
-      <div className="fixed inset-x-0 bottom-0 z-50 md:hidden">
+      {/* Mobile Navigation Bar - Redesigned to be thinner */}
+      <div className="fixed inset-x-0 bottom-0 z-50 md:hidden pointer-events-none">
         {/* Safe area padding for notched devices */}
-        <div className="flex items-center justify-between gap-1.5 border-t border-white/[0.08] bg-gradient-to-b from-zinc-950/90 to-zinc-950 px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_32px_rgba(0,0,0,0.4)] backdrop-blur-2xl">
+        <div className="pointer-events-auto mx-auto mb-2 flex max-w-[calc(100%-32px)] items-center justify-between gap-1.5 rounded-full border border-white/[0.08] bg-black/60 px-3 pb-1.5 pt-1.5 shadow-lg backdrop-blur-md">
           {/* Previous Day Button */}
           <motion.button
             type="button"
             onClick={handlePreviousDay}
             disabled={!canGoBack}
             whileTap={canGoBack ? { scale: 0.92 } : {}}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-white transition-all disabled:opacity-25 disabled:grayscale active:bg-white/[0.10]"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-white transition-all disabled:opacity-25 disabled:grayscale active:bg-white/[0.10]"
             aria-label="Giorno precedente"
           >
-            <Icons.ChevronLeft className="h-4 w-4" />
+            <Icons.ChevronLeft className="h-3.5 w-3.5" />
           </motion.button>
 
           {/* Center Date Display */}
           <button
             type="button"
             onClick={handleBackToToday}
-            className="flex min-w-0 flex-1 flex-col items-center justify-center rounded-xl px-2 py-1 transition-colors active:bg-white/[0.04]"
+            className="flex min-w-0 flex-1 flex-row items-center justify-center gap-2 rounded-full px-2 py-1 transition-colors active:bg-white/[0.04]"
           >
             <div className="flex items-baseline gap-1">
-              <span className="text-base font-bold text-white">{day}</span>
-              <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">{month}</span>
+              <span className="text-[13px] font-bold text-white">{day}</span>
+              <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-400">{month}</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-[10px] font-medium text-zinc-500">{weekday}</span>
               {isToday && (
                 <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
               )}
               {!isToday && (
-                <span className="rounded-full bg-indigo-500/20 px-1 py-0.5 text-[8px] font-semibold uppercase tracking-wider text-indigo-400">
+                <span className="rounded-full bg-indigo-500/20 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-indigo-400">
                   Oggi
                 </span>
               )}
@@ -168,10 +167,10 @@ export function DayNavigationButtons() {
             onClick={handleNextDay}
             disabled={!canGoForward}
             whileTap={canGoForward ? { scale: 0.92 } : {}}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-white transition-all disabled:opacity-25 disabled:grayscale active:bg-white/[0.10]"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-white transition-all disabled:opacity-25 disabled:grayscale active:bg-white/[0.10]"
             aria-label="Giorno successivo"
           >
-            <Icons.ChevronRight className="h-4 w-4" />
+            <Icons.ChevronRight className="h-3.5 w-3.5" />
           </motion.button>
 
           {/* Theme Toggle Button */}
@@ -179,10 +178,10 @@ export function DayNavigationButtons() {
             type="button"
             onClick={toggleTheme}
             whileTap={{ scale: 0.92 }}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-white transition-all active:bg-white/[0.10]"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-white transition-all active:bg-white/[0.10]"
             aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
           >
-            <span className="text-base">{isDark ? '☀️' : '🌙'}</span>
+            <span className="text-[14px]">{isDark ? '☀️' : '🌙'}</span>
           </motion.button>
         </div>
       </div>

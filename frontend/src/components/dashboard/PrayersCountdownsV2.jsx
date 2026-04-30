@@ -75,11 +75,11 @@ export function PrayersCountdownsV2({
       <div className="px-4 sm:px-6 py-4 sm:py-6">
         <div className="flex flex-col gap-4 sm:gap-6">
 
-          {/* Section 1: Focus Score - Animated SVG Circle */}
-          <div className="flex items-center justify-center gap-4 w-full sm:justify-center">
-            <div className="relative h-20 w-20 shrink-0">
+          {/* Section 1: Focus Score */}
+          <div className="flex flex-col items-center justify-center gap-4 w-full sm:flex-row sm:justify-start sm:gap-6">
+            <div className="relative h-32 w-32 shrink-0">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="8" className="text-zinc-200 dark:text-zinc-800" />
+                <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="6" className="text-zinc-100 dark:text-dark-borderSubtle" />
                 <motion.circle
                   cx="50" cy="50" r="40" fill="none"
                   stroke="url(#focusGradient)"
@@ -93,37 +93,44 @@ export function PrayersCountdownsV2({
                 />
                 <defs>
                   <linearGradient id="focusGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#6366f1" />
-                    <stop offset="100%" stopColor="#8b5cf6" />
+                    <stop offset="0%" stopColor="#7C5CFF" />
+                    <stop offset="100%" stopColor="#9B82FF" />
                   </linearGradient>
                 </defs>
               </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">{percentage}%</span>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-3xl font-bold text-zinc-900 dark:text-white tabular-nums tracking-tighter">{percentage}%</span>
               </div>
+            </div>
+            
+            <div className="text-center sm:text-left">
+              <h4 className="text-[18px] font-bold text-zinc-800 dark:text-dark-textPrimary">
+                {percentage === 100 ? 'Giornata perfetta!' : percentage > 70 ? 'Ottimo lavoro finora!' : percentage > 30 ? 'Sei sulla buona strada.' : 'Inizia una sessione per costruire momentum.'}
+              </h4>
+              <p className="mt-1 text-[14px] text-zinc-500 dark:text-dark-textSecondary font-medium max-w-sm">
+                {isToday ? 'Completa le tue priorità e mantieni la costanza giornaliera.' : 'Riepilogo del focus per questa giornata.'}
+              </p>
             </div>
           </div>
 
           {/* Section 2: Time Period Progress Bars - 2x2 grid on mobile, row on desktop */}
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:w-full sm:justify-between sm:gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:w-full sm:justify-between sm:gap-3 mt-2">
             {allBars.map((bar) => {
-              const cfg = TIME_BAR_CONFIGS.find(c => c.key === bar.label) || TIME_BAR_CONFIGS[0];
               const pct = Math.min(1, Math.max(0, bar.pct ?? 0));
               return (
-                <div key={bar.label} className="flex flex-col gap-1.5 rounded-xl ring-1 px-3 py-2 sm:flex-1 sm:min-w-0 sm:gap-1 sm:px-4 sm:py-2.5">
+                <div key={bar.label} className="flex flex-col gap-1.5 rounded-2xl bg-zinc-50 dark:bg-dark-surface2 p-3 sm:flex-1 sm:min-w-0 border border-zinc-100 dark:border-dark-borderSubtle">
                   <div className="flex items-center justify-between gap-1 whitespace-nowrap">
-                    <span className="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{bar.label}</span>
-                    <span className="text-[9px] sm:text-[11px] font-bold tabular-nums text-zinc-400 dark:text-zinc-500">{Math.round(pct * 100)}%</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-dark-textSecondary">{bar.label}</span>
+                    <span className="text-[10px] font-[650] tabular-nums text-zinc-400 dark:text-dark-textMuted">{bar.remaining}</span>
                   </div>
-                  <div className="h-1 sm:h-2 w-full rounded-full bg-zinc-200/70 dark:bg-zinc-800/80 overflow-hidden">
+                  <div className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-dark-surface3 overflow-hidden">
                     <motion.div
-                      className={`h-full rounded-full bg-gradient-to-r ${cfg.gradient}`}
+                      className="h-full rounded-full bg-indigo-500 dark:bg-dark-violet"
                       initial={false}
                       animate={{ width: `${Math.max(2, pct * 100)}%` }}
                       transition={{ duration: 1, ease: 'easeOut' }}
                     />
                   </div>
-                  <span className="text-[10px] sm:text-sm font-bold tabular-nums text-zinc-900 dark:text-zinc-100">{bar.remaining}</span>
                 </div>
               );
             })}
