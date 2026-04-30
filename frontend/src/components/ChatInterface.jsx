@@ -62,12 +62,16 @@ const ChatInterface = () => {
 
       console.log('Request body:', requestBody);
 
+      const apiKey = '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';
+      console.log('API Key length:', apiKey.length);
+      console.log('API Key starts with:', apiKey.substring(0, 10));
+
       // Call OpenRouter Video Generation API with Kling Pro
       console.log('Sending video generation request...');
       const response = await fetch('https://openrouter.ai/api/v1/videos', {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer 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',
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(requestBody)
