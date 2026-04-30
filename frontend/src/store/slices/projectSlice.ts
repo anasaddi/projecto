@@ -115,12 +115,30 @@ export function createProjectSlice(set: ProjectSet, get: ProjectGet) {
         if (p) {
           const title = findTaskTitle(p.tasks, taskId);
           logTimelineEvent(state, 'project', taskId, title ?? '', val, p.title, undefined, toDateKey(parseSelectedDate(state.selectedDate, new Date())));
-          p.tasks = updateNodeInTree(p.tasks, taskId, (n: TaskNode) => ({ ...n, done: val })) as TaskNode[];
+          
+          const recursiveUpdate = (nodes: TaskNode[], id: string, done: boolean): TaskNode[] => {
+            return nodes.map(node => {
+              if (node.id === id) {
+                const updateChildren = (n: TaskNode): TaskNode => ({
+                  ...n,
+                  done,
+                  children: (n.children || []).map(updateChildren)
+                });
+                return updateChildren(node);
+              }
+              if (node.children && node.children.length > 0) {
+                return { ...node, children: recursiveUpdate(node.children, id, done) };
+              }
+              return node;
+            });
+          };
+
+          p.tasks = recursiveUpdate(p.tasks, taskId, val);
           if (p.lifeGoalId) {
             for (const tier of state.lifeGoals?.tiers ?? []) {
               const goal = (tier.goals || []).find((g) => g.id === p.lifeGoalId);
               if (goal) {
-                goal.tasks = updateNodeInTree(goal.tasks, taskId, (n: TaskNode) => ({ ...n, done: val })) as TaskNode[];
+                goal.tasks = recursiveUpdate(goal.tasks, taskId, val);
                 break;
               }
             }
@@ -134,7 +152,7 @@ export function createProjectSlice(set: ProjectSet, get: ProjectGet) {
               if ((sp as any).sourceProjectId === projectId) {
                 return {
                   ...sp,
-                  tasks: updateNodeInTree(sp.tasks || [], taskId, (n: TaskNode) => ({ ...n, done: val })) as TaskNode[],
+                  tasks: recursiveUpdate(sp.tasks || [], taskId, val),
                 };
               }
               return sp;

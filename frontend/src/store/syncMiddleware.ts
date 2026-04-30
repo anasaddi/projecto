@@ -79,6 +79,9 @@ interface SyncStateSlice {
   activePomodoroTask?: unknown;
   sectionOrder?: Record<string, string[]>;
   lastSavedAt?: number | null;
+  timelinePanelExpanded?: boolean;
+  todayTrainingExpanded?: boolean;
+  lockedHabitsCollapsed?: boolean;
 }
 
 type SetState = (args: unknown) => void;

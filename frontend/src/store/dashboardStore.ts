@@ -216,6 +216,7 @@ const dashboardStore = create<any>()(
             if (data.timelineRoutines != null && typeof data.timelineRoutines === 'object') state.timelineRoutines = data.timelineRoutines;
             if (data.timelinePanelExpanded !== undefined) state.timelinePanelExpanded = data.timelinePanelExpanded;
             if (data.todayTrainingExpanded !== undefined) state.todayTrainingExpanded = data.todayTrainingExpanded;
+            if (data.lockedHabitsCollapsed !== undefined) state.lockedHabitsCollapsed = data.lockedHabitsCollapsed;
             if (data.projectExpandedState && typeof data.projectExpandedState === 'object') state.projectExpandedState = data.projectExpandedState;
             if (data.projects && Array.isArray(data.projects)) {
               const prev = (state.projects || []) as Project[];
