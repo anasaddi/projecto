@@ -8,23 +8,20 @@ import { Card, CardHeader, Badge } from './Card';
 
 export function Top3SectionV2() {
   const [dragOverIndex, setDragOverIndex] = useState(null);
-  const store = useDashboardStore();
-  const {
-    projects = [],
-    top3Manual = [null, null, null],
-    quickTasks = [],
-    lifeGoals = { tiers: [] },
-    sharedDashboards = [],
-    reorderTop3,
-    setTop3SlotAtIndex,
-    removeFromTop3,
-    toggleQuickTask,
-    updateProject,
-    updateSharedDashboardProject,
-    toggleSharedQuickTask,
-    updateGoal,
-    logTimelineCompletionEvent
-  } = store ?? {};
+  const projects = useDashboardStore((s) => s.projects) ?? [];
+  const top3Manual = useDashboardStore((s) => s.top3Manual) ?? [null, null, null];
+  const quickTasks = useDashboardStore((s) => s.quickTasks) ?? [];
+  const lifeGoals = useDashboardStore((s) => s.lifeGoals) ?? { tiers: [] };
+  const sharedDashboards = useDashboardStore((s) => s.sharedDashboards) ?? [];
+  const reorderTop3 = useDashboardStore((s) => s.reorderTop3);
+  const setTop3SlotAtIndex = useDashboardStore((s) => s.setTop3SlotAtIndex);
+  const removeFromTop3 = useDashboardStore((s) => s.removeFromTop3);
+  const toggleQuickTask = useDashboardStore((s) => s.toggleQuickTask);
+  const updateProject = useDashboardStore((s) => s.updateProject);
+  const updateSharedDashboardProject = useDashboardStore((s) => s.updateSharedDashboardProject);
+  const toggleSharedQuickTask = useDashboardStore((s) => s.toggleSharedQuickTask);
+  const updateGoal = useDashboardStore((s) => s.updateGoal);
+  const logTimelineCompletionEvent = useDashboardStore((s) => s.logTimelineCompletionEvent);
 
   const showToast = useToast();
 

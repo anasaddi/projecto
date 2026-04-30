@@ -9,32 +9,29 @@ import { MS } from '../../constants';
 
 export function QuickTasksSectionV2() {
   const [hoveredTaskId, setHoveredTaskId] = useState(null);
-  const store = useDashboardStore();
-  const {
-    quickTasks = [],
-    sharedDashboards = [],
-    quickTaskDraft = '',
-    setQuickTaskDraft,
-    addQuickTaskAction,
-    quickTaskEditingId,
-    setQuickTaskEditingId,
-    quickTaskEditingTitle,
-    setQuickTaskEditingTitle,
-    quickTaskDeadlineEditing,
-    setQuickTaskDeadlineEditing,
-    quickTaskDeadlineInput,
-    setQuickTaskDeadlineInput,
-    toggleSharedQuickTask,
-    toggleQuickTask,
-    updateSharedQuickTask,
-    updateQuickTask,
-    top3Manual = [null, null, null],
-    setTop3SlotAtIndex,
-    removeSharedQuickTask,
-    removeQuickTask,
-    reorderQuickTasks,
-    promoteQuickTaskToProject,
-  } = store ?? {};
+  const quickTasks = useDashboardStore((s) => s.quickTasks) ?? [];
+  const sharedDashboards = useDashboardStore((s) => s.sharedDashboards) ?? [];
+  const quickTaskDraft = useDashboardStore((s) => s.quickTaskDraft);
+  const setQuickTaskDraft = useDashboardStore((s) => s.setQuickTaskDraft);
+  const addQuickTaskAction = useDashboardStore((s) => s.addQuickTaskAction);
+  const quickTaskEditingId = useDashboardStore((s) => s.quickTaskEditingId);
+  const setQuickTaskEditingId = useDashboardStore((s) => s.setQuickTaskEditingId);
+  const quickTaskEditingTitle = useDashboardStore((s) => s.quickTaskEditingTitle);
+  const setQuickTaskEditingTitle = useDashboardStore((s) => s.setQuickTaskEditingTitle);
+  const quickTaskDeadlineEditing = useDashboardStore((s) => s.quickTaskDeadlineEditing);
+  const setQuickTaskDeadlineEditing = useDashboardStore((s) => s.setQuickTaskDeadlineEditing);
+  const quickTaskDeadlineInput = useDashboardStore((s) => s.quickTaskDeadlineInput);
+  const setQuickTaskDeadlineInput = useDashboardStore((s) => s.setQuickTaskDeadlineInput);
+  const toggleSharedQuickTask = useDashboardStore((s) => s.toggleSharedQuickTask);
+  const toggleQuickTask = useDashboardStore((s) => s.toggleQuickTask);
+  const updateSharedQuickTask = useDashboardStore((s) => s.updateSharedQuickTask);
+  const updateQuickTask = useDashboardStore((s) => s.updateQuickTask);
+  const top3Manual = useDashboardStore((s) => s.top3Manual) ?? [null, null, null];
+  const setTop3SlotAtIndex = useDashboardStore((s) => s.setTop3SlotAtIndex);
+  const removeSharedQuickTask = useDashboardStore((s) => s.removeSharedQuickTask);
+  const removeQuickTask = useDashboardStore((s) => s.removeQuickTask);
+  const reorderQuickTasks = useDashboardStore((s) => s.reorderQuickTasks);
+  const promoteQuickTaskToProject = useDashboardStore((s) => s.promoteQuickTaskToProject);
 
   const allQuickTasks = useMemo(() => {
     const local = quickTasks.filter(t => !t.parentId).map(t => ({ ...t, shareId: null }));

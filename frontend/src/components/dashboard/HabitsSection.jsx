@@ -204,25 +204,25 @@ export function HabitsSection() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
-  const store = useDashboardStore();
-  const {
-    dailyTaskTemplates = [],
-    setDailyTaskTemplates,
-    dailyTaskLogs = {},
-    habitDraft = '',
-    setHabitDraft,
-    toggleDailyTask,
-    habitEditingId,
-    setHabitEditingId,
-    habitEditingTitle,
-    setHabitEditingTitle,
-    toggleHabitLock,
-    toggleHabitInTimeline,
-    removeDailyTask,
-    reorderHabits
-  } = store ?? {};
 
+  const dailyTaskTemplates = useDashboardStore((s) => s.dailyTaskTemplates) ?? [];
+  const setDailyTaskTemplates = useDashboardStore((s) => s.setDailyTaskTemplates);
+  const dailyTaskLogs = useDashboardStore((s) => s.dailyTaskLogs) ?? {};
+  const habitDraft = useDashboardStore((s) => s.habitDraft);
+  const setHabitDraft = useDashboardStore((s) => s.setHabitDraft);
+  const toggleDailyTask = useDashboardStore((s) => s.toggleDailyTask);
+  const habitEditingId = useDashboardStore((s) => s.habitEditingId);
+  const setHabitEditingId = useDashboardStore((s) => s.setHabitEditingId);
+  const habitEditingTitle = useDashboardStore((s) => s.habitEditingTitle);
+  const setHabitEditingTitle = useDashboardStore((s) => s.setHabitEditingTitle);
+  const toggleHabitLock = useDashboardStore((s) => s.toggleHabitLock);
+  const toggleHabitInTimeline = useDashboardStore((s) => s.toggleHabitInTimeline);
+  const removeDailyTask = useDashboardStore((s) => s.removeDailyTask);
+  const reorderHabits = useDashboardStore((s) => s.reorderHabits);
   const selectedDate = useDashboardStore((s) => s.selectedDate);
+  const lockedHabitsCollapsed = useDashboardStore((s) => s.lockedHabitsCollapsed);
+  const setLockedHabitsCollapsed = useDashboardStore((s) => s.setLockedHabitsCollapsed);
+
   const now = useMemo(() => parseSelectedDate(selectedDate, new Date()), [selectedDate]);
   const todayKey = useMemo(() => toDateKey(now), [now]);
   
@@ -232,9 +232,6 @@ export function HabitsSection() {
     logs.forEach(l => map[l.id] = l.done);
     return map;
   }, [dailyTaskLogs, todayKey]);
-
-  const lockedHabitsCollapsed = useDashboardStore((s) => s.lockedHabitsCollapsed);
-  const setLockedHabitsCollapsed = useDashboardStore((s) => s.setLockedHabitsCollapsed);
 
   const activeHabits = useMemo(() => dailyTaskTemplates.filter((t) => !t.locked), [dailyTaskTemplates]);
   const lockedHabits = useMemo(() => dailyTaskTemplates.filter((t) => t.locked), [dailyTaskTemplates]);

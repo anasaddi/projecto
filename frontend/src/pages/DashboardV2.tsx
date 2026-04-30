@@ -116,71 +116,19 @@ export default function DashboardV2(): React.ReactElement {
     () => resolveTop3Slots(projects, top3Manual as any[], allQuickTasks, lifeGoals as any, sharedDashboards as any[]),
     [projects, top3Manual, allQuickTasks, lifeGoals, sharedDashboards]
   );
+  
+  const isToday = toDateKey(selectedDate) === toDateKey(today);
+
   const top3DoneCount = useMemo(
     () => (top3Resolved as any[]).filter((s: any) => s && !s.missing && s.done).length,
     [top3Resolved]
   );
-
   const totalFocusItems = activeHabits.length + PRAYERS.length + 3;
   const doneFocusItems = todayDone + prayerDone + top3DoneCount;
-  const todayFocusScore = totalFocusItems ? doneFocusItems / totalFocusItems : 0;
-
-  const formattedDate = useMemo(() => selectedDate.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' }), [selectedDate]);
-  const isToday = toDateKey(selectedDate) === toDateKey(today);
 
   useEffect(() => {
     if (updateStats) updateStats(doneFocusItems, totalFocusItems);
   }, [doneFocusItems, totalFocusItems, updateStats]);
-
-  // lastSavedAt is now handled in Layout.tsx
-
-  const countdowns = useMemo(() => {
-    const n = new Date(now);
-    const eod = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
-    const eow = addDays(startOfWeek(n), 7);
-    const eom = new Date(n.getFullYear(), n.getMonth() + 1, 1);
-    return [
-      {
-        label: 'Day',
-        remaining: formatCountdown(eod.getTime() - n.getTime()),
-        pct: (n.getTime() - startOfDay(n).getTime()) / (eod.getTime() - startOfDay(n).getTime()),
-      },
-      {
-        label: 'Week',
-        remaining: formatCountdown(eow.getTime() - n.getTime()),
-        pct: (n.getTime() - startOfWeek(n).getTime()) / (eow.getTime() - startOfWeek(n).getTime()),
-      },
-      {
-        label: 'Month',
-        remaining: formatCountdown(eom.getTime() - n.getTime()),
-        pct: (n.getTime() - startOfMonth(n).getTime()) / (eom.getTime() - startOfMonth(n).getTime()),
-      },
-    ] as any[];
-  }, [now]);
-
-  const focusStreak = useMemo(() => {
-    const totalItems = activeHabits.length + PRAYERS.length + 3;
-    let s = 0;
-    for (let i = 0; i < 30; i++) {
-      const d = addDays(startOfDay(selectedDate), -i);
-      const key = toDateKey(d);
-      const taskLog = (dailyTaskLogs[key] as { id: string; done: boolean }[]) || [];
-      const taskLogMap: Record<string, boolean> = {};
-      taskLog.forEach((l) => (taskLogMap[l.id] = l.done));
-      const prayerLog = (prayerLogs[key] as Record<string, boolean>) || {};
-      const cl = (dailyCompletionLog[key] as { quick?: string[]; project?: string[] }) || {
-        quick: [],
-        project: [],
-      };
-      const habitsDone = (activeHabits as any[]).reduce((acc: number, t: any) => acc + (taskLogMap[t.id] ? 1 : 0), 0);
-      const prayersDone = PRAYERS.reduce((acc: number, p: string) => acc + (prayerLog[p] ? 1 : 0), 0);
-      const tasksDone = Math.min(3, (cl.quick?.length || 0) + (cl.project?.length || 0));
-      const score = totalItems ? (habitsDone + prayersDone + tasksDone) / totalItems : 0;
-      if (score >= 0.8) s++;
-      else break;
-    }
-    return s;
-  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDate, PRAYERS]);
 
   const confirmId = confirmState && typeof confirmState === 'object' && 'id' in confirmState ? (confirmState as { id: string }).id : undefined;
   const confirmPayload = confirmState && typeof confirmState === 'object' && 'payload' in confirmState ? (confirmState as { payload?: { shareId?: string; projectId?: string; goalId?: string } }).payload : undefined;
@@ -193,17 +141,8 @@ export default function DashboardV2(): React.ReactElement {
       {/* Day Navigation Component */}
       <DayNavigationButtons />
       
-      {/* Redundant header removed - items moved to Layout and PrayersCountdowns */}
-
       <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-4 py-4 pb-[calc(6rem+env(safe-area-inset-bottom))] md:gap-5 md:pb-6 md:py-6 flex-1 min-h-0 relative z-10`}>
-        <PrayersCountdownsV2
-          countdowns={countdowns as { label: string; remaining: string; pct: number }[]}
-          todayFocusScore={todayFocusScore}
-          focusStreak={focusStreak}
-          selectedDate={selectedDate}
-          formattedDate={formattedDate}
-          isToday={isToday}
-        />
+        <PrayersCountdownsV2 />
 
         <DailyTimelineWidget2 PRAYERS={PRAYERS} todayKey={todayKey} todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} isToday={isToday} />
 

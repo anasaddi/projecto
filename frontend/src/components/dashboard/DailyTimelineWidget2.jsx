@@ -126,17 +126,14 @@ function HabitSelector({ activeHabits, onSelect, onClose, triggerRef }) {
 
 // --- WIDGET PRINCIPALE ---
 export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, togglePrayer, isToday = true }) {
-  const store = useDashboardStore();
-  const {
-    timelineRoutines,
-    addTimelineRoutine,
-    toggleTimelineRoutine,
-    removeTimelineRoutine,
-    dailyTaskTemplates,
-    dailyCompletionLog,
-    timelinePanelExpanded,
-    setTimelinePanelExpanded
-  } = store;
+  const timelineRoutines = useDashboardStore((s) => s.timelineRoutines) ?? {};
+  const addTimelineRoutine = useDashboardStore((s) => s.addTimelineRoutine);
+  const toggleTimelineRoutine = useDashboardStore((s) => s.toggleTimelineRoutine);
+  const removeTimelineRoutine = useDashboardStore((s) => s.removeTimelineRoutine);
+  const dailyTaskTemplates = useDashboardStore((s) => s.dailyTaskTemplates) ?? [];
+  const dailyCompletionLog = useDashboardStore((s) => s.dailyCompletionLog) ?? {};
+  const timelinePanelExpanded = useDashboardStore((s) => s.timelinePanelExpanded);
+  const setTimelinePanelExpanded = useDashboardStore((s) => s.setTimelinePanelExpanded);
 
   const [selectorOpenSlot, setSelectorOpenSlot] = useState(null);
   const winTriggerRef = useRef(null);

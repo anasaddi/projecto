@@ -10,32 +10,29 @@ import { Card, CardHeader, CardBody } from './Card';
 import { AddItemInputBar } from './AddItemInputBar';
 
 export function LifeGoalsSection() {
-  const store = useDashboardStore();
-  const {
-    lifeGoals = { tiers: [] },
-    updateLifeGoals,
-    toggleTierCollapse,
-    moveGoalToTier,
-    updateGoal,
-    deleteGoal,
-    setConfirmState,
-    goalDeadlineEditing,
-    setGoalDeadlineEditing,
-    goalDeadlineInput,
-    setGoalDeadlineInput,
-    top3Manual = [null, null, null],
-    setTop3SlotAtIndex,
-    promoteGoalToProjects,
-    promoteGoalToQuickTasks,
-    projects = [],
-    quickTasks = [],
-    goalTaskDrafts = {},
-    setGoalTaskDrafts,
-    setProjects,
-    setQuickTasks,
-    toggleQuickTask,
-    addGoalToTier
-  } = store ?? {};
+  const lifeGoals = useDashboardStore((s) => s.lifeGoals) ?? { tiers: [] };
+  const updateLifeGoals = useDashboardStore((s) => s.updateLifeGoals);
+  const toggleTierCollapse = useDashboardStore((s) => s.toggleTierCollapse);
+  const moveGoalToTier = useDashboardStore((s) => s.moveGoalToTier);
+  const updateGoal = useDashboardStore((s) => s.updateGoal);
+  const deleteGoal = useDashboardStore((s) => s.deleteGoal);
+  const setConfirmState = useDashboardStore((s) => s.setConfirmState);
+  const goalDeadlineEditing = useDashboardStore((s) => s.goalDeadlineEditing);
+  const setGoalDeadlineEditing = useDashboardStore((s) => s.setGoalDeadlineEditing);
+  const goalDeadlineInput = useDashboardStore((s) => s.goalDeadlineInput);
+  const setGoalDeadlineInput = useDashboardStore((s) => s.setGoalDeadlineInput);
+  const top3Manual = useDashboardStore((s) => s.top3Manual) ?? [null, null, null];
+  const setTop3SlotAtIndex = useDashboardStore((s) => s.setTop3SlotAtIndex);
+  const promoteGoalToProjects = useDashboardStore((s) => s.promoteGoalToProjects);
+  const promoteGoalToQuickTasks = useDashboardStore((s) => s.promoteGoalToQuickTasks);
+  const projects = useDashboardStore((s) => s.projects) ?? [];
+  const quickTasks = useDashboardStore((s) => s.quickTasks) ?? [];
+  const goalTaskDrafts = useDashboardStore((s) => s.goalTaskDrafts) ?? {};
+  const setGoalTaskDrafts = useDashboardStore((s) => s.setGoalTaskDrafts);
+  const setProjects = useDashboardStore((s) => s.setProjects);
+  const setQuickTasks = useDashboardStore((s) => s.setQuickTasks);
+  const toggleQuickTask = useDashboardStore((s) => s.toggleQuickTask);
+  const addGoalToTier = useDashboardStore((s) => s.addGoalToTier);
 
   const showToast = useToast();
   const getTop3IndexForGoal = useCallback((gid) => top3Manual.findIndex(s => s && (

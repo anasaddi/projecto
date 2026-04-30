@@ -25,7 +25,6 @@ export function createUISlice(set: UISet) {
     setHabitEditingTitle: (val: string) =>
       set((s: unknown) => void ((s as { habitEditingTitle: string }).habitEditingTitle = val)),
 
-    lockedHabitsCollapsed: false,
     setLockedHabitsCollapsed: (val: boolean) =>
       set((s: unknown) => void ((s as { lockedHabitsCollapsed: boolean }).lockedHabitsCollapsed = val)),
 
