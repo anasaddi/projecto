@@ -146,7 +146,7 @@ export function PrayersCountdownsV2() {
                 </defs>
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold text-zinc-900 dark:text-white tabular-nums tracking-tighter">{percentage}%</span>
+                <span className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-indigo-500 to-violet-500 dark:from-indigo-400 dark:to-violet-400 tabular-nums tracking-tighter drop-shadow-sm">{percentage}%</span>
               </div>
             </div>
             
@@ -161,14 +161,14 @@ export function PrayersCountdownsV2() {
             {allBars.map((bar) => {
               const pct = Math.min(1, Math.max(0, bar.pct ?? 0));
               return (
-                <div key={bar.label} className="flex flex-col gap-1.5 rounded-2xl bg-zinc-50 dark:bg-white/[0.02] p-3 sm:flex-1 sm:min-w-0 border border-zinc-100 dark:border-white/[0.04]">
+                <div key={bar.label} className="flex flex-col gap-1.5 rounded-2xl bg-zinc-50 dark:bg-white/[0.02] p-3 sm:flex-1 sm:min-w-0 border border-zinc-100 dark:border-white/[0.04] transition-all duration-300 hover:scale-[1.02] hover:shadow-sm dark:hover:shadow-none dark:hover:bg-white/[0.04]">
                   <div className="flex items-center justify-between gap-1 whitespace-nowrap">
                     <span className="text-[11px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{bar.label}</span>
                     <span className="text-[10px] font-[650] tabular-nums text-zinc-400 dark:text-zinc-500">{bar.remaining}</span>
                   </div>
                   <div className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-white/[0.04] overflow-hidden">
                     <motion.div
-                      className="h-full rounded-full bg-indigo-500"
+                      className={h-full rounded-full bg-gradient-to-r }
                       initial={false}
                       animate={{ width: `${Math.max(2, pct * 100)}%` }}
                       transition={{ duration: 1, ease: 'easeOut' }}

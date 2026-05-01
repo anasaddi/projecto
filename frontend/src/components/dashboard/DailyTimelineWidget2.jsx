@@ -697,16 +697,24 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                                   {events.length > 0 && (
                                     <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 p-2.5">
                                       <div className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600/80 dark:text-emerald-400/80 mb-1.5">Completati</div>
-                                      <div className="flex flex-col gap-1">
-                                        {events.map((e, ei) => (
-                                          <div key={ei} className="flex items-start gap-1.5 bg-white dark:bg-zinc-800 p-1.5 rounded-lg border border-emerald-100 dark:border-emerald-900/30 shadow-sm">
-                                            <Icons.CheckCircle className="w-3 h-3 text-emerald-500 shrink-0 mt-0.5" />
-                                            <div className="flex flex-col flex-1 min-w-0">
-                                              <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 leading-tight truncate">{e.title}</span>
-                                              <span className="text-xs text-zinc-400 font-mono">{new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                            </div>
-                                          </div>
-                                        ))}
+                                      <div className="flex flex-col gap-1.5">
+                                        <AnimatePresence>
+                                          {events.map((e, ei) => (
+                                            <motion.div 
+                                              key={e.id || ei} 
+                                              initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                                              animate={{ opacity: 1, height: 'auto', scale: 1 }}
+                                              exit={{ opacity: 0, height: 0, scale: 0.95 }}
+                                              className="flex items-start gap-2 bg-gradient-to-br from-white to-emerald-50 dark:from-zinc-800 dark:to-emerald-900/10 p-2 rounded-xl border border-emerald-100 dark:border-emerald-500/20 shadow-sm hover:shadow-md transition-shadow"
+                                            >
+                                              <Icons.CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                              <div className="flex flex-col flex-1 min-w-0">
+                                                <span className="text-sm font-bold text-zinc-800 dark:text-zinc-100 leading-tight truncate">{e.title}</span>
+                                                <span className="text-[10px] font-bold text-emerald-600/70 dark:text-emerald-400/70 uppercase tracking-widest font-mono">{new Date(e.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                              </div>
+                                            </motion.div>
+                                          ))}
+                                        </AnimatePresence>
                                       </div>
                                     </div>
                                   )}
