@@ -40,14 +40,52 @@ export function PomodoroCompact() {
     try {
       const stored = localStorage.getItem(POMODORO_STORAGE);
       if (stored) {
-        const { date, sessions } = JSON.parse(stored);
-        if (date === selectedKey) setSessionsToday(sessions || 0);
+        const data = JSON.parse(stored);
+        if (data.date === realTodayKey) setSessionsToday(data.sessions || 0);
         else setSessionsToday(0);
+        
+        // Resume timer if active
+        if (data.timerStatus === 'running' && data.timerEnd && data.timerEnd > Date.now()) {
+          setSelectedMinutes(data.timerSelected || 25);
+          setRemaining(Math.ceil((data.timerEnd - Date.now()) / 1000));
+          setStatus('running');
+        } else if (data.timerStatus === 'paused' && data.timerRemaining) {
+          setSelectedMinutes(data.timerSelected || 25);
+          setRemaining(data.timerRemaining);
+          setStatus('paused');
+        }
       } else {
         setSessionsToday(0);
       }
     } catch (err) {}
-  }, [selectedKey]);
+  }, []); // Run only on mount
+
+  // Sync timer state to localStorage to prevent resets on reload
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    try {
+      const stored = localStorage.getItem(POMODORO_STORAGE);
+      const data = stored ? JSON.parse(stored) : { date: realTodayKey, sessions: 0 };
+      
+      if (status === 'running') {
+        data.timerStatus = 'running';
+        data.timerEnd = Date.now() + remaining * 1000;
+        data.timerSelected = selectedMinutes;
+      } else if (status === 'paused') {
+        data.timerStatus = 'paused';
+        data.timerRemaining = remaining;
+        data.timerSelected = selectedMinutes;
+        delete data.timerEnd;
+      } else {
+        delete data.timerStatus;
+        delete data.timerEnd;
+        delete data.timerRemaining;
+        delete data.timerSelected;
+      }
+      localStorage.setItem(POMODORO_STORAGE, JSON.stringify(data));
+    } catch (err) {}
+  }, [status, selectedMinutes, status === 'paused' ? remaining : null]); // Only update when status changes or is paused
+
 
   useEffect(() => {
     if (!completedRef.current) return;

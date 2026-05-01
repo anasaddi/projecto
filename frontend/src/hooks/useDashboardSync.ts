@@ -48,12 +48,8 @@ export function useDashboardSync(): void {
             }
           } catch (_) {}
         }
-        const freshRes = await api.training.getDashboardStateAt(new Date().toISOString(), { timeout: 15_000 }).catch(() => null);
-        let payload = extractDashboardPayload(freshRes) ?? extractDashboardPayload((freshRes as { data?: unknown } | null | undefined)?.data);
-        if (!hasMeaningfulDashboardData(payload)) {
-          const currentRes = await api.training.getDashboardState({ timeout: 15_000 }).catch(() => null);
-          payload = extractDashboardPayload(currentRes) ?? extractDashboardPayload((currentRes as { data?: unknown } | null | undefined)?.data);
-        }
+        const currentRes = await api.training.getDashboardState({ timeout: 15_000 }).catch(() => null);
+        let payload = extractDashboardPayload(currentRes) ?? extractDashboardPayload((currentRes as { data?: unknown } | null | undefined)?.data);
         if (payload && syncWithServer && !hasLocalData) syncWithServer(payload as Parameters<typeof syncWithServer>[0]);
         const shared = await api.training.listSharedDashboards({ timeout: 10_000 }).catch(() => null);
         if (!cancelled && Array.isArray(shared) && setSharedDashboards) setSharedDashboards(shared);
