@@ -59,7 +59,13 @@ function getSlotLabel(slotKey) {
   return `${from} → ${to}`;
 }
 
-
+// Converte "HH:MM" in minuti totali dalla mezzanotte
+function parseMinutes(timeStr) {
+  if (!timeStr || typeof timeStr !== 'string') return NaN;
+  const [h, m] = timeStr.split(':').map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return NaN;
+  return h * 60 + m;
+}
 
 
 // --- HABIT SELECTOR (UX/UI Ultra-Premium) - Portal per evitare clip nella card ---
