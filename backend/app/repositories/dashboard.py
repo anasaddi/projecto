@@ -157,6 +157,9 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
         "lifeGoals": lifeGoals,
         "timelineRoutines": timeline_routines,
         "timelinePanelExpanded": ds_data.get("timelinePanelExpanded", True),
+        "todayTrainingExpanded": ds_data.get("todayTrainingExpanded", True),
+        "lockedHabitsCollapsed": ds_data.get("lockedHabitsCollapsed", False),
+        "projectExpandedState": ds_data.get("projectExpandedState", {}),
         "sectionOrder": section_order,
         "activePomodoroTask": ds_data.get("activePomodoroTask"),
     }
@@ -317,7 +320,7 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
         merged["lifeGoals"]["collapsed"] = lg.get("collapsed", False)
         ds.data = merged
 
-        for ui_key in ("timelineRoutines", "timelinePanelExpanded", "sectionOrder", "activePomodoroTask"):
+        for ui_key in ("timelineRoutines", "timelinePanelExpanded", "todayTrainingExpanded", "lockedHabitsCollapsed", "projectExpandedState", "sectionOrder", "activePomodoroTask"):
             if ui_key in data:
                 merged = _parse_json(ds.data, {})
                 merged[ui_key] = data[ui_key]

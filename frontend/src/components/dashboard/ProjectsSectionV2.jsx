@@ -8,7 +8,7 @@ import { useDashboardStore } from '../../store/dashboardStore';
 import { Card, CardHeader, CardBody } from './Card';
 import { AddItemInputBar } from './AddItemInputBar';
 
-export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
+export const ProjectsSectionV2 = React.memo(({ PROJECT_ACCENTS }) => {
   const projects = useDashboardStore((s) => s.projects) ?? [];
   const createProject = useDashboardStore((s) => s.createProject);
   const setConfirmState = useDashboardStore((s) => s.setConfirmState);
@@ -258,6 +258,6 @@ export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
       </CardBody>
     </Card>
   );
-}
+});
 
 export default ProjectsSectionV2;

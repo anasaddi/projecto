@@ -65,24 +65,42 @@ function parseMinutes(timeStr) {
 }
 
 // --- HABIT SELECTOR (UX/UI Ultra-Premium) - Portal per evitare clip nella card ---
-function HabitSelector({ activeHabits, onSelect, onClose, triggerRef }) {
+function HabitSelector({ activeHabits, onSelect, onClose, triggerEl }) {
   const ref = useRef(null);
-  const [position, setPosition] = useState({ bottom: 0, left: 0 });
+  const [position, setPosition] = useState(null);
 
   useEffect(() => {
-    if (triggerRef?.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setPosition({ bottom: window.innerHeight - rect.top + 8, left: rect.left });
+    if (triggerEl) {
+      const rect = triggerEl.getBoundingClientRect();
+      const popupHeight = 280; // estimated max height
+      const popupWidth = 260;
+      const margin = 8;
+
+      // Prefer opening below, fall back to above if not enough space
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const top = spaceBelow >= popupHeight
+        ? rect.bottom + margin
+        : rect.top - popupHeight - margin;
+
+      // Clamp left so popup never goes off screen
+      const left = Math.min(
+        Math.max(margin, rect.left),
+        window.innerWidth - popupWidth - margin
+      );
+
+      setPosition({ top, left });
     }
-  }, [triggerRef]);
+  }, [triggerEl]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (ref.current && !ref.current.contains(e.target) && triggerRef?.current && !triggerRef.current.contains(e.target)) onClose();
+      if (ref.current && !ref.current.contains(e.target) && triggerEl && !triggerEl.contains(e.target)) onClose();
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onClose, triggerRef]);
+  }, [onClose, triggerEl]);
+
+  if (!position) return null;
 
   const content = (
     <motion.div
@@ -92,7 +110,7 @@ function HabitSelector({ activeHabits, onSelect, onClose, triggerRef }) {
       exit={{ opacity: 0, y: 10, scale: 0.95 }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
       className="fixed w-[260px] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border border-zinc-200/80 dark:border-zinc-700/80 rounded-2xl z-[9999] p-2 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.2)] dark:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.5)] overflow-hidden"
-      style={{ position: 'fixed', bottom: position.bottom, left: position.left }}
+      style={{ position: 'fixed', top: position.top, left: position.left }}
     >
       <div className="text-xs font-extrabold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest px-3 py-2 mb-1">
         Aggiungi Micro-Vittoria
@@ -136,7 +154,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
   const setTimelinePanelExpanded = useDashboardStore((s) => s.setTimelinePanelExpanded);
 
   const [selectorOpenSlot, setSelectorOpenSlot] = useState(null);
-  const winTriggerRef = useRef(null);
+  const [selectorOpenEl, setSelectorOpenEl] = useState(null);
+  const winTriggerEls = useRef(new Map());
   const { times: PRAYER_TIMES, locationName } = usePrayerTimes();
   const [currentPrayerIndex, setCurrentPrayerIndex] = useState(0);
   const [direction, setDirection] = useState(0);
@@ -230,6 +249,11 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
   }, [PRAYER_TIMES, minuteTick]);
   
   const activeHabits = useMemo(() => dailyTaskTemplates.filter(t => !t.locked), [dailyTaskTemplates]);
+  const habitMap = useMemo(() => {
+    const m = {};
+    (dailyTaskTemplates || []).forEach(h => { m[h.id] = h.title; });
+    return m;
+  }, [dailyTaskTemplates]);
   const eventsToday = useMemo(() => dailyCompletionLog[todayKey]?.events || [], [dailyCompletionLog, todayKey]);
   const slotsForDay = useMemo(() => timelineRoutines[todayKey] || {}, [timelineRoutines, todayKey]);
   const currentSlotKey = isToday ? getCurrentSlotKey() : null;
@@ -255,11 +279,11 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
 
     if (!isToday) {
       return {
-        badge: isDone ? 'In ritardo' : 'Mancante',
+        badge: isDone ? 'Completata' : 'Mancante',
         checkboxClass: isDone
-          ? 'bg-amber-500 border-amber-400 text-white shadow-[0_0_12px_rgba(245,158,11,0.3)]'
+          ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)]'
           : 'bg-rose-500 border-rose-400 text-white shadow-[0_0_12px_rgba(244,63,94,0.3)]',
-        labelClass: isDone ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400',
+        labelClass: isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400',
       };
     }
 
@@ -403,7 +427,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                   {/* Mobile: single prayer with smooth transition */}
                   <div className="md:hidden flex flex-col">
                     {/* Mobile navigation */}
-                    <div className="flex items-center justify-between mb-4 px-2 sticky left-0 right-0 z-20 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl py-2">
+                    <div className="flex items-center justify-between mb-4 px-2 py-2">
                       <button
                         onClick={handlePrevious}
                         disabled={currentPrayerIndex === 0}
@@ -500,7 +524,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                                           >
                                             <TaskCheckbox done={r.done} onClick={() => toggleTimelineRoutine(todayKey, slotKey, r.id, !r.done)} />
                                             <span className={`text-sm font-semibold truncate transition-colors flex-1 ${r.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}>
-                                              {r.title || 'Rimosso'}
+                                              {habitMap[r.habitId] || r.title || 'Rimosso'}
                                             </span>
                                             <button
                                               type="button"
@@ -515,8 +539,12 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
 
                                         <div className="relative mt-0.5">
                                           <button
-                                            ref={selectorOpenSlot === slotKey ? (el) => { winTriggerRef.current = el; } : undefined}
-                                            onClick={() => setSelectorOpenSlot(selectorOpenSlot === slotKey ? null : slotKey)}
+                                            ref={(el) => { if (el) winTriggerEls.current.set(slotKey, el); else winTriggerEls.current.delete(slotKey); }}
+                                            onClick={(e) => {
+                                              const isOpen = selectorOpenSlot === slotKey;
+                                              setSelectorOpenSlot(isOpen ? null : slotKey);
+                                              setSelectorOpenEl(isOpen ? null : winTriggerEls.current.get(slotKey) || null);
+                                            }}
                                             className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700/80 text-sm font-bold uppercase tracking-widest text-zinc-400 hover:text-indigo-500 hover:border-indigo-300 hover:bg-indigo-50/50 dark:hover:bg-indigo-500/10 transition-all"
                                           >
                                             <Icons.Plus className="w-3.5 h-3.5" /> Win
@@ -526,8 +554,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                                               <HabitSelector
                                                 activeHabits={activeHabits}
                                                 onSelect={(habitId) => addTimelineRoutine(todayKey, slotKey, habitId)}
-                                                onClose={() => setSelectorOpenSlot(null)}
-                                                triggerRef={winTriggerRef}
+                                                onClose={() => { setSelectorOpenSlot(null); setSelectorOpenEl(null); }}
+                                                triggerEl={selectorOpenEl}
                                               />
                                             )}
                                           </AnimatePresence>
@@ -623,7 +651,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                                       >
                                         <TaskCheckbox done={r.done} onClick={() => toggleTimelineRoutine(todayKey, slotKey, r.id, !r.done)} />
                                         <span className={`text-xs font-semibold truncate transition-colors ${r.done ? 'text-zinc-400 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}>
-                                          {r.title || 'Rimosso'}
+                                          {habitMap[r.habitId] || r.title || 'Rimosso'}
                                         </span>
                                         <button
                                           type="button"
@@ -638,8 +666,12 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
 
                                     <div className="relative mt-0.5">
                                       <button
-                                        ref={selectorOpenSlot === slotKey ? (el) => { winTriggerRef.current = el; } : undefined}
-                                        onClick={() => setSelectorOpenSlot(selectorOpenSlot === slotKey ? null : slotKey)}
+                                        ref={(el) => { if (el) winTriggerEls.current.set(slotKey, el); else winTriggerEls.current.delete(slotKey); }}
+                                        onClick={() => {
+                                          const isOpen = selectorOpenSlot === slotKey;
+                                          setSelectorOpenSlot(isOpen ? null : slotKey);
+                                          setSelectorOpenEl(isOpen ? null : winTriggerEls.current.get(slotKey) || null);
+                                        }}
                                         className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700/80 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-indigo-500 hover:border-indigo-300 hover:bg-indigo-50/50 dark:hover:bg-indigo-500/10 transition-all"
                                       >
                                         <Icons.Plus className="w-3 h-3" /> Win
@@ -649,8 +681,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                                           <HabitSelector
                                             activeHabits={activeHabits}
                                             onSelect={(habitId) => addTimelineRoutine(todayKey, slotKey, habitId)}
-                                            onClose={() => setSelectorOpenSlot(null)}
-                                            triggerRef={winTriggerRef}
+                                            onClose={() => { setSelectorOpenSlot(null); setSelectorOpenEl(null); }}
+                                            triggerEl={selectorOpenEl}
                                           />
                                         )}
                                       </AnimatePresence>

@@ -125,13 +125,21 @@ export function DenseTaskNode({
     (tid, val) => {
       if (onToggleProp) return onToggleProp(tid, val);
       if (isLifeGoal) {
-        // updateGoal already syncs linked projects & quick tasks via lifeGoalsSlice
-        // so we only need one atomic update here — NOT two separate set() calls
-        updateGoal(goalId, (g) => ({ ...g, tasks: updateNodeInTree(g.tasks || [], tid, (n) => ({ ...n, done: val })) }));
+        const recursiveUpdater = (n) => ({
+          ...n,
+          done: val,
+          children: (n.children || []).map(recursiveUpdater)
+        });
+        updateGoal(goalId, (g) => ({ ...g, tasks: updateNodeInTree(g.tasks || [], tid, recursiveUpdater) }));
       } else if (isShared) {
+        const recursiveUpdater = (n) => ({
+          ...n,
+          done: val,
+          children: (n.children || []).map(recursiveUpdater)
+        });
         updateSharedDashboardProject(shareId, projectId, (p) => ({
           ...p,
-          tasks: updateNodeInTree(p.tasks || [], tid, (n) => ({ ...n, done: val })),
+          tasks: updateNodeInTree(p.tasks || [], tid, recursiveUpdater),
         }));
       } else {
         toggleProjectTask(projectId, tid, val);

@@ -210,7 +210,10 @@ class DailyScheduleOut(BaseModel):
     template_id: Optional[str] = None
     is_completed: bool
 
-    model_config = {"from_attributes": True}
+    model_config = {
+        "from_attributes": True,
+        "populate_by_name": True
+    }
 
 
 class DailyScheduleUpdate(BaseModel):

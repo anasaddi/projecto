@@ -7,7 +7,7 @@ import { QuickTaskRow } from './QuickTaskRow';
 import { AddItemInputBar } from './AddItemInputBar';
 import { MS } from '../../constants';
 
-export function QuickTasksSectionV2() {
+export const QuickTasksSectionV2 = React.memo(() => {
   const [hoveredTaskId, setHoveredTaskId] = useState(null);
   const quickTasks = useDashboardStore((s) => s.quickTasks) ?? [];
   const sharedDashboards = useDashboardStore((s) => s.sharedDashboards) ?? [];
@@ -189,6 +189,6 @@ export function QuickTasksSectionV2() {
       </div>
     </Card>
   );
-}
+});
 
 export default QuickTasksSectionV2;

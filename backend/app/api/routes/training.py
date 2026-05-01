@@ -217,10 +217,16 @@ async def get_schedule(start_date: Optional[date] = None, days_count: int = 14, 
 @router.patch("/schedule/{schedule_date}", response_model=schemas.DailyScheduleOut, dependencies=[Depends(get_training_access)])
 async def update_schedule_completion(schedule_date: date, body: schemas.DailyScheduleUpdate, db: AsyncSession = Depends(get_db)):
     """Update completion status for a schedule date."""
-    sched = await crud_training.update_daily_schedule_completion(db, schedule_date, body.is_completed)
-    if not sched:
-        raise HTTPException(status_code=404, detail="Schedule non trovato per questa data")
-    return sched
+    try:
+        sched = await crud_training.update_daily_schedule_completion(db, schedule_date, body.is_completed)
+        if not sched:
+            raise HTTPException(status_code=404, detail="Schedule non trovato per questa data")
+        return sched
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to update schedule completion: %s", e)
+        raise HTTPException(status_code=500, detail=f"Errore interno durante l'aggiornamento: {str(e)}")
 
 @router.post("/schedule/skip-today", response_model=dict, dependencies=[Depends(get_training_access)])
 async def skip_today(db: AsyncSession = Depends(get_db)):

@@ -196,7 +196,7 @@ function SortableHabitItem({ task, idx, todayTaskLog, isHovered, setHoveredHabit
   );
 }
 
-export function HabitsSection() {
+export const HabitsSection = React.memo(() => {
   const [hoveredHabitId, setHoveredHabitId] = useState(null);
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -358,4 +358,6 @@ export function HabitsSection() {
       <ThisWeekWidget dailyTaskLogs={dailyTaskLogs} activeHabits={activeHabits} now={now} />
     </Card>
   );
-}
+});
+
+export default HabitsSection;

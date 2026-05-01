@@ -1,7 +1,8 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Icons } from './Icons';
 
 import { useGlobalConfig } from '../../context/GlobalConfigContext';
+import { useDashboardStore } from '../../store/dashboardStore';
 import { Card, CardHeader, CardBody } from './Card';
 import { toDateKey, addDays, startOfDay, parseSelectedDate } from './DashboardUtils';
 import { DASHBOARD } from '../../constants';
@@ -15,7 +16,9 @@ function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
     for (let i = 29; i >= 0; i--) {
       const d = addDays(startOfDay(anchorDate), -i);
       const key = toDateKey(d);
-      const taskLog = dailyTaskLogs[key] || {};
+      const taskLogArr = dailyTaskLogs[key] || [];
+      const taskLog = {};
+      (Array.isArray(taskLogArr) ? taskLogArr : []).forEach(l => { taskLog[l.id] = l.done; });
       const prayerLog = prayerLogs[key] || {};
       const cl = dailyCompletionLog[key] || { quick: [], project: [] };
       const habitsDone = activeHabits.reduce((a, t) => a + (taskLog[t.id] ? 1 : 0), 0);
@@ -44,9 +47,19 @@ function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
   );
 }
 
-export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, selectedDate, onSelectDate }) {
+export function FocusHeatmap() {
   const { config } = useGlobalConfig();
   const PRAYERS = config?.PRAYERS || ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+
+  const dailyTaskTemplates = useDashboardStore((s) => s.dailyTaskTemplates) ?? [];
+  const dailyTaskLogs = useDashboardStore((s) => s.dailyTaskLogs) ?? {};
+  const prayerLogs = useDashboardStore((s) => s.prayerLogs) ?? {};
+  const dailyCompletionLog = useDashboardStore((s) => s.dailyCompletionLog) ?? {};
+  const selectedDate = useDashboardStore((s) => s.selectedDate);
+  const setSelectedDate = useDashboardStore((s) => s.setSelectedDate);
+
+  const activeHabits = useMemo(() => (dailyTaskTemplates || []).filter(t => !t.locked), [dailyTaskTemplates]);
+
   const safeSelectedDate = parseSelectedDate(selectedDate, new Date());
   const selectedDateKey = toDateKey(startOfDay(safeSelectedDate));
   const anchorDate = startOfDay(new Date());
@@ -57,7 +70,9 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
     for (let i = 29; i >= 0; i--) {
       const d = addDays(anchorDate, -i);
       const key = toDateKey(d);
-      const taskLog = dailyTaskLogs[key] || {};
+      const taskLogArr = dailyTaskLogs[key] || [];
+      const taskLog = {};
+      (Array.isArray(taskLogArr) ? taskLogArr : []).forEach(l => { taskLog[l.id] = l.done; });
       const prayerLog = prayerLogs[key] || {};
       const completionLog = dailyCompletionLog[key] || { quick: [], project: [] };
       const habitsDone = activeHabits.reduce((acc, t) => acc + (taskLog[t.id] ? 1 : 0), 0);
@@ -125,7 +140,7 @@ export function FocusHeatmap({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
               key={key}
               type="button"
               title={`${key}\nStato: ${getDayStatus(score)} (${Math.round(score * 100)}%)\nAbitudini: ${habitsDone}/${habitsTotal}\nPreghiere: ${prayersDone}/${prayersTotal}\nTop3: ${tasksDone}/${tasksTotal}`}
-              onClick={() => onSelectDate?.(date)}
+              onClick={() => setSelectedDate?.(date)}
               className={`h-5 w-5 rounded-md ${getColor(score)} ${isSelected ? 'ring-2 ring-offset-1 ring-indigo-500 dark:ring-indigo-400 ring-offset-white dark:ring-offset-[#131820]' : ''} transition-colors hover:scale-[1.04] focus:outline-none focus:ring-2 focus:ring-indigo-400/70 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-[#131820]`}
               aria-label={`Seleziona il giorno ${key}`}
             />
