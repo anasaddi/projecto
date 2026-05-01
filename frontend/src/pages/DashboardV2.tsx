@@ -135,7 +135,7 @@ export default function DashboardV2(): React.ReactElement {
       if (toDateKey(next) !== toDateKey(today)) {
         setToday(next);
       }
-    }, 1000);
+    }, 30_000);
     return () => clearInterval(timer);
   }, [today]);
 

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardHeader, Badge } from './Card';
 import { Icons } from './Icons';
@@ -18,6 +18,13 @@ export function PrayersCountdownsV2() {
   const selectedDate = useMemo(() => parseSelectedDate(selectedDateRaw, new Date()), [selectedDateRaw]);
   const todayKey = useMemo(() => toDateKey(selectedDate), [selectedDate]);
   const isToday = useMemo(() => toDateKey(new Date()) === todayKey, [todayKey]);
+
+  // Tick every 60s to keep countdowns live
+  const [minuteTick, setMinuteTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setMinuteTick(t => t + 1), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   // Focus Score logic
   const activeHabits = useMemo(() => dailyTaskTemplates.filter(t => !t.locked), [dailyTaskTemplates]);
@@ -76,7 +83,7 @@ export function PrayersCountdownsV2() {
       { label: 'Week',  remaining: formatCountdown(eow.getTime() - n.getTime()), pct: (n.getTime() - startOfWeek(n).getTime()) / (eow.getTime() - startOfWeek(n).getTime()) },
       { label: 'Month', remaining: formatCountdown(eom.getTime() - n.getTime()), pct: (n.getTime() - startOfMonth(n).getTime()) / (eom.getTime() - startOfMonth(n).getTime()) },
     ];
-  }, []);
+  }, [minuteTick]);
 
   const yearRef = selectedDate;
   const startOfYearDate = new Date(yearRef.getFullYear(), 0, 1);

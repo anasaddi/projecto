@@ -452,6 +452,7 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
             await dashboard_service.update_shared_dashboard(
                 db, share_id, payload.get("data"), payload.get("title")
             )
+            from app.cache import invalidate_shared_dashboard
             await invalidate_shared_dashboard(share_id)
             # Broadcast AFTER successful DB write to avoid spreading uncommitted state
             await manager.broadcast(jsonable_encoder(payload), share_id, exclude=websocket)

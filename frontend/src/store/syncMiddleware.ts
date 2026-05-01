@@ -149,7 +149,7 @@ export function syncMiddleware(config: any): any {
         } catch (err) {
           console.error('Failed to post to BroadcastChannel:', err);
         }
-      }, 300);
+      }, 500);
 
       if (syncTimeout) clearTimeout(syncTimeout);
       syncTimeout = setTimeout(async () => {
@@ -177,7 +177,7 @@ export function syncMiddleware(config: any): any {
         } else {
           await addToSyncQueue('dashboard_update', fullState);
         }
-      }, 500);
+      }, 2000);
     };
 
     if (channel) {

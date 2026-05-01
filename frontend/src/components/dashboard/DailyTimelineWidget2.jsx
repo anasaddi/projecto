@@ -59,10 +59,8 @@ function getSlotLabel(slotKey) {
   return `${from} → ${to}`;
 }
 
-function parseMinutes(timeStr) {
-  const [h, m] = String(timeStr || '00:00').split(':').map(Number);
-  return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
-}
+
+
 
 // --- HABIT SELECTOR (UX/UI Ultra-Premium) - Portal per evitare clip nella card ---
 function HabitSelector({ activeHabits, onSelect, onClose, triggerEl }) {
