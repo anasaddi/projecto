@@ -168,7 +168,7 @@ export function PrayersCountdownsV2() {
                   </div>
                   <div className="h-1.5 w-full rounded-full bg-zinc-200 dark:bg-white/[0.04] overflow-hidden">
                     <motion.div
-                      className={h-full rounded-full bg-gradient-to-r }
+                      className={`h-full rounded-full bg-gradient-to-r ${bar.label === 'Week' ? 'from-emerald-500 to-teal-500' : bar.label === 'Month' ? 'from-amber-500 to-orange-500' : bar.label === 'Year' ? 'from-rose-500 to-pink-500' : 'from-indigo-500 to-violet-500'}`}
                       initial={false}
                       animate={{ width: `${Math.max(2, pct * 100)}%` }}
                       transition={{ duration: 1, ease: 'easeOut' }}
