@@ -167,7 +167,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
     return () => clearInterval(id);
   }, []);
 
-  // Calculate oldest missing prayer as starting point
+  // Calculate oldest missing prayer as starting point - ONLY on mount or date change
   useEffect(() => {
     if (!isToday) {
       setCurrentPrayerIndex(0);
@@ -183,20 +183,21 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
       }
     }
     setCurrentPrayerIndex(oldestMissingIndex);
-  }, [isToday, todayPrayerLog, PRAYERS]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isToday, todayKey]);
 
   // Handle swipe navigation
   const handlePrevious = () => {
     if (currentPrayerIndex > 0) {
       setDirection(-1);
-      setCurrentPrayerIndex(currentPrayerIndex - 1);
+      setCurrentPrayerIndex(prev => prev - 1);
     }
   };
 
   const handleNext = () => {
     if (currentPrayerIndex < PRAYERS.length - 1) {
       setDirection(1);
-      setCurrentPrayerIndex(currentPrayerIndex + 1);
+      setCurrentPrayerIndex(prev => prev + 1);
     }
   };
   
