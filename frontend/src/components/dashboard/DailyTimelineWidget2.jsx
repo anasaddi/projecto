@@ -72,21 +72,25 @@ function HabitSelector({ activeHabits, onSelect, onClose, triggerEl }) {
   useEffect(() => {
     if (triggerEl) {
       const rect = triggerEl.getBoundingClientRect();
-      const popupHeight = 280; // estimated max height
       const popupWidth = 260;
       const margin = 8;
 
+      // Measure actual popup height after render, fallback to estimate
+      const popupHeight = ref.current?.offsetHeight || 280;
+
       // Prefer opening below, fall back to above if not enough space
       const spaceBelow = window.innerHeight - rect.bottom;
-      const top = spaceBelow >= popupHeight
+      let top = spaceBelow >= popupHeight + margin
         ? rect.bottom + margin
         : rect.top - popupHeight - margin;
 
-      // Clamp left so popup never goes off screen
-      const left = Math.min(
-        Math.max(margin, rect.left),
-        window.innerWidth - popupWidth - margin
-      );
+      // Clamp so popup stays fully visible vertically
+      top = Math.max(margin, Math.min(top, window.innerHeight - popupHeight - margin));
+
+      // Center popup horizontally relative to the trigger button
+      let left = rect.left + rect.width / 2 - popupWidth / 2;
+      // Clamp so it doesn't go off-screen
+      left = Math.max(margin, Math.min(left, window.innerWidth - popupWidth - margin));
 
       setPosition({ top, left });
     }
@@ -462,7 +466,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                           animate={{ opacity: 1, x: 0, scale: 1 }}
                           exit={{ opacity: 0, x: direction > 0 ? -50 : 50, scale: 0.95 }}
                           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                          className="flex flex-col items-center gap-3"
+                          className="flex flex-col items-center gap-5"
                         >
                           {(() => {
                             const i = currentPrayerIndex;
@@ -475,7 +479,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                             const hasSlotCard = !!slotKey;
 
                             const routines = slotsForDay[slotKey] || [];
-                            const events = eventsToday.filter(e => e.slotKey === slotKey);
+                            const routineIds = new Set(routines.map(r => r.id));
+                            const events = eventsToday.filter(e => e.slotKey === slotKey && !routineIds.has(e.id));
                             const slotTotal = routines.length;
                             const slotDone = routines.filter(r => r.done).length;
 
@@ -601,7 +606,8 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                       const hasSlotCard = !!slotKey;
 
                       const routines = slotsForDay[slotKey] || [];
-                      const events = eventsToday.filter(e => e.slotKey === slotKey);
+                      const routineIds = new Set(routines.map(r => r.id));
+                      const events = eventsToday.filter(e => e.slotKey === slotKey && !routineIds.has(e.id));
                       const slotTotal = routines.length;
                       const slotDone = routines.filter(r => r.done).length;
 
