@@ -36,26 +36,31 @@ export function useDashboardSync(): void {
 
     async function hydrateAndFetch() {
       try {
-        if (!hasLocalData && syncWithServer) {
-          try {
-            const localState = await getLocalState();
-            const idbState = hasMeaningfulDashboardData(localState) ? extractDashboardPayload(localState) : null;
-            if (idbState) {
-              syncWithServer(idbState as Parameters<typeof syncWithServer>[0]);
-              const shared = await api.training.listSharedDashboards({ timeout: 10_000 }).catch(() => null);
-              if (!cancelled && Array.isArray(shared) && setSharedDashboards) setSharedDashboards(shared);
-              return;
-            }
-          } catch (_) {}
-        }
-        const currentRes = await api.training.getDashboardState({ timeout: 15_000 }).catch(() => null);
-        let payload = extractDashboardPayload(currentRes) ?? extractDashboardPayload((currentRes as { data?: unknown } | null | undefined)?.data);
-        if (payload && syncWithServer && !hasLocalData) syncWithServer(payload as Parameters<typeof syncWithServer>[0]);
+        // 1. Try to load from IndexedDB first for instant UI
+        try {
+          const localState = await getLocalState();
+          const idbState = hasMeaningfulDashboardData(localState) ? extractDashboardPayload(localState) : null;
+          if (idbState && syncWithServer) {
+            syncWithServer(idbState as Parameters<typeof syncWithServer>[0]);
+          }
+        } catch (_) {}
+
+        // 2. Fetch shared dashboards metadata
         const shared = await api.training.listSharedDashboards({ timeout: 10_000 }).catch(() => null);
-        if (!cancelled && Array.isArray(shared) && setSharedDashboards) setSharedDashboards(shared);
+        if (!cancelled && Array.isArray(shared) && setSharedDashboards) {
+          setSharedDashboards(shared);
+        }
+
+        // 3. Fetch and apply latest dashboard state from server
+        const currentRes = await api.training.getDashboardState({ timeout: 15_000 }).catch(() => null);
+        const payload = extractDashboardPayload(currentRes) ?? extractDashboardPayload((currentRes as { data?: unknown } | null | undefined)?.data);
+        
+        if (!cancelled && payload && syncWithServer) {
+          syncWithServer(payload as Parameters<typeof syncWithServer>[0]);
+        }
       } catch (err) {
         if (typeof window !== 'undefined' && (window as any).process?.env?.NODE_ENV !== 'production') {
-          console.warn('Dashboard load from server failed (using local state):', (err as Error)?.message || err);
+          console.warn('Dashboard sync failed:', (err as Error)?.message || err);
         }
       } finally {
         if (!cancelled) setIsLoaded(true);

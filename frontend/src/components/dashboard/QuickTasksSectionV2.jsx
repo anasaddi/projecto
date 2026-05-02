@@ -84,7 +84,7 @@ export const QuickTasksSectionV2 = React.memo(() => {
   };
 
   return (
-    <Card className="flex flex-col min-h-0"
+    <Card className="flex flex-col min-h-[300px]"
       glow={doneCount === totalCount && totalCount > 0}
       glowColor="success"
     >
@@ -94,9 +94,18 @@ export const QuickTasksSectionV2 = React.memo(() => {
         title="Quick Tasks"
         subtitle="Task veloci senza progetto"
         action={
-          <Badge variant={doneCount === totalCount && totalCount > 0 ? 'success' : 'danger'} size="sm">
-            {doneCount}/{totalCount}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => window.location.reload()} 
+              className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400"
+              title="Sincronizza"
+            >
+              <Icons.Refresh className="w-3.5 h-3.5" />
+            </button>
+            <Badge variant={totalCount === 0 ? 'primary' : (doneCount === totalCount ? 'success' : 'danger')} size="sm">
+              {doneCount}/{totalCount}
+            </Badge>
+          </div>
         }
       />
       
