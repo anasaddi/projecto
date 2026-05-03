@@ -124,13 +124,13 @@ function scanDirectory(dir) {
 }
 
 function main() {
-  console.log('🔍 Design System Audit\n');
+  console.log('[AUDIT] Design System Audit\n');
   console.log('Scanning:', SRC_DIR, '\n');
 
   scanDirectory(SRC_DIR);
 
   if (VIOLATIONS.length === 0) {
-    console.log('✅ Nessuna violazione trovata!\n');
+    console.log('[OK] Nessuna violazione trovata!\n');
     process.exit(0);
   }
 

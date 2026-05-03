@@ -22,6 +22,7 @@ import { useDashboardStore } from '../../store/dashboardStore';
 import { ThisWeekWidget } from './ThisWeekWidget';
 import { Card, CardHeader, Badge, ActionButton } from './Card';
 import { AddItemInputBar } from './AddItemInputBar';
+import { useGlobalConfig } from '../../context/GlobalConfigContext';
 
 function SortableHabitItem({ task, idx, todayTaskLog, isHovered, setHoveredHabitId, toggleDailyTask, habitEditingId, setHabitEditingId, setHabitEditingTitle, setDailyTaskTemplates, toggleHabitLock, toggleHabitInTimeline, removeDailyTask, dailyTaskLogs, now }) {
   const {
@@ -197,6 +198,9 @@ function SortableHabitItem({ task, idx, todayTaskLog, isHovered, setHoveredHabit
 }
 
 export const HabitsSection = React.memo(() => {
+  const { config } = useGlobalConfig();
+  const PRAYERS = config?.PRAYERS || ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+  
   const [hoveredHabitId, setHoveredHabitId] = useState(null);
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -208,6 +212,7 @@ export const HabitsSection = React.memo(() => {
   const dailyTaskTemplates = useDashboardStore((s) => s.dailyTaskTemplates) ?? [];
   const setDailyTaskTemplates = useDashboardStore((s) => s.setDailyTaskTemplates);
   const dailyTaskLogs = useDashboardStore((s) => s.dailyTaskLogs) ?? {};
+  const prayerLogs = useDashboardStore((s) => s.prayerLogs) ?? {};
   const habitDraft = useDashboardStore((s) => s.habitDraft);
   const setHabitDraft = useDashboardStore((s) => s.setHabitDraft);
   const toggleDailyTask = useDashboardStore((s) => s.toggleDailyTask);
@@ -243,12 +248,10 @@ export const HabitsSection = React.memo(() => {
 
   const todayDone = useMemo(() => activeHabits.reduce((acc, t) => acc + (todayTaskLog[t.id] ? 1 : 0), 0), [activeHabits, todayTaskLog]);
 
+  const addHabitActionFromStore = useDashboardStore((s) => s.addHabitAction);
   const addHabit = () => {
     const t = habitDraft.trim();
-    if (t) {
-      setDailyTaskTemplates(p => [...p, { id: `daily-${Date.now()}`, title: t, locked: false, ordinal: p.length }]);
-      setHabitDraft('');
-    }
+    if (t) addHabitActionFromStore(t);
   };
 
   const handleDragEnd = (event) => {
@@ -355,7 +358,13 @@ export const HabitsSection = React.memo(() => {
         </DndContext>
       </div>
       
-      <ThisWeekWidget dailyTaskLogs={dailyTaskLogs} activeHabits={activeHabits} now={now} />
+      <ThisWeekWidget 
+        dailyTaskLogs={dailyTaskLogs} 
+        activeHabits={activeHabits} 
+        now={now}
+        prayerLogs={prayerLogs}
+        PRAYERS={PRAYERS}
+      />
     </Card>
   );
 });

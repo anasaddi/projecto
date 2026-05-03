@@ -268,19 +268,13 @@ export default function Training2() {
     }
   }, [history, historyIndex]);
 
-  // Persistent save logic for training logs
-  const pendingSaveRef = useRef(null);
-
   useEffect(() => {
-    if (!selectedDay || !lastSaved) return;
-
-    if (pendingSaveRef.current) clearTimeout(pendingSaveRef.current);
-    
-    pendingSaveRef.current = setTimeout(async () => {
+    if (!selectedDay || !lastSaved || isSaving) return;
+    const timeoutId = setTimeout(() => {
       const sets = [];
       Object.entries(setsByExercise).forEach(([exerciseId, rows]) => {
         (rows || []).forEach(row => {
-          if (row.weight || row.reps || row.checked) {
+          if (row.weight || row.reps) {
             sets.push({
               exercise_id: exerciseId,
               set_number: row.set,
@@ -291,23 +285,13 @@ export default function Training2() {
           }
         });
       });
-
-      if (sets.length > 0 && !isSaving) {
+      if (sets.length > 0) {
         setIsSaving(true);
-        try {
-          await api.training.log({ template_id: selectedDay.template_id, sets });
-        } catch (err) {
-          console.error("[Training2] Save failed:", err);
-        } finally {
-          setIsSaving(false);
-        }
+        api.training.log({ template_id: selectedDay.template_id, sets }).finally(() => setIsSaving(false));
       }
-    }, 800);
-
-    return () => {
-      if (pendingSaveRef.current) clearTimeout(pendingSaveRef.current);
-    };
-  }, [lastSaved, selectedDay, setsByExercise]);
+    }, 2000);
+    return () => clearTimeout(timeoutId);
+  }, [lastSaved, selectedDay, setsByExercise, isSaving]);
 
   if (loading) {
     return (

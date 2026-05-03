@@ -40,6 +40,7 @@ interface SyncData {
   projectExpandedState?: Record<string, boolean>;
   activePomodoroTask?: { taskId: string; projectId?: string; quickTaskId?: string; shareId?: string; title: string } | null;
   sectionOrder?: Record<string, string[]>;
+  lockedHabitsCollapsed?: boolean;
 }
 
 const defaultInitial = {
@@ -247,11 +248,12 @@ const dashboardStore = create<any>()(
 
         togglePrayer: (name: string, val: boolean) =>
           set((s: unknown) => {
-            const state = s as { prayerLogs: Record<string, Record<string, boolean>>; selectedDate?: Date | string };
+            const state = s as { prayerLogs: Record<string, Record<string, any>>; selectedDate?: Date | string };
             if (val) haptic([50]);
             const date = toDateKey(parseSelectedDate(state.selectedDate, new Date()));
             if (!state.prayerLogs[date]) state.prayerLogs[date] = {};
-            state.prayerLogs[date][name] = val;
+            // Store timestamp when completed, null when uncompleted
+            state.prayerLogs[date][name] = val ? { completedAt: new Date().toISOString() } : null;
           }),
 
         ...createProjectSlice(set, get),

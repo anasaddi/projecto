@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     assemblyai_api_key: str = ""
     openrouter_api_key: str = ""
 
+    # AI & Vector Search
+    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    qdrant_host: str = "localhost"
+    qdrant_port: int = 6333
+    qdrant_collection: str = "km_chunks"
+
     @property
     def is_production(self) -> bool:
         return self.environment.lower() in ("production", "prod")

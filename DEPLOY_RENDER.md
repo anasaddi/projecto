@@ -22,7 +22,7 @@
 1. Seleziona il repository GitHub del tuo progetto
 2. Render leggerà automaticamente il file `render.yaml`
 3. Configura le variabili d'ambiente:
-   - `ADMIN_ACCESS_KEY`: `Anasaddi2001`
+   - `ADMIN_ACCESS_KEY`: `[YOUR_SECURE_PASSWORD]`
    - `ASSEMBLYAI_API_KEY`: (la tua key, se la usi)
    - `OPENROUTER_API_KEY`: (la tua key, se la usi)
    - `SECRET_KEY`: verrà generato automaticamente
@@ -70,7 +70,7 @@ Render creerà automaticamente il database PostgreSQL. Devi applicare le migrazi
 
 | Variabile | Valore | Note |
 |---|---|---|
-| `ADMIN_ACCESS_KEY` | `Anasaddi2001` | Password di accesso |
+| `ADMIN_ACCESS_KEY` | `[YOUR_SECURE_PASSWORD]` | Password di accesso |
 | `SECRET_KEY` | (auto-generato) | Per JWT tokens |
 | `DATABASE_URL` | (auto da Render) | PostgreSQL connection |
 | `ENVIRONMENT` | `production` | Modalità prod |

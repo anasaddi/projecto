@@ -77,7 +77,16 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
     prayerLogs = {}
     for pr in pr_logs:
         if pr.date not in prayerLogs: prayerLogs[pr.date] = {}
-        prayerLogs[pr.date][pr.prayer_name] = bool(pr.completed)
+        # Return {completedAt: "..."} format for completed prayers with timestamp,
+        # or true for legacy completed prayers without timestamp (backward compat)
+        # or null for uncompleted prayers
+        if pr.completed:
+            if pr.completed_at:
+                prayerLogs[pr.date][pr.prayer_name] = {"completedAt": pr.completed_at}
+            else:
+                prayerLogs[pr.date][pr.prayer_name] = True  # Legacy: no timestamp available
+        else:
+            prayerLogs[pr.date][pr.prayer_name] = None
 
     # 6. Top3 Items
     top3_result = await db.execute(select(Top3Item).order_by(Top3Item.slot))
@@ -284,8 +293,18 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
     if "prayerLogs" in data:
         for d_str, prayers in data["prayerLogs"].items():
             await db.execute(delete(PrayerLog).filter(PrayerLog.date == d_str))
-            for p_name, completed in prayers.items():
-                db.add(PrayerLog(date=d_str, prayer_name=p_name, completed=1 if completed else 0))
+            for p_name, value in prayers.items():
+                # Handle both old boolean format and new object format {completedAt: "..."}
+                if value is None or value is False:
+                    is_completed = 0
+                    completed_at = None
+                elif isinstance(value, dict):
+                    is_completed = 1 if value.get("completedAt") else 0
+                    completed_at = value.get("completedAt")  # Preserve timestamp
+                else:
+                    is_completed = 1 if value else 0
+                    completed_at = None
+                db.add(PrayerLog(date=d_str, prayer_name=p_name, completed=is_completed, completed_at=completed_at))
 
     if "top3Manual" in data:
         await db.execute(delete(Top3Item))

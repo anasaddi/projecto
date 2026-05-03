@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from './Icons';
-import { ProgressBar } from '../ui/CardV2';
+import { ProgressBar } from './Card';
 import { useToast } from '../../context/ToastContext';
 
 /**

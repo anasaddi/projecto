@@ -129,6 +129,29 @@ export function createHabitSlice(
             s.dailyTaskLogs[date] = s.dailyTaskLogs[date].filter((x) => x.id !== id);
           }
         });
+        // Fix #10: Clean orphan references in timelineRoutines and top3Manual
+        const state = s as any;
+        if (state.timelineRoutines) {
+          Object.keys(state.timelineRoutines).forEach((date: string) => {
+            const day = state.timelineRoutines[date];
+            if (day && typeof day === 'object') {
+              Object.keys(day).forEach((slot: string) => {
+                if (Array.isArray(day[slot])) {
+                  day[slot] = day[slot].filter((r: any) => r.habitId !== id);
+                }
+              });
+            }
+          });
+        }
+        if (state.top3Manual && Array.isArray(state.top3Manual)) {
+          state.top3Manual = state.top3Manual.map((slot: any) => {
+            if (slot?.quickTaskId) {
+              const quickTask = state.quickTasks?.find((t: any) => t.id === slot.quickTaskId);
+              if (!quickTask) return null;
+            }
+            return slot;
+          });
+        }
       }),
 
     reorderHabits: (fromIndex, toIndex) =>
@@ -143,8 +166,12 @@ export function createHabitSlice(
       set((s) => {
         const t = title.trim();
         if (t) {
+          // Fix #12: Use crypto.randomUUID() when available, fallback to Date.now() with random suffix to prevent collisions
+          const uniqueId = typeof crypto !== 'undefined' && crypto.randomUUID 
+            ? `daily-${crypto.randomUUID().slice(0, 12)}` 
+            : `daily-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
           s.dailyTaskTemplates.push({
-            id: `daily-${Date.now()}`,
+            id: uniqueId,
             title: t,
             locked: false,
             ordinal: s.dailyTaskTemplates.length,

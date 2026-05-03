@@ -123,7 +123,12 @@ export const api = {
       form.append('tipo', tipo || 'note');
       if (title) form.append('title', title);
       form.append('trust_score', String(trust_score ?? 7));
-      return fetch(BASE + '/sources/', { method: 'POST', body: form }).then((r) => {
+      const token = localStorage.getItem('km-admin-token');
+      return fetch(BASE + '/sources/', {
+        method: 'POST',
+        headers: token ? { 'x-km-access': token } : {},
+        body: form
+      }).then((r) => {
         if (!r.ok) throw new Error(r.statusText);
         return r.json();
       });
@@ -139,14 +144,19 @@ export const api = {
       form.append('tipo', tipo || 'article');
       if (title) form.append('title', title);
       form.append('trust_score', String(trust_score ?? 7));
-      return fetch(BASE + '/sources/', { method: 'POST', body: form }).then((r) => {
+      const token = localStorage.getItem('km-admin-token');
+      return fetch(BASE + '/sources/', {
+        method: 'POST',
+        headers: token ? { 'x-km-access': token } : {},
+        body: form
+      }).then((r) => {
         if (!r.ok) throw new Error(r.statusText);
         return r.json();
       });
     },
   },
   content: {
-    getBySource: (sourceId: string) => request<unknown>(`/content/by-source/${sourceId}`),
+    getBySource: (sourceId: string) => request<unknown>(`/content/source/${sourceId}`),
     get: (id: string) => request<unknown>(`/content/${id}`),
   },
   insights: {

@@ -12,13 +12,9 @@ OUT_DIR = ROOT / "scripts" / "provider_lists"
 
 def read_openrouter_key() -> str:
     env_key = (os.getenv("OPENROUTER_API_KEY") or "").strip()
-    if env_key:
-        return env_key
-    text = TRANSCRIBER_PATH.read_text(encoding="utf-8")
-    m = re.search(r'OPENROUTER_API_KEY\s*=\s*"([^"]+)"', text)
-    if not m:
-        raise RuntimeError("OPENROUTER_API_KEY not found")
-    return m.group(1).strip()
+    if not env_key:
+        raise RuntimeError("OPENROUTER_API_KEY environment variable required")
+    return env_key
 
 
 def fetch_catalog(api_key: str) -> list[dict]:

@@ -124,8 +124,9 @@ class DashboardStateUpdate(BaseModel):
 class SharedDashboardOut(BaseModel):
     share_id: str
     title: str
-    data: dict | list
-    updated_at: datetime
+    data: Optional[dict | list] = None
+    updated_at: Optional[datetime] = None
+    is_protected: bool = False
 
     model_config = {"from_attributes": True}
 
@@ -133,6 +134,14 @@ class SharedDashboardOut(BaseModel):
 class SharedDashboardUpdate(BaseModel):
     data: dict | list
     title: Optional[str] = None
+
+
+class SharedDashboardUnlockRequest(BaseModel):
+    password: str
+
+
+class SharedDashboardUnlockResponse(BaseModel):
+    token: str
 
 
 # --- Workout Logs ---

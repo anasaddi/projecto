@@ -10,7 +10,7 @@ import Layout from './components/Layout';
 import AppErrorBoundary from './components/AppErrorBoundary';
 import { isTokenExpired } from './api/client';
 
-import DashboardV2 from './pages/DashboardV2';
+const DashboardV2 = lazy(() => import('./pages/DashboardV2'));
 
 const SourceList = lazy(() => import('./pages/SourceList'));
 const YouTubeViewer = lazy(() => import('./pages/YouTubeViewer'));

@@ -119,7 +119,7 @@ export interface DashboardState {
   dailyTaskTemplates: DailyTaskTemplate[];
   dailyTaskLogs: Record<string, DailyTaskLogEntry[]>;
   projects: Project[];
-  prayerLogs: Record<string, Record<string, boolean>>;
+  prayerLogs: Record<string, Record<string, boolean | { completedAt?: string } | null>>;
   top3Manual: (Top3Slot | null)[];
   quickTasks: QuickTask[];
   dailyCompletionLog: Record<string, DayCompletionPayload>;

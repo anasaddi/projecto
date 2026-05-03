@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Icons } from './Icons';
 import { TaskCheckbox } from './DashboardComponents';
@@ -8,23 +8,20 @@ import { Card, CardHeader, Badge } from './Card';
 
 export function Top3Section() {
   const [dragOverIndex, setDragOverIndex] = useState(null);
-  const store = useDashboardStore();
-  const {
-    projects = [],
-    top3Manual = [null, null, null],
-    quickTasks = [],
-    lifeGoals = { tiers: [] },
-    sharedDashboards = [],
-    reorderTop3,
-    setTop3SlotAtIndex,
-    removeFromTop3,
-    toggleQuickTask,
-    toggleProjectTask,
-    updateSharedDashboardProject,
-    toggleSharedQuickTask,
-    updateGoal,
-    logTimelineCompletionEvent
-  } = store ?? {};
+  const projects = useDashboardStore(s => s.projects) || [];
+  const top3Manual = useDashboardStore(s => s.top3Manual) || [null, null, null];
+  const quickTasks = useDashboardStore(s => s.quickTasks) || [];
+  const lifeGoals = useDashboardStore(s => s.lifeGoals) || { tiers: [] };
+  const sharedDashboards = useDashboardStore(s => s.sharedDashboards) || [];
+  const reorderTop3 = useDashboardStore(s => s.reorderTop3);
+  const setTop3SlotAtIndex = useDashboardStore(s => s.setTop3SlotAtIndex);
+  const removeFromTop3 = useDashboardStore(s => s.removeFromTop3);
+  const toggleQuickTask = useDashboardStore(s => s.toggleQuickTask);
+  const toggleProjectTask = useDashboardStore(s => s.toggleProjectTask);
+  const updateSharedDashboardProject = useDashboardStore(s => s.updateSharedDashboardProject);
+  const toggleSharedQuickTask = useDashboardStore(s => s.toggleSharedQuickTask);
+  const updateGoal = useDashboardStore(s => s.updateGoal);
+  const logTimelineCompletionEvent = useDashboardStore(s => s.logTimelineCompletionEvent);
 
   const allQuickTasks = useMemo(() => {
     const local = quickTasks.filter(t => !t.parentId).map(t => ({ ...t, shareId: null }));

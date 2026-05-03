@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.main import app
 from app.db.session import Base, get_db
+from app.config import get_settings
 
 # Use in-memory SQLite for tests to avoid requiring Postgres
 TEST_DATABASE_URL = "sqlite:///./test.db"
@@ -40,5 +41,7 @@ def client(db_session):
 
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as c:
+        # Provide admin access by default in tests
+        c.headers.update({"x-km-access": get_settings().admin_access_key})
         yield c
     app.dependency_overrides.clear()

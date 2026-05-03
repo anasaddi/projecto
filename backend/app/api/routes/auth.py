@@ -20,7 +20,7 @@ def create_access_token(data: dict, secret_key: str, expires_delta: datetime.tim
 
 @router.post("/login")
 async def login(req: LoginRequest, settings: Settings = Depends(get_settings)):
-    payload = {"role": "admin"}
+    payload = {"role": "admin", "sub": "admin"}
     training_key = (settings.training_access_key or "").strip()
     if training_key and req.key == training_key:
         payload["training"] = True  # Flavio (o chi ha questa chiave) vede Training
@@ -37,9 +37,13 @@ async def login(req: LoginRequest, settings: Settings = Depends(get_settings)):
         secret_key=settings.secret_key,
         expires_delta=datetime.timedelta(days=7)
     )
-    return {"token": access_token, "role": "admin", "training": True}
+    return {"token": access_token, "role": "admin", "training": bool(payload.get("training"))}
 
 @router.get("/verify")
 async def verify_token(current_admin: dict = Depends(get_current_admin)):
     """Verify if the provided token is valid."""
-    return {"status": "valid", "role": current_admin.get("role", "admin")}
+    return {
+        "status": "valid",
+        "role": current_admin.get("role", "admin"),
+        "training": bool(current_admin.get("training"))
+    }

@@ -19,10 +19,6 @@ interface DayTemplate {
 
 interface TodayResponse {
   template?: DayTemplate;
-  template_id?: string;
-  day_name?: string;
-  hypertrophy_exercises?: Exercise[];
-  strength_aw_exercises?: Exercise[];
   date?: string;
 }
 
@@ -249,7 +245,7 @@ function calculateProgressPercent(
   return Math.min(100, Math.round((totalCompleted / totalExpected) * 100)) || 0;
 }
 
-export function useTodayTraining(forDate?: string): UseTodayTrainingReturn {
+export function useTodayTraining(): UseTodayTrainingReturn {
   const [selectedDay, setSelectedDay] = useState<DayTemplate | null>(null);
   const [allProgressions, setAllProgressions] = useState<Record<string, ProgressionData>>({});
   const [awProgram, setAwProgram] = useState<AwProgram | null>(null);
@@ -258,6 +254,8 @@ export function useTodayTraining(forDate?: string): UseTodayTrainingReturn {
   const [error, setError] = useState<string | null>(null);
   
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  // Fix #14: Snapshot of progression before optimistic update, used for rollback on API failure
+  const progressionSnapshots = useRef<Record<string, ProgressionData | null>>({});
   
   // Fetch today's training data
   // No auth gate - let the API handle authorization and set errors reactively
@@ -265,16 +263,13 @@ export function useTodayTraining(forDate?: string): UseTodayTrainingReturn {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-      setSelectedDay(null);
-      setAllProgressions({});
-      setAwProgram(null);
 
       try {
-        const targetDate = (forDate || new Date().toISOString().slice(0, 10)).slice(0, 10);
-        setSelectedDate(targetDate);
+        const today = new Date().toISOString().slice(0, 10);
+        setSelectedDate(today);
 
         const [todayRes, progressionsRes, awProgramRes] = await Promise.all([
-          api.training.getToday(targetDate).catch((err) => {
+          api.training.getToday().catch((err) => {
             console.warn('[useTodayTraining] Failed to fetch today:', err);
             return null;
           }),
@@ -290,17 +285,8 @@ export function useTodayTraining(forDate?: string): UseTodayTrainingReturn {
 
         // Process today's data
         const todayData = todayRes as TodayResponse | null;
-        const groupedHypertrophy = todayData?.hypertrophy_exercises ?? [];
-        const groupedStrength = todayData?.strength_aw_exercises ?? [];
         if (todayData?.template) {
           setSelectedDay(todayData.template);
-        } else if (groupedHypertrophy.length || groupedStrength.length) {
-          const response = todayData ?? {};
-          setSelectedDay({
-            template_id: response.template_id || targetDate,
-            day_name: response.day_name || 'Today',
-            exercises: [...groupedHypertrophy, ...groupedStrength],
-          });
         }
 
         // Process progressions
@@ -327,7 +313,7 @@ export function useTodayTraining(forDate?: string): UseTodayTrainingReturn {
 
     fetchData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [forDate]);
+  }, []); // Run once on mount
 
   // Calculate progress percentage
   const progressPercent = useMemo(() => {
@@ -337,21 +323,40 @@ export function useTodayTraining(forDate?: string): UseTodayTrainingReturn {
 
   // Handle progression changes with debounce
   const onProgressionChange = useCallback((exerciseId: string, data: ProgressionData) => {
-    // Update local state immediately
-    setAllProgressions((prev) => ({
-      ...prev,
-      [exerciseId]: data,
-    }));
+    // Fix #14: Save previous state for rollback on API failure
+    if (progressionSnapshots.current[exerciseId] === undefined) {
+      // Only snapshot the first time per exercise (before any debounced save completes)
+      setAllProgressions((prev) => {
+        progressionSnapshots.current[exerciseId] = prev[exerciseId] ?? null;
+        return { ...prev, [exerciseId]: data };
+      });
+    } else {
+      // Snapshot already saved, just update optimistically
+      setAllProgressions((prev) => ({ ...prev, [exerciseId]: data }));
+    }
 
     // Debounce API call
     if (saveTimers.current[exerciseId]) {
       clearTimeout(saveTimers.current[exerciseId]);
     }
 
-    saveTimers.current[exerciseId] = setTimeout(() => {
-      api.training.updateProgression(exerciseId, data).catch((err) => {
+    saveTimers.current[exerciseId] = setTimeout(async () => {
+      try {
+        await api.training.updateProgression(exerciseId, data);
+        // Success: clear the snapshot, this state is now confirmed
+        delete progressionSnapshots.current[exerciseId];
+      } catch (err) {
         console.error(`[useTodayTraining] Failed to update progression for ${exerciseId}:`, err);
-      });
+        // Rollback to previous state on API failure
+        const snapshot = progressionSnapshots.current[exerciseId];
+        if (snapshot !== undefined) {
+          setAllProgressions((prev) => ({
+            ...prev,
+            [exerciseId]: snapshot ?? {} as ProgressionData,
+          }));
+          delete progressionSnapshots.current[exerciseId];
+        }
+      }
     }, 700);
   }, []);
 

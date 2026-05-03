@@ -1,14 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dumbbell, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTodayTraining } from '../../hooks/useTodayTraining';
-import { useDashboardStore } from '../../store/dashboardStore';
 import TodayCard from '../training/TodayCard';
 import { Card, CardHeader, Badge } from './Card';
-
-interface TodayCardDashboardProps {
-  defaultExpanded?: boolean;
-}
 
 // Skeleton for loading state
 const TodayCardSkeleton = () => (
@@ -63,19 +58,8 @@ const TodayCardSkeleton = () => (
   </div>
 );
 
-export function TodayCardDashboard({ defaultExpanded = true }: TodayCardDashboardProps): React.ReactElement {
-  const isExpanded = useDashboardStore((s) =>
-    typeof s.todayTrainingExpanded === 'boolean' ? s.todayTrainingExpanded : defaultExpanded
-  );
-  const setTodayTrainingExpanded = useDashboardStore((s) => s.setTodayTrainingExpanded);
-  const dashboardSelectedDate = useDashboardStore((s) => s.selectedDate);
-  const toggleTodayTrainingExpanded = () => {
-    const current = useDashboardStore.getState().todayTrainingExpanded;
-    setTodayTrainingExpanded(!current);
-  };
-  const selectedDateKey = dashboardSelectedDate instanceof Date
-    ? dashboardSelectedDate.toISOString().slice(0, 10)
-    : (typeof dashboardSelectedDate === 'string' ? dashboardSelectedDate.slice(0, 10) : undefined);
+export function TodayCardDashboard(): React.ReactElement | null {
+  const [isExpanded, setIsExpanded] = useState(true);
   const {
     selectedDay,
     allProgressions,
@@ -85,29 +69,31 @@ export function TodayCardDashboard({ defaultExpanded = true }: TodayCardDashboar
     loading,
     error,
     onProgressionChange,
-  } = useTodayTraining(selectedDateKey);
+  } = useTodayTraining();
 
-  // Show visible fallback when there's no workout today or if an error occurs
-  if ((error && !loading) || (!loading && !selectedDay?.exercises?.length && !error)) {
+  // If there's genuinely no workout today (no exercises), returning null is fine
+  // But on error, show a minimal fallback UI so the user knows something exists
+  if (!loading && !selectedDay?.exercises?.length && !error) {
+    return null;
+  }
+
+  // Show collapsed card with error message on error
+  if (error && !loading) {
     return (
       <Card className="flex flex-col overflow-hidden">
         <CardHeader
           icon={Dumbbell}
           iconColor="text-indigo-500"
           title="Training"
-          subtitle={error ? 'Unable to load workout' : 'Rest day / no workout scheduled'}
+          subtitle="Unable to load workout"
           action={
             <Badge variant="primary" size="sm">
-              {error ? '--' : 'REST'}
+              --
             </Badge>
           }
         />
         <div className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
-          <p>
-            {error
-              ? 'Could not load today\'s training data. The server may be unavailable.'
-              : 'No training session is scheduled for today. You can still review your workout history or keep the card collapsed.'}
-          </p>
+          <p>Could not load today's training data. The server may be unavailable.</p>
         </div>
       </Card>
     );
@@ -117,12 +103,12 @@ export function TodayCardDashboard({ defaultExpanded = true }: TodayCardDashboar
   const isToday = selectedDate?.slice(0, 10) === todayDateStr;
 
   return (
-    <Card className="flex flex-col overflow-hidden border-indigo-500/10 shadow-[0_8px_32px_-12px_rgba(79,70,229,0.15)]">
+    <Card className="flex flex-col overflow-hidden">
       <CardHeader
         icon={Dumbbell}
         iconColor="text-indigo-500"
         title="Training"
-        subtitle={isExpanded ? "Sessione Odierna" : `${progressPercent}% completato`}
+        subtitle="Today's workout session"
         action={
           <div className="flex items-center gap-2">
             {!loading && (
@@ -131,14 +117,14 @@ export function TodayCardDashboard({ defaultExpanded = true }: TodayCardDashboar
               </Badge>
             )}
             <button
-              onClick={toggleTodayTrainingExpanded}
-              className={`p-1.5 rounded-lg transition-all ${isExpanded ? 'bg-indigo-500/10 text-indigo-500' : 'hover:bg-zinc-100 dark:hover:bg-white/[0.06] text-zinc-400'}`}
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors"
               aria-label={isExpanded ? 'Collapse' : 'Expand'}
             >
               {isExpanded ? (
-                <ChevronUp className="h-4 w-4" />
+                <ChevronUp className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
               ) : (
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
               )}
             </button>
           </div>
@@ -154,22 +140,22 @@ export function TodayCardDashboard({ defaultExpanded = true }: TodayCardDashboar
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             className="overflow-hidden"
           >
-            <div className="border-t border-zinc-100 dark:border-white/[0.04]">
-              {loading ? (
-                <TodayCardSkeleton />
-              ) : (
-                <TodayCard
-                  selectedDay={selectedDay}
-                  allProgressions={allProgressions}
-                  selectedDate={selectedDate}
-                  progressPercent={progressPercent}
-                  isToday={isToday}
-                  onProgressionChange={onProgressionChange}
-                  awProgram={awProgram}
-                  embedded
-                  anasOnly
-                />
-              )}
+            <div className="p-4 pt-0">
+              <div className="max-h-[600px] overflow-y-auto custom-scrollbar">
+                {loading ? (
+                  <TodayCardSkeleton />
+                ) : (
+                  <TodayCard
+                    selectedDay={selectedDay}
+                    allProgressions={allProgressions}
+                    selectedDate={selectedDate}
+                    progressPercent={progressPercent}
+                    isToday={isToday}
+                    onProgressionChange={onProgressionChange}
+                    awProgram={awProgram}
+                  />
+                )}
+              </div>
             </div>
           </motion.div>
         )}

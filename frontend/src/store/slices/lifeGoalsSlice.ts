@@ -112,7 +112,7 @@ export function createLifeGoalsSlice(set: LifeGoalsSet, get: LifeGoalsGet) {
         const tier = (state.lifeGoals?.tiers ?? []).find((t) => t.id === tierId);
         if (tier) {
           tier.goals.push({
-            id: `goal-${Date.now()}`,
+            id: `goal-${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().slice(0, 12) : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`}`,
             title,
             category,
             type,

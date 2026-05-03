@@ -27,11 +27,11 @@ TOPIC_KEYWORDS = {"quran", "jesus", "disciple", "disciples", "follower", "follow
 
 
 def read_openrouter_key() -> str:
-    text = TRANSCRIBER_PATH.read_text(encoding="utf-8")
-    m = re.search(r'OPENROUTER_API_KEY\s*=\s*"([^"]+)"', text)
-    if not m:
-        raise RuntimeError("OPENROUTER_API_KEY not found")
-    return m.group(1).strip()
+    import os
+    key = os.getenv("OPENROUTER_API_KEY", "").strip()
+    if not key:
+        raise RuntimeError("OPENROUTER_API_KEY environment variable required")
+    return key
 
 
 def load_transcript_excerpt() -> str:

@@ -136,8 +136,13 @@ function WeeklyCalendar({ onSelectDay, progressions, schedule, loading, onEditAc
           }}
         >
           {schedule?.map((day, idx) => {
-            const dateObj = new Date(day.date || day.date_);
-            const dayStr = day.date || day.date_;
+            // Fix #15: Parse date correctly using local date construction to avoid timezone offset issues
+            const dayDateStr = (day.date || day.date_ || '').toString();
+            // Extract YYYY-MM-DD part regardless of format
+            const dateStr = dayDateStr.slice(0, 10);
+            const [year, month, dayNum] = dateStr.split('-').map(Number);
+            const dateObj = new Date(year, month - 1, dayNum); // Local midnight
+            const dayStr = dayDateStr;
             const isToday = dateObj.toDateString() === new Date().toDateString();
             const isSelected = selectedDate && (
               dayStr === selectedDate ||

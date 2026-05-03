@@ -79,6 +79,10 @@ async def get_dashboard_state_at(
     aggregate_id: str,
     at: datetime | None = None,
 ) -> dict[str, Any]:
-    """Time Travel: return dashboard state as it was at `at` (or latest if at is None)."""
+    """Time Travel: return dashboard state as it was at `at`. Fallback to current if no events."""
     events = await get_dashboard_events(db, aggregate_id, before=at)
+    if not events:
+        # Fallback to current aggregated state
+        from app.repositories.dashboard import get_dashboard_state_aggregated
+        return await get_dashboard_state_aggregated(db, key=aggregate_id)
     return project_events_to_state(events)

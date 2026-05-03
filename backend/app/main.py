@@ -47,7 +47,8 @@ async def lifespan(app: FastAPI):
         try:
             async with engine.begin() as conn:
                 try:
-                    await conn.run_sync(Base.metadata.create_all)
+                    if not settings.is_production:
+                        await conn.run_sync(Base.metadata.create_all)
                 except Exception as e:
                     logger.error(f"Failed to create tables: {e}")
                     db_ready = False
@@ -134,21 +135,23 @@ def create_app() -> FastAPI:
         # GET/PUT dashboard-state: never 500 — return empty state so frontend can use local data
         if "/api/training/dashboard-state" in str(request.url.path) and "at" not in str(request.url.path):
             logger.warning("dashboard-state %s failed, returning empty state: %s", request.method, exc)
-            from datetime import datetime, timezone
-            return JSONResponse(status_code=200, content={
-                "key": "default",
-                "data": {
-                    "dailyTaskTemplates": [],
-                    "dailyTaskLogs": {},
-                    "projects": [],
-                    "quickTasks": [],
-                    "prayerLogs": {},
-                    "top3Manual": [None, None, None],
-                    "dailyCompletionLog": {},
-                    "lifeGoals": {"collapsed": False, "tiers": []},
-                },
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            })
+            if request.method == "GET":
+                return JSONResponse(status_code=200, content={
+                    "key": "default",
+                    "data": {
+                        "dailyTaskTemplates": [],
+                        "dailyTaskLogs": {},
+                        "projects": [],
+                        "quickTasks": [],
+                        "prayerLogs": {},
+                        "top3Manual": [None, None, None],
+                        "dailyCompletionLog": {},
+                        "lifeGoals": {"collapsed": False, "tiers": []},
+                    },
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                }, headers={"X-Degraded": "true"})
+            else:
+                return JSONResponse(status_code=503, content={"detail": f"Dashboard save failed: {exc}"})
         # GET config/constants: return minimal config
         if "/api/config/constants" in str(request.url.path):
             logger.warning("config/constants GET failed, returning defaults: %s", exc)

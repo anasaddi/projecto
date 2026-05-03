@@ -413,12 +413,38 @@ export function loadDashboardStateFromStorage(fallback = null) {
 
 export const PRAYER_SLOTS =['Fajr-Dhuhr', 'Dhuhr-Asr', 'Asr-Maghrib', 'Maghrib-Isha', 'Isha-Fajr'];
 
-export function getCurrentSlotKey(date = new Date()) {
+export function getCurrentSlotKey(date = new Date(), prayerTimes = null) {
   const h = date.getHours();
   const m = date.getMinutes();
-  const time = h + m / 60;
+  const currentMinutes = h * 60 + m;
   
-  // Mappatura oraria approssimata per assegnare i task in auto
+  // If actual prayer times are provided, use them for accurate slot calculation
+  if (prayerTimes) {
+    const toMinutes = (timeStr) => {
+      if (!timeStr || typeof timeStr !== 'string') return NaN;
+      const [hours, mins] = timeStr.split(':').map(Number);
+      if (!Number.isFinite(hours) || !Number.isFinite(mins)) return NaN;
+      return hours * 60 + mins;
+    };
+    
+    const fajr = toMinutes(prayerTimes.Fajr);
+    const dhuhr = toMinutes(prayerTimes.Dhuhr);
+    const asr = toMinutes(prayerTimes.Asr);
+    const maghrib = toMinutes(prayerTimes.Maghrib);
+    const isha = toMinutes(prayerTimes.Isha);
+    
+    // Check if all times are valid
+    if ([fajr, dhuhr, asr, maghrib, isha].every(t => Number.isFinite(t))) {
+      if (currentMinutes >= fajr && currentMinutes < dhuhr) return 'Fajr-Dhuhr';
+      if (currentMinutes >= dhuhr && currentMinutes < asr) return 'Dhuhr-Asr';
+      if (currentMinutes >= asr && currentMinutes < maghrib) return 'Asr-Maghrib';
+      if (currentMinutes >= maghrib && currentMinutes < isha) return 'Maghrib-Isha';
+      return 'Isha-Fajr'; // Before Fajr or after Isha
+    }
+  }
+  
+  // Fallback to hardcoded times if prayer times not available or invalid
+  const time = h + m / 60;
   if (time >= 5 && time < 12.5) return 'Fajr-Dhuhr'; 
   if (time >= 12.5 && time < 15.5) return 'Dhuhr-Asr';  
   if (time >= 15.5 && time < 18.0) return 'Asr-Maghrib';

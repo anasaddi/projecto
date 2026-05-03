@@ -68,19 +68,18 @@ function removeNodeFromTree(nodes, nodeId) {
 
 async function hashPassword(pw) {
   const enc = new TextEncoder();
-  // Domain-specific prefix hardens against cross-service rainbow table attacks
+  // Aligning with backend prefix
   const buf = await crypto.subtle.digest('SHA-256', enc.encode(`km-shared:${pw}`));
   return Array.from(new Uint8Array(buf))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 }
 
-function isUnlocked(shareId, passwordHash) {
-  if (!shareId || !passwordHash) return true;
+function isUnlocked(shareId) {
+  if (!shareId) return true;
   try {
     if (localStorage.getItem('km-admin-token')) return true;
-    const stored = localStorage.getItem(`km-shared-pwd-${shareId}`);
-    return stored === passwordHash;
+    return !!localStorage.getItem(`km-shared-token-${shareId}`);
   } catch (_) {
     return false;
   }
@@ -640,8 +639,10 @@ export default function SharedProjects() {
     if (!id || ws.current?.readyState === WebSocket.OPEN) return;
 
     const url = getSharedDashboardWsUrl(id);
+    const token = localStorage.getItem(`km-shared-token-${id}`);
+    const finalUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
     try {
-      ws.current = new WebSocket(url);
+      ws.current = new WebSocket(finalUrl);
     } catch (e) {
       console.error('WS create error', e);
       return;
@@ -696,7 +697,9 @@ export default function SharedProjects() {
 
   const refetchFromApi = () => {
     if (!id) return;
-    api.training.getSharedDashboard(id)
+    const token = localStorage.getItem(`km-shared-token-${id}`);
+    const opts = token ? { headers: { 'x-share-token': token } } : {};
+    api.training.getSharedDashboard(id, opts)
       .then((data) => {
         if (!mountedRef.current) return;
         applyDashboardFromPayload(data);
@@ -744,14 +747,14 @@ export default function SharedProjects() {
     }
 
     let cancelled = false;
-    api.training.getSharedDashboard(id)
+    const token = localStorage.getItem(`km-shared-token-${id}`);
+    const opts = token ? { headers: { 'x-share-token': token } } : {};
+
+    api.training.getSharedDashboard(id, opts)
       .then((data) => {
         if (cancelled || !mountedRef.current) return;
-        const payload = data?.data || data;
-        const pwHash = payload?.passwordHash;
-        if (pwHash && !isUnlocked(id, pwHash)) {
+        if (data?.is_protected && !token) {
           setNeedsPassword(true);
-          setGatePasswordHash(pwHash);
           setDashboard(prev => ({ ...prev, loading: false, error: null }));
           return;
         }
@@ -979,16 +982,20 @@ export default function SharedProjects() {
     const pw = passwordInput.trim();
     if (!pw) return;
     setPasswordError(null);
-    const h = await hashPassword(pw);
-    if (h === gatePasswordHash) {
-      try {
-        localStorage.setItem(`km-shared-pwd-${id}`, gatePasswordHash);
-      } catch (_) {}
-      setNeedsPassword(false);
-      setPasswordInput('');
-      refetchFromApi();
-    } else {
-      setPasswordError('Password errata');
+    try {
+      const { token } = await api.training.unlockSharedDashboard(id, pw);
+      if (token) {
+        localStorage.setItem(`km-shared-token-${id}`, token);
+        setNeedsPassword(false);
+        setPasswordInput('');
+        refetchFromApi();
+        // Force reconnect WS to use the new token
+        if (ws.current) {
+          ws.current.close();
+        }
+      }
+    } catch (err) {
+      setPasswordError(err?.response?.data?.detail || err?.message || 'Password errata');
     }
   };
 

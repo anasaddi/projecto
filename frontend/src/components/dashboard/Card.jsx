@@ -8,11 +8,12 @@ import { motion } from 'framer-motion';
 
 const baseClasses = `
   relative overflow-hidden
-  rounded-[18px]
-  border border-zinc-200 dark:border-dark-borderSubtle
-  bg-white dark:bg-dark-surface1
+  rounded-3xl
+  border border-zinc-200/70 dark:border-white/[0.08]
+  bg-white/[0.9] dark:bg-[#131820]/90
   backdrop-blur-2xl
-  shadow-sm dark:shadow-xl
+  shadow-[0_2px_4px_rgba(15,23,42,0.04),0_12px_40px_-18px_rgba(15,23,42,0.18),0_32px_64px_-36px_rgba(15,23,42,0.14)] dark:shadow-[0_2px_4px_rgba(0,0,0,0.2),0_16px_48px_-20px_rgba(0,0,0,0.5),0_36px_70px_-36px_rgba(0,0,0,0.4)]
+  before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/70 before:to-transparent dark:before:via-white/[0.06]
   transition-all duration-300 ease-out
 `;
 
@@ -32,7 +33,7 @@ export function Card({
     <div
       className={`
         ${baseClasses}
-        ${hover ? 'hover:-translate-y-0.5 hover:border-zinc-300 dark:hover:border-dark-borderStrong hover:shadow-md dark:hover:shadow-2xl' : ''}
+        ${hover ? 'hover:-translate-y-0.5 hover:border-zinc-300/80 hover:shadow-[0_2px_4px_rgba(15,23,42,0.06),0_16px_48px_-20px_rgba(79,70,229,0.22),0_36px_80px_-40px_rgba(79,70,229,0.16)] dark:hover:border-white/[0.12] dark:hover:shadow-[0_2px_6px_rgba(0,0,0,0.3),0_20px_56px_-24px_rgba(0,0,0,0.6),0_40px_80px_-40px_rgba(0,0,0,0.5)]' : ''}
         ${glow ? (glowStyles[glowColor] || glowStyles.indigo) : ''}
         ${className}
       `}
@@ -53,16 +54,16 @@ export function CardHeader({
   className = '' 
 }) {
   return (
-    <div className={`flex items-center justify-between gap-3 border-b border-zinc-100 p-4 sm:gap-4 sm:p-5 dark:border-dark-borderSubtle ${className}`}>
-      <div className="flex min-w-0 items-center gap-3 sm:gap-3.5">
+    <div className={`flex items-center justify-between gap-4 border-b border-zinc-100/80 p-5 dark:border-white/[0.04] ${className}`}>
+      <div className="flex min-w-0 items-center gap-3.5">
         {Icon && (
-          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[14px] bg-zinc-100 dark:bg-dark-surface2 ${iconColor}`}>
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-zinc-100/90 dark:bg-white/[0.05] ${iconColor} shadow-sm ring-1 ring-white/60 dark:ring-white/[0.04]`}>
             <Icon className="h-4 w-4" />
           </div>
         )}
         <div className="min-w-0">
-          {title && <h3 className="text-[15px] font-[650] tracking-tight text-zinc-900 dark:text-dark-textPrimary">{title}</h3>}
-          {subtitle && <p className="mt-0.5 text-[13px] font-medium text-zinc-500 dark:text-dark-textSecondary">{subtitle}</p>}
+          {title && <h3 className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{title}</h3>}
+          {subtitle && <p className="mt-0.5 text-xs font-medium text-zinc-500 dark:text-zinc-400">{subtitle}</p>}
           {children && !title && children}
         </div>
       </div>
@@ -75,8 +76,8 @@ export function CardBody({ children, className = '', padding = 'normal' }) {
   const paddingClasses = {
     none: '',
     small: 'p-3',
-    normal: 'p-4 sm:p-5',
-    large: 'p-5 sm:p-6'
+    normal: 'p-5',
+    large: 'p-6'
   };
   
   return (
@@ -88,7 +89,7 @@ export function CardBody({ children, className = '', padding = 'normal' }) {
 
 export function CardFooter({ children, className = '' }) {
   return (
-    <div className={`border-t border-zinc-100 bg-zinc-50 px-5 py-4 dark:border-dark-borderSubtle dark:bg-dark-surface2 ${className}`}>
+    <div className={`border-t border-zinc-100/80 bg-zinc-50/60 px-5 py-4 dark:border-white/[0.04] dark:bg-white/[0.02] ${className}`}>
       {children}
     </div>
   );
@@ -144,7 +145,7 @@ export function ProgressBar({
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <div className={`flex-1 ${sizeClasses[size]} rounded-full bg-zinc-200 dark:bg-dark-surface3 overflow-hidden`}>
+      <div className={`flex-1 ${sizeClasses[size]} rounded-full bg-zinc-200 dark:bg-white/[0.08] overflow-hidden`}>
         <motion.div
           className={`h-full rounded-full bg-gradient-to-r ${barGradient} shadow-sm`}
           initial={{ width: 0 }}
@@ -153,7 +154,7 @@ export function ProgressBar({
         />
       </div>
       {showLabel && (
-        <span className="text-[11px] font-[600] tabular-nums text-zinc-500 dark:text-dark-textMuted w-8 text-right">
+        <span className="text-xs font-bold tabular-nums text-zinc-500 dark:text-zinc-400 w-8 text-right">
           {Math.round(percentage)}%
         </span>
       )}
@@ -171,11 +172,11 @@ export function Badge({
   className = '' 
 }) {
   const variantClasses = {
-    default: 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-dark-surface3 dark:text-dark-textSecondary dark:border-dark-borderSubtle',
-    primary: 'bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-dark-violet/10 dark:text-dark-violetLight dark:border-dark-violet/30',
-    success: 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-dark-teal/10 dark:text-dark-teal dark:border-dark-teal/30',
-    warning: 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-dark-amber/10 dark:text-dark-amber dark:border-dark-amber/30',
-    danger: 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-dark-rose/10 dark:text-dark-rose dark:border-dark-rose/30'
+    default: 'bg-zinc-100/90 dark:bg-white/[0.06] text-zinc-600 dark:text-zinc-400 border-zinc-200/80 dark:border-white/[0.08]',
+    primary: 'bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-200/80 dark:border-indigo-500/30',
+    success: 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-200/80 dark:border-emerald-500/30',
+    warning: 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-200/80 dark:border-amber-500/30',
+    danger: 'bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-200/80 dark:border-rose-500/30'
   };
   
   const sizeClasses = {
@@ -217,9 +218,9 @@ export function ActionButton({
   };
   
   const sizeClasses = {
-    sm: 'p-1.5 sm:p-1',
-    md: 'p-2 sm:p-1.5',
-    lg: 'p-2.5 sm:p-2'
+    sm: 'p-1',
+    md: 'p-1.5',
+    lg: 'p-2'
   };
   
   const iconSize = {
@@ -234,11 +235,11 @@ export function ActionButton({
       onClick={onClick}
       title={title}
       className={`
-        rounded-[12px] transition-all duration-200
+        rounded-xl border border-transparent transition-all duration-200
         active:scale-[0.95]
         ${variantClasses[variant]}
         ${sizeClasses[size]}
-        ${danger ? 'text-rose-500 hover:text-rose-600 dark:text-dark-rose dark:hover:text-rose-400' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-dark-textMuted dark:hover:bg-dark-surface3 dark:hover:text-dark-textPrimary'}
+        ${danger ? 'text-rose-500 hover:border-rose-100 hover:text-rose-600 dark:hover:border-rose-500/10' : 'text-zinc-500 hover:border-zinc-200/80 hover:text-zinc-700 dark:text-zinc-400 dark:hover:border-white/[0.08] dark:hover:text-zinc-200'}
         ${className}
       `}
     >

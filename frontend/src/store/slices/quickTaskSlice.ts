@@ -77,7 +77,10 @@ export function createQuickTaskSlice(set: QuickTaskSet, get: QuickTaskGet) {
         const t = title.trim();
         if (t) {
           state.quickTasks.push({
-            id: uid('quick'),
+            // Fix #12: Use crypto.randomUUID() when available to prevent ID collisions
+            id: typeof crypto !== 'undefined' && crypto.randomUUID 
+              ? `quick-${crypto.randomUUID().slice(0, 12)}` 
+              : uid('quick'),
             title: t,
             done: false,
             deadline: undefined,

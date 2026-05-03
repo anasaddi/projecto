@@ -5,7 +5,7 @@
 1. ✅ `render.yaml` - Configurazione completa per Render (backend + database)
 2. ✅ `DEPLOY_RENDER.md` - Guida dettagliata passo-passo
 3. ✅ `update_vercel_url.py` - Script per aggiornare automaticamente Vercel
-4. ✅ `.env` configurato con password `Anasaddi2001`
+4. ✅ `.env` configurato con password `[YOUR_SECURE_PASSWORD]`
 
 ---
 
@@ -24,7 +24,7 @@ git push origin main
 2. **New +** → **Blueprint**
 3. **Seleziona il repository** GitHub
 4. **Configura variabili**:
-   - `ADMIN_ACCESS_KEY` → `Anasaddi2001`
+   - `ADMIN_ACCESS_KEY` → `[YOUR_SECURE_PASSWORD]`
    - `ASSEMBLYAI_API_KEY` → (la tua key se la usi)
    - `OPENROUTER_API_KEY` → (la tua key se la usi)
    - `SECRET_KEY` → lascialo generare automaticamente
@@ -62,7 +62,7 @@ git push origin main
 
 1. ✅ Backend: visita `https://TUO-URL.onrender.com/health`
 2. ✅ Frontend: visita `https://projecto-indol.vercel.app`
-3. ✅ Login con password: `Anasaddi2001`
+3. ✅ Login con password: `[YOUR_SECURE_PASSWORD]`
 4. ✅ Da telefono: apri il link Vercel e prova!
 
 ---
@@ -97,7 +97,7 @@ Render free tier va in sleep dopo 15 min di inattività.
 ## 🆘 PROBLEMI COMUNI:
 
 ### ❌ "Chiave di accesso non valida"
-- Verifica su Render che `ADMIN_ACCESS_KEY` = `Anasaddi2001`
+- Verifica su Render che `ADMIN_ACCESS_KEY` = `[YOUR_SECURE_PASSWORD]`
 - Dashboard Render → Environment → controlla il valore
 
 ### ❌ 404 su API
@@ -128,7 +128,7 @@ Ora puoi usare PROJECTO da:
 - ✅ Tablet (browser)
 - ✅ Ovunque con internet!
 
-Password: `Anasaddi2001`
+Password: `[YOUR_SECURE_PASSWORD]`
 
 ---
 

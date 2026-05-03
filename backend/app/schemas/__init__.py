@@ -35,6 +35,8 @@ from app.schemas.training import (
     DashboardStateUpdate,
     SharedDashboardOut,
     SharedDashboardUpdate,
+    SharedDashboardUnlockRequest,
+    SharedDashboardUnlockResponse,
 )
 
 __all__ = [
@@ -77,4 +79,6 @@ __all__ = [
     "DashboardStateUpdate",
     "SharedDashboardOut",
     "SharedDashboardUpdate",
+    "SharedDashboardUnlockRequest",
+    "SharedDashboardUnlockResponse",
 ]

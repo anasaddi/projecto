@@ -6,7 +6,9 @@ from typing import Optional, List, Dict
 from dataclasses import dataclass
 
 # Configuration
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "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")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+if not OPENROUTER_API_KEY:
+    raise RuntimeError("OPENROUTER_API_KEY env var required")
 CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
 VIDEO_URL = "https://openrouter.ai/api/v1/videos"
 

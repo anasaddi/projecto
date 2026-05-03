@@ -136,6 +136,7 @@ export function syncMiddleware(config: any): any {
       if (persistTimeout) clearTimeout(persistTimeout);
       persistTimeout = setTimeout(() => {
         const fullState = buildFullState();
+        /* 
         if (typeof window !== 'undefined' && window.localStorage) {
           try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(fullState));
@@ -143,6 +144,7 @@ export function syncMiddleware(config: any): any {
             console.error('Failed to save to localStorage:', err);
           }
         }
+        */
         saveLocalState(fullState);
         try {
           if (channel) channel.postMessage(fullState);
@@ -177,7 +179,7 @@ export function syncMiddleware(config: any): any {
         } else {
           await addToSyncQueue('dashboard_update', fullState);
         }
-      }, 2000);
+      }, 4000);
     };
 
     if (channel) {
@@ -198,6 +200,18 @@ export function syncMiddleware(config: any): any {
               const queued = isApplyingFromBCQueue.splice(0);
               for (const data of queued) applyIncomingState(set, data);
             }
+            // Fix #13: Trigger fresh persist after BC application to ensure
+            // any local mutations made during the BC application window are captured
+            if (persistTimeout) clearTimeout(persistTimeout);
+            persistTimeout = setTimeout(() => {
+              const fullState = buildFullState();
+              saveLocalState(fullState);
+              try {
+                if (channel) channel.postMessage(fullState);
+              } catch (err) {
+                console.error('Failed to post to BroadcastChannel:', err);
+              }
+            }, 100);
           });
         }, 0);
       };

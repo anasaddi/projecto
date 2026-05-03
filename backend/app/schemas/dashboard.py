@@ -5,7 +5,7 @@ Use for validation of API payloads and for typing the JSON stored in DashboardSt
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -128,6 +128,11 @@ class TimelineRoutineItem(BaseModel):
 
 
 # --- Full dashboard state (payload inside DashboardState.data) ---
+class PrayerLogEntry(BaseModel):
+    """Represents a prayer completion with timestamp."""
+    completedAt: Optional[str] = None  # ISO timestamp string
+
+
 class DashboardStatePayload(BaseModel):
     """Validates the nested structure of dashboard state stored as JSON."""
     daily_task_templates: list[DailyTaskTemplate] = Field(
@@ -137,7 +142,8 @@ class DashboardStatePayload(BaseModel):
         default_factory=dict, alias="dailyTaskLogs"
     )
     projects: list[Project] = Field(default_factory=list)
-    prayer_logs: dict[str, dict[str, bool]] = Field(
+    # Fix #3: Accept both old bool format and new object format with timestamp
+    prayer_logs: dict[str, dict[str, Union[bool, PrayerLogEntry, None]]] = Field(
         default_factory=dict, alias="prayerLogs"
     )
     top3_manual: list[Optional[Top3Slot]] = Field(

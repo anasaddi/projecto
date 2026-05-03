@@ -11,6 +11,15 @@ const DEFAULT_PRAYERS = DASHBOARD.DEFAULT_PRAYERS;
 
 function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, anchorDate, PRAYERS = DEFAULT_PRAYERS }) {
   const totalItems = activeHabits.length + PRAYERS.length + 3;
+  
+  // Helper to check if prayer is completed (handles both old boolean and new object format)
+  const isPrayerCompleted = (prayerLogEntry) => {
+    if (typeof prayerLogEntry === 'object') {
+      return !!prayerLogEntry?.completedAt;
+    }
+    return !!prayerLogEntry;
+  };
+  
   const { weekAvg, monthAvg, bestDay, worstDay } = useMemo(() => {
     const days = [];
     for (let i = 29; i >= 0; i--) {
@@ -22,7 +31,8 @@ function LightAnalyticsInner({ dailyTaskLogs, prayerLogs, dailyCompletionLog, ac
       const prayerLog = prayerLogs[key] || {};
       const cl = dailyCompletionLog[key] || { quick: [], project: [] };
       const habitsDone = activeHabits.reduce((a, t) => a + (taskLog[t.id] ? 1 : 0), 0);
-      const prayersDone = PRAYERS.reduce((a, p) => a + (prayerLog[p] ? 1 : 0), 0);
+      // Fix #1: Use helper function for prayer completion check
+      const prayersDone = PRAYERS.reduce((a, p) => a + (isPrayerCompleted(prayerLog[p]) ? 1 : 0), 0);
       const tasksDone = Math.min(3, (cl.quick?.length || 0) + (cl.project?.length || 0));
       const score = totalItems ? (habitsDone + prayersDone + tasksDone) / totalItems : 0;
       days.push({ key, score });
@@ -65,6 +75,15 @@ export function FocusHeatmap() {
   const anchorDate = startOfDay(new Date());
 
   const totalItems = activeHabits.length + PRAYERS.length + 3;
+  
+  // Helper to check if prayer is completed (handles both old boolean and new object format)
+  const isPrayerCompleted = (prayerLogEntry) => {
+    if (typeof prayerLogEntry === 'object') {
+      return !!prayerLogEntry?.completedAt;
+    }
+    return !!prayerLogEntry;
+  };
+  
   const heatmapDays = useMemo(() => {
     const days = [];
     for (let i = 29; i >= 0; i--) {
@@ -76,7 +95,8 @@ export function FocusHeatmap() {
       const prayerLog = prayerLogs[key] || {};
       const completionLog = dailyCompletionLog[key] || { quick: [], project: [] };
       const habitsDone = activeHabits.reduce((acc, t) => acc + (taskLog[t.id] ? 1 : 0), 0);
-      const prayersDone = PRAYERS.reduce((acc, p) => acc + (prayerLog[p] ? 1 : 0), 0);
+      // Fix #1: Use helper function for prayer completion check
+      const prayersDone = PRAYERS.reduce((acc, p) => acc + (isPrayerCompleted(prayerLog[p]) ? 1 : 0), 0);
       const tasksDone = Math.min(3, (completionLog.quick?.length || 0) + (completionLog.project?.length || 0));
       const score = totalItems ? (habitsDone + prayersDone + tasksDone) / totalItems : 0;
       days.push({
@@ -110,6 +130,8 @@ export function FocusHeatmap() {
   };
 
   const streak = useMemo(() => {
+    // Fix #4: Calculate streak from today (last element) backwards
+    // heatmapDays[0] = 30 days ago, heatmapDays[29] = today
     let s = 0;
     for (let i = heatmapDays.length - 1; i >= 0; i--) {
       if (heatmapDays[i].score >= 0.8) s++;

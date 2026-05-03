@@ -1,7 +1,8 @@
 import json
 import logging
 from pathlib import Path
-from datetime import date, datetime, timezone, time
+from datetime import date, datetime, timezone, time, timedelta
+import jwt
 from typing import Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, Header, WebSocket, WebSocketDisconnect
 
@@ -357,26 +358,137 @@ async def get_audit_events(
 
 # --- Shared Dashboard ---
 
-@router.get("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut | None)
-async def get_shared_dashboard(share_id: str, db: AsyncSession = Depends(get_db)):
-    """Fetch a shared dashboard — Redis-first, DB fallback. PUBLIC ROUTE."""
-    from app.cache import get_cached_shared_dashboard, set_cached_shared_dashboard
-    cached = await get_cached_shared_dashboard(share_id)
-    if cached:
-        return cached
-    data = await dashboard_service.get_shared_dashboard(db, share_id)
-    if data:
-        await set_cached_shared_dashboard(share_id, data)
-    return data
+def create_share_token(share_id: str, secret_key: str):
+    payload = {
+        "share_id": share_id,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=24)
+    }
+    return jwt.encode(payload, secret_key, algorithm="HS256")
 
-@router.get("/shared-dashboards", response_model=list[schemas.SharedDashboardOut])
+def verify_share_token(token: str, share_id: str, secret_key: str) -> bool:
+    if not token: return False
+    try:
+        payload = jwt.decode(token, secret_key, algorithms=["HS256"])
+        return payload.get("share_id") == share_id
+    except Exception:
+        return False
+
+@router.get("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut | None)
+async def get_shared_dashboard(
+    share_id: str, 
+    db: AsyncSession = Depends(get_db),
+    x_share_token: str | None = Header(None, alias="x-share-token")
+):
+    """Fetch a shared dashboard — Redis-first, DB fallback. PUBLIC ROUTE with password protection."""
+    from app.cache import get_cached_shared_dashboard, set_cached_shared_dashboard
+    from app.config import get_settings
+    settings = get_settings()
+    
+    cached = await get_cached_shared_dashboard(share_id)
+    data = cached if cached else await dashboard_service.get_shared_dashboard(db, share_id)
+    
+    if not data:
+        return None
+    
+    if not cached:
+        await set_cached_shared_dashboard(share_id, data)
+
+    payload_data = data.get("data") or {}
+    pwd_hash = payload_data.get("passwordHash")
+    
+    is_protected = bool(pwd_hash)
+    if is_protected:
+        is_unlocked = x_share_token and verify_share_token(x_share_token, share_id, settings.secret_key)
+        if not is_unlocked:
+            return {
+                "share_id": share_id,
+                "title": data.get("title", "Progetti Condivisi"),
+                "is_protected": True,
+                "data": None,
+                "updated_at": data.get("updated_at")
+            }
+
+    clean_data = dict(payload_data)
+    clean_data.pop("passwordHash", None)
+    clean_data.pop("sectionPasswords", None)
+    
+    return {
+        "share_id": share_id,
+        "title": data.get("title"),
+        "data": clean_data,
+        "updated_at": data.get("updated_at"),
+        "is_protected": is_protected
+    }
+
+@router.get("/shared-dashboards", response_model=list[schemas.SharedDashboardOut], dependencies=[Depends(get_current_admin)])
 async def list_shared_dashboards(db: AsyncSession = Depends(get_db)):
-    """Fetch all shared dashboards. PUBLIC ROUTE."""
+    """Fetch all shared dashboards. ADMIN ONLY."""
     return await dashboard_service.get_all_shared_dashboards(db)
 
+@router.post("/shared-dashboard/{share_id}/unlock", response_model=schemas.SharedDashboardUnlockResponse)
+async def unlock_shared_dashboard(share_id: str, body: schemas.SharedDashboardUnlockRequest, db: AsyncSession = Depends(get_db)):
+    """Verify password and return a temporary access token for a shared dashboard."""
+    import hashlib
+    from app.config import get_settings
+    settings = get_settings()
+    
+    dashboard = await dashboard_service.get_shared_dashboard(db, share_id)
+    if not dashboard:
+        raise HTTPException(status_code=404, detail="Dashboard non trovato")
+    
+    payload_data = dashboard.get("data") or {}
+    pwd_hash = payload_data.get("passwordHash")
+    
+    if not pwd_hash:
+        raise HTTPException(status_code=400, detail="Questa dashboard non è protetta da password")
+        
+    # Frontend prefix: "km-shared:"
+    incoming_hash = hashlib.sha256(f"km-shared:{body.password}".encode()).hexdigest()
+    if incoming_hash != pwd_hash and body.password != pwd_hash: 
+        raise HTTPException(status_code=403, detail="Password errata")
+        
+    token = create_share_token(share_id, settings.secret_key)
+    return {"token": token}
+
+async def get_shared_write_access(
+    share_id: str,
+    x_share_token: str | None = Header(None, alias="x-share-token"),
+    x_km_access: str | None = Header(None, alias="x-km-access"),
+    db: AsyncSession = Depends(get_db)
+):
+    """Dependency to allow write access if either admin or valid share token is provided."""
+    from app.config import get_settings
+    settings = get_settings()
+    
+    # 1. Admin check
+    if x_km_access == settings.admin_access_key:
+        return True
+        
+    # 2. Shared token check
+    dashboard = await dashboard_service.get_shared_dashboard(db, share_id)
+    if not dashboard:
+        raise HTTPException(status_code=404, detail="Dashboard non trovato")
+        
+    payload_data = dashboard.get("data") or {}
+    pwd_hash = payload_data.get("passwordHash")
+    
+    if not pwd_hash:
+        # If not protected, anyone can write? For now, yes, keeping it open if no pwd.
+        return True
+        
+    if verify_share_token(x_share_token, share_id, settings.secret_key):
+        return True
+        
+    raise HTTPException(status_code=403, detail="Accesso negato. Token mancante o non valido.")
+
 @router.put("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut)
-async def update_shared_dashboard(share_id: str, body: schemas.SharedDashboardUpdate, db: AsyncSession = Depends(get_db)):
-    """Update or create a shared dashboard. Invalidates cache + broadcasts. PUBLIC ROUTE."""
+async def update_shared_dashboard(
+    share_id: str, 
+    body: schemas.SharedDashboardUpdate, 
+    db: AsyncSession = Depends(get_db),
+    access=Depends(get_shared_write_access)
+):
+    """Update or create a shared dashboard. Invalidates cache + broadcasts. ADMIN OR TOKEN."""
     from app.cache import invalidate_shared_dashboard, set_cached_shared_dashboard
     from app.repositories.audit import record_event
     
@@ -394,35 +506,57 @@ async def update_shared_dashboard(share_id: str, body: schemas.SharedDashboardUp
         "data": body.data
     }
     await manager.broadcast(payload, share_id)
-    return dashboard
+    return {
+        "share_id": share_id,
+        "title": dashboard["title"],
+        "data": body.data,
+        "updated_at": datetime.now(timezone.utc)
+    }
 
 @router.websocket("/ws/shared-dashboard/{share_id}")
 async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: AsyncSession = Depends(get_db)):
     import logging
     logger = logging.getLogger("km.ws")
     
+    from app.config import get_settings
+    settings = get_settings()
+    from fastapi.encoders import jsonable_encoder
+    from app.cache import get_cached_shared_dashboard, set_cached_shared_dashboard
+
+    # 1. Fetch dashboard to check protection
+    dashboard = await get_cached_shared_dashboard(share_id)
+    if not dashboard:
+        dashboard = await dashboard_service.get_shared_dashboard(db, share_id)
+        if dashboard:
+            await set_cached_shared_dashboard(share_id, dashboard)
+
+    if not dashboard:
+        await websocket.close(code=1008)
+        return
+
+    payload_data = dashboard.get("data") or {}
+    pwd_hash = payload_data.get("passwordHash")
+    
+    # 2. Token verification if protected
+    if pwd_hash:
+        token = websocket.query_params.get("token")
+        if not verify_share_token(token, share_id, settings.secret_key):
+            await websocket.close(code=1008, reason="Unauthorized")
+            return
+
+    # 3. Connect and send initial sanitized state
     await manager.connect(websocket, share_id)
     try:
-        # Send initial state (try cache first)
-        from app.cache import get_cached_shared_dashboard, set_cached_shared_dashboard
-        dashboard = await get_cached_shared_dashboard(share_id)
-        if not dashboard:
-            dashboard = await dashboard_service.get_shared_dashboard(db, share_id)
-            if dashboard:
-                await set_cached_shared_dashboard(share_id, dashboard)
+        dashboard_to_send = dict(dashboard)
+        dashboard_to_send["type"] = "sync"
         
-        from fastapi.encoders import jsonable_encoder
-        if dashboard:
-            dashboard["type"] = "sync"
-            await websocket.send_json(jsonable_encoder(dashboard))
-        else:
-            await websocket.send_json({
-                "type": "sync",
-                "share_id": share_id, 
-                "title": "Progetti Condivisi", 
-                "data": {"projects": [], "quickTasks": [], "chat": []},
-                "updated_at": None
-            })
+        if pwd_hash:
+            clean_data = dict(payload_data)
+            clean_data.pop("passwordHash", None)
+            clean_data.pop("sectionPasswords", None)
+            dashboard_to_send["data"] = clean_data
+
+        await websocket.send_json(jsonable_encoder(dashboard_to_send))
 
         while True:
             payload = await websocket.receive_json()
@@ -448,6 +582,21 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
                         "data": jsonable_encoder(new_msg)
                     }, share_id, exclude=websocket)
                 continue
+
+            # Security: if dashboard is protected, allow only chat if no token, 
+            # and block full data updates unless token/admin
+            payload_data = dashboard.get("data") or {}
+            pwd_hash = payload_data.get("passwordHash")
+            
+            if pwd_hash:
+                token = payload.get("token") or websocket.query_params.get("token")
+                from app.config import get_settings
+                if not verify_share_token(token, share_id, get_settings().secret_key):
+                    # Only allow chat messages if they are from someone who at least can see the chat? 
+                    # No, usually if protected, everything is protected.
+                    if payload.get("type") != "chat":
+                        await websocket.send_json({"type": "error", "message": "Dashboard protetta. Sblocca per modificare."})
+                        continue
 
             await dashboard_service.update_shared_dashboard(
                 db, share_id, payload.get("data"), payload.get("title")

@@ -5,10 +5,11 @@ import { ProjectCard } from './ProjectCard';
 import { DenseTaskNode } from './DenseTaskNode';
 import { createTaskNode, countTreeStats, getDeadlineColorClass, formatDeadline } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
-import { Card, CardHeader, CardBody } from './Card';
+import { Card, CardHeader, CardBody } from '../ui/Card';
+import { Label } from '../ui/Typography';
 import { AddItemInputBar } from './AddItemInputBar';
 
-export const ProjectsSectionV2 = React.memo(({ PROJECT_ACCENTS }) => {
+export function ProjectsSectionV2({ PROJECT_ACCENTS }) {
   const projects = useDashboardStore((s) => s.projects) ?? [];
   const createProject = useDashboardStore((s) => s.createProject);
   const setConfirmState = useDashboardStore((s) => s.setConfirmState);
@@ -25,46 +26,37 @@ export const ProjectsSectionV2 = React.memo(({ PROJECT_ACCENTS }) => {
   const sharedDashboards = useDashboardStore((s) => s.sharedDashboards) ?? [];
   const updateSharedDashboardProject = useDashboardStore((s) => s.updateSharedDashboardProject);
   const deleteSharedDashboardProject = useDashboardStore((s) => s.deleteSharedDashboardProject);
-  const projectExpandedState = useDashboardStore((s) => s.projectExpandedState) ?? {};
-  const setProjectExpandedState = useDashboardStore((s) => s.setProjectExpandedState);
   const moveQuickTaskToProject = useDashboardStore((s) => s.moveQuickTaskToProject);
 
   const hasProjects = projects.length > 0;
   const hasShared = sharedDashboards.length > 0;
-  const sharedProjectsCount = sharedDashboards.reduce((acc, sd) => {
-    const data = sd?.data || {};
-    const list = Array.isArray(data.projects) ? data.projects : (Array.isArray(data) ? data : []);
-    return acc + list.length;
-  }, 0);
-  const totalProjectCount = projects.length + sharedProjectsCount;
-  const denseMode = totalProjectCount >= 7;
   const allCompleted = hasProjects && projects.every(p => countTreeStats(p.tasks).ratio === 1);
 
   return (
     <Card 
+      variant="elevated" 
+      radius="xl" 
       className="flex flex-col min-h-0"
       glow={allCompleted}
       glowColor="success"
     >
       <CardHeader
-        icon={Icons.FolderKanban}
-        iconColor="text-emerald-500"
+        icon={<Icons.Square className="w-5 h-5" />}
+        iconColor="text-indigo-500"
         title="Progetti"
         subtitle={hasProjects ? `${projects.length} progetti attivi` : 'Crea il tuo primo progetto'}
+        bordered={true}
       />
 
-      <CardBody
-        padding={denseMode ? 'small' : 'normal'}
-        className={`flex-1 min-h-0 overflow-y-auto custom-scrollbar ${denseMode ? 'text-[13px]' : ''}`}
-      >
+      <CardBody className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
         {!hasProjects ? (
           <div className="flex flex-col items-center justify-center gap-3 py-10">
             <CreateProjectCard onClick={createProject} />
           </div>
         ) : (
-          <div className={`flex flex-col ${denseMode ? 'gap-3' : 'gap-3 sm:gap-4'}`}>
+          <div className="flex flex-col gap-4">
             {/* Personal Projects */}
-            <div className={`flex flex-col ${denseMode ? 'gap-3' : 'gap-3 sm:gap-4'}`}>
+            <div className="flex flex-col gap-4">
               {projects.map((project, idx) => {
                 const actualStats = countTreeStats(project.tasks);
                 const percentage = Math.round(actualStats.ratio * 100);
@@ -97,82 +89,80 @@ export const ProjectsSectionV2 = React.memo(({ PROJECT_ACCENTS }) => {
                       else if (p.type === 'quick' && p.quickTaskId) moveQuickTaskToProject(p.quickTaskId, project.id);
                     }}
                   >
-                      <StandardProjectCard
-                        project={project}
-                        stats={actualStats}
-                        percentage={percentage}
-                        accent={accent}
-                        isShared={false}
-                        onTitleChange={(val) => updateProject(project.id, p => ({ ...p, title: val }))}
-                        onDelete={() => setConfirmState?.({ id: 'deleteProject', payload: { projectId: project.id } })}
-                        extraMenuItems={syncMenuItems}
-                        onDeadlineClick={(val) => {
-                          updateProject(project.id, p => ({ ...p, deadline: val.trim() || undefined }));
-                          setProjectDeadlineEditing(null);
-                        }}
-                        projectDeadlineEditing={projectDeadlineEditing}
-                        projectDeadlineInput={projectDeadlineInput}
-                        setProjectDeadlineInput={setProjectDeadlineInput}
-                        setProjectDeadlineEditing={setProjectDeadlineEditing}
-                        getDeadlineColorClass={getDeadlineColorClass}
-                        formatDeadline={formatDeadline}
-                        defaultExpanded={!!projectExpandedState[project.id]}
-                        onToggleExpand={(val) => setProjectExpandedState((prev) => ({ ...prev, [project.id]: val }))}
-                        renderTasks={() => (
-                          <>
-                            {project.tasks?.map((node, tIdx) => (
-                              <DenseTaskNode
-                                key={node.id}
-                                node={node}
-                                depth={0}
-                                projectId={project.id}
-                                projectAccent={accent}
-                                targetIndex={tIdx}
-                                targetParentId={null}
-                                showWorkingByBadge={false}
-                              />
-                            ))}
-                            <div className="pt-2">
-                              <AddItemInputBar
-                                value={projectTaskDrafts[project.id] ?? ''}
-                                onChange={(val) => setProjectTaskDrafts(prev => ({ ...prev, [project.id]: val }))}
-                                onSubmit={() => {
-                                  const title = (projectTaskDrafts[project.id] ?? '').trim();
-                                  if (title) {
-                                    updateProject(project.id, p => ({ ...p, tasks: [...(p.tasks || []), createTaskNode(title)] }));
-                                    setProjectTaskDrafts(prev => ({ ...prev, [project.id]: '' }));
-                                  }
-                                }}
-                                placeholder="Aggiungi task..."
-                                buttonColor="indigo"
-                              />
-                            </div>
-                          </>
-                        )}
-                      />
+                    <StandardProjectCard
+                      project={project}
+                      stats={actualStats}
+                      percentage={percentage}
+                      accent={accent}
+                      isShared={false}
+                      onTitleChange={(val) => updateProject(project.id, p => ({ ...p, title: val }))}
+                      onDelete={() => setConfirmState?.({ id: 'deleteProject', payload: { projectId: project.id } })}
+                      extraMenuItems={syncMenuItems}
+                      onDeadlineClick={(val) => {
+                        updateProject(project.id, p => ({ ...p, deadline: val.trim() || undefined }));
+                        setProjectDeadlineEditing(null);
+                      }}
+                      projectDeadlineEditing={projectDeadlineEditing}
+                      projectDeadlineInput={projectDeadlineInput}
+                      setProjectDeadlineInput={setProjectDeadlineInput}
+                      setProjectDeadlineEditing={setProjectDeadlineEditing}
+                      getDeadlineColorClass={getDeadlineColorClass}
+                      formatDeadline={formatDeadline}
+                      renderTasks={() => (
+                        <>
+                          {project.tasks?.map((node, tIdx) => (
+                            <DenseTaskNode
+                              key={node.id}
+                              node={node}
+                              depth={0}
+                              projectId={project.id}
+                              projectAccent={accent}
+                              targetIndex={tIdx}
+                              targetParentId={null}
+                              showWorkingByBadge={false}
+                            />
+                          ))}
+                          <div className="pt-2">
+                            <AddItemInputBar
+                              value={projectTaskDrafts[project.id] ?? ''}
+                              onChange={(val) => setProjectTaskDrafts(prev => ({ ...prev, [project.id]: val }))}
+                              onSubmit={() => {
+                                const title = (projectTaskDrafts[project.id] ?? '').trim();
+                                if (title) {
+                                  updateProject(project.id, p => ({ ...p, tasks: [...(p.tasks || []), createTaskNode(title)] }));
+                                  setProjectTaskDrafts(prev => ({ ...prev, [project.id]: '' }));
+                                }
+                              }}
+                              placeholder="Aggiungi task..."
+                              buttonColor="indigo"
+                            />
+                          </div>
+                        </>
+                      )}
+                    />
                   </ProjectCard>
                 );
               })}
               
-              <div className={`flex ${denseMode ? 'min-h-[4.75rem]' : 'min-h-[5rem] sm:min-h-[5.5rem]'}`}>
+              <div className="flex min-h-[5.5rem]">
                 <CreateProjectCard onClick={createProject} className="flex-1" />
               </div>
             </div>
 
             {/* Shared Projects */}
             {hasShared && (
-              <div className={`flex flex-col ${denseMode ? 'gap-3' : 'gap-3 sm:gap-4'}`}>
-                <div className="flex items-center gap-3 py-1.5 sm:py-2">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-3 py-2">
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-500/10">
                       <Icons.MessageCircle className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                     </div>
-                    <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Condivisi</span>
+                    <Label>Condivisi</Label>
                   </div>
                   <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
                 </div>
                               
-                <div className={`flex flex-col ${denseMode ? 'gap-3' : 'gap-4'}`}>
+                <div className="flex flex-col gap-4">
                   {sharedDashboards.map((shared, sIdx) => {
                     const sharedData = shared.data || {};
                     const sharedProjects = Array.isArray(sharedData.projects) ? sharedData.projects : (Array.isArray(sharedData) ? sharedData : []);
@@ -211,8 +201,6 @@ export const ProjectsSectionV2 = React.memo(({ PROJECT_ACCENTS }) => {
                             setProjectDeadlineEditing={setProjectDeadlineEditing}
                             getDeadlineColorClass={getDeadlineColorClass}
                             formatDeadline={formatDeadline}
-                            defaultExpanded={!!projectExpandedState[`${shared.share_id}:${project.id}`]}
-                            onToggleExpand={(val) => setProjectExpandedState((prev) => ({ ...prev, [`${shared.share_id}:${project.id}`]: val }))}
                             renderTasks={() => (
                               <>
                                 {project.tasks?.map((node, tIdx) => (
@@ -258,6 +246,6 @@ export const ProjectsSectionV2 = React.memo(({ PROJECT_ACCENTS }) => {
       </CardBody>
     </Card>
   );
-});
+}
 
 export default ProjectsSectionV2;

@@ -9,11 +9,9 @@ import { useDashboardStore } from '../store/dashboardStore';
 export function useNotificationReminders() {
   const notificationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastNotifiedRef = useRef<Record<string, number>>({});
-  const { prayerLogs, quickTasks } = useDashboardStore((s) => ({
-    prayerLogs: s.prayerLogs || {},
-    quickTasks: s.quickTasks || [],
-  }));
-  const PRAYERS = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+  // Refs to store the latest state without triggering re-renders of the effect
+  const prayerLogsRef = useRef(useDashboardStore.getState().prayerLogs || {});
+  const quickTasksRef = useRef(useDashboardStore.getState().quickTasks || []);
 
   useEffect(() => {
     // Request notification permission
@@ -21,37 +19,36 @@ export function useNotificationReminders() {
       Notification.requestPermission();
     }
 
-    // Check every minute for notifications
+    // Subscribe to store updates once
+    const unsub = useDashboardStore.subscribe((state: any) => {
+      prayerLogsRef.current = state.prayerLogs || {};
+      quickTasksRef.current = state.quickTasks || [];
+    });
+
+    const PRAYERS = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+    const prayerTimes: Record<string, number> = {
+      Fajr: 5, Dhuhr: 12, Asr: 15, Maghrib: 18, Isha: 19,
+    };
+
     notificationIntervalRef.current = setInterval(() => {
       const now = new Date();
       const todayKey = now.toISOString().split('T')[0];
       const currentHour = now.getHours();
       const currentMinute = now.getMinutes();
+      const currentPrayerLogs = prayerLogsRef.current;
+      const currentQuickTasks = quickTasksRef.current;
 
-      // Prayer notifications - 5 minutes before
-      // Using approximate prayer times (simplified - in production use API)
-      const prayerTimes: Record<string, number> = {
-        Fajr: 5,    // 5:00 AM
-        Dhuhr: 12,  // 12:00 PM
-        Asr: 15,    // 3:00 PM
-        Maghrib: 18, // 6:00 PM
-        Isha: 19,   // 7:00 PM
-      };
-
-      PRAYERS.forEach((prayer: string) => {
+      PRAYERS.forEach((prayer) => {
         const prayerHour = prayerTimes[prayer] || 12;
-        const prayerMinute = 0;
         const prayerTimeKey = `${prayer}-${todayKey}`;
+        const todayLog = (currentPrayerLogs[todayKey] as Record<string, any>) || {};
+        // Handle both old boolean and new object format for prayer completion
+        const entry = todayLog[prayer];
+        const isCompleted = typeof entry === 'object' ? !!entry?.completedAt : !!entry;
         
-        // Check if prayer is already done today
-        const todayLog = (prayerLogs[todayKey] as Record<string, boolean>) || {};
-        if (todayLog[prayer]) return;
+        if (isCompleted || lastNotifiedRef.current[prayerTimeKey]) return;
 
-        // Check if we already notified for this prayer today
-        if (lastNotifiedRef.current[prayerTimeKey]) return;
-
-        // Check if we're 5 minutes before prayer time
-        const minutesUntilPrayer = (prayerHour - currentHour) * 60 + (prayerMinute - currentMinute);
+        const minutesUntilPrayer = (prayerHour - currentHour) * 60 - currentMinute;
         if (minutesUntilPrayer === 5) {
           if ('Notification' in window && Notification.permission === 'granted') {
             new Notification('Preghiera imminente', {
@@ -64,21 +61,14 @@ export function useNotificationReminders() {
         }
       });
 
-      // Deadline notifications for quick tasks due today
-      quickTasks.forEach((task: any) => {
+      currentQuickTasks.forEach((task: any) => {
         if (!task.deadline || task.done) return;
-        
         const deadlineDate = new Date(task.deadline);
-        const isToday = deadlineDate.toISOString().split('T')[0] === todayKey;
+        if (deadlineDate.toISOString().split('T')[0] !== todayKey) return;
         const deadlineKey = `deadline-${task.id}`;
-        
-        if (!isToday) return;
         if (lastNotifiedRef.current[deadlineKey]) return;
 
-        const deadlineHour = deadlineDate.getHours();
-        const minutesUntilDeadline = (deadlineHour - currentHour) * 60 - currentMinute;
-
-        // Notify if deadline is in 1 hour or less
+        const minutesUntilDeadline = (deadlineDate.getHours() - currentHour) * 60 - currentMinute;
         if (minutesUntilDeadline <= 60 && minutesUntilDeadline > 0) {
           if ('Notification' in window && Notification.permission === 'granted') {
             new Notification('Scadenza imminente', {
@@ -90,12 +80,12 @@ export function useNotificationReminders() {
           }
         }
       });
-    }, 60000); // Check every minute
+    }, 60000);
 
     return () => {
-      if (notificationIntervalRef.current) {
-        clearInterval(notificationIntervalRef.current);
-      }
+      // @ts-expect-error unsubscribe callable at runtime
+      unsub?.();
+      if (notificationIntervalRef.current) clearInterval(notificationIntervalRef.current);
     };
-  }, [PRAYERS, prayerLogs, quickTasks]);
+  }, []);
 }

@@ -320,6 +320,7 @@ class PrayerLog(Base):
     date = Column(String(10), nullable=False, index=True) # YYYY-MM-DD
     prayer_name = Column(String(64), nullable=False)
     completed = Column(Integer, default=0) # 0 = no, 1 = yes
+    completed_at = Column(String(64), nullable=True) # ISO timestamp when completed
 
     __table_args__ = (
         Index("idx_prayer_logs_date_name", "date", "prayer_name"),

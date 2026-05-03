@@ -6,7 +6,7 @@ services:
     region: frankfurt
     plan: free
     rootDir: backend
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -e .
     startCommand: bash start.sh
     healthCheckPath: /health
     envVars:

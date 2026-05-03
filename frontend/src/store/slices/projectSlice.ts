@@ -25,7 +25,7 @@ export function createProjectSlice(set: ProjectSet, get: ProjectGet) {
       set((s: unknown) => {
         const state = s as { projects: Project[] };
         state.projects.unshift({
-          id: `project-${Date.now()}`,
+          id: `project-${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().slice(0, 12) : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`}`,
           title: 'New Project',
           active: true,
           tasks: [],
@@ -372,7 +372,7 @@ export function createProjectSlice(set: ProjectSet, get: ProjectGet) {
         // Create a linked copy with sourceProjectId
         const linkedProject = {
           ...JSON.parse(JSON.stringify(personalProject)), // Deep clone
-          id: `project-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          id: `project-${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().slice(0, 12) : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`}`,
           sourceProjectId: personalProjectId,
         } as any;
         
