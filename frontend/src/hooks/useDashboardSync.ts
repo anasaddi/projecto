@@ -52,10 +52,11 @@ export function useDashboardSync(): void {
         }
 
         // 3. Fetch and apply latest dashboard state from server
+        // Only apply if server has meaningful data (don't overwrite local with empty)
         const currentRes = await api.training.getDashboardState({ timeout: 15_000 }).catch(() => null);
         const payload = extractDashboardPayload(currentRes) ?? extractDashboardPayload((currentRes as { data?: unknown } | null | undefined)?.data);
         
-        if (!cancelled && payload && syncWithServer) {
+        if (!cancelled && payload && syncWithServer && hasMeaningfulDashboardData(payload)) {
           syncWithServer(payload as Parameters<typeof syncWithServer>[0]);
         }
       } catch (err) {
