@@ -208,32 +208,33 @@ const dashboardStore = create<any>()(
         syncWithServer: (data: SyncData) =>
           set((s: Record<string, unknown>) => {
             const state = s as Record<string, unknown> & SyncData;
-            if (data.dailyTaskTemplates) state.dailyTaskTemplates = data.dailyTaskTemplates;
-            if (data.dailyTaskLogs) state.dailyTaskLogs = data.dailyTaskLogs;
-            if (data.prayerLogs) state.prayerLogs = data.prayerLogs;
+            // Only sync if backend has data (non-empty arrays or non-empty objects)
+            if (data.dailyTaskTemplates && data.dailyTaskTemplates.length > 0) state.dailyTaskTemplates = data.dailyTaskTemplates;
+            if (data.dailyTaskLogs && Object.keys(data.dailyTaskLogs).length > 0) state.dailyTaskLogs = data.dailyTaskLogs;
+            if (data.prayerLogs && Object.keys(data.prayerLogs).length > 0) state.prayerLogs = data.prayerLogs;
             // selectedDate is UI-only (navigation state); do not overwrite from server sync
-            if (data.dailyCompletionLog) state.dailyCompletionLog = data.dailyCompletionLog;
-            if (data.lifeGoals) state.lifeGoals = normalizeLifeGoals(data.lifeGoals, buildDefaultLifeGoals()) as LifeGoalsState;
-            if (data.timelineRoutines != null && typeof data.timelineRoutines === 'object') state.timelineRoutines = data.timelineRoutines;
+            if (data.dailyCompletionLog && Object.keys(data.dailyCompletionLog).length > 0) state.dailyCompletionLog = data.dailyCompletionLog;
+            if (data.lifeGoals && ((data.lifeGoals.tiers && data.lifeGoals.tiers.length > 0) || (data.lifeGoals as any).collapsed !== undefined)) state.lifeGoals = normalizeLifeGoals(data.lifeGoals, buildDefaultLifeGoals()) as LifeGoalsState;
+            if (data.timelineRoutines != null && typeof data.timelineRoutines === 'object' && Object.keys(data.timelineRoutines).length > 0) state.timelineRoutines = data.timelineRoutines;
             if (data.timelinePanelExpanded !== undefined) state.timelinePanelExpanded = data.timelinePanelExpanded;
             if (data.todayTrainingExpanded !== undefined) state.todayTrainingExpanded = data.todayTrainingExpanded;
             if (data.lockedHabitsCollapsed !== undefined) state.lockedHabitsCollapsed = data.lockedHabitsCollapsed;
-            if (data.projectExpandedState && typeof data.projectExpandedState === 'object') state.projectExpandedState = data.projectExpandedState;
-            if (data.projects && Array.isArray(data.projects)) {
+            if (data.projectExpandedState && typeof data.projectExpandedState === 'object' && Object.keys(data.projectExpandedState).length > 0) state.projectExpandedState = data.projectExpandedState;
+            if (data.projects && Array.isArray(data.projects) && data.projects.length > 0) {
               const prev = (state.projects || []) as Project[];
               state.projects = data.projects.map((p) => {
                 const cur = prev.find((x) => x.id === p.id);
                 return cur?.lifeGoalId != null ? { ...p, lifeGoalId: cur.lifeGoalId } : p;
               });
             }
-            if (data.quickTasks && Array.isArray(data.quickTasks)) {
+            if (data.quickTasks && Array.isArray(data.quickTasks) && data.quickTasks.length > 0) {
               const prev = (state.quickTasks || []) as QuickTask[];
               state.quickTasks = data.quickTasks.map((t) => {
                 const cur = prev.find((x) => x.id === t.id);
                 return cur?.lifeGoalId != null ? { ...t, lifeGoalId: cur.lifeGoalId } : t;
               });
             }
-            if (data.top3Manual && Array.isArray(data.top3Manual)) {
+            if (data.top3Manual && Array.isArray(data.top3Manual) && data.top3Manual.some((s: any) => s !== null)) {
               const prev = (state.top3Manual || []) as (Top3Slot | null)[];
               state.top3Manual = data.top3Manual.map((slot: Top3Slot | null, i: number) => {
                 const curSlot = prev[i];
