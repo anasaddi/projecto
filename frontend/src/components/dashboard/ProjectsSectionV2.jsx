@@ -5,7 +5,7 @@ import { ProjectCard } from './ProjectCard';
 import { DenseTaskNode } from './DenseTaskNode';
 import { createTaskNode, countTreeStats, getDeadlineColorClass, formatDeadline } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
-import { Card, CardHeader, CardBody } from '../ui/Card';
+import { Card, CardHeader, CardBody } from './Card';
 import { Label } from '../ui/Typography';
 import { AddItemInputBar } from './AddItemInputBar';
 
