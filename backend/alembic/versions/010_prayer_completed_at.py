@@ -19,7 +19,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Add nullable completed_at column — existing rows keep NULL (no data loss)
-    op.add_column('prayer_logs', sa.Column('completed_at', sa.String(length=64), nullable=True))
+    # Uses IF NOT EXISTS for idempotency (safe to re-run)
+    op.execute("ALTER TABLE prayer_logs ADD COLUMN IF NOT EXISTS completed_at VARCHAR(64)")
 
 
 def downgrade() -> None:
