@@ -251,10 +251,20 @@ const dashboardStore = create<any>()(
           set((s: unknown) => {
             const state = s as { prayerLogs: Record<string, Record<string, any>>; selectedDate?: Date | string };
             if (val) haptic([50]);
-            const date = toDateKey(parseSelectedDate(state.selectedDate, new Date()));
+            const selected = parseSelectedDate(state.selectedDate, new Date());
+            const date = toDateKey(selected);
+            const todayKey = toDateKey(new Date());
             if (!state.prayerLogs[date]) state.prayerLogs[date] = {};
-            // Store timestamp when completed, null when uncompleted
-            state.prayerLogs[date][name] = val ? { completedAt: new Date().toISOString() } : null;
+            if (!val) {
+              state.prayerLogs[date][name] = null;
+            } else if (date === todayKey) {
+              // Today: store real timestamp so we can classify on-time / late / early
+              state.prayerLogs[date][name] = { completedAt: new Date().toISOString() };
+            } else {
+              // Past day: retroactive tick — store true (legacy format) so it’s shown as “Completata”
+              // without misleading “In ritardo” classification based on current wall-clock time
+              state.prayerLogs[date][name] = true;
+            }
           }),
 
         ...createProjectSlice(set, get),

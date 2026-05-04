@@ -338,19 +338,103 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
     return values;
   }, [PRAYERS, PRAYER_TIMES]);
 
-  const getPrayerState = (idx, isDone) => {
-    // Simple, classic coloring: done = emerald green, not done = neutral
-    if (isDone) {
+  const getPrayerState = (idx, isDone, completedAtTimestamp = null) => {
+    const start = prayerMinutes[idx];
+    const end = prayerMinutes[idx + 1];
+
+    // PAST DAYS: classify by timestamp vs slot end
+    if (!isToday) {
+      if (isDone && completedAtTimestamp && Number.isFinite(end)) {
+        const completedAt = new Date(completedAtTimestamp);
+        const completedMinutes = completedAt.getHours() * 60 + completedAt.getMinutes();
+        const wasLate = completedMinutes > end;
+        return {
+          badge: wasLate ? 'In ritardo' : 'Completata',
+          checkboxClass: wasLate
+            ? 'bg-orange-500 border-orange-400 text-white shadow-[0_0_15px_rgba(249,115,22,0.35)]'
+            : 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)]',
+          labelClass: wasLate ? 'text-orange-600 dark:text-orange-400' : 'text-emerald-600 dark:text-emerald-400',
+        };
+      }
       return {
-        badge: 'Completata',
-        checkboxClass: 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)]',
-        labelClass: 'text-emerald-600 dark:text-emerald-400',
+        badge: isDone ? 'Completata' : 'Mancante',
+        checkboxClass: isDone
+          ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)]'
+          : 'bg-rose-500 border-rose-400 text-white shadow-[0_0_12px_rgba(244,63,94,0.3)]',
+        labelClass: isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400',
       };
     }
+
+    // TODAY: fallback when slot times aren’t available
+    if (!Number.isFinite(start) || !Number.isFinite(end)) {
+      return {
+        badge: isDone ? 'Completata' : 'In attesa',
+        checkboxClass: isDone
+          ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)]'
+          : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-400 hover:border-indigo-400 hover:text-indigo-500',
+        labelClass: isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400',
+      };
+    }
+
+    // TODAY, not yet done
+    if (!isDone) {
+      if (nowMinutes > end) {
+        return {
+          badge: 'Mancante',
+          checkboxClass: 'bg-rose-500 border-rose-400 text-white shadow-[0_0_12px_rgba(244,63,94,0.3)]',
+          labelClass: 'text-rose-600 dark:text-rose-400',
+        };
+      }
+      if (nowMinutes >= start && nowMinutes < end) {
+        return {
+          badge: 'Ora',
+          checkboxClass: 'bg-amber-500 border-amber-400 text-white shadow-[0_0_12px_rgba(245,158,11,0.3)]',
+          labelClass: 'text-amber-600 dark:text-amber-400',
+        };
+      }
+      return {
+        badge: 'In attesa',
+        checkboxClass: 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-400 hover:border-indigo-400 hover:text-indigo-500',
+        labelClass: 'text-zinc-600 dark:text-zinc-400',
+      };
+    }
+
+    // TODAY, done: classify by completion timestamp (late / early / on time)
+    if (completedAtTimestamp) {
+      const completedAt = new Date(completedAtTimestamp);
+      const completedMinutes = completedAt.getHours() * 60 + completedAt.getMinutes();
+      if (completedMinutes > end) {
+        return {
+          badge: 'In ritardo',
+          checkboxClass: 'bg-orange-500 border-orange-400 text-white shadow-[0_0_12px_rgba(249,115,22,0.3)]',
+          labelClass: 'text-orange-600 dark:text-orange-400',
+        };
+      }
+      if (completedMinutes < start) {
+        return {
+          badge: 'In anticipo',
+          checkboxClass: 'bg-sky-500 border-sky-400 text-white shadow-[0_0_15px_rgba(14,165,233,0.35)]',
+          labelClass: 'text-sky-600 dark:text-sky-400',
+        };
+      }
+    } else if (nowMinutes > end) {
+      return {
+        badge: 'In ritardo',
+        checkboxClass: 'bg-orange-500 border-orange-400 text-white shadow-[0_0_12px_rgba(249,115,22,0.3)]',
+        labelClass: 'text-orange-600 dark:text-orange-400',
+      };
+    } else if (nowMinutes < start) {
+      return {
+        badge: 'In anticipo',
+        checkboxClass: 'bg-sky-500 border-sky-400 text-white shadow-[0_0_15px_rgba(14,165,233,0.35)]',
+        labelClass: 'text-sky-600 dark:text-sky-400',
+      };
+    }
+
     return {
-      badge: 'Da fare',
-      checkboxClass: 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-400 hover:border-indigo-400 hover:text-indigo-500',
-      labelClass: 'text-zinc-600 dark:text-zinc-400',
+      badge: 'In orario',
+      checkboxClass: 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]',
+      labelClass: 'text-emerald-600 dark:text-emerald-400',
     };
   };
 
@@ -486,7 +570,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                             const completedAtTimestamp = typeof prayerLogEntry === 'object' 
                               ? prayerLogEntry?.completedAt || null 
                               : null;
-                            const prayerState = getPrayerState(i, isDone);
+                            const prayerState = getPrayerState(i, isDone, completedAtTimestamp);
                             const slotKey = PRAYER_SLOTS[i];
                             const isCurrentSlot = isToday && currentSlotKey === slotKey;
                             const isPastSlot = isToday && currentSlotKey ? PRAYER_SLOTS.indexOf(slotKey) < PRAYER_SLOTS.indexOf(currentSlotKey) : false;
@@ -620,7 +704,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                       const completedAtTimestamp = typeof prayerLogEntry === 'object' 
                         ? prayerLogEntry?.completedAt || null 
                         : null;
-                      const prayerState = getPrayerState(i, isDone);
+                      const prayerState = getPrayerState(i, isDone, completedAtTimestamp);
                       const slotKey = PRAYER_SLOTS[i];
                       const isCurrentSlot = isToday && currentSlotKey === slotKey;
                       const isPastSlot = isToday && currentSlotKey ? PRAYER_SLOTS.indexOf(slotKey) < PRAYER_SLOTS.indexOf(currentSlotKey) : false;
