@@ -214,7 +214,6 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
 
   const [selectorOpenSlot, setSelectorOpenSlot] = useState(null);
   const [selectorOpenEl, setSelectorOpenEl] = useState(null);
-  const [confirmDialog, setConfirmDialog] = useState(null); // { prayer, prayerTime, onComplete }
   const winTriggerEls = useRef(new Map());
   const { times: PRAYER_TIMES, locationName } = usePrayerTimes();
   const [currentPrayerIndex, setCurrentPrayerIndex] = useState(0);
@@ -261,27 +260,9 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
     }
   };
   
-  // Handle prayer toggle with confirmation for future prayers
-  const handlePrayerToggle = (prayer, currentlyDone, prayerTime) => {
-    if (!isToday || currentlyDone) {
-      // If not today or unchecking, toggle directly
-      togglePrayer?.(prayer, !currentlyDone);
-      return;
-    }
-    
-    // Check if this is a future prayer
-    const prayerTimeMinutes = parseMinutes(prayerTime);
-    if (nowMinutes < prayerTimeMinutes) {
-      // Future prayer - show confirmation
-      setConfirmDialog({
-        prayer,
-        prayerTime,
-        onComplete: () => togglePrayer?.(prayer, true)
-      });
-    } else {
-      // Past or current prayer - toggle directly
-      togglePrayer?.(prayer, !currentlyDone);
-    }
+  // Handle prayer toggle — always toggle directly, no confirmation modal
+  const handlePrayerToggle = (prayer, currentlyDone) => {
+    togglePrayer?.(prayer, !currentlyDone);
   };
   
   // Calculate timeline progress based on actual prayer times
@@ -357,101 +338,19 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
     return values;
   }, [PRAYERS, PRAYER_TIMES]);
 
-  const getPrayerState = (idx, isDone, completedAtTimestamp = null) => {
-    const start = prayerMinutes[idx];
-    const end = prayerMinutes[idx + 1];
-
-    if (!isToday) {
-      // For past days, check if prayer was completed late based on timestamp
-      if (isDone && completedAtTimestamp) {
-        const completedAt = new Date(completedAtTimestamp);
-        const completedMinutes = completedAt.getHours() * 60 + completedAt.getMinutes();
-        const wasLate = completedMinutes > end;
-        
-        return {
-          badge: wasLate ? 'Completata in ritardo' : 'Completata',
-          checkboxClass: wasLate
-            ? 'bg-orange-500 border-orange-400 text-white shadow-[0_0_15px_rgba(249,115,22,0.35)]'
-            : 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)]',
-          labelClass: wasLate ? 'text-orange-600 dark:text-orange-400' : 'text-emerald-600 dark:text-emerald-400',
-        };
-      }
-      
+  const getPrayerState = (idx, isDone) => {
+    // Simple, classic coloring: done = emerald green, not done = neutral
+    if (isDone) {
       return {
-        badge: isDone ? 'Completata' : 'Mancante',
-        checkboxClass: isDone
-          ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)]'
-          : 'bg-rose-500 border-rose-400 text-white shadow-[0_0_12px_rgba(244,63,94,0.3)]',
-        labelClass: isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400',
+        badge: 'Completata',
+        checkboxClass: 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)]',
+        labelClass: 'text-emerald-600 dark:text-emerald-400',
       };
     }
-
-    if (!Number.isFinite(start) || !Number.isFinite(end)) {
-      return {
-        badge: isDone ? 'Completata' : 'In attesa',
-        checkboxClass: isDone
-          ? 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)]'
-          : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-400 ring-2 ring-indigo-500 ring-offset-2 shadow-md hover:border-indigo-400 hover:text-indigo-500',
-        labelClass: isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400',
-      };
-    }
-
-    if (!isDone) {
-      if (nowMinutes > end) {
-        return {
-          badge: 'Mancante',
-          checkboxClass: 'bg-rose-500 border-rose-400 text-white shadow-[0_0_12px_rgba(244,63,94,0.3)]',
-          labelClass: 'text-rose-600 dark:text-rose-400',
-        };
-      }
-      if (nowMinutes >= start && nowMinutes < end) {
-        return {
-          badge: 'Ora',
-          checkboxClass: 'bg-amber-500 border-amber-400 text-white shadow-[0_0_12px_rgba(245,158,11,0.3)]',
-          labelClass: 'text-amber-600 dark:text-amber-400',
-        };
-      }
-      return {
-        badge: 'In attesa',
-        checkboxClass: 'bg-indigo-500 border-indigo-400 text-white shadow-[0_0_12px_rgba(99,102,241,0.3)]',
-        labelClass: 'text-indigo-600 dark:text-indigo-400',
-      };
-    }
-
-    // isDone = true from here
-    // Check if completed late by comparing completion timestamp
-    if (completedAtTimestamp) {
-      const completedAt = new Date(completedAtTimestamp);
-      const completedMinutes = completedAt.getHours() * 60 + completedAt.getMinutes();
-      
-      if (completedMinutes > end) {
-        return {
-          badge: 'In ritardo',
-          checkboxClass: 'bg-orange-500 border-orange-400 text-white shadow-[0_0_12px_rgba(249,115,22,0.3)]',
-          labelClass: 'text-orange-600 dark:text-orange-400',
-        };
-      }
-    } else if (nowMinutes > end) {
-      // Fallback: if no timestamp but current time is past end, assume late
-      return {
-        badge: 'In ritardo',
-        checkboxClass: 'bg-orange-500 border-orange-400 text-white shadow-[0_0_12px_rgba(249,115,22,0.3)]',
-        labelClass: 'text-orange-600 dark:text-orange-400',
-      };
-    }
-    
-    if (nowMinutes < start) {
-      return {
-        badge: 'In anticipo',
-        checkboxClass: 'bg-sky-500 border-sky-400 text-white shadow-[0_0_15px_rgba(14,165,233,0.35)]',
-        labelClass: 'text-sky-600 dark:text-sky-400',
-      };
-    }
-
     return {
-      badge: 'In orario',
-      checkboxClass: 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]',
-      labelClass: 'text-emerald-600 dark:text-emerald-400',
+      badge: 'Da fare',
+      checkboxClass: 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 text-zinc-400 hover:border-indigo-400 hover:text-indigo-500',
+      labelClass: 'text-zinc-600 dark:text-zinc-400',
     };
   };
 
@@ -587,7 +486,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                             const completedAtTimestamp = typeof prayerLogEntry === 'object' 
                               ? prayerLogEntry?.completedAt || null 
                               : null;
-                            const prayerState = getPrayerState(i, isDone, completedAtTimestamp);
+                            const prayerState = getPrayerState(i, isDone);
                             const slotKey = PRAYER_SLOTS[i];
                             const isCurrentSlot = isToday && currentSlotKey === slotKey;
                             const isPastSlot = isToday && currentSlotKey ? PRAYER_SLOTS.indexOf(slotKey) < PRAYER_SLOTS.indexOf(currentSlotKey) : false;
@@ -602,7 +501,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                             return (
                               <>
                                 <motion.button
-                                  onClick={() => handlePrayerToggle(prayer, isDone, PRAYER_TIMES[prayer])}
+                                  onClick={() => handlePrayerToggle(prayer, isDone)}
                                   whileHover={{ scale: 1.05 }}
                                   whileTap={{ scale: 0.95 }}
                                   className={`relative z-10 w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-lg border-2 ${prayerState.checkboxClass}`}
@@ -721,7 +620,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                       const completedAtTimestamp = typeof prayerLogEntry === 'object' 
                         ? prayerLogEntry?.completedAt || null 
                         : null;
-                      const prayerState = getPrayerState(i, isDone, completedAtTimestamp);
+                      const prayerState = getPrayerState(i, isDone);
                       const slotKey = PRAYER_SLOTS[i];
                       const isCurrentSlot = isToday && currentSlotKey === slotKey;
                       const isPastSlot = isToday && currentSlotKey ? PRAYER_SLOTS.indexOf(slotKey) < PRAYER_SLOTS.indexOf(currentSlotKey) : false;
@@ -737,7 +636,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
                         <React.Fragment key={prayer}>
                           <div className="flex flex-col items-center gap-2 min-w-0">
                             <motion.button
-                              onClick={() => handlePrayerToggle(prayer, isDone, PRAYER_TIMES[prayer])}
+                              onClick={() => handlePrayerToggle(prayer, isDone)}
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
                               className={`relative z-10 w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm border-2 ${prayerState.checkboxClass}`}
@@ -856,19 +755,6 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
           )}
         </AnimatePresence>
       </Card>
-      
-      {/* Confirmation Dialog for Future Prayers */}
-      <AnimatePresence>
-        {confirmDialog && (
-          <PrayerConfirmationDialog
-            isOpen={!!confirmDialog}
-            onClose={() => setConfirmDialog(null)}
-            onConfirm={confirmDialog.onComplete}
-            prayerName={confirmDialog.prayer}
-            prayerTime={confirmDialog.prayerTime}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 }

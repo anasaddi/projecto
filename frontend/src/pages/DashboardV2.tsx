@@ -13,6 +13,7 @@ import { HabitsSection } from '../components/dashboard/HabitsSection';
 import { ProjectsSectionV2 } from '../components/dashboard/ProjectsSectionV2';
 import { LifeGoalsSection } from '../components/dashboard/LifeGoalsSection';
 import { TodayCardDashboard } from '../components/dashboard/TodayCardDashboard';
+import { DayNavigationButtons } from '../components/dashboard/DayNavigationButtons';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { HabitSkeleton, ProjectSkeleton, Top3Skeleton, QuickTaskSkeleton } from '../components/dashboard/SkeletonSection';
 
@@ -322,6 +323,8 @@ export default function DashboardV2(): React.ReactElement {
         }}
         onCancel={() => setConfirmState(null)}
       />
+
+      <DayNavigationButtons />
     </div>
   );
 }
