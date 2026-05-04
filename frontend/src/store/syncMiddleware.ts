@@ -158,7 +158,7 @@ export function syncMiddleware(config: any): any {
         const fullState = buildFullState();
         if (navigator.onLine) {
           try {
-            await api.training.updateDashboardState(fullState, { timeout: 30_000 });
+            await api.training.updateDashboardState(fullState, { timeout: 60_000 });
             isApplyingFromBC = true;
             set((s: any) => ({ ...s, lastSavedAt: Date.now() }));
             queueMicrotask(() => {

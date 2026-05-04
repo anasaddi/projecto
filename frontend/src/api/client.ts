@@ -4,8 +4,8 @@ import { API_BASE } from '../config';
 
 const BASE = API_BASE;
 const DEFAULT_TIMEOUT_MS = 30_000;
-const MAX_RETRIES = 2;
-const RETRY_DELAY_MS = 500;
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 2000;
 
 export function clearAuthAndRedirect(): void {
   localStorage.removeItem('km-admin-token');
