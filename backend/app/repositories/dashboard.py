@@ -195,8 +195,15 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
             await db.execute(delete(HabitLog).filter(HabitLog.habit_id.not_in(incoming_habit_ids)))
             await db.execute(delete(Habit).filter(Habit.id.not_in(incoming_habit_ids)))
         else:
-            await db.execute(delete(HabitLog))
-            await db.execute(delete(Habit))
+            # DEFENSIVE: incoming is empty — only wipe if DB is also (near-)empty.
+            # Otherwise this is almost certainly a partial/buggy payload and
+            # blindly deleting everything would cause catastrophic data loss.
+            existing_count_res = await db.execute(select(Habit))
+            existing_count = len(existing_count_res.scalars().all())
+            if existing_count == 0:
+                await db.execute(delete(HabitLog))
+                await db.execute(delete(Habit))
+            # else: skip destructive delete — preserve existing data
             
         existing_res = await db.execute(select(Habit))
         existing_habits = {str(h.id): h for h in existing_res.scalars().all()}
@@ -220,7 +227,10 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
         if incoming_qids:
             await db.execute(delete(QuickTask).filter(QuickTask.id.not_in(incoming_qids)))
         else:
-            await db.execute(delete(QuickTask))
+            # DEFENSIVE: same guard as habits — only wipe if DB is empty.
+            existing_count_res = await db.execute(select(QuickTask))
+            if len(existing_count_res.scalars().all()) == 0:
+                await db.execute(delete(QuickTask))
         existing_q_res = await db.execute(select(QuickTask))
         existing_qs = {str(q.id): q for q in existing_q_res.scalars().all()}
         for i, q in enumerate(data["quickTasks"]):
@@ -242,8 +252,15 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
             deleted_p_res = await db.execute(select(Project.id).filter(Project.share_id == None, Project.id.not_in(inc_proj_ids)))
             deleted_p_ids = deleted_p_res.scalars().all()
         else:
-            deleted_p_res = await db.execute(select(Project.id).filter(Project.share_id == None))
-            deleted_p_ids = [r for r in deleted_p_res.scalars().all()]
+            # DEFENSIVE: incoming is empty — only wipe if DB has no personal
+            # projects (fresh state). Otherwise this is almost certainly a
+            # buggy partial payload; skip destructive delete.
+            existing_personal_res = await db.execute(select(Project.id).filter(Project.share_id == None))
+            existing_personal_ids = existing_personal_res.scalars().all()
+            if len(existing_personal_ids) == 0:
+                deleted_p_ids = []
+            else:
+                deleted_p_ids = []  # skip — preserve existing
         if deleted_p_ids:
             await db.execute(delete(Task).filter(Task.project_id.in_(deleted_p_ids)))
             await db.execute(delete(Project).filter(Project.id.in_(deleted_p_ids)))
@@ -307,17 +324,23 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
                 db.add(PrayerLog(date=d_str, prayer_name=p_name, completed=is_completed, completed_at=completed_at))
 
     if "top3Manual" in data:
-        await db.execute(delete(Top3Item))
-        for i, item in enumerate(data["top3Manual"]):
-            if item:
-                db.add(Top3Item(
-                    slot=i,
-                    project_id=item.get("projectId"),
-                    task_id=item.get("taskId"),
-                    quick_task_id=item.get("quickTaskId"),
-                    title=item.get("title"),
-                    done=1 if item.get("done") else 0
-                ))
+        incoming_top3 = data["top3Manual"]
+        # DEFENSIVE: top3Manual is ALWAYS exactly 3 slots in a valid payload.
+        # If we receive a shorter/empty list and the DB has entries, it's a
+        # partial/buggy payload — skip the destructive delete.
+        is_valid_shape = isinstance(incoming_top3, list) and len(incoming_top3) == 3
+        if is_valid_shape:
+            await db.execute(delete(Top3Item))
+            for i, item in enumerate(incoming_top3):
+                if item:
+                    db.add(Top3Item(
+                        slot=i,
+                        project_id=item.get("projectId"),
+                        task_id=item.get("taskId"),
+                        quick_task_id=item.get("quickTaskId"),
+                        title=item.get("title"),
+                        done=1 if item.get("done") else 0
+                    ))
 
     if "dailyCompletionLog" in data:
         for d_str, log in data["dailyCompletionLog"].items():
@@ -352,8 +375,12 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
                 await db.execute(delete(LifeGoal).filter(LifeGoal.tier_id.not_in(incoming_tier_ids)))
                 await db.execute(delete(LifeGoalTier).filter(LifeGoalTier.id.not_in(incoming_tier_ids)))
             else:
-                await db.execute(delete(LifeGoal))
-                await db.execute(delete(LifeGoalTier))
+                # DEFENSIVE: only wipe tiers/goals if DB is already empty.
+                existing_tiers_res = await db.execute(select(LifeGoalTier))
+                if len(existing_tiers_res.scalars().all()) == 0:
+                    await db.execute(delete(LifeGoal))
+                    await db.execute(delete(LifeGoalTier))
+                # else: skip — preserve existing tiers/goals
             
             ex_tiers_res = await db.execute(select(LifeGoalTier))
             ex_tiers = {str(t.id): t for t in ex_tiers_res.scalars().all()}

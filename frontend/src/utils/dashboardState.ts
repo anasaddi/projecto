@@ -6,7 +6,10 @@ export type DashboardPayloadLike = Record<string, unknown> & {
   dailyTaskTemplates?: unknown[];
   projects?: unknown[];
   quickTasks?: unknown[];
+  dailyTaskLogs?: Record<string, unknown> | unknown;
+  prayerLogs?: Record<string, unknown> | unknown;
   dailyCompletionLog?: Record<string, unknown> | unknown;
+  timelineRoutines?: Record<string, unknown> | unknown;
   selectedDate?: unknown;
   top3Manual?: unknown;
   lifeGoals?: DashboardLifeGoalsLike | unknown;
@@ -23,10 +26,16 @@ export function extractDashboardPayload(value: unknown): DashboardPayloadLike | 
     candidate.selectedDate != null ||
     candidate.lifeGoals != null ||
     candidate.top3Manual != null ||
-    candidate.dailyCompletionLog != null;
+    candidate.dailyCompletionLog != null ||
+    candidate.prayerLogs != null ||
+    candidate.dailyTaskLogs != null ||
+    candidate.timelineRoutines != null;
   if (hasDashboardShape) return candidate;
   return extractDashboardPayload(candidate.data);
 }
+
+const hasAnyKeys = (v: unknown): boolean =>
+  !!v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v as object).length > 0;
 
 export function hasMeaningfulDashboardData(value: unknown): boolean {
   const payload = extractDashboardPayload(value);
@@ -37,6 +46,10 @@ export function hasMeaningfulDashboardData(value: unknown): boolean {
     (Array.isArray(payload.projects) && payload.projects.length > 0) ||
     (Array.isArray(payload.quickTasks) && payload.quickTasks.length > 0) ||
     payload.selectedDate != null ||
+    hasAnyKeys(payload.prayerLogs) ||
+    hasAnyKeys(payload.dailyTaskLogs) ||
+    hasAnyKeys(payload.dailyCompletionLog) ||
+    hasAnyKeys(payload.timelineRoutines) ||
     (Array.isArray(lifeGoals?.tiers) && lifeGoals.tiers.some((tier) => (tier?.goals?.length ?? 0) > 0))
   );
 }

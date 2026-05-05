@@ -1,4 +1,5 @@
 import { api } from '../api/client';
+import { API_BASE } from '../config';
 import { STORAGE_KEY, BC_CHANNEL } from '../components/dashboard/DashboardUtils';
 import { parseSelectedDate } from '../components/dashboard/DashboardUtils';
 import { saveLocalState, addToSyncQueue, getSyncQueue, clearSyncQueue } from '../db/localDb';
@@ -9,12 +10,142 @@ let isApplyingFromBC = false;
 let isApplyingFromBCQueue: unknown[] = [];  // Buffer BC updates while applying
 let bc: BroadcastChannel | null = null;
 
+/** Latest built full state, captured before the debounced PUT fires.
+ *  Used by beforeunload/visibilitychange to flush via sendBeacon so ticks
+ *  aren't lost when the tab closes during the 4-second debounce window. */
+let pendingFullState: Record<string, unknown> | null = null;
+let hasPendingPut = false;
+
+function flushPendingPutViaBeacon(): void {
+  if (!hasPendingPut || !pendingFullState) return;
+  if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') return;
+  try {
+    const url = `${API_BASE}/training/dashboard-state`;
+    // sendBeacon only supports POST, but the backend endpoint is PUT. Fall
+    // back to fetch(keepalive: true) which survives page unload for small
+    // payloads (<64KB typical per browser).
+    const body = JSON.stringify({ data: pendingFullState });
+    if (typeof fetch === 'function') {
+      void fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        credentials: 'include',
+        keepalive: true,
+      }).catch(() => {});
+    }
+    hasPendingPut = false;
+  } catch {
+    // swallow — page is unloading
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', flushPendingPutViaBeacon);
+  window.addEventListener('pagehide', flushPendingPutViaBeacon);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushPendingPutViaBeacon();
+  });
+}
+
 function normalizeIncomingState(payload: unknown): unknown {
   if (!payload || typeof payload !== 'object') return payload;
   const next = { ...(payload as Record<string, unknown>) };
   // selectedDate is UI-only navigation state — never overwrite from BC/sync
   delete next.selectedDate;
   return next;
+}
+
+/** Keys whose values are date-keyed dictionaries; these must be merged, not
+ *  wholesale-replaced, to avoid losing local mutations that haven't yet been
+ *  reflected in cross-tab broadcasts. */
+const DATE_KEYED_DICT_KEYS = new Set([
+  'prayerLogs',
+  'dailyTaskLogs',
+  'dailyCompletionLog',
+  'timelineRoutines',
+]);
+
+/** Keys whose values are flat dictionaries (not date-keyed). Merge by key —
+ *  incoming fills in missing keys, local wins for anything already set. */
+const FLAT_DICT_MERGE_KEYS = new Set([
+  'projectExpandedState',
+  'sectionOrder',
+]);
+
+/** Flat dict merge: local wins per-key; incoming only fills missing keys. */
+function mergeFlatDict(
+  local: Record<string, unknown> | undefined,
+  incoming: Record<string, unknown> | undefined
+): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...(local || {}) };
+  if (!incoming || typeof incoming !== 'object') return out;
+  for (const key of Object.keys(incoming)) {
+    if (!(key in out) || out[key] == null) {
+      out[key] = incoming[key];
+    }
+    // else: local wins
+  }
+  return out;
+}
+
+/** Merge sharedDashboards arrays by share_id. Local entries win; incoming
+ *  fills in dashboards local doesn't have yet. Preserves per-share_id local
+ *  edits (tick state, lifeGoalId, etc.) against stale broadcasts. */
+function mergeSharedDashboards(
+  local: unknown,
+  incoming: unknown
+): unknown[] {
+  const localArr = Array.isArray(local) ? local : [];
+  const incomingArr = Array.isArray(incoming) ? incoming : [];
+  const byId = new Map<string, unknown>();
+  for (const entry of incomingArr) {
+    const id = (entry as { share_id?: string })?.share_id;
+    if (id) byId.set(id, entry);
+  }
+  // Local wins — overlay over incoming
+  for (const entry of localArr) {
+    const id = (entry as { share_id?: string })?.share_id;
+    if (id) byId.set(id, entry);
+  }
+  return Array.from(byId.values());
+}
+
+/** Merge date-keyed dict: local wins per inner-key when local is truthy,
+ *  server/other-tab fills in missing inner keys. */
+function mergeDateKeyedDict(
+  local: Record<string, unknown> | undefined,
+  incoming: Record<string, unknown> | undefined
+): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...(local || {}) };
+  if (!incoming || typeof incoming !== 'object') return out;
+  for (const dateKey of Object.keys(incoming)) {
+    const localEntry = out[dateKey];
+    const incomingEntry = incoming[dateKey];
+    const localIsEmpty =
+      localEntry == null ||
+      (typeof localEntry === 'object' && !Array.isArray(localEntry) && Object.keys(localEntry as object).length === 0) ||
+      (Array.isArray(localEntry) && localEntry.length === 0);
+    if (localIsEmpty) {
+      out[dateKey] = incomingEntry;
+      continue;
+    }
+    if (
+      incomingEntry && typeof incomingEntry === 'object' && !Array.isArray(incomingEntry) &&
+      localEntry && typeof localEntry === 'object' && !Array.isArray(localEntry)
+    ) {
+      const merged: Record<string, unknown> = { ...(localEntry as Record<string, unknown>) };
+      for (const innerKey of Object.keys(incomingEntry as Record<string, unknown>)) {
+        const localVal = merged[innerKey];
+        if (localVal == null || localVal === false) {
+          merged[innerKey] = (incomingEntry as Record<string, unknown>)[innerKey];
+        }
+      }
+      out[dateKey] = merged;
+    }
+    // else: keep local
+  }
+  return out;
 }
 
 /** Apply incoming state by mutating the immer draft key-by-key instead of
@@ -25,7 +156,32 @@ function applyIncomingState(set: SetState, data: unknown): void {
   set((s: unknown) => {
     const draft = s as Record<string, unknown>;
     for (const key of Object.keys(incoming)) {
-      draft[key] = incoming[key];
+      if (DATE_KEYED_DICT_KEYS.has(key)) {
+        // Merge, never replace — protects local ticks from stale BC snapshots
+        draft[key] = mergeDateKeyedDict(
+          draft[key] as Record<string, unknown> | undefined,
+          incoming[key] as Record<string, unknown> | undefined
+        );
+      } else if (FLAT_DICT_MERGE_KEYS.has(key)) {
+        // Merge by key — protects UI state (expand/collapse, section order)
+        draft[key] = mergeFlatDict(
+          draft[key] as Record<string, unknown> | undefined,
+          incoming[key] as Record<string, unknown> | undefined
+        );
+      } else if (key === 'activePomodoroTask') {
+        // Only clobber if local has no active session — don't let a stale BC
+        // message reset an in-progress pomodoro on this tab.
+        const localVal = draft[key];
+        const incomingVal = incoming[key];
+        if (localVal == null && incomingVal != null) {
+          draft[key] = incomingVal;
+        }
+        // else: keep local (even if incoming is null)
+      } else if (key === 'sharedDashboards') {
+        draft[key] = mergeSharedDashboards(draft[key], incoming[key]);
+      } else {
+        draft[key] = incoming[key];
+      }
     }
     return draft; // Must return the state for the raw Zustand set
   });
@@ -154,11 +310,18 @@ export function syncMiddleware(config: any): any {
       }, 500);
 
       if (syncTimeout) clearTimeout(syncTimeout);
+      // Capture the latest state up-front so beforeunload/visibilitychange can
+      // flush via keepalive fetch if the user closes the tab before 4s elapse.
+      pendingFullState = buildFullState();
+      hasPendingPut = true;
       syncTimeout = setTimeout(async () => {
         const fullState = buildFullState();
+        pendingFullState = fullState;
+        hasPendingPut = true;
         if (navigator.onLine) {
           try {
             await api.training.updateDashboardState(fullState, { timeout: 60_000 });
+            hasPendingPut = false;
             isApplyingFromBC = true;
             set((s: any) => ({ ...s, lastSavedAt: Date.now() }));
             queueMicrotask(() => {

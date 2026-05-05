@@ -27,6 +27,7 @@ import {
   formatCountdown,
   resolveTop3Slots,
   POMODORO_STORAGE,
+  parseSelectedDate,
 } from '../components/dashboard/DashboardUtils';
 import { useDashboardSync } from '../hooks/useDashboardSync';
 import { DASHBOARD_CONTENT_CLASS } from '../constants/layout';
@@ -53,6 +54,7 @@ export default function DashboardV2(): React.ReactElement {
   const deleteGoal = useDashboardStore((s) => s.deleteGoal);
   const deleteSharedDashboardProject = useDashboardStore((s) => s.deleteSharedDashboardProject);
   const togglePrayer = useDashboardStore((s) => s.togglePrayer);
+  const selectedDateRaw = useDashboardStore((s) => s.selectedDate);
   const sectionOrder = useDashboardStore((s) => s.sectionOrder) ?? {
     left: ['pomodoro', 'quickTasks', 'focusHeatmap'],
     center: ['top3', 'habits'],
@@ -83,6 +85,10 @@ export default function DashboardV2(): React.ReactElement {
   }, [today]);
 
   const todayKey = toDateKey(today);
+  // Selected day (may differ from actual today when user navigates past days)
+  const selectedDate = useMemo(() => parseSelectedDate(selectedDateRaw, today), [selectedDateRaw, today]);
+  const selectedDateKey = useMemo(() => toDateKey(selectedDate), [selectedDate]);
+  const isSelectedToday = selectedDateKey === todayKey;
   const todayTaskLog = useMemo(() => {
     const logs = (dailyTaskLogs[todayKey] as { id: string; done: boolean }[]) || [];
     const map: Record<string, boolean> = {};
@@ -90,6 +96,11 @@ export default function DashboardV2(): React.ReactElement {
     return map;
   }, [dailyTaskLogs, todayKey]);
   const todayPrayerLog = (prayerLogs[todayKey] as Record<string, any>) || {};
+  // Prayer log for the day currently being viewed (today or a navigated past day)
+  const viewPrayerLog = useMemo(
+    () => (prayerLogs[selectedDateKey] as Record<string, any>) || {},
+    [prayerLogs, selectedDateKey]
+  );
   
   // Helper to check if prayer is completed (handles both old boolean and new object format)
   const isPrayerCompleted = (prayerLogEntry: any) => {
@@ -204,7 +215,13 @@ export default function DashboardV2(): React.ReactElement {
       <div className={`${DASHBOARD_CONTENT_CLASS} flex flex-col gap-5 py-5 md:py-6 flex-1 min-h-0`}>
         <PrayersCountdownsV2 />
 
-        <DailyTimelineWidget2 PRAYERS={PRAYERS} todayKey={todayKey} todayPrayerLog={todayPrayerLog} togglePrayer={togglePrayer} />
+        <DailyTimelineWidget2
+          PRAYERS={PRAYERS}
+          todayKey={selectedDateKey}
+          todayPrayerLog={viewPrayerLog}
+          togglePrayer={togglePrayer}
+          isToday={isSelectedToday}
+        />
 
         {/* Training Section - Full Width */}
         <TodayCardDashboard />

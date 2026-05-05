@@ -208,18 +208,92 @@ const dashboardStore = create<any>()(
         syncWithServer: (data: SyncData) =>
           set((s: Record<string, unknown>) => {
             const state = s as Record<string, unknown> & SyncData;
+
+            // Merge helper for date-keyed dictionaries (e.g. prayerLogs[date][prayer]).
+            // Server fills dates local doesn't have, but NEVER clobbers dates local
+            // already has entries for. Prevents stale backend snapshots (including
+            // responses that pre-date an in-flight PUT) from erasing local ticks.
+            const mergeByDate = (
+              local: Record<string, unknown> | undefined,
+              remote: Record<string, unknown> | undefined
+            ): Record<string, unknown> => {
+              const out: Record<string, unknown> = { ...(local || {}) };
+              if (remote && typeof remote === 'object') {
+                for (const dateKey of Object.keys(remote)) {
+                  const localEntry = out[dateKey];
+                  const remoteEntry = remote[dateKey];
+                  // If local has no data for this date, take server's.
+                  if (
+                    localEntry == null ||
+                    (typeof localEntry === 'object' && !Array.isArray(localEntry) && Object.keys(localEntry as object).length === 0) ||
+                    (Array.isArray(localEntry) && localEntry.length === 0)
+                  ) {
+                    out[dateKey] = remoteEntry;
+                    continue;
+                  }
+                  // Both sides have data for this date — merge per-key when both are plain objects.
+                  if (
+                    remoteEntry && typeof remoteEntry === 'object' && !Array.isArray(remoteEntry) &&
+                    localEntry && typeof localEntry === 'object' && !Array.isArray(localEntry)
+                  ) {
+                    const merged: Record<string, unknown> = { ...(localEntry as Record<string, unknown>) };
+                    for (const innerKey of Object.keys(remoteEntry as Record<string, unknown>)) {
+                      // Prefer local value when it is truthy (user recently ticked)
+                      // Fill in from server only when local is missing/falsy.
+                      const localVal = merged[innerKey];
+                      const remoteVal = (remoteEntry as Record<string, unknown>)[innerKey];
+                      if (localVal == null || localVal === false) {
+                        merged[innerKey] = remoteVal;
+                      }
+                    }
+                    out[dateKey] = merged;
+                  }
+                  // Otherwise keep local — safer than clobbering.
+                }
+              }
+              return out;
+            };
+
             // Only sync if backend has data (non-empty arrays or non-empty objects)
             if (data.dailyTaskTemplates && data.dailyTaskTemplates.length > 0) state.dailyTaskTemplates = data.dailyTaskTemplates;
-            if (data.dailyTaskLogs && Object.keys(data.dailyTaskLogs).length > 0) state.dailyTaskLogs = data.dailyTaskLogs;
-            if (data.prayerLogs && Object.keys(data.prayerLogs).length > 0) state.prayerLogs = data.prayerLogs;
+            // Merge per-date instead of wholesale replacing — preserves local ticks
+            // that haven't yet round-tripped to the backend.
+            if (data.dailyTaskLogs && typeof data.dailyTaskLogs === 'object') {
+              state.dailyTaskLogs = mergeByDate(state.dailyTaskLogs as Record<string, unknown>, data.dailyTaskLogs as Record<string, unknown>);
+            }
+            if (data.prayerLogs && typeof data.prayerLogs === 'object') {
+              state.prayerLogs = mergeByDate(state.prayerLogs as Record<string, unknown>, data.prayerLogs as Record<string, unknown>);
+            }
             // selectedDate is UI-only (navigation state); do not overwrite from server sync
-            if (data.dailyCompletionLog && Object.keys(data.dailyCompletionLog).length > 0) state.dailyCompletionLog = data.dailyCompletionLog;
+            if (data.dailyCompletionLog && typeof data.dailyCompletionLog === 'object') {
+              state.dailyCompletionLog = mergeByDate(state.dailyCompletionLog as Record<string, unknown>, data.dailyCompletionLog as Record<string, unknown>) as Record<string, DayCompletionPayload>;
+            }
             if (data.lifeGoals && ((data.lifeGoals.tiers && data.lifeGoals.tiers.length > 0) || (data.lifeGoals as any).collapsed !== undefined)) state.lifeGoals = normalizeLifeGoals(data.lifeGoals, buildDefaultLifeGoals()) as LifeGoalsState;
-            if (data.timelineRoutines != null && typeof data.timelineRoutines === 'object' && Object.keys(data.timelineRoutines).length > 0) state.timelineRoutines = data.timelineRoutines;
+            if (data.timelineRoutines != null && typeof data.timelineRoutines === 'object') {
+              state.timelineRoutines = mergeByDate(state.timelineRoutines as Record<string, unknown>, data.timelineRoutines as Record<string, unknown>);
+            }
             if (data.timelinePanelExpanded !== undefined) state.timelinePanelExpanded = data.timelinePanelExpanded;
             if (data.todayTrainingExpanded !== undefined) state.todayTrainingExpanded = data.todayTrainingExpanded;
             if (data.lockedHabitsCollapsed !== undefined) state.lockedHabitsCollapsed = data.lockedHabitsCollapsed;
-            if (data.projectExpandedState && typeof data.projectExpandedState === 'object' && Object.keys(data.projectExpandedState).length > 0) state.projectExpandedState = data.projectExpandedState;
+            // projectExpandedState: merge per-key, local wins — server fills in
+            // missing keys but never clobbers a recent local toggle.
+            if (data.projectExpandedState && typeof data.projectExpandedState === 'object') {
+              const local = (state.projectExpandedState || {}) as Record<string, unknown>;
+              const remote = data.projectExpandedState as Record<string, unknown>;
+              const merged: Record<string, unknown> = { ...local };
+              for (const k of Object.keys(remote)) {
+                if (!(k in merged) || merged[k] == null) merged[k] = remote[k];
+              }
+              state.projectExpandedState = merged as Record<string, boolean>;
+            }
+            // activePomodoroTask: don't let a stale server snapshot kill a
+            // live local timer. Only accept server value when local is null.
+            if (data.activePomodoroTask !== undefined) {
+              const local = state.activePomodoroTask;
+              if (local == null && data.activePomodoroTask != null) {
+                state.activePomodoroTask = data.activePomodoroTask;
+              }
+            }
             if (data.projects && Array.isArray(data.projects) && data.projects.length > 0) {
               const prev = (state.projects || []) as Project[];
               state.projects = data.projects.map((p) => {
