@@ -335,9 +335,13 @@ const dashboardStore = create<any>()(
               // Today: store real timestamp so we can classify on-time / late / early
               state.prayerLogs[date][name] = { completedAt: new Date().toISOString() };
             } else {
-              // Past day: retroactive tick — store true (legacy format) so it’s shown as “Completata”
-              // without misleading “In ritardo” classification based on current wall-clock time
-              state.prayerLogs[date][name] = true;
+              // Past day: retroactive tick — logically the prayer was done AFTER
+              // its window expired. Store a timestamp pinned to 23:59 of that
+              // day so getPrayerState classifies it as "In ritardo" (orange)
+              // rather than plain green "Completata".
+              const endOfDay = new Date(selected);
+              endOfDay.setHours(23, 59, 59, 999);
+              state.prayerLogs[date][name] = { completedAt: endOfDay.toISOString() };
             }
           }),
 
