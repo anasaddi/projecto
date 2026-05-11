@@ -23,22 +23,31 @@ def _serialize_dt(dt: Any) -> Any:
 # --- Dashboard (Aggregated View for Frontend) ---
 
 async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default", user_id: str | None = None):
-    # 1. Habits (Templates)
-    habits_result = await db.execute(select(Habit).order_by(Habit.ordinal))
+    # 1. Habits (Templates) - Filter by user_id if provided
+    habits_query = select(Habit).order_by(Habit.ordinal)
+    if user_id is not None:
+        habits_query = habits_query.filter(Habit.user_id == user_id)
+    habits_result = await db.execute(habits_query)
     habits = habits_result.scalars().all()
     dailyTaskTemplates = [{"id": h.id, "title": h.title, "locked": bool(h.locked), "ordinal": h.ordinal} for h in habits]
 
-    # 2. Habit Logs (Bounded to last 60 days)
+    # 2. Habit Logs (Bounded to last 60 days) - Filter by user_id if provided
     sixty_days_ago = (datetime.now(timezone.utc) - timedelta(days=60)).strftime("%Y-%m-%d")
-    logs_result = await db.execute(select(HabitLog).filter(HabitLog.date >= sixty_days_ago))
+    logs_query = select(HabitLog).filter(HabitLog.date >= sixty_days_ago)
+    if user_id is not None:
+        logs_query = logs_query.filter(HabitLog.user_id == user_id)
+    logs_result = await db.execute(logs_query)
     logs = logs_result.scalars().all()
     dailyTaskLogs = {}
     for l in logs:
         if l.date not in dailyTaskLogs: dailyTaskLogs[l.date] = []
         dailyTaskLogs[l.date].append({"id": l.habit_id, "done": bool(l.status)})
 
-    # 3. Personal Projects & Tasks (Single-pass build)
-    projs_result = await db.execute(select(Project).filter(Project.share_id == None).order_by(Project.ordinal, Project.created_at.desc()))
+    # 3. Personal Projects & Tasks (Single-pass build) - Filter by user_id if provided
+    projs_query = select(Project).filter(Project.share_id == None).order_by(Project.ordinal, Project.created_at.desc())
+    if user_id is not None:
+        projs_query = projs_query.filter(Project.user_id == user_id)
+    projs_result = await db.execute(projs_query)
     projs = projs_result.scalars().all()
     proj_ids = [p.id for p in projs]
 
@@ -67,12 +76,18 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
         for p in projs
     ]
 
-    # 4. QuickTasks
-    qt_result = await db.execute(select(QuickTask).order_by(QuickTask.ordinal, QuickTask.created_at.desc()))
+    # 4. QuickTasks - Filter by user_id if provided
+    qt_query = select(QuickTask).order_by(QuickTask.ordinal, QuickTask.created_at.desc())
+    if user_id is not None:
+        qt_query = qt_query.filter(QuickTask.user_id == user_id)
+    qt_result = await db.execute(qt_query)
     quickTasks = [{"id": q.id, "title": q.title, "done": bool(q.done), "deadline": q.deadline, "ordinal": q.ordinal} for q in qt_result.scalars().all()]
 
-    # 5. Prayer Logs
-    pr_result = await db.execute(select(PrayerLog).filter(PrayerLog.date >= sixty_days_ago))
+    # 5. Prayer Logs - Filter by user_id if provided
+    pr_query = select(PrayerLog).filter(PrayerLog.date >= sixty_days_ago)
+    if user_id is not None:
+        pr_query = pr_query.filter(PrayerLog.user_id == user_id)
+    pr_result = await db.execute(pr_query)
     pr_logs = pr_result.scalars().all()
     prayerLogs = {}
     for pr in pr_logs:
@@ -102,17 +117,19 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
                 "done": bool(tr.done)
             }
 
-    # 7. Daily Completion Log
-    dc_result = await db.execute(select(DailyCompletionLog).filter(DailyCompletionLog.date >= sixty_days_ago))
+    # 7. Daily Completion Log - Filter by user_id if provided
+    dc_query = select(DailyCompletionLog).filter(DailyCompletionLog.date >= sixty_days_ago)
+    if user_id is not None:
+        dc_query = dc_query.filter(DailyCompletionLog.user_id == user_id)
+    dc_result = await db.execute(dc_query)
     dc_logs = dc_result.scalars().all()
     dailyCompletionLog = {dc.date: {"score": dc.score, **(dc.data or {})} for dc in dc_logs}
 
     # 8. Life Goals (Tiered)
-    tiers_result = await db.execute(
-        select(LifeGoalTier)
-        .options(selectinload(LifeGoalTier.goals))
-        .order_by(LifeGoalTier.ordinal)
-    )
+    tiers_query = select(LifeGoalTier).options(selectinload(LifeGoalTier.goals)).order_by(LifeGoalTier.ordinal)
+    if user_id is not None:
+        tiers_query = tiers_query.filter(LifeGoalTier.user_id == user_id)
+    tiers_result = await db.execute(tiers_query)
     tiers = tiers_result.scalars().all()
     
     # We also need the top-level 'collapsed' from DashboardState for now

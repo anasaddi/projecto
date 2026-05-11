@@ -50,6 +50,7 @@ export function hasMeaningfulDashboardData(value: unknown): boolean {
     hasAnyKeys(payload.dailyTaskLogs) ||
     hasAnyKeys(payload.dailyCompletionLog) ||
     hasAnyKeys(payload.timelineRoutines) ||
-    (Array.isArray(lifeGoals?.tiers) && lifeGoals.tiers.some((tier) => (tier?.goals?.length ?? 0) > 0))
+    (Array.isArray(lifeGoals?.tiers) && lifeGoals.tiers.some((tier) => (tier?.goals?.length ?? 0) > 0)) ||
+    (Array.isArray(payload.top3Manual) && payload.top3Manual.some((slot) => slot !== null))
   );
 }
