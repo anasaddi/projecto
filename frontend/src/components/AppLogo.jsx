@@ -28,7 +28,9 @@ export function AppLogo({ size = 'md', className = '' }) {
   const s = sizes[size] || sizes.md;
   const is = iconSizes[size] || iconSizes.md;
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setClickCount(prev => {
       const next = prev + 1;
       if (next === 3) {
