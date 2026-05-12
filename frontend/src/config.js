@@ -4,10 +4,10 @@
  */
 const isDev = Boolean(import.meta.env.DEV);
 
-// Production backend URL on Render
-const PRODUCTION_API_BASE = 'https://projecto-backend-7we9.onrender.com/api';
+// Default to same-origin API so Vercel rewrites can proxy to backend reliably.
+const DEFAULT_API_BASE = '/api';
 
-export const API_BASE = import.meta.env.VITE_API_BASE || (isDev ? '/api' : PRODUCTION_API_BASE);
+export const API_BASE = import.meta.env.VITE_API_BASE || DEFAULT_API_BASE;
 
 const browserHostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
 
