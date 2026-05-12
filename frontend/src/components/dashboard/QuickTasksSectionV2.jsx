@@ -9,6 +9,7 @@ import { MS } from '../../constants';
 
 export const QuickTasksSectionV2 = React.memo(() => {
   const [hoveredTaskId, setHoveredTaskId] = useState(null);
+  const [showCompleted, setShowCompleted] = useState(false);
   const quickTasks = useDashboardStore((s) => s.quickTasks) ?? [];
   const sharedDashboards = useDashboardStore((s) => s.sharedDashboards) ?? [];
   const quickTaskDraft = useDashboardStore((s) => s.quickTaskDraft);
@@ -44,6 +45,7 @@ export const QuickTasksSectionV2 = React.memo(() => {
 
   const doneCount = allQuickTasks.filter(t => t.done).length;
   const totalCount = allQuickTasks.length;
+  const completionPct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
 
   const groupedQuickTasks = useMemo(() => {
     const withIndex = allQuickTasks.map((task, originalIdx) => ({ task, originalIdx }));
@@ -110,6 +112,23 @@ export const QuickTasksSectionV2 = React.memo(() => {
       />
       
       <div className="p-4 pt-3 flex flex-col gap-3">
+        {totalCount > 0 && (
+          <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
+            <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400">
+              <span>Progress</span>
+              <span>{completionPct}%</span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-r from-rose-500 via-indigo-500 to-emerald-500"
+                initial={false}
+                animate={{ width: `${Math.max(2, completionPct)}%` }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Input */}
         <AddItemInputBar
           value={quickTaskDraft}
@@ -121,11 +140,24 @@ export const QuickTasksSectionV2 = React.memo(() => {
 
         {/* Tasks list */}
         <div className="flex flex-col gap-1">
+          {groupedQuickTasks.completedItems.length > 0 && (
+            <div className="mb-1 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setShowCompleted((v) => !v)}
+                className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+              >
+                {showCompleted ? <Icons.EyeOff className="h-3.5 w-3.5" /> : <Icons.Eye className="h-3.5 w-3.5" />}
+                {showCompleted ? 'Nascondi completate' : 'Mostra completate'}
+              </button>
+            </div>
+          )}
+
           <AnimatePresence mode="popLayout">
             {[
               { key: 'now', title: 'Ora', items: groupedQuickTasks.nowItems, color: 'text-rose-500' },
               { key: 'later', title: 'Da Fare', items: groupedQuickTasks.laterItems, color: 'text-indigo-500' },
-              { key: 'done', title: 'Completate', items: groupedQuickTasks.completedItems, color: 'text-emerald-500' },
+              { key: 'done', title: 'Completate', items: showCompleted ? groupedQuickTasks.completedItems : [], color: 'text-emerald-500' },
             ].map((section) => (
               section.items.length > 0 ? (
                 <motion.div key={section.key} layout className="flex flex-col gap-1.5 mb-1">

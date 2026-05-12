@@ -169,11 +169,8 @@ export function Top3SectionV2() {
         return;
       }
 
-      const targetIndex = top3Manual[idx] === null ? idx : top3Manual.findIndex((slot) => !slot);
-      if (targetIndex === -1) {
-        showToast?.('I Top 3 sono già pieni. Rimuovi prima un elemento.', { type: 'warning' });
-        return;
-      }
+      const targetIndex = idx;
+      const replacingExisting = Boolean(top3Manual[targetIndex]);
 
       // Check if slot is already filled
       if (isTaskInTop3(payload)) {
@@ -189,6 +186,11 @@ export function Top3SectionV2() {
         setTop3SlotAtIndex(targetIndex, { projectId: `lg-${payload.goalId}`, taskId: payload.goalId, shareId: payload.shareId ?? null });
       } else {
         showToast?.('Trascinamento non valido: dati mancanti', { type: 'warning' });
+        return;
+      }
+
+      if (replacingExisting) {
+        showToast?.('Top 3 aggiornato: slot sostituito', { type: 'info' });
       }
     } catch (_) {
       showToast?.('Errore durante il trascinamento', { type: 'error' });

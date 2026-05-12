@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import date, datetime, timezone, time, timedelta
 import jwt
 from typing import Optional, Any
-from fastapi import APIRouter, Depends, HTTPException, Header, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, Header, Response, WebSocket, WebSocketDisconnect
 
 logger = logging.getLogger(__name__)
 
@@ -319,11 +319,15 @@ async def update_dashboard_state(
     except Exception as e:
         logger.exception("update_dashboard_state failed: %s", e)
         fallback_data = body.data if isinstance(body.data, dict) else {}
-        return {
-            "key": "default",
-            "data": fallback_data,
-            "updated_at": datetime.now(timezone.utc),
-        }
+        return Response(
+            content=json.dumps({
+                "key": "default",
+                "data": fallback_data,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }),
+            media_type="application/json",
+            headers={"X-Degraded": "true"},
+        )
 
 # --- Batch Operations ---
 
