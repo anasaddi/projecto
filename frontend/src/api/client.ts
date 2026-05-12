@@ -263,6 +263,10 @@ export const api = {
         body: JSON.stringify({ data }),
         ...opts,
       }),
+    resetDailyLogs: () =>
+      request('/training/dashboard-reset-daily', {
+        method: 'POST',
+      }),
     getSharedDashboard: (shareId: string) =>
       request<unknown>(`/training/shared-dashboard/${encodeURIComponent(shareId)}`),
     listSharedDashboards: (opts?: RequestOptions) => request<unknown>('/training/shared-dashboards', opts ?? {}),

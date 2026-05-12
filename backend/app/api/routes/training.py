@@ -308,6 +308,58 @@ async def update_dashboard_state(
 
 # --- Batch Operations ---
 
+@router.post("/dashboard-reset-daily", response_model=schemas.DashboardStateOut, dependencies=[Depends(get_current_admin)])
+async def reset_daily_logs(
+    db: AsyncSession = Depends(get_db),
+    user_id: str | None = Depends(get_current_user),
+):
+    """Reset all daily logs (dailyTaskLogs, prayerLogs, dailyCompletionLog, timelineRoutines) for the current user."""
+    from app.repositories.dashboard import HabitLog, PrayerLog, DailyCompletionLog
+    from app.cache import invalidate_dashboard, set_cached_dashboard
+
+    try:
+        # Delete daily logs for the current user
+        if user_id:
+            await db.execute(delete(HabitLog).filter(HabitLog.user_id == user_id))
+            await db.execute(delete(PrayerLog).filter(PrayerLog.user_id == user_id))
+            await db.execute(delete(DailyCompletionLog).filter(DailyCompletionLog.user_id == user_id))
+        else:
+            # Legacy: no user_id, delete all (backward compatibility)
+            await db.execute(delete(HabitLog))
+            await db.execute(delete(PrayerLog))
+            await db.execute(delete(DailyCompletionLog))
+
+        # Clear timelineRoutines from DashboardState JSON blob
+        from app.repositories.dashboard import DashboardState
+        q = select(DashboardState).filter(DashboardState.key == "default")
+        if user_id is not None:
+            q = q.filter(DashboardState.user_id == user_id)
+        else:
+            q = q.filter(DashboardState.user_id.is_(None))
+        res_ds = await db.execute(q.order_by(DashboardState.updated_at.desc()))
+        ds = res_ds.scalar_one_or_none()
+
+        if ds:
+            from app.repositories.dashboard import _parse_json
+            data = _parse_json(ds.data, {}) or {}
+            if "timelineRoutines" in data:
+                data["timelineRoutines"] = {}
+                ds.data = data
+                from sqlalchemy.orm.attributes import flag_modified
+                flag_modified(ds, "data")
+
+        await db.commit()
+
+        # Invalidate cache and return updated dashboard state
+        data = await dashboard_service.get_dashboard(db, user_id=user_id)
+        await invalidate_dashboard(user_id)
+        await set_cached_dashboard(data, user_id)
+        return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
+    except Exception as e:
+        logger.exception("reset_daily_logs failed: %s", e)
+        await db.rollback()
+        raise HTTPException(status_code=503, detail=str(e))
+
 @router.patch("/dashboard-state/batch", dependencies=[Depends(get_current_admin)])
 async def batch_update_dashboard(body: dict, db: AsyncSession = Depends(get_db)):
     """Process multiple dashboard mutations in a single transaction.

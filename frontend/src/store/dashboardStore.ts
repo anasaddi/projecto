@@ -345,6 +345,20 @@ const dashboardStore = create<any>()(
             }
           }),
 
+        resetDailyLogs: () =>
+          set((s: unknown) => {
+            const state = s as {
+              dailyTaskLogs: Record<string, unknown>;
+              prayerLogs: Record<string, unknown>;
+              dailyCompletionLog: Record<string, unknown>;
+              timelineRoutines: Record<string, unknown>;
+            };
+            state.dailyTaskLogs = {};
+            state.prayerLogs = {};
+            state.dailyCompletionLog = {};
+            state.timelineRoutines = {};
+          }),
+
         ...createProjectSlice(set, get),
         ...createTimelineSlice(set),
         ...createLifeGoalsSlice(set, get),
