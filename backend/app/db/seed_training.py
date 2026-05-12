@@ -45,52 +45,60 @@ async def sync_missing_exercises(db: AsyncSession) -> int:
 async def seed_training_if_empty(db: AsyncSession) -> int:
     """Seed exercises and day templates from training_seed.json if no exercises exist. Returns number of exercises seeded."""
     count_res = await db.execute(select(func.count(Exercise.id)))
-    if count_res.scalar() > 0:
+    exercises_exist = count_res.scalar() > 0
+
+    tmpl_count = await db.execute(select(func.count(WorkoutDayTemplate.id)))
+    templates_exist = tmpl_count.scalar() > 0
+
+    if exercises_exist and templates_exist:
         return 0
+
     path = _seed_path()
     if not path.exists():
         return 0
     data = json.loads(path.read_text(encoding="utf-8"))
 
-    for ex in data.get("exercises", []):
-        db.add(Exercise(
-            id=ex["id"],
-            name=ex["name"],
-            category=ex["category"],
-            primary_muscles=ex.get("primary_muscles", []),
-            secondary_muscles=ex.get("secondary_muscles", []),
-            cns_fatigue=float(ex.get("cns_fatigue", 0)),
-            joint_stress=ex.get("joint_stress", {}),
-        ))
-
-    for tmpl in data.get("day_templates", []):
-        db.add(WorkoutDayTemplate(
-            id=tmpl["id"],
-            day_name=tmpl["day_name"],
-            weekday=tmpl.get("weekday"),
-        ))
-
-    await db.commit()
-
-    ex_categories = {e["id"]: e.get("category") for e in data.get("exercises", [])}
-    for tmpl in data.get("day_templates", []):
-        for ord_val, ex in enumerate(tmpl.get("exercises", [])):
-            ex_id = ex.get("exercise_id") if isinstance(ex, dict) else ex
-            default_sets = 2 if ex_categories.get(ex_id) == "HYPERTROPHY" else 4
-            base_sets = ex.get("base_sets", default_sets) if isinstance(ex, dict) else default_sets
-            base_reps = ex.get("base_reps") if isinstance(ex, dict) else None
-            db.add(WorkoutDayExercise(
-                template_id=tmpl["id"],
-                exercise_id=ex_id,
-                base_sets=base_sets,
-                base_reps=base_reps,
-                instruction=ex.get("instruction") if isinstance(ex, dict) else None,
-                custom_name=ex.get("custom_name") if isinstance(ex, dict) else None,
-                ordinal=ord_val,
+    if not exercises_exist:
+        for ex in data.get("exercises", []):
+            db.add(Exercise(
+                id=ex["id"],
+                name=ex["name"],
+                category=ex["category"],
+                primary_muscles=ex.get("primary_muscles", []),
+                secondary_muscles=ex.get("secondary_muscles", []),
+                cns_fatigue=float(ex.get("cns_fatigue", 0)),
+                joint_stress=ex.get("joint_stress", {}),
             ))
 
-    await db.commit()
-    return len(data.get("exercises", []))
+    if not templates_exist:
+        for tmpl in data.get("day_templates", []):
+            db.add(WorkoutDayTemplate(
+                id=tmpl["id"],
+                day_name=tmpl["day_name"],
+                weekday=tmpl.get("weekday"),
+            ))
+
+        await db.commit()
+
+        ex_categories = {e["id"]: e.get("category") for e in data.get("exercises", [])}
+        for tmpl in data.get("day_templates", []):
+            for ord_val, ex in enumerate(tmpl.get("exercises", [])):
+                ex_id = ex.get("exercise_id") if isinstance(ex, dict) else ex
+                default_sets = 2 if ex_categories.get(ex_id) == "HYPERTROPHY" else 4
+                base_sets = ex.get("base_sets", default_sets) if isinstance(ex, dict) else default_sets
+                base_reps = ex.get("base_reps") if isinstance(ex, dict) else None
+                db.add(WorkoutDayExercise(
+                    template_id=tmpl["id"],
+                    exercise_id=ex_id,
+                    base_sets=base_sets,
+                    base_reps=base_reps,
+                    instruction=ex.get("instruction") if isinstance(ex, dict) else None,
+                    custom_name=ex.get("custom_name") if isinstance(ex, dict) else None,
+                    ordinal=ord_val,
+                ))
+        await db.commit()
+
+    return len(data.get("exercises", [])) if not exercises_exist else 0
 
 
 async def seed_fake_history(db: AsyncSession, *, force: bool = False) -> int:
