@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { clearDashboardPersistence } from '../db/localDb';
 
 const TargetIcon = ({ className }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -47,11 +48,12 @@ export function AppLogo({ size = 'md', className = '' }) {
     try {
       const { api } = await import('../api/client');
       await api.training.resetDailyLogs();
+      await clearDashboardPersistence();
       // Reload page to refresh state
       window.location.reload();
     } catch (err) {
       console.error('Reset failed:', err);
-      alert('Reset fallito. Controlla la console.');
+      alert('Reset log giornalieri fallito. Riprova tra qualche secondo.');
     }
     setShowResetMenu(false);
   }, []);

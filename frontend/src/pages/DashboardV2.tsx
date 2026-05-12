@@ -16,9 +16,10 @@ import { TodayCardDashboard } from '../components/dashboard/TodayCardDashboard';
 import { DayNavigationButtons } from '../components/dashboard/DayNavigationButtons';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { HabitSkeleton, ProjectSkeleton, Top3Skeleton, QuickTaskSkeleton } from '../components/dashboard/SkeletonSection';
+import { api } from '../api/client';
+import { clearDashboardPersistence } from '../db/localDb';
 
 import {
-  STORAGE_KEY,
   toDateKey,
   startOfDay,
   addDays,
@@ -132,7 +133,7 @@ export default function DashboardV2(): React.ReactElement {
   }, [quickTasks, sharedDashboards]);
 
   const top3Resolved = useMemo(
-    () => resolveTop3Slots(projects, top3Manual as any[], allQuickTasks, lifeGoals as any, sharedDashboards as any[]),
+    () => (resolveTop3Slots as any)(projects, top3Manual as any[], allQuickTasks, lifeGoals as any, sharedDashboards as any[]),
     [projects, top3Manual, allQuickTasks, lifeGoals, sharedDashboards]
   );
   const top3DoneCount = useMemo(
@@ -317,14 +318,14 @@ export default function DashboardV2(): React.ReactElement {
               ? 'Sei sicuro di voler eliminare questo obiettivo?'
               : confirmId === 'deleteProject'
                 ? 'Il progetto e tutti i suoi task verranno eliminati. Questa azione non si può annullare.'
-                : 'Azzerare tutto? Verranno eliminati progetti, task, abitudini e dati della dashboard. Ricarica la pagina.'
+                : 'Vuoi resettare solo i log giornalieri (habits, preghiere, completamenti timeline)? Progetti e struttura restano invariati.'
         }
         variant={
           confirmId === 'reset' || confirmId === 'deleteProject' || confirmId === 'deleteGoal' || confirmId === 'deleteShared'
             ? 'danger'
             : 'default'
         }
-        onConfirm={() => {
+        onConfirm={async () => {
           if (confirmId === 'deleteShared' && confirmPayload?.shareId && confirmPayload?.projectId) {
             deleteSharedDashboardProject(confirmPayload.shareId, confirmPayload.projectId);
           } else if (confirmId === 'deleteGoal' && confirmPayload?.goalId) {
@@ -332,9 +333,15 @@ export default function DashboardV2(): React.ReactElement {
           } else if (confirmId === 'deleteProject' && confirmPayload?.projectId) {
             deleteProject(confirmPayload.projectId);
           } else if (confirmId === 'reset') {
-            localStorage.removeItem(STORAGE_KEY);
-            localStorage.removeItem(POMODORO_STORAGE);
-            window.location.reload();
+            try {
+              await api.training.resetDailyLogs();
+              useDashboardStore.getState().resetDailyLogs?.();
+              await clearDashboardPersistence();
+              localStorage.removeItem(POMODORO_STORAGE);
+              window.location.reload();
+            } catch (err) {
+              console.error('Dashboard reset failed:', err);
+            }
           }
           setConfirmState(null);
         }}
