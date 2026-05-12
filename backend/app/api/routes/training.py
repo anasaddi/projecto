@@ -131,24 +131,34 @@ async def get_aw_program():
 @router.get("/today", response_model=schemas.TodayResponse, dependencies=[Depends(get_training_access)])
 async def get_today(db: AsyncSession = Depends(get_db), for_date: Optional[date] = None):
     """Fetch the template for today (or for_date)."""
-    target = for_date or date.today()
-    template = await crud_training.get_today_template(db, for_date)
-    if not template:
+    try:
+        target = for_date or date.today()
+        template = await crud_training.get_today_template(db, for_date)
+        if not template:
+            return schemas.TodayResponse(
+                template_id="",
+                day_name="Nessun template per oggi",
+                hypertrophy_exercises=[],
+                strength_aw_exercises=[],
+            )
+        hyp, strength_aw = await crud_training.get_today_exercises_grouped(db, for_date)
+        is_fallback = template.weekday is not None and template.weekday != target.weekday()
+        return schemas.TodayResponse(
+            template_id=template.id,
+            day_name=template.day_name,
+            hypertrophy_exercises=hyp,
+            strength_aw_exercises=strength_aw,
+            is_fallback=is_fallback,
+        )
+    except Exception as e:
+        logger.exception("training/today failed: %s", e)
         return schemas.TodayResponse(
             template_id="",
             day_name="Nessun template per oggi",
             hypertrophy_exercises=[],
             strength_aw_exercises=[],
+            is_fallback=False,
         )
-    hyp, strength_aw = await crud_training.get_today_exercises_grouped(db, for_date)
-    is_fallback = template.weekday is not None and template.weekday != target.weekday()
-    return schemas.TodayResponse(
-        template_id=template.id,
-        day_name=template.day_name,
-        hypertrophy_exercises=hyp,
-        strength_aw_exercises=strength_aw,
-        is_fallback=is_fallback,
-    )
 
 @router.get("/week", response_model=list[schemas.WeekDayData], dependencies=[Depends(get_training_access)])
 async def get_week(db: AsyncSession = Depends(get_db)):
@@ -194,7 +204,11 @@ async def log_workout(body: schemas.WorkoutLogCreate, db: AsyncSession = Depends
 @router.get("/progression", response_model=list[schemas.TrainingProgressionOut], dependencies=[Depends(get_training_access)])
 async def get_all_progressions(db: AsyncSession = Depends(get_db)):
     """Get all training progressions (TMs, monthly data)."""
-    return await crud_training.get_all_progressions(db)
+    try:
+        return await crud_training.get_all_progressions(db)
+    except Exception as e:
+        logger.exception("training/progression failed: %s", e)
+        return []
 
 @router.get("/progression/{exercise_id}", response_model=Optional[schemas.TrainingProgressionOut], dependencies=[Depends(get_training_access)])
 async def get_progression(exercise_id: str, db: AsyncSession = Depends(get_db)):
@@ -475,7 +489,11 @@ async def get_shared_dashboard(
 @router.get("/shared-dashboards", response_model=list[schemas.SharedDashboardOut], dependencies=[Depends(get_current_admin)])
 async def list_shared_dashboards(db: AsyncSession = Depends(get_db)):
     """Fetch all shared dashboards. ADMIN ONLY."""
-    return await dashboard_service.get_all_shared_dashboards(db)
+    try:
+        return await dashboard_service.get_all_shared_dashboards(db)
+    except Exception as e:
+        logger.exception("training/shared-dashboards failed: %s", e)
+        return []
 
 @router.post("/shared-dashboard/{share_id}/unlock", response_model=schemas.SharedDashboardUnlockResponse)
 async def unlock_shared_dashboard(share_id: str, body: schemas.SharedDashboardUnlockRequest, db: AsyncSession = Depends(get_db)):
