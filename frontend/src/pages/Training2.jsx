@@ -72,6 +72,9 @@ export default function Training2() {
         throw new Error("Template settimanali non validi o mancanti");
       }
 
+      console.log('[Training2] templates count:', templates.length, 'first template:', templates[0]);
+      console.log('[Training2] scheduleData count:', scheduleData?.length, 'first entry:', scheduleData?.[0]);
+
       // Merge schedule con i template (per avere esercizi e date reali)
       let scheduleToUse = scheduleData || [];
       if (scheduleToUse.length === 0 && templates?.length > 0) {
