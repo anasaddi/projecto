@@ -3,9 +3,20 @@ import type { LoginResponse } from '../types/api';
 import { API_BASE } from '../config';
 
 const BASE = API_BASE;
+const RENDER_API_PREFIX = 'https://projecto-backend-7we9.onrender.com/api';
 const DEFAULT_TIMEOUT_MS = 30_000;
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000;
+
+function resolveApiUrl(path: string): string {
+  const url = BASE + path;
+  if (typeof window !== 'undefined' && window.location.hostname.endsWith('vercel.app')) {
+    if (url.startsWith(RENDER_API_PREFIX)) {
+      return '/api' + path;
+    }
+  }
+  return url;
+}
 
 export function clearAuthAndRedirect(): void {
   localStorage.removeItem('km-admin-token');
@@ -57,7 +68,7 @@ export async function request<T = unknown>(path: string, options: RequestOptions
     ...(token ? { Authorization: `Bearer ${token}`, 'x-km-access': token } : {}),
     ...options.headers,
   };
-  const url = BASE + path;
+  const url = resolveApiUrl(path);
   const timeoutMs = options.timeout ?? DEFAULT_TIMEOUT_MS;
   let lastErr: Error | undefined;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -124,7 +135,7 @@ export const api = {
       if (title) form.append('title', title);
       form.append('trust_score', String(trust_score ?? 7));
       const token = localStorage.getItem('km-admin-token');
-      return fetch(BASE + '/sources/', {
+      return fetch(resolveApiUrl('/sources/'), {
         method: 'POST',
         headers: token ? { 'x-km-access': token } : {},
         body: form
@@ -145,7 +156,7 @@ export const api = {
       if (title) form.append('title', title);
       form.append('trust_score', String(trust_score ?? 7));
       const token = localStorage.getItem('km-admin-token');
-      return fetch(BASE + '/sources/', {
+      return fetch(resolveApiUrl('/sources/'), {
         method: 'POST',
         headers: token ? { 'x-km-access': token } : {},
         body: form
