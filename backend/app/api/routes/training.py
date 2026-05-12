@@ -308,7 +308,7 @@ async def update_dashboard_state(
 
 # --- Batch Operations ---
 
-@router.post("/dashboard-reset-daily", response_model=schemas.DashboardStateOut, dependencies=[Depends(get_current_admin)])
+@router.post("/dashboard-reset-daily", response_model=schemas.DashboardStateOut)
 async def reset_daily_logs(
     db: AsyncSession = Depends(get_db),
     user_id: str | None = Depends(get_current_user),
