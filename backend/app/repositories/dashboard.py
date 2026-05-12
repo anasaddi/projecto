@@ -192,6 +192,29 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
 
 async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "default", user_id: str | None = None):
     """Update dashboard state. Supports partial updates by checking key presence."""
+    if not isinstance(data, dict):
+        data = {}
+
+    list_keys = ("dailyTaskTemplates", "quickTasks", "projects", "top3Manual")
+    for k in list_keys:
+        if k in data and not isinstance(data.get(k), list):
+            data[k] = [] if k != "top3Manual" else [None, None, None]
+
+    dict_keys = (
+        "dailyTaskLogs",
+        "prayerLogs",
+        "dailyCompletionLog",
+        "timelineRoutines",
+        "projectExpandedState",
+        "sectionOrder",
+    )
+    for k in dict_keys:
+        if k in data and not isinstance(data.get(k), dict):
+            data[k] = {}
+
+    if "lifeGoals" in data and not isinstance(data.get("lifeGoals"), dict):
+        data["lifeGoals"] = {"collapsed": False, "tiers": []}
+
     q = select(DashboardState).filter(DashboardState.key == key)
     if user_id is not None:
         q = q.filter(DashboardState.user_id == user_id)
