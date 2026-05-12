@@ -227,7 +227,11 @@ async def update_progression(exercise_id: str, body: schemas.TrainingProgression
 async def get_schedule(start_date: Optional[date] = None, days_count: int = 14, db: AsyncSession = Depends(get_db)):
     """Get the daily schedule."""
     target_date = start_date or date.today()
-    return await crud_training.get_daily_schedule(db, target_date, days_count)
+    try:
+        return await crud_training.get_daily_schedule(db, target_date, days_count)
+    except Exception as e:
+        logger.exception("get_schedule failed: %s", e)
+        return []
 
 @router.patch("/schedule/{schedule_date}", response_model=schemas.DailyScheduleOut, dependencies=[Depends(get_training_access)])
 async def update_schedule_completion(schedule_date: date, body: schemas.DailyScheduleUpdate, db: AsyncSession = Depends(get_db)):
