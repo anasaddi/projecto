@@ -25,10 +25,15 @@ function flushPendingPutViaBeacon(): void {
     // back to fetch(keepalive: true) which survives page unload for small
     // payloads (<64KB typical per browser).
     const body = JSON.stringify({ data: pendingFullState });
+    const token = localStorage.getItem('km-admin-token');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}`, 'x-km-access': token } : {}),
+    };
     if (typeof fetch === 'function') {
       void fetch(url, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body,
         credentials: 'include',
         keepalive: true,

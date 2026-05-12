@@ -2,20 +2,16 @@
  * Centralized config for API and WebSocket URLs.
  * Override via env: VITE_API_BASE, VITE_WS_HOST
  */
-function isLocalHost() {
-  return typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-}
+const isDev = Boolean(import.meta.env.DEV);
 
 // Production backend URL on Render
 const PRODUCTION_API_BASE = 'https://projecto-backend-7we9.onrender.com/api';
 
-export const API_BASE = isLocalHost()
-  ? (import.meta.env.VITE_API_BASE || '/api')
-  : (import.meta.env.VITE_API_BASE || PRODUCTION_API_BASE);
+export const API_BASE = import.meta.env.VITE_API_BASE || (isDev ? '/api' : PRODUCTION_API_BASE);
 
-export const WS_HOST = isLocalHost()
-  ? 'localhost:8000'
-  : (import.meta.env.VITE_WS_HOST || 'projecto-backend-7we9.onrender.com');
+const browserHostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+
+export const WS_HOST = import.meta.env.VITE_WS_HOST || (isDev ? `${browserHostname}:8000` : 'projecto-backend-7we9.onrender.com');
 
 export function getSharedDashboardWsUrl(shareId) {
   const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
