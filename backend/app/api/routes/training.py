@@ -471,7 +471,7 @@ async def get_shared_dashboard(
         if not data:
             logger.info("Creating new shared dashboard: %s", share_id)
             await dashboard_service.update_shared_dashboard(db, share_id, {}, title="Progetti Condivisi")
-            # Build response directly instead of querying again
+            # Build response directly to avoid race condition
             return {
                 "share_id": share_id,
                 "title": "Progetti Condivisi",
