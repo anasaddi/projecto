@@ -459,26 +459,32 @@ async def get_shared_dashboard(
     x_share_token: str | None = Header(None, alias="x-share-token")
 ):
     """Fetch a shared dashboard — Redis-first, DB fallback. PUBLIC ROUTE with password protection."""
-    from app.cache import get_cached_shared_dashboard, set_cached_shared_dashboard
+    from app.cache import get_cached_shared_dashboard, set_cached_shared_dashboard, invalidate_shared_dashboard
     from app.config import get_settings
     settings = get_settings()
     
     try:
         cached = await get_cached_shared_dashboard(share_id)
+        if cached is not None and not isinstance(cached, dict):
+            logger.warning("Ignoring malformed shared dashboard cache for %s (type=%s)", share_id, type(cached).__name__)
+            await invalidate_shared_dashboard(share_id)
+            cached = None
         data = cached if cached else await dashboard_service.get_shared_dashboard(db, share_id)
         
         # Auto-create if doesn't exist (v2 - return direct response)
         if not data:
             logger.info("Auto-creating shared dashboard: %s", share_id)  # v3
-            await dashboard_service.update_shared_dashboard(db, share_id, {}, title="Progetti Condivisi")
-            # Build response directly to avoid race condition
-            return {
+            created = await dashboard_service.update_shared_dashboard(db, share_id, {}, title="Progetti Condivisi")
+            created_response = {
                 "share_id": share_id,
-                "title": "Progetti Condivisi",
-                "data": {"projects": [], "quickTasks": [], "notes": [], "chat": [], "bonifici": []},
-                "updated_at": None,
-                "is_protected": False
+                "title": created.get("title") or "Progetti Condivisi",
+                "data": created.get("data") or {"projects": [], "quickTasks": [], "notes": [], "chat": [], "bonifici": []},
+                "updated_at": created.get("updated_at") or datetime.now(timezone.utc),
+                "is_protected": False,
             }
+            await set_cached_shared_dashboard(share_id, created_response)
+            # Build response directly to avoid race condition
+            return created_response
         
         if not cached:
             await set_cached_shared_dashboard(share_id, data)
