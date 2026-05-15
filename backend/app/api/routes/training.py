@@ -517,7 +517,23 @@ async def get_shared_dashboard(
         }
     except Exception as e:
         logger.exception("Error fetching shared dashboard %s: %s", share_id, e)
-        raise HTTPException(status_code=500, detail=f"Internal error fetching shared dashboard: {str(e)}")
+        try:
+            await invalidate_shared_dashboard(share_id)
+        except Exception:
+            pass
+        return {
+            "share_id": share_id,
+            "title": "Progetti Condivisi",
+            "data": {
+                "projects": [],
+                "quickTasks": [],
+                "notes": [],
+                "chat": [],
+                "bonifici": [],
+            },
+            "updated_at": datetime.now(timezone.utc),
+            "is_protected": False,
+        }
 
 @router.get("/shared-dashboards", response_model=list[schemas.SharedDashboardOut], dependencies=[Depends(get_current_admin)])
 async def list_shared_dashboards(db: AsyncSession = Depends(get_db)):
