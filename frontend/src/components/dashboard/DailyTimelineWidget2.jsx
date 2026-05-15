@@ -96,10 +96,16 @@ function usePrayerTimes() {
             const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=it`);
             const geoData = await geoRes.json();
             setLocationName(geoData.city || geoData.locality || '');
-          } catch (e) {}
+          } catch (e) {
+            // Silently fail - location name is optional feature
+          }
         }
-      } catch (err) {}
-    }, () => {});
+      } catch (err) {
+        console.warn('Failed to fetch prayer times:', err);
+      }
+    }, () => {
+      // Geolocation denied or failed - use default prayer times
+    });
   }, []);
   
   return { times, locationName };

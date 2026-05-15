@@ -78,6 +78,13 @@ const FLAT_DICT_MERGE_KEYS = new Set([
   'sectionOrder',
 ]);
 
+/** Keys whose values are arrays with id fields; merge by id, local wins. */
+const ARRAY_MERGE_KEYS = new Set([
+  'quickTasks',
+  'projects',
+  'dailyTaskTemplates',
+]);
+
 /** Flat dict merge: local wins per-key; incoming only fills missing keys. */
 function mergeFlatDict(
   local: Record<string, unknown> | undefined,
@@ -111,6 +118,26 @@ function mergeSharedDashboards(
   // Local wins — overlay over incoming
   for (const entry of localArr) {
     const id = (entry as { share_id?: string })?.share_id;
+    if (id) byId.set(id, entry);
+  }
+  return Array.from(byId.values());
+}
+
+/** Merge arrays of objects by their id field. Local entries win over incoming.
+ *  This prevents server data (potentially stale) from overwriting recent local
+ *  changes like checkbox toggles, task edits, etc. */
+function mergeById(local: unknown, incoming: unknown): unknown[] {
+  const localArr = Array.isArray(local) ? local : [];
+  const incomingArr = Array.isArray(incoming) ? incoming : [];
+  const byId = new Map<string, unknown>();
+  // First add all incoming entries
+  for (const entry of incomingArr) {
+    const id = (entry as { id?: string })?.id;
+    if (id) byId.set(id, entry);
+  }
+  // Local wins — overlay over incoming
+  for (const entry of localArr) {
+    const id = (entry as { id?: string })?.id;
     if (id) byId.set(id, entry);
   }
   return Array.from(byId.values());
@@ -184,6 +211,10 @@ function applyIncomingState(set: SetState, data: unknown): void {
         // else: keep local (even if incoming is null)
       } else if (key === 'sharedDashboards') {
         draft[key] = mergeSharedDashboards(draft[key], incoming[key]);
+      } else if (ARRAY_MERGE_KEYS.has(key)) {
+        // Merge arrays by id — local wins over incoming to prevent race conditions
+        // where server data (stale) overwrites recent local checkbox toggles
+        draft[key] = mergeById(draft[key], incoming[key]);
       } else {
         draft[key] = incoming[key];
       }

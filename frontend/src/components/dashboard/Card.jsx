@@ -125,7 +125,7 @@ export function ProgressBar({
   showLabel = false,
   className = '' 
 }) {
-  const percentage = Math.min(100, Math.max(0, (value / max) * 100));
+  const percentage = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
   
   const sizeClasses = {
     sm: 'h-1.5',

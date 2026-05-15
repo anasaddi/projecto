@@ -43,7 +43,9 @@ export function useDashboardSync(): void {
           if (idbState && syncWithServer) {
             syncWithServer(idbState as Parameters<typeof syncWithServer>[0]);
           }
-        } catch (_) {}
+        } catch (err) {
+          console.warn('Failed to load from IndexedDB:', err);
+        }
 
         // 2. Fetch shared dashboards metadata
         const shared = await api.training.listSharedDashboards({ timeout: 10_000 }).catch(() => null);

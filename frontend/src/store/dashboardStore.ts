@@ -18,6 +18,7 @@ import {
   startOfDay,
   parseSelectedDate,
 } from '../components/dashboard/DashboardUtils';
+import { getLocalState } from '../db/localDb';
 import { haptic } from '../utils/haptics';
 import { logTimelineEvent } from './storeHelpers';
 import type { DayCompletionPayload, LifeGoalsState } from '../types/dashboard';
@@ -254,8 +255,17 @@ const dashboardStore = create<any>()(
               return out;
             };
 
-            // Only sync if backend has data (non-empty arrays or non-empty objects)
-            if (data.dailyTaskTemplates && data.dailyTaskTemplates.length > 0) state.dailyTaskTemplates = data.dailyTaskTemplates;
+            // Merge dailyTaskTemplates (habits): local wins over incoming
+            // This prevents habit checkbox toggles from being reverted by stale server data
+            if (data.dailyTaskTemplates && Array.isArray(data.dailyTaskTemplates) && data.dailyTaskTemplates.length > 0) {
+              const prev = (state.dailyTaskTemplates || []);
+              const byId = new Map<string, unknown>();
+              // First add server entries
+              for (const h of data.dailyTaskTemplates) if ((h as any).id) byId.set((h as any).id, h);
+              // Local wins - overlay with local entries
+              for (const h of prev) if ((h as any).id) byId.set((h as any).id, h);
+              state.dailyTaskTemplates = Array.from(byId.values());
+            }
             // Merge per-date instead of wholesale replacing — preserves local ticks
             // that haven't yet round-tripped to the backend.
             if (data.dailyTaskLogs && typeof data.dailyTaskLogs === 'object') {
@@ -294,25 +304,35 @@ const dashboardStore = create<any>()(
                 state.activePomodoroTask = data.activePomodoroTask;
               }
             }
+            // Merge projects: local wins over incoming for all properties
+            // to prevent race conditions where stale server data overwrites recent local changes
             if (data.projects && Array.isArray(data.projects) && data.projects.length > 0) {
               const prev = (state.projects || []) as Project[];
-              state.projects = data.projects.map((p) => {
-                const cur = prev.find((x) => x.id === p.id);
-                return cur?.lifeGoalId != null ? { ...p, lifeGoalId: cur.lifeGoalId } : p;
-              });
+              const byId = new Map<string, Project>();
+              // First add server entries
+              for (const p of data.projects) if (p.id) byId.set(p.id, p);
+              // Local wins - overlay with local entries
+              for (const p of prev) if (p.id) byId.set(p.id, p);
+              state.projects = Array.from(byId.values());
             }
+            // Merge quickTasks: local wins over incoming for all properties
+            // This prevents checkbox toggles from being reverted by stale server data
             if (data.quickTasks && Array.isArray(data.quickTasks) && data.quickTasks.length > 0) {
               const prev = (state.quickTasks || []) as QuickTask[];
-              state.quickTasks = data.quickTasks.map((t) => {
-                const cur = prev.find((x) => x.id === t.id);
-                return cur?.lifeGoalId != null ? { ...t, lifeGoalId: cur.lifeGoalId } : t;
-              });
+              const byId = new Map<string, QuickTask>();
+              // First add server entries
+              for (const t of data.quickTasks) if (t.id) byId.set(t.id, t);
+              // Local wins - overlay with local entries
+              for (const t of prev) if (t.id) byId.set(t.id, t);
+              state.quickTasks = Array.from(byId.values());
             }
-            if (data.top3Manual && Array.isArray(data.top3Manual) && data.top3Manual.some((s: any) => s !== null)) {
+            // Merge top3Manual: preserve local manual slots over incoming
+            if (data.top3Manual && Array.isArray(data.top3Manual)) {
               const prev = (state.top3Manual || []) as (Top3Slot | null)[];
               state.top3Manual = data.top3Manual.map((slot: Top3Slot | null, i: number) => {
                 const curSlot = prev[i];
-                if (curSlot && (curSlot.projectId?.startsWith?.('lg-') || curSlot.quickTaskId)) return curSlot;
+                // Keep local slot if it exists (user may have manually set it)
+                if (curSlot && (curSlot.projectId || curSlot.quickTaskId)) return curSlot;
                 return slot;
               });
             }
