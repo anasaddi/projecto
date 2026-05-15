@@ -467,7 +467,7 @@ async def get_shared_dashboard(
         cached = await get_cached_shared_dashboard(share_id)
         data = cached if cached else await dashboard_service.get_shared_dashboard(db, share_id)
         
-        # Auto-create if doesn't exist
+        # Auto-create if doesn't exist (v2 - return direct response)
         if not data:
             logger.info("Creating new shared dashboard: %s", share_id)
             await dashboard_service.update_shared_dashboard(db, share_id, {}, title="Progetti Condivisi")
