@@ -634,6 +634,7 @@ async def update_shared_dashboard(
     from app.repositories.audit import record_event
     from app.repositories.dashboard import upsert_shared_dashboard_metadata
 
+    degraded = False
     dashboard = None
     try:
         dashboard = await dashboard_service.update_shared_dashboard(db, share_id, body.data, body.title)
@@ -646,13 +647,22 @@ async def update_shared_dashboard(
             logger.exception("Fallback save for shared dashboard %s also failed: %s", share_id, fallback_error)
             try:
                 await db.rollback()
-                await invalidate_shared_dashboard(share_id)
             except Exception:
                 pass
-            raise HTTPException(status_code=503, detail="Impossibile salvare la shared dashboard")
+            degraded = True
+            dashboard = {
+                "share_id": share_id,
+                "title": body.title or "Progetti Condivisi",
+                "data": body.data if isinstance(body.data, dict) else {},
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
 
-    await invalidate_shared_dashboard(share_id)
-    await set_cached_shared_dashboard(share_id, dashboard)
+    try:
+        await invalidate_shared_dashboard(share_id)
+        if not degraded:
+            await set_cached_shared_dashboard(share_id, dashboard)
+    except Exception as e:
+        logger.warning("Cache update failed for shared dashboard %s: %s", share_id, e)
     
     try:
         await record_event(
@@ -675,10 +685,12 @@ async def update_shared_dashboard(
         await manager.broadcast(payload, share_id)
     except Exception as e:
         logger.warning("Failed to broadcast shared dashboard update for %s: %s", share_id, e)
+    
+    response_data = dashboard.get("data") if isinstance(dashboard, dict) else body.data
     return {
         "share_id": share_id,
         "title": dashboard["title"],
-        "data": dashboard.get("data") if isinstance(dashboard, dict) else body.data,
+        "data": response_data,
         "updated_at": datetime.now(timezone.utc)
     }
 
