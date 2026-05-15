@@ -38,6 +38,14 @@ def _has_meaningful_dashboard_data(data: Any) -> bool:
 
 def _dashboard_snapshot_or_empty(data: Any) -> dict:
     return data if isinstance(data, dict) and _has_meaningful_dashboard_data(data) else EMPTY_DASHBOARD
+
+
+def _safe_shared_dashboard_data(data: Any) -> dict:
+    if isinstance(data, dict):
+        return data
+    if isinstance(data, list):
+        return {"items": data}
+    return {}
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
 from app.api.deps import get_current_admin, get_current_user, get_training_access
@@ -586,9 +594,14 @@ async def get_shared_write_access(
     # 2. Shared token check
     dashboard = await dashboard_service.get_shared_dashboard(db, share_id)
     if not dashboard:
-        raise HTTPException(status_code=404, detail="Dashboard non trovato")
+        logger.info("Auto-creating shared dashboard for write access: %s", share_id)
+        try:
+            dashboard = await dashboard_service.update_shared_dashboard(db, share_id, {}, title="Progetti Condivisi")
+        except Exception as e:
+            logger.exception("Failed to auto-create shared dashboard for write access %s: %s", share_id, e)
+            raise HTTPException(status_code=503, detail="Impossibile preparare la shared dashboard")
         
-    payload_data = dashboard.get("data") or {}
+    payload_data = _safe_shared_dashboard_data(dashboard.get("data"))
     pwd_hash = payload_data.get("passwordHash")
     
     if not pwd_hash:
@@ -660,12 +673,25 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
     from app.config import get_settings
     settings = get_settings()
     from fastapi.encoders import jsonable_encoder
-    from app.cache import get_cached_shared_dashboard, set_cached_shared_dashboard
+    from app.cache import get_cached_shared_dashboard, set_cached_shared_dashboard, invalidate_shared_dashboard
 
     # 1. Fetch dashboard to check protection
     dashboard = await get_cached_shared_dashboard(share_id)
+    if dashboard is not None and not isinstance(dashboard, dict):
+        logger.warning("Ignoring malformed shared dashboard cache in websocket for %s (type=%s)", share_id, type(dashboard).__name__)
+        try:
+            await invalidate_shared_dashboard(share_id)
+        except Exception:
+            pass
+        dashboard = None
     if not dashboard:
         dashboard = await dashboard_service.get_shared_dashboard(db, share_id)
+        if dashboard:
+            await set_cached_shared_dashboard(share_id, dashboard)
+
+    if not dashboard:
+        logger.info("Auto-creating shared dashboard for websocket: %s", share_id)
+        dashboard = await dashboard_service.update_shared_dashboard(db, share_id, {}, title="Progetti Condivisi")
         if dashboard:
             await set_cached_shared_dashboard(share_id, dashboard)
 
@@ -673,7 +699,7 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
         await websocket.close(code=1008)
         return
 
-    payload_data = dashboard.get("data") or {}
+    payload_data = _safe_shared_dashboard_data(dashboard.get("data"))
     pwd_hash = payload_data.get("passwordHash")
     
     # 2. Token verification if protected
@@ -724,7 +750,7 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
 
             # Security: if dashboard is protected, allow only chat if no token, 
             # and block full data updates unless token/admin
-            payload_data = dashboard.get("data") or {}
+            payload_data = _safe_shared_dashboard_data(dashboard.get("data"))
             pwd_hash = payload_data.get("passwordHash")
             
             if pwd_hash:

@@ -622,8 +622,8 @@ async def get_all_shared_dashboards_aggregated(db: AsyncSession):
         ]
 
         # Apply saved project order
-        shared_data = _parse_json(sd.data, {})
-        project_order = shared_data.get("projectOrder") or [] if isinstance(shared_data, dict) else []
+        shared_data = _normalize_shared_dashboard_data(sd.data)
+        project_order = shared_data.get("projectOrder") or []
         if project_order:
             by_id = {p["id"]: p for p in projects}
             ordered = [by_id[pid] for pid in project_order if pid in by_id]
