@@ -615,8 +615,16 @@ async def update_shared_dashboard(
     await invalidate_shared_dashboard(share_id)
     await set_cached_shared_dashboard(share_id, dashboard)
     
-    await record_event(db, "shared_dashboard", share_id, "updated",
-                       share_id=share_id, new_data={"title": body.title})
+    try:
+        await record_event(
+            db,
+            "shared_dashboard",
+            share_id,
+            "updated",
+            new_data={"share_id": share_id, "title": body.title, "updated": True},
+        )
+    except Exception as e:
+        logger.warning("Failed to record shared dashboard audit event for %s: %s", share_id, e)
     
     payload = {
         "type": "sync",
@@ -624,7 +632,10 @@ async def update_shared_dashboard(
         "title": body.title or dashboard["title"],
         "data": body.data
     }
-    await manager.broadcast(payload, share_id)
+    try:
+        await manager.broadcast(payload, share_id)
+    except Exception as e:
+        logger.warning("Failed to broadcast shared dashboard update for %s: %s", share_id, e)
     return {
         "share_id": share_id,
         "title": dashboard["title"],
