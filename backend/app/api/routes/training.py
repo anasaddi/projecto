@@ -469,7 +469,7 @@ async def get_shared_dashboard(
         
         # Auto-create if doesn't exist (v2 - return direct response)
         if not data:
-            logger.info("Creating new shared dashboard: %s", share_id)
+            logger.info("Auto-creating shared dashboard: %s", share_id)
             await dashboard_service.update_shared_dashboard(db, share_id, {}, title="Progetti Condivisi")
             # Build response directly to avoid race condition
             return {
