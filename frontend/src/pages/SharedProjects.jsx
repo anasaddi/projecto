@@ -696,7 +696,7 @@ export default function SharedProjects() {
   };
 
   const refetchFromApi = () => {
-    if (!id) return;
+    if (!id || dashboard.error?.includes('404') || dashboard.error?.includes('non trovat')) return;
     const token = localStorage.getItem(`km-shared-token-${id}`);
     const opts = token ? { headers: { 'x-share-token': token } } : {};
     api.training.getSharedDashboard(id, opts)
@@ -704,7 +704,17 @@ export default function SharedProjects() {
         if (!mountedRef.current) return;
         applyDashboardFromPayload(data);
       })
-      .catch(() => { });
+      .catch((err) => {
+        // Stop polling on 404/500 errors to prevent spamming console
+        const status = err?.response?.status || err?.status;
+        if (status === 404 || status === 500) {
+          console.warn(`[SharedProjects] Stopping poll for ${id}: ${status} error`);
+          if (pollInterval.current) {
+            clearInterval(pollInterval.current);
+            pollInterval.current = null;
+          }
+        }
+      });
   };
 
   useEffect(() => {
@@ -729,7 +739,7 @@ export default function SharedProjects() {
   }, [id]);
 
   useEffect(() => {
-    if (!id || dashboard.isConnected) return;
+    if (!id || dashboard.isConnected || dashboard.error) return;
     pollInterval.current = setInterval(refetchFromApi, 4000);
     return () => {
       if (pollInterval.current) {
@@ -737,7 +747,7 @@ export default function SharedProjects() {
         pollInterval.current = null;
       }
     };
-  }, [id, dashboard.isConnected]);
+  }, [id, dashboard.isConnected, dashboard.error]);
 
   useEffect(() => {
     mountedRef.current = true;
