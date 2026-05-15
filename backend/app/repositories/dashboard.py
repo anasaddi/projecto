@@ -671,6 +671,42 @@ async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, dat
     res = await db.execute(select(SharedDashboard).filter(SharedDashboard.share_id == share_id))
     shared = res.scalar_one_or_none()
     incoming_data = _normalize_shared_dashboard_data(data)
+
+    def _safe_project_items(projects_value: Any) -> list[dict]:
+        if not isinstance(projects_value, list):
+            return []
+        items: list[dict] = []
+        for project in projects_value:
+            if not isinstance(project, dict):
+                continue
+            project_id = project.get("id")
+            project_title = project.get("title")
+            if project_id is None or project_title is None:
+                continue
+            tasks_value = project.get("tasks", [])
+            if not isinstance(tasks_value, list):
+                tasks_value = []
+            items.append({
+                "id": str(project_id),
+                "title": project_title,
+                "tasks": tasks_value,
+            })
+        return items
+
+    def _safe_chat_items(chat_value: Any) -> list[dict]:
+        if not isinstance(chat_value, list):
+            return []
+        items: list[dict] = []
+        for msg in chat_value:
+            if not isinstance(msg, dict):
+                continue
+            msg_id = msg.get("id")
+            sender_id = msg.get("senderId")
+            text = msg.get("text")
+            if msg_id is None or sender_id is None or text is None:
+                continue
+            items.append(msg)
+        return items
     
     if not shared:
         shared = SharedDashboard(share_id=share_id, title=title or "Progetti Condivisi", data=incoming_data)
@@ -679,81 +715,132 @@ async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, dat
         if title: shared.title = title
         curr_data = _normalize_shared_dashboard_data(shared.data)
         curr_data.update(incoming_data)
-        if "projectOrder" in incoming_data:
-            curr_data["projectOrder"] = incoming_data["projectOrder"]
+        if "projectOrder" in incoming_data and isinstance(incoming_data.get("projectOrder"), list):
+            curr_data["projectOrder"] = [str(pid) for pid in incoming_data["projectOrder"] if pid is not None]
         elif "projects" in incoming_data:
-            curr_data["projectOrder"] = [p["id"] for p in incoming_data["projects"]]
+            curr_data["projectOrder"] = [p["id"] for p in _safe_project_items(incoming_data["projects"])]
         shared.data = curr_data
         flag_modified(shared, "data")
 
     # RELATIONAL SYNC
     
     if "projects" in incoming_data:
-        p_data = incoming_data["projects"]
-        inc_proj_ids = [str(p["id"]) for p in p_data]
-        if inc_proj_ids:
-            deleted_p_res = await db.execute(select(Project.id).filter(Project.share_id == share_id, Project.id.not_in(inc_proj_ids)))
-            deleted_p_ids = deleted_p_res.scalars().all()
-            if deleted_p_ids:
-                await db.execute(delete(Task).filter(Task.project_id.in_(deleted_p_ids)))
-                await db.execute(delete(Project).filter(Project.id.in_(deleted_p_ids)))
-        else:
-            p_ids_res = await db.execute(select(Project.id).filter(Project.share_id == share_id))
-            p_ids = p_ids_res.scalars().all()
-            if p_ids:
-                await db.execute(delete(Task).filter(Task.project_id.in_(p_ids)))
-                await db.execute(delete(Project).filter(Project.share_id == share_id))
-        ex_p_res = await db.execute(select(Project).filter(Project.share_id == share_id))
-        ex_projs = {str(p.id): p for p in ex_p_res.scalars().all()}
-        for p in p_data:
-            pid = str(p["id"])
-            if pid in ex_projs:
-                ex_projs[pid].title = p["title"]
+        try:
+            p_data = _safe_project_items(incoming_data["projects"])
+            inc_proj_ids = [p["id"] for p in p_data]
+            if inc_proj_ids:
+                deleted_p_res = await db.execute(select(Project.id).filter(Project.share_id == share_id, Project.id.not_in(inc_proj_ids)))
+                deleted_p_ids = deleted_p_res.scalars().all()
+                if deleted_p_ids:
+                    await db.execute(delete(Task).filter(Task.project_id.in_(deleted_p_ids)))
+                    await db.execute(delete(Project).filter(Project.id.in_(deleted_p_ids)))
             else:
-                db.add(Project(id=pid, title=p["title"], share_id=share_id))
-            
-            inc_task_ids = []
-            def collect_tasks(tasks_list):
+                p_ids_res = await db.execute(select(Project.id).filter(Project.share_id == share_id))
+                p_ids = p_ids_res.scalars().all()
+                if p_ids:
+                    await db.execute(delete(Task).filter(Task.project_id.in_(p_ids)))
+                    await db.execute(delete(Project).filter(Project.share_id == share_id))
+            ex_p_res = await db.execute(select(Project).filter(Project.share_id == share_id))
+            ex_projs = {str(p.id): p for p in ex_p_res.scalars().all()}
+
+            def collect_tasks(tasks_list, inc_task_ids):
+                if not isinstance(tasks_list, list):
+                    return
                 for t in tasks_list:
-                    inc_task_ids.append(str(t["id"]))
-                    if t.get("children"): collect_tasks(t["children"])
-            collect_tasks(p.get("tasks", []))
-            
-            if inc_task_ids:
-                await db.execute(delete(Task).filter(Task.project_id == pid, Task.id.not_in(inc_task_ids)))
-            else:
-                await db.execute(delete(Task).filter(Task.project_id == pid))
-            ex_t_res = await db.execute(select(Task).filter(Task.project_id == pid))
-            ex_tasks = {str(t.id): t for t in ex_t_res.scalars().all()}
+                    if not isinstance(t, dict):
+                        continue
+                    tid = t.get("id")
+                    if tid is None:
+                        continue
+                    inc_task_ids.append(str(tid))
+                    children = t.get("children", [])
+                    if isinstance(children, list) and children:
+                        collect_tasks(children, inc_task_ids)
+
             async def upsert_t(tasks, proj_id, parent=None):
+                if not isinstance(tasks, list):
+                    return
                 for t in tasks:
-                    tid = str(t["id"])
+                    if not isinstance(t, dict):
+                        continue
+                    tid = t.get("id")
+                    title_value = t.get("title")
+                    if tid is None or title_value is None:
+                        continue
+                    tid = str(tid)
                     if tid in ex_tasks:
-                        ex_tasks[tid].title = t["title"]
+                        ex_tasks[tid].title = title_value
                         ex_tasks[tid].parent_id = parent
                         ex_tasks[tid].done = 1 if t.get("done") else 0
                         ex_tasks[tid].deadline = t.get("deadline")
                     else:
-                        db.add(Task(id=tid, project_id=proj_id, parent_id=parent, title=t["title"], done=1 if t.get("done") else 0, deadline=t.get("deadline")))
-                    if t.get("children"): await upsert_t(t["children"], proj_id, tid)
-            await upsert_t(p.get("tasks", []), pid)
+                        db.add(Task(id=tid, project_id=proj_id, parent_id=parent, title=title_value, done=1 if t.get("done") else 0, deadline=t.get("deadline")))
+                    children = t.get("children", [])
+                    if isinstance(children, list) and children:
+                        await upsert_t(children, proj_id, tid)
+
+            for p in p_data:
+                pid = p["id"]
+                project_title = p["title"]
+                if pid in ex_projs:
+                    ex_projs[pid].title = project_title
+                else:
+                    db.add(Project(id=pid, title=project_title, share_id=share_id))
+
+                inc_task_ids: list[str] = []
+                collect_tasks(p.get("tasks", []), inc_task_ids)
+
+                if inc_task_ids:
+                    await db.execute(delete(Task).filter(Task.project_id == pid, Task.id.not_in(inc_task_ids)))
+                else:
+                    await db.execute(delete(Task).filter(Task.project_id == pid))
+                ex_t_res = await db.execute(select(Task).filter(Task.project_id == pid))
+                ex_tasks = {str(t.id): t for t in ex_t_res.scalars().all()}
+                await upsert_t(p.get("tasks", []), pid)
+        except Exception as e:
+            logger.warning("Skipping malformed shared project sync for %s: %s", share_id, e)
     
     if "chat" in incoming_data:
-        chat_data = incoming_data["chat"]
-        # If chat is provided, we sync the list (usually we just append via a different method, but this is the bulk sync)
-        inc_chat_ids = [str(m["id"]) for m in chat_data]
-        if inc_chat_ids:
-            await db.execute(delete(ChatMessage).filter(ChatMessage.share_id == share_id, ChatMessage.id.not_in(inc_chat_ids)))
-        else:
-            await db.execute(delete(ChatMessage).filter(ChatMessage.share_id == share_id))
-        ex_c_res = await db.execute(select(ChatMessage).filter(ChatMessage.share_id == share_id))
-        ex_chats = {str(c.id): c for c in ex_c_res.scalars().all()}
-        for msg in chat_data:
-            mid = str(msg["id"])
-            if mid not in ex_chats:
-                db.add(ChatMessage(id=mid, share_id=share_id, sender_id=msg["senderId"], text=msg["text"], 
-                                   timestamp=datetime.fromtimestamp(msg["timestamp"]/1000, tz=timezone.utc) if msg.get("timestamp") else datetime.now(timezone.utc)))
+        try:
+            chat_data = _safe_chat_items(incoming_data["chat"])
+            # If chat is provided, we sync the list (usually we just append via a different method, but this is the bulk sync)
+            inc_chat_ids = [str(m["id"]) for m in chat_data]
+            if inc_chat_ids:
+                await db.execute(delete(ChatMessage).filter(ChatMessage.share_id == share_id, ChatMessage.id.not_in(inc_chat_ids)))
+            else:
+                await db.execute(delete(ChatMessage).filter(ChatMessage.share_id == share_id))
+            ex_c_res = await db.execute(select(ChatMessage).filter(ChatMessage.share_id == share_id))
+            ex_chats = {str(c.id): c for c in ex_c_res.scalars().all()}
+            for msg in chat_data:
+                mid = str(msg["id"])
+                if mid not in ex_chats:
+                    db.add(ChatMessage(id=mid, share_id=share_id, sender_id=msg["senderId"], text=msg["text"], 
+                                       timestamp=datetime.fromtimestamp(msg["timestamp"]/1000, tz=timezone.utc) if msg.get("timestamp") else datetime.now(timezone.utc)))
+        except Exception as e:
+            logger.warning("Skipping malformed shared chat sync for %s: %s", share_id, e)
     
+    await db.commit()
+    return await get_shared_dashboard_aggregated(db, share_id)
+
+async def upsert_shared_dashboard_metadata(db: AsyncSession, share_id: str, data: Any, title: str | None = None):
+    """Fallback writer that only persists the shared dashboard row itself.
+
+    This intentionally skips relational sync so a malformed nested payload cannot
+    turn a dashboard save into a hard failure.
+    """
+    res = await db.execute(select(SharedDashboard).filter(SharedDashboard.share_id == share_id))
+    shared = res.scalar_one_or_none()
+    normalized_data = _normalize_shared_dashboard_data(data)
+
+    if not shared:
+        shared = SharedDashboard(share_id=share_id, title=title or "Progetti Condivisi", data=normalized_data)
+        db.add(shared)
+    else:
+        if title:
+            shared.title = title
+        shared.data = normalized_data
+        flag_modified(shared, "data")
+
     await db.commit()
     return await get_shared_dashboard_aggregated(db, share_id)
 

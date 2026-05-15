@@ -623,16 +623,24 @@ async def update_shared_dashboard(
     """Update or create a shared dashboard. Invalidates cache + broadcasts. ADMIN OR TOKEN."""
     from app.cache import invalidate_shared_dashboard, set_cached_shared_dashboard
     from app.repositories.audit import record_event
+    from app.repositories.dashboard import upsert_shared_dashboard_metadata
 
+    dashboard = None
     try:
         dashboard = await dashboard_service.update_shared_dashboard(db, share_id, body.data, body.title)
     except Exception as e:
         logger.exception("Error updating shared dashboard %s: %s", share_id, e)
         try:
-            await invalidate_shared_dashboard(share_id)
-        except Exception:
-            pass
-        raise HTTPException(status_code=503, detail="Impossibile salvare la shared dashboard")
+            await db.rollback()
+            dashboard = await upsert_shared_dashboard_metadata(db, share_id, body.data, body.title)
+        except Exception as fallback_error:
+            logger.exception("Fallback save for shared dashboard %s also failed: %s", share_id, fallback_error)
+            try:
+                await db.rollback()
+                await invalidate_shared_dashboard(share_id)
+            except Exception:
+                pass
+            raise HTTPException(status_code=503, detail="Impossibile salvare la shared dashboard")
 
     await invalidate_shared_dashboard(share_id)
     await set_cached_shared_dashboard(share_id, dashboard)
@@ -652,7 +660,7 @@ async def update_shared_dashboard(
         "type": "sync",
         "share_id": share_id,
         "title": body.title or dashboard["title"],
-        "data": body.data
+        "data": dashboard.get("data") if isinstance(dashboard, dict) and dashboard.get("data") is not None else body.data
     }
     try:
         await manager.broadcast(payload, share_id)
@@ -661,7 +669,7 @@ async def update_shared_dashboard(
     return {
         "share_id": share_id,
         "title": dashboard["title"],
-        "data": body.data,
+        "data": dashboard.get("data") if isinstance(dashboard, dict) else body.data,
         "updated_at": datetime.now(timezone.utc)
     }
 
