@@ -239,13 +239,15 @@ const dashboardStore = create<any>()(
                   ) {
                     const merged: Record<string, unknown> = { ...(localEntry as Record<string, unknown>) };
                     for (const innerKey of Object.keys(remoteEntry as Record<string, unknown>)) {
-                      // Prefer local value when it is truthy (user recently ticked)
-                      // Fill in from server only when local is missing/falsy.
+                      // CRITICAL FIX: Local wins if key exists (even if false/null for unchecked)
+                      // Only take server value if local key is completely missing (undefined)
+                      // This prevents race condition: unchecked prayer reverting to checked
                       const localVal = merged[innerKey];
                       const remoteVal = (remoteEntry as Record<string, unknown>)[innerKey];
-                      if (localVal == null || localVal === false) {
+                      if (localVal === undefined) {
                         merged[innerKey] = remoteVal;
                       }
+                      // else: keep local (even if null/false - user explicitly unchecked)
                     }
                     out[dateKey] = merged;
                   }

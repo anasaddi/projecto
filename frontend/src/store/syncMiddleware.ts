@@ -169,9 +169,12 @@ function mergeDateKeyedDict(
       const merged: Record<string, unknown> = { ...(localEntry as Record<string, unknown>) };
       for (const innerKey of Object.keys(incomingEntry as Record<string, unknown>)) {
         const localVal = merged[innerKey];
-        if (localVal == null || localVal === false) {
+        // CRITICAL FIX: Only overwrite if local key is completely missing (undefined)
+        // null/false are valid explicit values (unchecked prayer) and must win over incoming
+        if (localVal === undefined) {
           merged[innerKey] = (incomingEntry as Record<string, unknown>)[innerKey];
         }
+        // else: keep local value (even if null/false - user explicitly unchecked)
       }
       out[dateKey] = merged;
     }
