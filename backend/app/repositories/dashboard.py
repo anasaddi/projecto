@@ -293,8 +293,8 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
             else:
                 db.add(QuickTask(id=qid, title=q["title"], done=1 if q.get("done") else 0, deadline=q.get("deadline"), ordinal=i))
     
-    if "projects" in incoming_data:
-        p_data = incoming_data["projects"]
+    if "projects" in data:
+        p_data = data["projects"]
         inc_proj_ids = [str(p["id"]) for p in p_data]
         
         # Only delete projects if "projects" key exists in payload (guard empty list for not_in)
