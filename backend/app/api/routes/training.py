@@ -471,7 +471,14 @@ async def get_shared_dashboard(
         if not data:
             logger.info("Creating new shared dashboard: %s", share_id)
             await dashboard_service.update_shared_dashboard(db, share_id, {}, title="Progetti Condivisi")
-            data = await dashboard_service.get_shared_dashboard(db, share_id)
+            # Build response directly instead of querying again
+            return {
+                "share_id": share_id,
+                "title": "Progetti Condivisi",
+                "data": {"projects": [], "quickTasks": [], "notes": [], "chat": [], "bonifici": []},
+                "updated_at": None,
+                "is_protected": False
+            }
         
         if not cached:
             await set_cached_shared_dashboard(share_id, data)
