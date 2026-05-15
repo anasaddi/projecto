@@ -463,41 +463,45 @@ async def get_shared_dashboard(
     from app.config import get_settings
     settings = get_settings()
     
-    cached = await get_cached_shared_dashboard(share_id)
-    data = cached if cached else await dashboard_service.get_shared_dashboard(db, share_id)
-    
-    if not data:
-        return None
-    
-    if not cached:
-        await set_cached_shared_dashboard(share_id, data)
+    try:
+        cached = await get_cached_shared_dashboard(share_id)
+        data = cached if cached else await dashboard_service.get_shared_dashboard(db, share_id)
+        
+        if not data:
+            return None
+        
+        if not cached:
+            await set_cached_shared_dashboard(share_id, data)
 
-    payload_data = data.get("data") or {}
-    pwd_hash = payload_data.get("passwordHash")
-    
-    is_protected = bool(pwd_hash)
-    if is_protected:
-        is_unlocked = x_share_token and verify_share_token(x_share_token, share_id, settings.secret_key)
-        if not is_unlocked:
-            return {
-                "share_id": share_id,
-                "title": data.get("title", "Progetti Condivisi"),
-                "is_protected": True,
-                "data": None,
-                "updated_at": data.get("updated_at")
-            }
+        payload_data = data.get("data") or {}
+        pwd_hash = payload_data.get("passwordHash")
+        
+        is_protected = bool(pwd_hash)
+        if is_protected:
+            is_unlocked = x_share_token and verify_share_token(x_share_token, share_id, settings.secret_key)
+            if not is_unlocked:
+                return {
+                    "share_id": share_id,
+                    "title": data.get("title", "Progetti Condivisi"),
+                    "is_protected": True,
+                    "data": None,
+                    "updated_at": data.get("updated_at")
+                }
 
-    clean_data = dict(payload_data)
-    clean_data.pop("passwordHash", None)
-    clean_data.pop("sectionPasswords", None)
-    
-    return {
-        "share_id": share_id,
-        "title": data.get("title"),
-        "data": clean_data,
-        "updated_at": data.get("updated_at"),
-        "is_protected": is_protected
-    }
+        clean_data = dict(payload_data)
+        clean_data.pop("passwordHash", None)
+        clean_data.pop("sectionPasswords", None)
+        
+        return {
+            "share_id": share_id,
+            "title": data.get("title"),
+            "data": clean_data,
+            "updated_at": data.get("updated_at"),
+            "is_protected": is_protected
+        }
+    except Exception as e:
+        logger.exception("Error fetching shared dashboard %s: %s", share_id, e)
+        raise HTTPException(status_code=500, detail=f"Internal error fetching shared dashboard: {str(e)}")
 
 @router.get("/shared-dashboards", response_model=list[schemas.SharedDashboardOut], dependencies=[Depends(get_current_admin)])
 async def list_shared_dashboards(db: AsyncSession = Depends(get_db)):
