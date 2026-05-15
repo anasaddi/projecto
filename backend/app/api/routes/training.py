@@ -610,8 +610,17 @@ async def update_shared_dashboard(
     """Update or create a shared dashboard. Invalidates cache + broadcasts. ADMIN OR TOKEN."""
     from app.cache import invalidate_shared_dashboard, set_cached_shared_dashboard
     from app.repositories.audit import record_event
-    
-    dashboard = await dashboard_service.update_shared_dashboard(db, share_id, body.data, body.title)
+
+    try:
+        dashboard = await dashboard_service.update_shared_dashboard(db, share_id, body.data, body.title)
+    except Exception as e:
+        logger.exception("Error updating shared dashboard %s: %s", share_id, e)
+        try:
+            await invalidate_shared_dashboard(share_id)
+        except Exception:
+            pass
+        raise HTTPException(status_code=503, detail="Impossibile salvare la shared dashboard")
+
     await invalidate_shared_dashboard(share_id)
     await set_cached_shared_dashboard(share_id, dashboard)
     

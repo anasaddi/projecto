@@ -20,6 +20,16 @@ def _serialize_dt(dt: Any) -> Any:
         return dt.isoformat()
     return dt
 
+
+def _normalize_shared_dashboard_data(data: Any) -> dict:
+    """Normalize shared dashboard payloads to a dict for safe merging/storage."""
+    parsed = _parse_json(data, {})
+    if isinstance(parsed, dict):
+        return dict(parsed)
+    if isinstance(parsed, list):
+        return {"items": parsed}
+    return {}
+
 # --- Dashboard (Aggregated View for Frontend) ---
 
 async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default", user_id: str | None = None):
@@ -283,8 +293,8 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
             else:
                 db.add(QuickTask(id=qid, title=q["title"], done=1 if q.get("done") else 0, deadline=q.get("deadline"), ordinal=i))
     
-    if "projects" in data:
-        p_data = data["projects"]
+    if "projects" in incoming_data:
+        p_data = incoming_data["projects"]
         inc_proj_ids = [str(p["id"]) for p in p_data]
         
         # Only delete projects if "projects" key exists in payload (guard empty list for not_in)
@@ -506,7 +516,7 @@ async def get_shared_dashboard_aggregated(db: AsyncSession, share_id: str):
     ]
 
     # Apply saved project order (frontend reorder)
-    shared_data = _parse_json(shared.data, {})
+    shared_data = _normalize_shared_dashboard_data(shared.data)
     project_order = shared_data.get("projectOrder") or [] if isinstance(shared_data, dict) else []
     if project_order:
         by_id = {p["id"]: p for p in projects}
@@ -531,7 +541,7 @@ async def get_shared_dashboard_aggregated(db: AsyncSession, share_id: str):
     ]
     
     if not isinstance(shared_data, dict):
-        shared_data = _parse_json(shared.data, {}) or {}
+        shared_data = _normalize_shared_dashboard_data(shared.data)
     quickTasks = shared_data.get("quickTasks", [])
     notes = shared_data.get("notes", [])
     bonifici = shared_data.get("bonifici", [])
@@ -660,25 +670,26 @@ async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, dat
     """Partial update for shared dashboards."""
     res = await db.execute(select(SharedDashboard).filter(SharedDashboard.share_id == share_id))
     shared = res.scalar_one_or_none()
+    incoming_data = _normalize_shared_dashboard_data(data)
     
     if not shared:
-        shared = SharedDashboard(share_id=share_id, title=title or "Progetti Condivisi", data=data)
+        shared = SharedDashboard(share_id=share_id, title=title or "Progetti Condivisi", data=incoming_data)
         db.add(shared)
     else:
         if title: shared.title = title
-        curr_data = dict(_parse_json(shared.data, {}) or {})
-        curr_data.update(data)
-        if "projectOrder" in data:
-            curr_data["projectOrder"] = data["projectOrder"]
-        elif "projects" in data:
-            curr_data["projectOrder"] = [p["id"] for p in data["projects"]]
+        curr_data = _normalize_shared_dashboard_data(shared.data)
+        curr_data.update(incoming_data)
+        if "projectOrder" in incoming_data:
+            curr_data["projectOrder"] = incoming_data["projectOrder"]
+        elif "projects" in incoming_data:
+            curr_data["projectOrder"] = [p["id"] for p in incoming_data["projects"]]
         shared.data = curr_data
         flag_modified(shared, "data")
 
     # RELATIONAL SYNC
     
-    if "projects" in data:
-        p_data = data["projects"]
+    if "projects" in incoming_data:
+        p_data = incoming_data["projects"]
         inc_proj_ids = [str(p["id"]) for p in p_data]
         if inc_proj_ids:
             deleted_p_res = await db.execute(select(Project.id).filter(Project.share_id == share_id, Project.id.not_in(inc_proj_ids)))
@@ -727,8 +738,8 @@ async def update_shared_dashboard_from_json(db: AsyncSession, share_id: str, dat
                     if t.get("children"): await upsert_t(t["children"], proj_id, tid)
             await upsert_t(p.get("tasks", []), pid)
     
-    if "chat" in data:
-        chat_data = data["chat"]
+    if "chat" in incoming_data:
+        chat_data = incoming_data["chat"]
         # If chat is provided, we sync the list (usually we just append via a different method, but this is the bulk sync)
         inc_chat_ids = [str(m["id"]) for m in chat_data]
         if inc_chat_ids:
