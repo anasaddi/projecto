@@ -707,7 +707,7 @@ export default function SharedProjects() {
       .catch((err) => {
         // Stop polling on 404/500 errors to prevent spamming console
         const status = err?.response?.status || err?.status;
-        if (status === 404 || status === 500) {
+        if (status === 404 || status === 500 || status === 503) {
           console.warn(`[SharedProjects] Stopping poll for ${id}: ${status} error`);
           if (pollInterval.current) {
             clearInterval(pollInterval.current);
