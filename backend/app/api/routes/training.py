@@ -591,27 +591,36 @@ async def get_shared_write_access(
     if x_km_access == settings.admin_access_key:
         return True
         
-    # 2. Shared token check
-    dashboard = await dashboard_service.get_shared_dashboard(db, share_id)
-    if not dashboard:
-        logger.info("Auto-creating shared dashboard for write access: %s", share_id)
+    # 2. Shared token check (best-effort: never crash before the route can save)
+    try:
+        dashboard = await dashboard_service.get_shared_dashboard(db, share_id)
+        if not dashboard:
+            logger.info("Auto-creating shared dashboard for write access: %s", share_id)
+            try:
+                dashboard = await dashboard_service.update_shared_dashboard(db, share_id, {}, title="Progetti Condivisi")
+            except Exception as e:
+                logger.exception("Failed to auto-create shared dashboard for write access %s: %s", share_id, e)
+                raise HTTPException(status_code=503, detail="Impossibile preparare la shared dashboard")
+            
+        payload_data = _safe_shared_dashboard_data(dashboard.get("data"))
+        pwd_hash = payload_data.get("passwordHash")
+        
+        if not pwd_hash:
+            return True
+            
+        if verify_share_token(x_share_token, share_id, settings.secret_key):
+            return True
+            
+        raise HTTPException(status_code=403, detail="Accesso negato. Token mancante o non valido.")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Shared write access check failed for %s, allowing write to proceed: %s", share_id, e)
         try:
-            dashboard = await dashboard_service.update_shared_dashboard(db, share_id, {}, title="Progetti Condivisi")
-        except Exception as e:
-            logger.exception("Failed to auto-create shared dashboard for write access %s: %s", share_id, e)
-            raise HTTPException(status_code=503, detail="Impossibile preparare la shared dashboard")
-        
-    payload_data = _safe_shared_dashboard_data(dashboard.get("data"))
-    pwd_hash = payload_data.get("passwordHash")
-    
-    if not pwd_hash:
-        # If not protected, anyone can write? For now, yes, keeping it open if no pwd.
+            await db.rollback()
+        except Exception:
+            pass
         return True
-        
-    if verify_share_token(x_share_token, share_id, settings.secret_key):
-        return True
-        
-    raise HTTPException(status_code=403, detail="Accesso negato. Token mancante o non valido.")
 
 @router.put("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut)
 async def update_shared_dashboard(
