@@ -49,8 +49,6 @@ export function AppLogo({ size = 'md', className = '' }) {
     if (resetting) return;
     setResetting(true);
     try {
-      const { api } = await import('../api/client');
-      await api.training.resetDailyLogs();
       await clearDashboardPersistence();
       window.location.reload();
     } catch (err) {
