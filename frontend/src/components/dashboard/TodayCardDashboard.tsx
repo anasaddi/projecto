@@ -71,10 +71,26 @@ export function TodayCardDashboard(): React.ReactElement | null {
     onProgressionChange,
   } = useTodayTraining();
 
-  // If there's genuinely no workout today (no exercises), returning null is fine
-  // But on error, show a minimal fallback UI so the user knows something exists
+  // If there's genuinely no workout today (no exercises), show a rest day card
   if (!loading && !selectedDay?.exercises?.length && !error) {
-    return null;
+    return (
+      <Card className="flex flex-col overflow-hidden">
+        <CardHeader
+          icon={Dumbbell}
+          iconColor="text-indigo-500"
+          title="Training"
+          subtitle="Oggi — Giorno di riposo"
+          action={
+            <Badge variant="primary" size="sm">
+              Riposo
+            </Badge>
+          }
+        />
+        <div className="px-5 py-4 text-sm text-zinc-500 dark:text-zinc-400">
+          Nessun allenamento programmato per oggi. Recupera le energie!
+        </div>
+      </Card>
+    );
   }
 
   // Show collapsed card with error message on error
