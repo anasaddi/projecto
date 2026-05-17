@@ -12,7 +12,6 @@ import { isTokenExpired } from './api/client';
 
 const DashboardV2 = lazy(() => import('./pages/DashboardV2'));
 
-const SourceList = lazy(() => import('./pages/SourceList'));
 const YouTubeViewer = lazy(() => import('./pages/YouTubeViewer'));
 const SharedProjects = lazy(() => import('./pages/SharedProjects'));
 const Training = lazy(() => import('./pages/Training2'));
@@ -57,7 +56,7 @@ function HomePage(): React.ReactElement {
   const role = localStorage.getItem('km-user-role');
   const token = localStorage.getItem('km-admin-token');
   if (role === 'admin' && token && !isTokenExpired(token)) {
-    return <SourceList />;
+    return <Navigate to="/dashboard" replace />;
   }
   return <Welcome />;
 }

@@ -48,7 +48,7 @@ export function ConfirmModal({
           </Button>
           <Button
             variant={isDanger ? 'danger' : 'primary'}
-            onClick={() => { onConfirm?.(); onCancel?.(); }}
+            onClick={() => { onConfirm?.(); }}
           >
             {confirmLabel}
           </Button>
