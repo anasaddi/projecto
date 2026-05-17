@@ -406,19 +406,19 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
             else:
                 db.add(DailyCompletionLog(date=d_str, score=score, data=meta))
 
+    # Always persist UI keys regardless of whether lifeGoals is in the payload
+    for ui_key in ("timelineRoutines", "timelinePanelExpanded", "todayTrainingExpanded", "lockedHabitsCollapsed", "projectExpandedState", "sectionOrder", "activePomodoroTask"):
+        if ui_key in data:
+            merged = _parse_json(ds.data, {})
+            merged[ui_key] = data[ui_key]
+            ds.data = merged
+
     if "lifeGoals" in data:
         lg = data["lifeGoals"]
-        # Top-level state in blob for now
         merged = _parse_json(ds.data, {})
         if "lifeGoals" not in merged: merged["lifeGoals"] = {}
         merged["lifeGoals"]["collapsed"] = lg.get("collapsed", False)
         ds.data = merged
-
-        for ui_key in ("timelineRoutines", "timelinePanelExpanded", "todayTrainingExpanded", "lockedHabitsCollapsed", "projectExpandedState", "sectionOrder", "activePomodoroTask"):
-            if ui_key in data:
-                merged = _parse_json(ds.data, {})
-                merged[ui_key] = data[ui_key]
-                ds.data = merged
 
         if "tiers" in lg:
             incoming_tier_ids = [str(t["id"]) for t in lg["tiers"]]
@@ -503,12 +503,14 @@ async def get_shared_dashboard_aggregated(db: AsyncSession, share_id: str):
     for t in all_tasks:
         tasks_by_project[t.project_id].append(t)
 
-    def build_tree(task_list, parent_id=None):
+    def build_tree(task_list, parent_id=None, _depth=0):
+        if _depth > 10:
+            return []
         nodes = []
         for t in [x for x in task_list if x.parent_id == parent_id]:
             nodes.append({
-                "id": t.id, "title": t.title, "done": bool(t.done), 
-                "deadline": t.deadline, "children": build_tree(task_list, t.id)
+                "id": t.id, "title": t.title, "done": bool(t.done),
+                "deadline": t.deadline, "children": build_tree(task_list, t.id, _depth + 1)
             })
         return nodes
 
@@ -609,12 +611,14 @@ async def get_all_shared_dashboards_aggregated(db: AsyncSession):
         share_id = sd.share_id
         projs = projs_by_share.get(share_id, [])
 
-        def build_tree(task_list, parent_id=None):
+        def build_tree(task_list, parent_id=None, _depth=0):
+            if _depth > 10:
+                return []
             nodes = []
             for t in [x for x in task_list if x.parent_id == parent_id]:
                 nodes.append({
                     "id": t.id, "title": t.title, "done": bool(t.done),
-                    "deadline": t.deadline, "children": build_tree(task_list, t.id)
+                    "deadline": t.deadline, "children": build_tree(task_list, t.id, _depth + 1)
                 })
             return nodes
 

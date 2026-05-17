@@ -97,9 +97,12 @@ export function resolveTop3Slots(projects, top3Manual, quickTasks = [], lifeGoal
   return top3Manual.map((slot) => {
     if (!slot) return null;
     if (slot.quickTaskId) {
-      const qt = quickTasks.find((t) => t.id === slot.quickTaskId && (slot.shareId != null ? t.shareId === slot.shareId : !t.shareId));
+      // Prefer exact match with shareId; fall back to id-only match to recover after DB round-trip
+      // (DB Top3Item has no shareId column, so it's lost on persist+reload)
+      const qt = quickTasks.find((t) => t.id === slot.quickTaskId && (slot.shareId != null ? t.shareId === slot.shareId : !t.shareId))
+        ?? quickTasks.find((t) => t.id === slot.quickTaskId);
       if (!qt) return { ...slot, missing: true };
-      return { ...slot, title: qt.title, projectTitle: 'Quick Task', done: qt.done, isQuick: true };
+      return { ...slot, shareId: qt.shareId ?? slot.shareId ?? null, title: qt.title, projectTitle: qt.shareId ? 'Shared Quick Task' : 'Quick Task', done: qt.done, isQuick: true };
     }
     if (slot.shareId) {
       const sd = sharedDashboards.find((s) => s.share_id === slot.shareId);
