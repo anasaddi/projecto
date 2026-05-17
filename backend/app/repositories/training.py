@@ -123,7 +123,7 @@ async def get_week_templates(db: AsyncSession):
                 "category": str(e.category),
                 "instruction": str(we.instruction or "") if we.instruction else "",
                 "base_sets": int(we.base_sets) if we.base_sets is not None else 4,
-                "base_reps": int(we.base_reps) if we.base_reps is not None else 0,
+                "base_reps": str(we.base_reps) if we.base_reps is not None else "",
                 "primary_muscles": _parse_json(e.primary_muscles, []),
                 "secondary_muscles": _parse_json(e.secondary_muscles, []),
                 "cns_fatigue": float(e.cns_fatigue) if e.cns_fatigue is not None else 0.0,

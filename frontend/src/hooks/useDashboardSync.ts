@@ -181,5 +181,6 @@ export function useDashboardSync(): void {
         }
       });
     };
-  }, [isLoaded, sharedDashboards, updateSharedDashboardData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, sharedDashboards]);
 }

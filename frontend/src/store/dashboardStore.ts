@@ -287,6 +287,14 @@ const dashboardStore = create<any>()(
             if (data.timelinePanelExpanded !== undefined) state.timelinePanelExpanded = data.timelinePanelExpanded;
             if (data.todayTrainingExpanded !== undefined) state.todayTrainingExpanded = data.todayTrainingExpanded;
             if (data.lockedHabitsCollapsed !== undefined) state.lockedHabitsCollapsed = data.lockedHabitsCollapsed;
+            // sectionOrder: server wins only if local is still the default (fresh browser / no local state)
+            if (data.sectionOrder && typeof data.sectionOrder === 'object') {
+              const local = state.sectionOrder as Record<string, string[]> | undefined;
+              const isDefault = JSON.stringify(local) === JSON.stringify(defaultInitial.sectionOrder);
+              if (isDefault) {
+                state.sectionOrder = data.sectionOrder as Record<string, string[]>;
+              }
+            }
             // projectExpandedState: merge per-key, local wins — server fills in
             // missing keys but never clobbers a recent local toggle.
             if (data.projectExpandedState && typeof data.projectExpandedState === 'object') {
