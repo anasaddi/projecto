@@ -114,7 +114,7 @@ export default function Training2() {
       if (isInitial) {
         // Seleziona il giorno corrente nello schedule
         const todayStr = new Date().toDateString();
-        const todayDay = mergedData.find(d => new Date(normalizeDate(d)).toDateString() === todayStr) || mergedData[0];
+        const todayDay = mergedData.find(d => new Date(normalizeDate(d) + 'T12:00:00').toDateString() === todayStr) || mergedData[0];
 
         if (todayDay) {
           setSelectedDay(todayDay.template);

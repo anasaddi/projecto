@@ -85,6 +85,53 @@ export function useDashboardSync(): void {
 
   const isLoaded = useDashboardStore((s: any) => s.isLoaded);
 
+  // Stable ref so connectWs always uses the latest updateSharedDashboardData
+  const updateSharedRef = useRef(updateSharedDashboardData);
+  useEffect(() => { updateSharedRef.current = updateSharedDashboardData; }, [updateSharedDashboardData]);
+
+  const connectWs = useRef((id: string) => {
+    if (wsConnections.current[id]) return;
+    const wsUrl = getSharedDashboardWsUrl(id);
+    const socket = new WebSocket(wsUrl);
+    wsConnections.current[id] = socket;
+
+    const hb = setInterval(() => {
+      if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'ping' }));
+    }, 25000);
+
+    socket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        if (message.type === 'pong' || message.type === 'server_restart' || message.type === 'error') return;
+        if (message.type === 'chat' && message.data) {
+          updateSharedRef.current(id, (prev: { chat?: unknown[] }) => {
+            const chat = Array.isArray(prev.chat) ? prev.chat : [];
+            if ((chat as Array<{ id?: string }>).some((m) => m.id === message.data.id)) return prev;
+            return { ...prev, chat: [...chat.slice(-99), message.data] };
+          });
+        } else if (message.type === 'sync') {
+          updateSharedRef.current(id, () => message.data || message);
+        }
+        retryAttempts.current[id] = 0;
+      } catch (err) {
+        console.error(`WS message error for ${id}:`, err);
+      }
+    };
+
+    socket.onclose = () => {
+      clearInterval(hb);
+      delete wsConnections.current[id];
+      const attempt = (retryAttempts.current[id] ?? 0) + 1;
+      retryAttempts.current[id] = attempt;
+      const delay = Math.min(1000 * Math.pow(2, attempt - 1), 30000);
+      console.log(`WS ${id} closed — reconnect in ${delay}ms (attempt ${attempt})`);
+      retryDelays.current[id] = setTimeout(() => {
+        delete retryDelays.current[id];
+        connectWs.current(id);
+      }, delay);
+    };
+  });
+
   useEffect(() => {
     if (!isLoaded || sharedDashboards.length === 0) return;
     const shareIds = sharedDashboards.map((sd: { share_id: string }) => sd.share_id);
@@ -97,67 +144,20 @@ export function useDashboardSync(): void {
           if (!msg || applyingFromSharedBC.current) return;
           applyingFromSharedBC.current = true;
           if (msg.type === 'chat' && msg.data) {
-            updateSharedDashboardData(shareId, (prev: { chat?: unknown[] }) => {
+            updateSharedRef.current(shareId, (prev: { chat?: unknown[] }) => {
               const chat = Array.isArray(prev.chat) ? prev.chat : [];
               if ((chat as Array<{ id?: string }>).some((m) => m.id === msg.data.id)) return prev;
               return { ...prev, chat: [...chat.slice(-99), msg.data] };
             });
           } else if (msg.type === 'sync' && msg.data) {
-            updateSharedDashboardData(shareId, () => msg.data);
+            updateSharedRef.current(shareId, () => msg.data);
           }
-          setTimeout(() => {
-            applyingFromSharedBC.current = false;
-          }, 0);
+          setTimeout(() => { applyingFromSharedBC.current = false; }, 0);
         };
         bcChannels.current[shareId] = bc;
       }
 
-      if (wsConnections.current[shareId]) return;
-
-      const connectWs = (id: string) => {
-        if (wsConnections.current[id]) return;
-        const wsUrl = getSharedDashboardWsUrl(id);
-        const socket = new WebSocket(wsUrl);
-        wsConnections.current[id] = socket;
-
-        const hb = setInterval(() => {
-          if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'ping' }));
-        }, 25000);
-
-        socket.onmessage = (event) => {
-          try {
-            const message = JSON.parse(event.data);
-            if (message.type === 'pong' || message.type === 'server_restart' || message.type === 'error') return;
-            if (message.type === 'chat' && message.data) {
-              updateSharedDashboardData(id, (prev: { chat?: unknown[] }) => {
-                const chat = Array.isArray(prev.chat) ? prev.chat : [];
-                if ((chat as Array<{ id?: string }>).some((m) => m.id === message.data.id)) return prev;
-                return { ...prev, chat: [...chat.slice(-99), message.data] };
-              });
-            } else if (message.type === 'sync') {
-              updateSharedDashboardData(id, () => message.data || message);
-            }
-            retryAttempts.current[id] = 0;
-          } catch (err) {
-            console.error(`WS message error for ${id}:`, err);
-          }
-        };
-
-        socket.onclose = () => {
-          clearInterval(hb);
-          delete wsConnections.current[id];
-          const attempt = (retryAttempts.current[id] ?? 0) + 1;
-          retryAttempts.current[id] = attempt;
-          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 30000);
-          console.log(`WS ${id} closed — reconnect in ${delay}ms (attempt ${attempt})`);
-          retryDelays.current[id] = setTimeout(() => {
-            delete retryDelays.current[id];
-            connectWs(id);
-          }, delay);
-        };
-      };
-
-      connectWs(shareId);
+      connectWs.current(shareId);
     });
 
     return () => {

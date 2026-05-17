@@ -317,23 +317,28 @@ async def ensure_schedule_generated(db: AsyncSession, days_count: int = 14):
         except StopIteration:
             pass
 
-    existing_res = await db.execute(select(DailySchedule.date_).filter(DailySchedule.is_completed == 1))
+    # Load ALL existing scheduled dates (both completed and pending) to avoid duplicates
+    existing_res = await db.execute(select(DailySchedule.date_))
     existing_dates = {r[0].date() if isinstance(r[0], datetime) else r[0] for r in existing_res.all()}
 
     t_ptr = 0
+    added = 0
     for i in range(days_count * 4):
         curr_d = today + timedelta(days=i)
-        if curr_d.weekday() == 6:
+        if curr_d.weekday() == 6:  # Skip sundays
             continue
         if curr_d in existing_dates:
             continue
         t = templates[(next_t_idx + t_ptr) % len(templates)]
         db.add(DailySchedule(date_=datetime.combine(curr_d, time.min), template_id=t.id, is_completed=0))
+        existing_dates.add(curr_d)  # Prevent re-adding the same date in this loop
         t_ptr += 1
-        if t_ptr >= days_count * 2:
+        added += 1
+        if added >= days_count:
             break
 
-    await db.commit()
+    if added > 0:
+        await db.commit()
 
 
 async def get_daily_schedule(db: AsyncSession, start_date: date, days_count: int = 14):
