@@ -263,6 +263,7 @@ export function useTodayTraining(forDate?: string): UseTodayTrainingReturn {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
+      setSelectedDay(null); // Reset stale day so no flash of previous data
 
       try {
         const today = forDate || new Date().toISOString().slice(0, 10);

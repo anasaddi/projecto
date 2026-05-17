@@ -76,8 +76,9 @@ export function TodayCardDashboard(): React.ReactElement | null {
     onProgressionChange,
   } = useTodayTraining(forDate);
 
-  // If there's genuinely no workout today (no exercises), show a rest day card
-  if (!loading && !selectedDay?.exercises?.length && !error) {
+  // Only show rest day if fetch completed AND it was for the correct date
+  const fetchedForExpected = !forDate || selectedDate?.slice(0, 10) === forDate;
+  if (!loading && fetchedForExpected && !selectedDay?.exercises?.length && !error) {
     const restDateLabel = forDate
       ? new Date(forDate + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
       : 'Oggi';
