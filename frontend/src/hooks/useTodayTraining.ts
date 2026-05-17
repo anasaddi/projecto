@@ -17,10 +17,6 @@ interface DayTemplate {
   exercises: Exercise[];
 }
 
-interface TodayResponse {
-  template?: DayTemplate;
-  date?: string;
-}
 
 interface ProgressionData {
   [key: string]: unknown;
@@ -284,10 +280,17 @@ export function useTodayTraining(forDate?: string): UseTodayTrainingReturn {
           }),
         ]);
 
-        // Process today's data
-        const todayData = todayRes as TodayResponse | null;
-        if (todayData?.template) {
-          setSelectedDay(todayData.template);
+        // Process today's data — backend returns flat shape:
+        // { template_id, day_name, hypertrophy_exercises, strength_aw_exercises }
+        const raw = todayRes as Record<string, unknown> | null;
+        if (raw?.template_id && raw.template_id !== '') {
+          const hyp = Array.isArray(raw.hypertrophy_exercises) ? raw.hypertrophy_exercises as Exercise[] : [];
+          const str = Array.isArray(raw.strength_aw_exercises) ? raw.strength_aw_exercises as Exercise[] : [];
+          setSelectedDay({
+            template_id: raw.template_id as string,
+            day_name: raw.day_name as string,
+            exercises: [...hyp, ...str],
+          });
         }
 
         // Process progressions
