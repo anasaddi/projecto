@@ -67,6 +67,7 @@ const DEFAULT_PRAYER_TIMES = {
 function usePrayerTimes() {
   const [times, setTimes] = useState(DEFAULT_PRAYER_TIMES);
   const [locationName, setLocationName] = useState('');
+  const [usingFallback, setUsingFallback] = useState(true);
   
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -85,6 +86,7 @@ function usePrayerTimes() {
         const data = await response.json();
         if (data.code === 200 && data.data) {
           const timings = data.data.timings;
+          setUsingFallback(false);
           setTimes({
             Fajr: timings.Fajr?.substring(0, 5) || DEFAULT_PRAYER_TIMES.Fajr,
             Dhuhr: timings.Dhuhr?.substring(0, 5) || DEFAULT_PRAYER_TIMES.Dhuhr,
@@ -105,10 +107,11 @@ function usePrayerTimes() {
       }
     }, () => {
       // Geolocation denied or failed - use default prayer times
+      setUsingFallback(true);
     });
   }, []);
   
-  return { times, locationName };
+  return { times, locationName, usingFallback };
 }
 
 function getSlotLabel(slotKey) {
@@ -221,7 +224,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
   const [selectorOpenSlot, setSelectorOpenSlot] = useState(null);
   const [selectorOpenEl, setSelectorOpenEl] = useState(null);
   const winTriggerEls = useRef(new Map());
-  const { times: PRAYER_TIMES, locationName } = usePrayerTimes();
+  const { times: PRAYER_TIMES, locationName, usingFallback: prayerFallback } = usePrayerTimes();
   const [currentPrayerIndex, setCurrentPrayerIndex] = useState(0);
   const [direction, setDirection] = useState(0);
 
@@ -472,7 +475,7 @@ export function DailyTimelineWidget2({ PRAYERS, todayKey, todayPrayerLog, toggle
             icon={Icons.LayoutList}
             iconColor="text-violet-500"
             title="Preghiere & Timeline"
-            subtitle={locationName || 'Timeline giornaliera'}
+            subtitle={locationName ? locationName : prayerFallback ? '⚠️ Orari stimati — abilita posizione' : 'Timeline giornaliera'}
             action={
               <div className="flex items-center gap-2">
                 <div className="hidden md:flex items-center gap-2">
