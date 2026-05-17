@@ -245,7 +245,7 @@ function calculateProgressPercent(
   return Math.min(100, Math.round((totalCompleted / totalExpected) * 100)) || 0;
 }
 
-export function useTodayTraining(): UseTodayTrainingReturn {
+export function useTodayTraining(forDate?: string): UseTodayTrainingReturn {
   const [selectedDay, setSelectedDay] = useState<DayTemplate | null>(null);
   const [allProgressions, setAllProgressions] = useState<Record<string, ProgressionData>>({});
   const [awProgram, setAwProgram] = useState<AwProgram | null>(null);
@@ -265,11 +265,11 @@ export function useTodayTraining(): UseTodayTrainingReturn {
       setError(null);
 
       try {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = forDate || new Date().toISOString().slice(0, 10);
         setSelectedDate(today);
 
         const [todayRes, progressionsRes, awProgramRes] = await Promise.all([
-          api.training.getToday().catch((err) => {
+          api.training.getToday(forDate).catch((err) => {
             console.warn('[useTodayTraining] Failed to fetch today:', err);
             return null;
           }),
@@ -313,7 +313,7 @@ export function useTodayTraining(): UseTodayTrainingReturn {
 
     fetchData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount
+  }, [forDate]); // Re-fetch when date changes
 
   // Calculate progress percentage
   const progressPercent = useMemo(() => {

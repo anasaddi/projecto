@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dumbbell, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTodayTraining } from '../../hooks/useTodayTraining';
+import { useDashboardStore } from '../../store/dashboardStore';
 import TodayCard from '../training/TodayCard';
 import { Card, CardHeader, Badge } from './Card';
 
@@ -60,6 +61,10 @@ const TodayCardSkeleton = () => (
 
 export function TodayCardDashboard(): React.ReactElement | null {
   const [isExpanded, setIsExpanded] = useState(true);
+  const storeDate = useDashboardStore((s) => s.selectedDate);
+  const forDate = storeDate instanceof Date
+    ? storeDate.toISOString().slice(0, 10)
+    : typeof storeDate === 'string' ? storeDate.slice(0, 10) : undefined;
   const {
     selectedDay,
     allProgressions,
@@ -69,17 +74,20 @@ export function TodayCardDashboard(): React.ReactElement | null {
     loading,
     error,
     onProgressionChange,
-  } = useTodayTraining();
+  } = useTodayTraining(forDate);
 
   // If there's genuinely no workout today (no exercises), show a rest day card
   if (!loading && !selectedDay?.exercises?.length && !error) {
+    const restDateLabel = forDate
+      ? new Date(forDate + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
+      : 'Oggi';
     return (
       <Card className="flex flex-col overflow-hidden">
         <CardHeader
           icon={Dumbbell}
           iconColor="text-indigo-500"
           title="Training"
-          subtitle="Oggi — Giorno di riposo"
+          subtitle={`${restDateLabel} — Giorno di riposo`}
           action={
             <Badge variant="primary" size="sm">
               Riposo
