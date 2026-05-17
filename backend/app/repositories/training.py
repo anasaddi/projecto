@@ -291,7 +291,7 @@ async def update_training_progression(db: AsyncSession, ex_id: str, data: dict):
 # --- Schedule Management ---
 
 async def ensure_schedule_generated(db: AsyncSession, days_count: int = 14):
-    """Generate schedule entries for upcoming days. Called on startup or explicitly, NOT on GET."""
+    """Generate schedule entries for upcoming days — only fills gaps, never wipes existing entries."""
     t_res = await db.execute(select(WorkoutDayTemplate).order_by(WorkoutDayTemplate.weekday))
     templates = t_res.scalars().all()
     if not templates:
@@ -299,10 +299,6 @@ async def ensure_schedule_generated(db: AsyncSession, days_count: int = 14):
 
     today = date.today()
     today_dt = datetime.combine(today, time.min)
-
-    # Clean future incomplete entries
-    await db.execute(delete(DailySchedule).filter(DailySchedule.date_ >= today_dt, DailySchedule.is_completed == 0))
-    await db.flush()
 
     # Find last completed workout
     last_w_res = await db.execute(

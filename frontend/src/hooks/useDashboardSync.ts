@@ -55,11 +55,16 @@ export function useDashboardSync(): void {
           setSharedDashboards(shared);
         }
 
-        // 3. Fetch and apply latest dashboard state from server
-        // Only apply if server has meaningful data (don't overwrite local with empty)
-        const currentRes = await api.training.getDashboardState({ timeout: 15_000 }).catch(() => null);
+        // 3. Fetch and apply latest dashboard state from server with retry
+        // Covers cold start: backend may take 30-60s to wake up on Render free tier
+        let currentRes = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          currentRes = await api.training.getDashboardState({ timeout: 20_000 }).catch(() => null);
+          if (currentRes) break;
+          if (attempt < 2) await new Promise((r) => setTimeout(r, 3000 * (attempt + 1)));
+        }
         const payload = extractDashboardPayload(currentRes) ?? extractDashboardPayload((currentRes as { data?: unknown } | null | undefined)?.data);
-        
+
         if (!cancelled && payload && syncWithServer && hasMeaningfulDashboardData(payload)) {
           syncWithServer(payload as Parameters<typeof syncWithServer>[0]);
         }

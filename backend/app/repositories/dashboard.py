@@ -42,7 +42,7 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
     dailyTaskTemplates = [{"id": h.id, "title": h.title, "locked": bool(h.locked), "ordinal": h.ordinal} for h in habits]
 
     # 2. Habit Logs (Bounded to last 60 days) - Filter by user_id if provided
-    sixty_days_ago = (datetime.now(timezone.utc) - timedelta(days=60)).strftime("%Y-%m-%d")
+    sixty_days_ago = (datetime.now(timezone.utc) - timedelta(days=365)).strftime("%Y-%m-%d")
     logs_query = select(HabitLog).filter(HabitLog.date >= sixty_days_ago)
     if user_id is not None:
         logs_query = logs_query.filter(HabitLog.user_id == user_id)
@@ -68,7 +68,9 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
     for t in all_tasks:
         tasks_by_project[t.project_id].append(t)
 
-    def build_tree(task_list, parent_id=None):
+    def build_tree(task_list, parent_id=None, _depth=0):
+        if _depth > 10:
+            return []
         nodes = []
         for t in [x for x in task_list if x.parent_id == parent_id]:
             nodes.append({
@@ -77,7 +79,7 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
                 "done": bool(t.done),
                 "deadline": t.deadline,
                 "ordinal": t.ordinal,
-                "children": build_tree(task_list, t.id)
+                "children": build_tree(task_list, t.id, _depth + 1)
             })
         return nodes
 
@@ -128,7 +130,7 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
             }
 
     # 7. Daily Completion Log - Filter by user_id if provided
-    dc_query = select(DailyCompletionLog).filter(DailyCompletionLog.date >= sixty_days_ago)
+    dc_query = select(DailyCompletionLog).filter(DailyCompletionLog.date >= sixty_days_ago)  # 365 days
     if user_id is not None:
         dc_query = dc_query.filter(DailyCompletionLog.user_id == user_id)
     dc_result = await db.execute(dc_query)

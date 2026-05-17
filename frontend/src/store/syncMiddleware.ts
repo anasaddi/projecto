@@ -381,7 +381,7 @@ export function syncMiddleware(config: any): any {
         } else {
           await addToSyncQueue('dashboard_update', fullState);
         }
-      }, 4000);
+      }, 2000);
     };
 
     if (channel) {
