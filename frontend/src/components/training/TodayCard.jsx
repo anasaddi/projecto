@@ -447,7 +447,7 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
   return (
     <div className="flex flex-col gap-4 sm:gap-6 lg:gap-8 animate-in fade-in zoom-in-95 duration-500">
       {/* ── Header ───────────────────────────────────────────────────────────── */}
-      <div className="flex items-end justify-between px-4">
+      <div className="flex items-end justify-between px-4 mt-[5px]">
         <div className="flex items-center gap-4 sm:gap-6">
           <div className="relative group">
             <div className="h-14 w-1.5 bg-indigo-600 rounded-full dark:shadow-[0_0_20px_-5px_rgba(79,70,229,0.8)] transition-all group-hover:h-16" />
