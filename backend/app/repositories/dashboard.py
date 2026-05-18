@@ -271,11 +271,8 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
     if "dailyTaskLogs" in data:
         task_logs = data["dailyTaskLogs"]
         if not task_logs:
-            # Empty dict means "clear all" — delete all HabitLog rows for this user
-            q_del = delete(HabitLog)
-            if user_id is not None:
-                q_del = q_del.filter(HabitLog.user_id == user_id)
-            await db.execute(q_del)
+            # Empty dict means "clear all" — HabitLog has no user_id column, delete all
+            await db.execute(delete(HabitLog))
         else:
             # Partial update: only touch dates provided in the payload
             for d_str, logs in task_logs.items():
@@ -370,11 +367,8 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
     if "prayerLogs" in data:
         prayer_logs = data["prayerLogs"]
         if not prayer_logs:
-            # Empty dict means "clear all"
-            q_del = delete(PrayerLog)
-            if user_id is not None:
-                q_del = q_del.filter(PrayerLog.user_id == user_id)
-            await db.execute(q_del)
+            # Empty dict means "clear all" — PrayerLog has no user_id column, delete all
+            await db.execute(delete(PrayerLog))
         else:
             for d_str, prayers in prayer_logs.items():
                 await db.execute(delete(PrayerLog).filter(PrayerLog.date == d_str))
@@ -412,11 +406,8 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
     if "dailyCompletionLog" in data:
         completion_log = data["dailyCompletionLog"]
         if not completion_log:
-            # Empty dict means "clear all"
-            q_del = delete(DailyCompletionLog)
-            if user_id is not None:
-                q_del = q_del.filter(DailyCompletionLog.user_id == user_id)
-            await db.execute(q_del)
+            # Empty dict means "clear all" — DailyCompletionLog has no user_id column, delete all
+            await db.execute(delete(DailyCompletionLog))
         else:
             for d_str, log in completion_log.items():
                 existing = await db.execute(select(DailyCompletionLog).filter(DailyCompletionLog.date == d_str))

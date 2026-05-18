@@ -354,16 +354,10 @@ async def reset_daily_logs(
     from app.cache import invalidate_dashboard, set_cached_dashboard
 
     try:
-        # Delete daily logs for the current user
-        if user_id:
-            await db.execute(delete(HabitLog).filter(HabitLog.user_id == user_id))
-            await db.execute(delete(PrayerLog).filter(PrayerLog.user_id == user_id))
-            await db.execute(delete(DailyCompletionLog).filter(DailyCompletionLog.user_id == user_id))
-        else:
-            # Legacy: no user_id, delete all (backward compatibility)
-            await db.execute(delete(HabitLog))
-            await db.execute(delete(PrayerLog))
-            await db.execute(delete(DailyCompletionLog))
+        # HabitLog, PrayerLog, DailyCompletionLog have no user_id column — delete all rows
+        await db.execute(delete(HabitLog))
+        await db.execute(delete(PrayerLog))
+        await db.execute(delete(DailyCompletionLog))
 
         # Clear timelineRoutines from DashboardState JSON blob
         from app.repositories.dashboard import DashboardState
