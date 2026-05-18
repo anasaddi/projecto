@@ -28,6 +28,10 @@ export const clearSyncQueue = async (ids) => {
   await db.sync_queue.bulkDelete(ids);
 };
 
+export const clearAllSyncQueue = async () => {
+  await db.sync_queue.clear();
+};
+
 export const clearDashboardPersistence = async () => {
   await db.dashboard_state.delete('default');
   await db.sync_queue.clear();

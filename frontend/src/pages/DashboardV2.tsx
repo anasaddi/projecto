@@ -16,7 +16,7 @@ import { TodayCardDashboard } from '../components/dashboard/TodayCardDashboard';
 import { DayNavigationButtons } from '../components/dashboard/DayNavigationButtons';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { HabitSkeleton, ProjectSkeleton, Top3Skeleton, QuickTaskSkeleton } from '../components/dashboard/SkeletonSection';
-import { clearDailyLogsOnly } from '../db/localDb';
+import { saveLocalState, clearAllSyncQueue } from '../db/localDb';
 import { cancelPendingSync } from '../store/syncMiddleware';
 
 import {
@@ -336,7 +336,9 @@ export default function DashboardV2(): React.ReactElement {
             try {
               cancelPendingSync();
               useDashboardStore.getState().resetDailyLogs();
-              await clearDailyLogsOnly();
+              const cleanState = useDashboardStore.getState();
+              await saveLocalState(cleanState);
+              await clearAllSyncQueue();
               localStorage.removeItem(POMODORO_STORAGE);
               const { api } = await import('../api/client');
               await Promise.race([
