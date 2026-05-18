@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { clearDashboardPersistence } from '../db/localDb';
+import { clearDailyLogsOnly } from '../db/localDb';
 
 const TargetIcon = ({ className }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -49,7 +49,10 @@ export function AppLogo({ size = 'md', className = '' }) {
     if (resetting) return;
     setResetting(true);
     try {
-      await clearDashboardPersistence();
+      // Reset only daily logs — projects/habits/quickTasks preserved
+      await clearDailyLogsOnly();
+      // Fire-and-forget backend reset (don't block reload if server is cold)
+      import('../api/client').then(({ api }) => api.training.resetDailyLogs().catch(() => {}));
       window.location.reload();
     } catch (err) {
       console.error('Reset failed:', err);

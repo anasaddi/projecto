@@ -16,7 +16,7 @@ import { TodayCardDashboard } from '../components/dashboard/TodayCardDashboard';
 import { DayNavigationButtons } from '../components/dashboard/DayNavigationButtons';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { HabitSkeleton, ProjectSkeleton, Top3Skeleton, QuickTaskSkeleton } from '../components/dashboard/SkeletonSection';
-import { clearDashboardPersistence } from '../db/localDb';
+import { clearDailyLogsOnly } from '../db/localDb';
 
 import {
   toDateKey,
@@ -333,8 +333,9 @@ export default function DashboardV2(): React.ReactElement {
             deleteProject(confirmPayload.projectId);
           } else if (confirmId === 'reset') {
             try {
-              await clearDashboardPersistence();
+              await clearDailyLogsOnly();
               localStorage.removeItem(POMODORO_STORAGE);
+              import('../api/client').then(({ api }) => api.training.resetDailyLogs().catch(() => {}));
               window.location.reload();
             } catch (err) {
               console.error('Dashboard reset failed:', err);

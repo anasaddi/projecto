@@ -32,3 +32,18 @@ export const clearDashboardPersistence = async () => {
   await db.dashboard_state.delete('default');
   await db.sync_queue.clear();
 };
+
+export const clearDailyLogsOnly = async () => {
+  const res = await db.dashboard_state.get('default');
+  if (res && res.data) {
+    const patched = {
+      ...res.data,
+      dailyTaskLogs: {},
+      prayerLogs: {},
+      dailyCompletionLog: {},
+      timelineRoutines: {},
+    };
+    await db.dashboard_state.put({ key: 'default', data: patched });
+  }
+  await db.sync_queue.clear();
+};
