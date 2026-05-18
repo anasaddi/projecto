@@ -333,6 +333,7 @@ export default function DashboardV2(): React.ReactElement {
             deleteProject(confirmPayload.projectId);
           } else if (confirmId === 'reset') {
             try {
+              useDashboardStore.getState().resetDailyLogs();
               await clearDailyLogsOnly();
               localStorage.removeItem(POMODORO_STORAGE);
               const { api } = await import('../api/client');

@@ -166,7 +166,7 @@ export function TodayCardDashboard(): React.ReactElement | null {
             className="overflow-hidden"
           >
             <div className="p-4 pt-0">
-              <div className="max-h-[600px] overflow-y-auto custom-scrollbar">
+              <div>
                 {loading ? (
                   <TodayCardSkeleton />
                 ) : (

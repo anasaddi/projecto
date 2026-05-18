@@ -49,9 +49,12 @@ export function AppLogo({ size = 'md', className = '' }) {
     if (resetting) return;
     setResetting(true);
     try {
-      // Reset only daily logs locally — projects/habits/quickTasks preserved
+      // 1. Reset Zustand store in-memory FIRST so syncMiddleware cannot PUT stale logs
+      const { useDashboardStore } = await import('../store/dashboardStore');
+      useDashboardStore.getState().resetDailyLogs();
+      // 2. Clear IndexedDB logs
       await clearDailyLogsOnly();
-      // Wait for backend reset (max 8s) so DB rows are deleted before reload re-fetches
+      // 3. Wait for backend reset (max 8s) so DB rows are deleted before reload re-fetches
       const { api } = await import('../api/client');
       await Promise.race([
         api.training.resetDailyLogs(),
