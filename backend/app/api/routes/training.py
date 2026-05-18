@@ -386,11 +386,18 @@ async def reset_daily_logs(
             ds.data = data
             flag_modified(ds, "data")
 
+        # Invalidate Redis BEFORE commit so any concurrent GET misses cache and hits DB
+        await invalidate_dashboard(user_id)
+        try:
+            from app.simple_cache import invalidate_dashboard_fallback
+            await invalidate_dashboard_fallback()
+        except Exception:
+            pass
+
         await db.commit()
 
-        # Invalidate cache and return updated dashboard state
+        # Re-fetch clean state from DB and populate cache
         data = await dashboard_service.get_dashboard(db, user_id=user_id)
-        await invalidate_dashboard(user_id)
         await set_cached_dashboard(data, user_id)
         return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
     except Exception as e:

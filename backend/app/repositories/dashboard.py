@@ -269,10 +269,18 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
                 db.add(Habit(id=hid, title=h["title"], locked=1 if h.get("locked") else 0, ordinal=h.get("ordinal", i)))
     
     if "dailyTaskLogs" in data:
-        # Partial update: only touch dates provided in the payload
-        for d_str, logs in data["dailyTaskLogs"].items():
-            await db.execute(delete(HabitLog).filter(HabitLog.date == d_str))
-            for l in logs: db.add(HabitLog(habit_id=l["id"], date=d_str, status=1 if l.get("done") else 0))
+        task_logs = data["dailyTaskLogs"]
+        if not task_logs:
+            # Empty dict means "clear all" — delete all HabitLog rows for this user
+            q_del = delete(HabitLog)
+            if user_id is not None:
+                q_del = q_del.filter(HabitLog.user_id == user_id)
+            await db.execute(q_del)
+        else:
+            # Partial update: only touch dates provided in the payload
+            for d_str, logs in task_logs.items():
+                await db.execute(delete(HabitLog).filter(HabitLog.date == d_str))
+                for l in logs: db.add(HabitLog(habit_id=l["id"], date=d_str, status=1 if l.get("done") else 0))
     
     if "quickTasks" in data:
         incoming_qids = [str(q["id"]) for q in data["quickTasks"]]
@@ -360,20 +368,27 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
             await upsert_t(p.get("tasks", []), pid)
 
     if "prayerLogs" in data:
-        for d_str, prayers in data["prayerLogs"].items():
-            await db.execute(delete(PrayerLog).filter(PrayerLog.date == d_str))
-            for p_name, value in prayers.items():
-                # Handle both old boolean format and new object format {completedAt: "..."}
-                if value is None or value is False:
-                    is_completed = 0
-                    completed_at = None
-                elif isinstance(value, dict):
-                    is_completed = 1 if value.get("completedAt") else 0
-                    completed_at = value.get("completedAt")  # Preserve timestamp
-                else:
-                    is_completed = 1 if value else 0
-                    completed_at = None
-                db.add(PrayerLog(date=d_str, prayer_name=p_name, completed=is_completed, completed_at=completed_at))
+        prayer_logs = data["prayerLogs"]
+        if not prayer_logs:
+            # Empty dict means "clear all"
+            q_del = delete(PrayerLog)
+            if user_id is not None:
+                q_del = q_del.filter(PrayerLog.user_id == user_id)
+            await db.execute(q_del)
+        else:
+            for d_str, prayers in prayer_logs.items():
+                await db.execute(delete(PrayerLog).filter(PrayerLog.date == d_str))
+                for p_name, value in prayers.items():
+                    if value is None or value is False:
+                        is_completed = 0
+                        completed_at = None
+                    elif isinstance(value, dict):
+                        is_completed = 1 if value.get("completedAt") else 0
+                        completed_at = value.get("completedAt")
+                    else:
+                        is_completed = 1 if value else 0
+                        completed_at = None
+                    db.add(PrayerLog(date=d_str, prayer_name=p_name, completed=is_completed, completed_at=completed_at))
 
     if "top3Manual" in data:
         incoming_top3 = data["top3Manual"]
@@ -395,16 +410,24 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
                     ))
 
     if "dailyCompletionLog" in data:
-        for d_str, log in data["dailyCompletionLog"].items():
-            existing = await db.execute(select(DailyCompletionLog).filter(DailyCompletionLog.date == d_str))
-            dc = existing.scalar_one_or_none()
-            score = log.get("score", 0)
-            meta = {k: v for k, v in log.items() if k != "score"}
-            if dc:
-                dc.score = score
-                dc.data = meta
-            else:
-                db.add(DailyCompletionLog(date=d_str, score=score, data=meta))
+        completion_log = data["dailyCompletionLog"]
+        if not completion_log:
+            # Empty dict means "clear all"
+            q_del = delete(DailyCompletionLog)
+            if user_id is not None:
+                q_del = q_del.filter(DailyCompletionLog.user_id == user_id)
+            await db.execute(q_del)
+        else:
+            for d_str, log in completion_log.items():
+                existing = await db.execute(select(DailyCompletionLog).filter(DailyCompletionLog.date == d_str))
+                dc = existing.scalar_one_or_none()
+                score = log.get("score", 0)
+                meta = {k: v for k, v in log.items() if k != "score"}
+                if dc:
+                    dc.score = score
+                    dc.data = meta
+                else:
+                    db.add(DailyCompletionLog(date=d_str, score=score, data=meta))
 
     # Always persist UI keys regardless of whether lifeGoals is in the payload
     for ui_key in ("timelineRoutines", "timelinePanelExpanded", "todayTrainingExpanded", "lockedHabitsCollapsed", "projectExpandedState", "sectionOrder", "activePomodoroTask"):
