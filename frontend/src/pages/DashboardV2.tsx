@@ -336,7 +336,24 @@ export default function DashboardV2(): React.ReactElement {
             try {
               cancelPendingSync();
               useDashboardStore.getState().resetDailyLogs();
-              const cleanState = useDashboardStore.getState();
+              const s = useDashboardStore.getState();
+              const cleanState = {
+                dailyTaskTemplates: s.dailyTaskTemplates,
+                dailyTaskLogs: {},
+                projects: s.projects,
+                prayerLogs: {},
+                top3Manual: s.top3Manual,
+                quickTasks: s.quickTasks,
+                dailyCompletionLog: {},
+                lifeGoals: s.lifeGoals,
+                timelineRoutines: {},
+                timelinePanelExpanded: s.timelinePanelExpanded,
+                todayTrainingExpanded: s.todayTrainingExpanded,
+                lockedHabitsCollapsed: s.lockedHabitsCollapsed,
+                projectExpandedState: s.projectExpandedState,
+                sectionOrder: s.sectionOrder,
+                activePomodoroTask: (s as any).activePomodoroTask ?? null,
+              };
               await saveLocalState(cleanState);
               await clearAllSyncQueue();
               localStorage.removeItem(POMODORO_STORAGE);

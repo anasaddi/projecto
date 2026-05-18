@@ -55,8 +55,25 @@ export function AppLogo({ size = 'md', className = '' }) {
       // 2. Reset Zustand store in-memory FIRST
       const { useDashboardStore } = await import('../store/dashboardStore');
       useDashboardStore.getState().resetDailyLogs();
-      // 3. Write clean state directly to IndexedDB (guarantees no stale logs on reload)
-      const cleanState = useDashboardStore.getState();
+      // 3. Write clean state directly to IndexedDB (only serializable fields — no functions)
+      const s = useDashboardStore.getState();
+      const cleanState = {
+        dailyTaskTemplates: s.dailyTaskTemplates,
+        dailyTaskLogs: {},
+        projects: s.projects,
+        prayerLogs: {},
+        top3Manual: s.top3Manual,
+        quickTasks: s.quickTasks,
+        dailyCompletionLog: {},
+        lifeGoals: s.lifeGoals,
+        timelineRoutines: {},
+        timelinePanelExpanded: s.timelinePanelExpanded,
+        todayTrainingExpanded: s.todayTrainingExpanded,
+        lockedHabitsCollapsed: s.lockedHabitsCollapsed,
+        projectExpandedState: s.projectExpandedState,
+        sectionOrder: s.sectionOrder,
+        activePomodoroTask: s.activePomodoroTask ?? null,
+      };
       await saveLocalState(cleanState);
       await clearAllSyncQueue();
       // 4. Wait for backend reset (max 8s) so DB rows are deleted before reload re-fetches
