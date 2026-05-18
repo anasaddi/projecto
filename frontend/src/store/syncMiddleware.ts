@@ -16,6 +16,14 @@ let bc: BroadcastChannel | null = null;
 let pendingFullState: Record<string, unknown> | null = null;
 let hasPendingPut = false;
 
+/** Call before resetting/reloading to prevent beforeunload beacon from re-uploading stale state. */
+export function cancelPendingSync(): void {
+  pendingFullState = null;
+  hasPendingPut = false;
+  if (syncTimeout) { clearTimeout(syncTimeout); syncTimeout = null; }
+  if (persistTimeout) { clearTimeout(persistTimeout); persistTimeout = null; }
+}
+
 function flushPendingPutViaBeacon(): void {
   if (!hasPendingPut || !pendingFullState) return;
   if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') return;

@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { clearDailyLogsOnly } from '../db/localDb';
+import { cancelPendingSync } from '../store/syncMiddleware';
 
 const TargetIcon = ({ className }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -49,10 +50,12 @@ export function AppLogo({ size = 'md', className = '' }) {
     if (resetting) return;
     setResetting(true);
     try {
-      // 1. Reset Zustand store in-memory FIRST so syncMiddleware cannot PUT stale logs
+      // 1. Cancel any pending debounced PUT / beforeunload beacon
+      cancelPendingSync();
+      // 2. Reset Zustand store in-memory FIRST so syncMiddleware cannot PUT stale logs
       const { useDashboardStore } = await import('../store/dashboardStore');
       useDashboardStore.getState().resetDailyLogs();
-      // 2. Clear IndexedDB logs
+      // 3. Clear IndexedDB logs
       await clearDailyLogsOnly();
       // 3. Wait for backend reset (max 8s) so DB rows are deleted before reload re-fetches
       const { api } = await import('../api/client');

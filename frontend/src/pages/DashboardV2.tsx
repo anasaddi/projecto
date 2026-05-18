@@ -17,6 +17,7 @@ import { DayNavigationButtons } from '../components/dashboard/DayNavigationButto
 import { ConfirmModal } from '../components/ConfirmModal';
 import { HabitSkeleton, ProjectSkeleton, Top3Skeleton, QuickTaskSkeleton } from '../components/dashboard/SkeletonSection';
 import { clearDailyLogsOnly } from '../db/localDb';
+import { cancelPendingSync } from '../store/syncMiddleware';
 
 import {
   toDateKey,
@@ -333,6 +334,7 @@ export default function DashboardV2(): React.ReactElement {
             deleteProject(confirmPayload.projectId);
           } else if (confirmId === 'reset') {
             try {
+              cancelPendingSync();
               useDashboardStore.getState().resetDailyLogs();
               await clearDailyLogsOnly();
               localStorage.removeItem(POMODORO_STORAGE);
