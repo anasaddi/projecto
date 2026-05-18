@@ -214,6 +214,7 @@ class SetLog(Base):
 class Habit(Base):
     __tablename__ = "habits"
     id = Column(String(64), primary_key=True)
+    user_id = Column(String(128), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
     title = Column(String(256), nullable=False)
     locked = Column(Integer, default=0) # 0 = unlocked, 1 = locked
     ordinal = Column(Integer, default=0)
@@ -221,17 +222,20 @@ class Habit(Base):
 class HabitLog(Base):
     __tablename__ = "habit_logs"
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String(128), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
     habit_id = Column(String(64), ForeignKey("habits.id"), nullable=False)
     date = Column(String(10), nullable=False, index=True) # YYYY-MM-DD
     status = Column(Integer, default=0) # 0 = not done, 1 = done
 
     __table_args__ = (
         Index("idx_habit_logs_habit_date", "habit_id", "date"),
+        Index("idx_habit_logs_user_date", "user_id", "date"),
     )
 
 class Project(Base):
     __tablename__ = "projects"
     id = Column(String(64), primary_key=True)
+    user_id = Column(String(128), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
     title = Column(String(256), nullable=False)
     # Se share_id è presente, il progetto è condiviso
     share_id = Column(String(64), ForeignKey("shared_dashboards.share_id"), nullable=True, index=True)
@@ -262,6 +266,7 @@ class Task(Base):
 class QuickTask(Base):
     __tablename__ = "quick_tasks"
     id = Column(String(64), primary_key=True)
+    user_id = Column(String(128), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
     title = Column(String(512), nullable=False)
     done = Column(Integer, default=0)
     deadline = Column(String(10), nullable=True)
@@ -317,6 +322,7 @@ class SharedDashboard(Base):
 class PrayerLog(Base):
     __tablename__ = "prayer_logs"
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String(128), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
     date = Column(String(10), nullable=False, index=True) # YYYY-MM-DD
     prayer_name = Column(String(64), nullable=False)
     completed = Column(Integer, default=0) # 0 = no, 1 = yes
@@ -324,11 +330,13 @@ class PrayerLog(Base):
 
     __table_args__ = (
         Index("idx_prayer_logs_date_name", "date", "prayer_name"),
+        Index("idx_prayer_logs_user_date", "user_id", "date"),
     )
 
 class Top3Item(Base):
     __tablename__ = "top3_items"
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String(128), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
     slot = Column(Integer, nullable=False) # 0, 1, 2
     project_id = Column(String(64), nullable=True)
     task_id = Column(String(64), nullable=True)
@@ -337,19 +345,25 @@ class Top3Item(Base):
     done = Column(Integer, default=0) # for manual items
 
     __table_args__ = (
-        Index("idx_top3_items_slot", "slot", unique=True),
+        Index("idx_top3_items_user_slot", "user_id", "slot", unique=True),
     )
 
 class DailyCompletionLog(Base):
     __tablename__ = "daily_completion_log"
     id = Column(Integer, primary_key=True, index=True)
-    date = Column(String(10), nullable=False, index=True, unique=True) # YYYY-MM-DD
+    user_id = Column(String(128), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+    date = Column(String(10), nullable=False, index=True) # YYYY-MM-DD
     score = Column(Integer, default=0)
     data = Column(JSON, nullable=True, default=dict)
+
+    __table_args__ = (
+        Index("idx_daily_completion_user_date", "user_id", "date", unique=True),
+    )
 
 class LifeGoalTier(Base):
     __tablename__ = "life_goal_tiers"
     id = Column(String(64), primary_key=True)
+    user_id = Column(String(128), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
     name = Column(String(64), nullable=False)
     emoji = Column(String(16), nullable=True)
     color = Column(String(32), nullable=True)

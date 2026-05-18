@@ -132,7 +132,7 @@ def create_app() -> FastAPI:
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request, exc):
-        # GET/PUT dashboard-state: never 500 — return empty state so frontend can use local data
+        # GET dashboard-state: never 500 — return empty state so frontend can use local data
         if "/api/training/dashboard-state" in str(request.url.path) and "at" not in str(request.url.path):
             logger.warning("dashboard-state %s failed, returning empty state: %s", request.method, exc)
             if request.method == "GET":
@@ -150,12 +150,8 @@ def create_app() -> FastAPI:
                     },
                     "updated_at": datetime.now(timezone.utc).isoformat(),
                 }, headers={"X-Degraded": "true"})
-            else:
-                return JSONResponse(status_code=200, content={
-                    "key": "default",
-                    "data": {},
-                    "updated_at": datetime.now(timezone.utc).isoformat(),
-                }, headers={"X-Degraded": "true"})
+            if request.method == "PUT":
+                return JSONResponse(status_code=503, content={"detail": "Dashboard save failed"})
         # GET/PUT shared-dashboard: never 500 — return controlled fallback or save error
         if "/api/training/shared-dashboard" in str(request.url.path):
             logger.warning("shared-dashboard %s failed, returning controlled fallback: %s", request.method, exc)

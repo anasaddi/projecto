@@ -26,7 +26,7 @@ describe('ConfirmModal', () => {
     )
     fireEvent.click(screen.getByRole('button', { name: /conferma/i }))
     expect(onConfirm).toHaveBeenCalledTimes(1)
-    expect(onCancel).toHaveBeenCalledTimes(1)
+    expect(onCancel).toHaveBeenCalledTimes(0)
   })
 
   it('calls onCancel when Annulla is clicked', () => {

@@ -358,10 +358,9 @@ export default function DashboardV2(): React.ReactElement {
               await clearAllSyncQueue();
               localStorage.removeItem(POMODORO_STORAGE);
               const { api } = await import('../api/client');
-              await Promise.race([
-                api.training.resetDailyLogs(),
-                new Promise((resolve) => setTimeout(resolve, 8000)),
-              ]).catch(() => {});
+              // Important: wait for backend reset to complete before reloading,
+              // otherwise old logs may be fetched again and reappear in the heatmap.
+              await api.training.resetDailyLogs();
               window.location.reload();
             } catch (err) {
               console.error('Dashboard reset failed:', err);

@@ -37,15 +37,19 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
     habits_query = select(Habit).order_by(Habit.ordinal)
     if user_id is not None:
         habits_query = habits_query.filter(Habit.user_id == user_id)
+    else:
+        habits_query = habits_query.filter(Habit.user_id.is_(None))
     habits_result = await db.execute(habits_query)
     habits = habits_result.scalars().all()
     dailyTaskTemplates = [{"id": h.id, "title": h.title, "locked": bool(h.locked), "ordinal": h.ordinal} for h in habits]
 
-    # 2. Habit Logs (Bounded to last 60 days) - Filter by user_id if provided
-    sixty_days_ago = (datetime.now(timezone.utc) - timedelta(days=365)).strftime("%Y-%m-%d")
-    logs_query = select(HabitLog).filter(HabitLog.date >= sixty_days_ago)
+    # 2. Habit Logs (Bounded to last 365 days) - Filter by user_id if provided
+    since_date = (datetime.now(timezone.utc) - timedelta(days=365)).strftime("%Y-%m-%d")
+    logs_query = select(HabitLog).filter(HabitLog.date >= since_date)
     if user_id is not None:
         logs_query = logs_query.filter(HabitLog.user_id == user_id)
+    else:
+        logs_query = logs_query.filter(HabitLog.user_id.is_(None))
     logs_result = await db.execute(logs_query)
     logs = logs_result.scalars().all()
     dailyTaskLogs = {}
@@ -57,6 +61,8 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
     projs_query = select(Project).filter(Project.share_id == None).order_by(Project.ordinal, Project.created_at.desc())
     if user_id is not None:
         projs_query = projs_query.filter(Project.user_id == user_id)
+    else:
+        projs_query = projs_query.filter(Project.user_id.is_(None))
     projs_result = await db.execute(projs_query)
     projs = projs_result.scalars().all()
     proj_ids = [p.id for p in projs]
@@ -92,13 +98,17 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
     qt_query = select(QuickTask).order_by(QuickTask.ordinal, QuickTask.created_at.desc())
     if user_id is not None:
         qt_query = qt_query.filter(QuickTask.user_id == user_id)
+    else:
+        qt_query = qt_query.filter(QuickTask.user_id.is_(None))
     qt_result = await db.execute(qt_query)
     quickTasks = [{"id": q.id, "title": q.title, "done": bool(q.done), "deadline": q.deadline, "ordinal": q.ordinal} for q in qt_result.scalars().all()]
 
     # 5. Prayer Logs - Filter by user_id if provided
-    pr_query = select(PrayerLog).filter(PrayerLog.date >= sixty_days_ago)
+    pr_query = select(PrayerLog).filter(PrayerLog.date >= since_date)
     if user_id is not None:
         pr_query = pr_query.filter(PrayerLog.user_id == user_id)
+    else:
+        pr_query = pr_query.filter(PrayerLog.user_id.is_(None))
     pr_result = await db.execute(pr_query)
     pr_logs = pr_result.scalars().all()
     prayerLogs = {}
@@ -116,7 +126,12 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
             prayerLogs[pr.date][pr.prayer_name] = None
 
     # 6. Top3 Items
-    top3_result = await db.execute(select(Top3Item).order_by(Top3Item.slot))
+    top3_query = select(Top3Item).order_by(Top3Item.slot)
+    if user_id is not None:
+        top3_query = top3_query.filter(Top3Item.user_id == user_id)
+    else:
+        top3_query = top3_query.filter(Top3Item.user_id.is_(None))
+    top3_result = await db.execute(top3_query)
     top3_rows = top3_result.scalars().all()
     top3Manual = [None, None, None]
     for tr in top3_rows:
@@ -130,9 +145,11 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
             }
 
     # 7. Daily Completion Log - Filter by user_id if provided
-    dc_query = select(DailyCompletionLog).filter(DailyCompletionLog.date >= sixty_days_ago)  # 365 days
+    dc_query = select(DailyCompletionLog).filter(DailyCompletionLog.date >= since_date)  # 365 days
     if user_id is not None:
         dc_query = dc_query.filter(DailyCompletionLog.user_id == user_id)
+    else:
+        dc_query = dc_query.filter(DailyCompletionLog.user_id.is_(None))
     dc_result = await db.execute(dc_query)
     dc_logs = dc_result.scalars().all()
     dailyCompletionLog = {dc.date: {"score": dc.score, **(dc.data or {})} for dc in dc_logs}
@@ -141,6 +158,8 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
     tiers_query = select(LifeGoalTier).options(selectinload(LifeGoalTier.goals)).order_by(LifeGoalTier.ordinal)
     if user_id is not None:
         tiers_query = tiers_query.filter(LifeGoalTier.user_id == user_id)
+    else:
+        tiers_query = tiers_query.filter(LifeGoalTier.user_id.is_(None))
     tiers_result = await db.execute(tiers_query)
     tiers = tiers_result.scalars().all()
     
@@ -244,20 +263,46 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
     if "dailyTaskTemplates" in data:
         incoming_habit_ids = [str(h["id"]) for h in data["dailyTaskTemplates"]]
         if incoming_habit_ids:
-            await db.execute(delete(HabitLog).filter(HabitLog.habit_id.not_in(incoming_habit_ids)))
-            await db.execute(delete(Habit).filter(Habit.id.not_in(incoming_habit_ids)))
+            del_hl = delete(HabitLog).filter(HabitLog.habit_id.not_in(incoming_habit_ids))
+            del_h = delete(Habit).filter(Habit.id.not_in(incoming_habit_ids))
+            if user_id is not None:
+                del_hl = del_hl.filter(HabitLog.user_id == user_id)
+                del_h = del_h.filter(Habit.user_id == user_id)
+            else:
+                del_hl = del_hl.filter(HabitLog.user_id.is_(None))
+                del_h = del_h.filter(Habit.user_id.is_(None))
+            await db.execute(del_hl)
+            await db.execute(del_h)
         else:
             # DEFENSIVE: incoming is empty — only wipe if DB is also (near-)empty.
             # Otherwise this is almost certainly a partial/buggy payload and
             # blindly deleting everything would cause catastrophic data loss.
-            existing_count_res = await db.execute(select(Habit))
+            existing_count_q = select(Habit)
+            if user_id is not None:
+                existing_count_q = existing_count_q.filter(Habit.user_id == user_id)
+            else:
+                existing_count_q = existing_count_q.filter(Habit.user_id.is_(None))
+            existing_count_res = await db.execute(existing_count_q)
             existing_count = len(existing_count_res.scalars().all())
             if existing_count == 0:
-                await db.execute(delete(HabitLog))
-                await db.execute(delete(Habit))
+                del_hl = delete(HabitLog)
+                del_h = delete(Habit)
+                if user_id is not None:
+                    del_hl = del_hl.filter(HabitLog.user_id == user_id)
+                    del_h = del_h.filter(Habit.user_id == user_id)
+                else:
+                    del_hl = del_hl.filter(HabitLog.user_id.is_(None))
+                    del_h = del_h.filter(Habit.user_id.is_(None))
+                await db.execute(del_hl)
+                await db.execute(del_h)
             # else: skip destructive delete — preserve existing data
             
-        existing_res = await db.execute(select(Habit))
+        existing_q = select(Habit)
+        if user_id is not None:
+            existing_q = existing_q.filter(Habit.user_id == user_id)
+        else:
+            existing_q = existing_q.filter(Habit.user_id.is_(None))
+        existing_res = await db.execute(existing_q)
         existing_habits = {str(h.id): h for h in existing_res.scalars().all()}
         for i, h in enumerate(data["dailyTaskTemplates"]):
             hid = str(h["id"])
@@ -266,29 +311,58 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
                 existing_habits[hid].locked = 1 if h.get("locked") else 0
                 existing_habits[hid].ordinal = h.get("ordinal", i)
             else:
-                db.add(Habit(id=hid, title=h["title"], locked=1 if h.get("locked") else 0, ordinal=h.get("ordinal", i)))
+                db.add(Habit(id=hid, user_id=user_id, title=h["title"], locked=1 if h.get("locked") else 0, ordinal=h.get("ordinal", i)))
     
     if "dailyTaskLogs" in data:
         task_logs = data["dailyTaskLogs"]
         if not task_logs:
-            # Empty dict means "clear all" — HabitLog has no user_id column, delete all
-            await db.execute(delete(HabitLog))
+            del_hl = delete(HabitLog)
+            if user_id is not None:
+                del_hl = del_hl.filter(HabitLog.user_id == user_id)
+            else:
+                del_hl = del_hl.filter(HabitLog.user_id.is_(None))
+            await db.execute(del_hl)
         else:
             # Partial update: only touch dates provided in the payload
             for d_str, logs in task_logs.items():
-                await db.execute(delete(HabitLog).filter(HabitLog.date == d_str))
-                for l in logs: db.add(HabitLog(habit_id=l["id"], date=d_str, status=1 if l.get("done") else 0))
+                del_day = delete(HabitLog).filter(HabitLog.date == d_str)
+                if user_id is not None:
+                    del_day = del_day.filter(HabitLog.user_id == user_id)
+                else:
+                    del_day = del_day.filter(HabitLog.user_id.is_(None))
+                await db.execute(del_day)
+                for l in logs: db.add(HabitLog(user_id=user_id, habit_id=l["id"], date=d_str, status=1 if l.get("done") else 0))
     
     if "quickTasks" in data:
         incoming_qids = [str(q["id"]) for q in data["quickTasks"]]
         if incoming_qids:
-            await db.execute(delete(QuickTask).filter(QuickTask.id.not_in(incoming_qids)))
+            del_qt = delete(QuickTask).filter(QuickTask.id.not_in(incoming_qids))
+            if user_id is not None:
+                del_qt = del_qt.filter(QuickTask.user_id == user_id)
+            else:
+                del_qt = del_qt.filter(QuickTask.user_id.is_(None))
+            await db.execute(del_qt)
         else:
             # DEFENSIVE: same guard as habits — only wipe if DB is empty.
-            existing_count_res = await db.execute(select(QuickTask))
+            existing_count_q = select(QuickTask)
+            if user_id is not None:
+                existing_count_q = existing_count_q.filter(QuickTask.user_id == user_id)
+            else:
+                existing_count_q = existing_count_q.filter(QuickTask.user_id.is_(None))
+            existing_count_res = await db.execute(existing_count_q)
             if len(existing_count_res.scalars().all()) == 0:
-                await db.execute(delete(QuickTask))
-        existing_q_res = await db.execute(select(QuickTask))
+                del_qt = delete(QuickTask)
+                if user_id is not None:
+                    del_qt = del_qt.filter(QuickTask.user_id == user_id)
+                else:
+                    del_qt = del_qt.filter(QuickTask.user_id.is_(None))
+                await db.execute(del_qt)
+        existing_q_q = select(QuickTask)
+        if user_id is not None:
+            existing_q_q = existing_q_q.filter(QuickTask.user_id == user_id)
+        else:
+            existing_q_q = existing_q_q.filter(QuickTask.user_id.is_(None))
+        existing_q_res = await db.execute(existing_q_q)
         existing_qs = {str(q.id): q for q in existing_q_res.scalars().all()}
         for i, q in enumerate(data["quickTasks"]):
             qid = str(q["id"])
@@ -298,7 +372,7 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
                 existing_qs[qid].deadline = q.get("deadline")
                 existing_qs[qid].ordinal = i
             else:
-                db.add(QuickTask(id=qid, title=q["title"], done=1 if q.get("done") else 0, deadline=q.get("deadline"), ordinal=i))
+                db.add(QuickTask(id=qid, user_id=user_id, title=q["title"], done=1 if q.get("done") else 0, deadline=q.get("deadline"), ordinal=i))
     
     if "projects" in data:
         p_data = data["projects"]
@@ -306,13 +380,23 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
         
         # Only delete projects if "projects" key exists in payload (guard empty list for not_in)
         if inc_proj_ids:
-            deleted_p_res = await db.execute(select(Project.id).filter(Project.share_id == None, Project.id.not_in(inc_proj_ids)))
+            deleted_q = select(Project.id).filter(Project.share_id == None, Project.id.not_in(inc_proj_ids))
+            if user_id is not None:
+                deleted_q = deleted_q.filter(Project.user_id == user_id)
+            else:
+                deleted_q = deleted_q.filter(Project.user_id.is_(None))
+            deleted_p_res = await db.execute(deleted_q)
             deleted_p_ids = deleted_p_res.scalars().all()
         else:
             # DEFENSIVE: incoming is empty — only wipe if DB has no personal
             # projects (fresh state). Otherwise this is almost certainly a
             # buggy partial payload; skip destructive delete.
-            existing_personal_res = await db.execute(select(Project.id).filter(Project.share_id == None))
+            existing_personal_q = select(Project.id).filter(Project.share_id == None)
+            if user_id is not None:
+                existing_personal_q = existing_personal_q.filter(Project.user_id == user_id)
+            else:
+                existing_personal_q = existing_personal_q.filter(Project.user_id.is_(None))
+            existing_personal_res = await db.execute(existing_personal_q)
             existing_personal_ids = existing_personal_res.scalars().all()
             if len(existing_personal_ids) == 0:
                 deleted_p_ids = []
@@ -322,7 +406,12 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
             await db.execute(delete(Task).filter(Task.project_id.in_(deleted_p_ids)))
             await db.execute(delete(Project).filter(Project.id.in_(deleted_p_ids)))
 
-        ex_p_res = await db.execute(select(Project).filter(Project.share_id == None))
+        ex_p_q = select(Project).filter(Project.share_id == None)
+        if user_id is not None:
+            ex_p_q = ex_p_q.filter(Project.user_id == user_id)
+        else:
+            ex_p_q = ex_p_q.filter(Project.user_id.is_(None))
+        ex_p_res = await db.execute(ex_p_q)
         ex_projs = {str(p.id): p for p in ex_p_res.scalars().all()}
         
         # Prefetch tasks to avoid many small queries
@@ -335,7 +424,7 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
                 ex_projs[pid].title = p["title"]
                 ex_projs[pid].ordinal = i
             else:
-                db.add(Project(id=pid, title=p["title"], share_id=None, ordinal=i))
+                db.add(Project(id=pid, user_id=user_id, title=p["title"], share_id=None, ordinal=i))
             
             inc_task_ids = []
             def collect_tasks(tasks_list):
@@ -367,11 +456,20 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
     if "prayerLogs" in data:
         prayer_logs = data["prayerLogs"]
         if not prayer_logs:
-            # Empty dict means "clear all" — PrayerLog has no user_id column, delete all
-            await db.execute(delete(PrayerLog))
+            del_pr = delete(PrayerLog)
+            if user_id is not None:
+                del_pr = del_pr.filter(PrayerLog.user_id == user_id)
+            else:
+                del_pr = del_pr.filter(PrayerLog.user_id.is_(None))
+            await db.execute(del_pr)
         else:
             for d_str, prayers in prayer_logs.items():
-                await db.execute(delete(PrayerLog).filter(PrayerLog.date == d_str))
+                del_day = delete(PrayerLog).filter(PrayerLog.date == d_str)
+                if user_id is not None:
+                    del_day = del_day.filter(PrayerLog.user_id == user_id)
+                else:
+                    del_day = del_day.filter(PrayerLog.user_id.is_(None))
+                await db.execute(del_day)
                 for p_name, value in prayers.items():
                     if value is None or value is False:
                         is_completed = 0
@@ -382,7 +480,7 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
                     else:
                         is_completed = 1 if value else 0
                         completed_at = None
-                    db.add(PrayerLog(date=d_str, prayer_name=p_name, completed=is_completed, completed_at=completed_at))
+                    db.add(PrayerLog(user_id=user_id, date=d_str, prayer_name=p_name, completed=is_completed, completed_at=completed_at))
 
     if "top3Manual" in data:
         incoming_top3 = data["top3Manual"]
@@ -391,10 +489,16 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
         # partial/buggy payload — skip the destructive delete.
         is_valid_shape = isinstance(incoming_top3, list) and len(incoming_top3) == 3
         if is_valid_shape:
-            await db.execute(delete(Top3Item))
+            del_top3 = delete(Top3Item)
+            if user_id is not None:
+                del_top3 = del_top3.filter(Top3Item.user_id == user_id)
+            else:
+                del_top3 = del_top3.filter(Top3Item.user_id.is_(None))
+            await db.execute(del_top3)
             for i, item in enumerate(incoming_top3):
                 if item:
                     db.add(Top3Item(
+                        user_id=user_id,
                         slot=i,
                         project_id=item.get("projectId"),
                         task_id=item.get("taskId"),
@@ -406,11 +510,20 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
     if "dailyCompletionLog" in data:
         completion_log = data["dailyCompletionLog"]
         if not completion_log:
-            # Empty dict means "clear all" — DailyCompletionLog has no user_id column, delete all
-            await db.execute(delete(DailyCompletionLog))
+            del_dc = delete(DailyCompletionLog)
+            if user_id is not None:
+                del_dc = del_dc.filter(DailyCompletionLog.user_id == user_id)
+            else:
+                del_dc = del_dc.filter(DailyCompletionLog.user_id.is_(None))
+            await db.execute(del_dc)
         else:
             for d_str, log in completion_log.items():
-                existing = await db.execute(select(DailyCompletionLog).filter(DailyCompletionLog.date == d_str))
+                existing_q = select(DailyCompletionLog).filter(DailyCompletionLog.date == d_str)
+                if user_id is not None:
+                    existing_q = existing_q.filter(DailyCompletionLog.user_id == user_id)
+                else:
+                    existing_q = existing_q.filter(DailyCompletionLog.user_id.is_(None))
+                existing = await db.execute(existing_q)
                 dc = existing.scalar_one_or_none()
                 score = log.get("score", 0)
                 meta = {k: v for k, v in log.items() if k != "score"}
@@ -418,7 +531,7 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
                     dc.score = score
                     dc.data = meta
                 else:
-                    db.add(DailyCompletionLog(date=d_str, score=score, data=meta))
+                    db.add(DailyCompletionLog(user_id=user_id, date=d_str, score=score, data=meta))
 
     # Always persist UI keys regardless of whether lifeGoals is in the payload
     for ui_key in ("timelineRoutines", "timelinePanelExpanded", "todayTrainingExpanded", "lockedHabitsCollapsed", "projectExpandedState", "sectionOrder", "activePomodoroTask"):
@@ -426,31 +539,54 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
             merged = _parse_json(ds.data, {})
             merged[ui_key] = data[ui_key]
             ds.data = merged
-
     if "lifeGoals" in data:
         lg = data["lifeGoals"]
         merged = _parse_json(ds.data, {})
-        if "lifeGoals" not in merged: merged["lifeGoals"] = {}
+        if "lifeGoals" not in merged:
+            merged["lifeGoals"] = {}
         merged["lifeGoals"]["collapsed"] = lg.get("collapsed", False)
         ds.data = merged
 
         if "tiers" in lg:
             incoming_tier_ids = [str(t["id"]) for t in lg["tiers"]]
-            # Careful: deleting goals first due to FK (guard empty list for not_in)
             if incoming_tier_ids:
-                await db.execute(delete(LifeGoal).filter(LifeGoal.tier_id.not_in(incoming_tier_ids)))
-                await db.execute(delete(LifeGoalTier).filter(LifeGoalTier.id.not_in(incoming_tier_ids)))
+                del_goals = delete(LifeGoal).filter(LifeGoal.tier_id.not_in(incoming_tier_ids))
+                del_tiers = delete(LifeGoalTier).filter(LifeGoalTier.id.not_in(incoming_tier_ids))
+                if user_id is not None:
+                    del_tiers = del_tiers.filter(LifeGoalTier.user_id == user_id)
+                    del_goals = del_goals.filter(LifeGoal.tier_id.in_(select(LifeGoalTier.id).filter(LifeGoalTier.user_id == user_id)))
+                else:
+                    del_tiers = del_tiers.filter(LifeGoalTier.user_id.is_(None))
+                    del_goals = del_goals.filter(LifeGoal.tier_id.in_(select(LifeGoalTier.id).filter(LifeGoalTier.user_id.is_(None))))
+                await db.execute(del_goals)
+                await db.execute(del_tiers)
             else:
-                # DEFENSIVE: only wipe tiers/goals if DB is already empty.
-                existing_tiers_res = await db.execute(select(LifeGoalTier))
+                existing_tiers_q = select(LifeGoalTier)
+                if user_id is not None:
+                    existing_tiers_q = existing_tiers_q.filter(LifeGoalTier.user_id == user_id)
+                else:
+                    existing_tiers_q = existing_tiers_q.filter(LifeGoalTier.user_id.is_(None))
+                existing_tiers_res = await db.execute(existing_tiers_q)
                 if len(existing_tiers_res.scalars().all()) == 0:
-                    await db.execute(delete(LifeGoal))
-                    await db.execute(delete(LifeGoalTier))
-                # else: skip — preserve existing tiers/goals
-            
-            ex_tiers_res = await db.execute(select(LifeGoalTier))
+                    del_lg = delete(LifeGoal)
+                    del_tiers = delete(LifeGoalTier)
+                    if user_id is not None:
+                        del_lg = del_lg.filter(LifeGoal.tier_id.in_(select(LifeGoalTier.id).filter(LifeGoalTier.user_id == user_id)))
+                        del_tiers = del_tiers.filter(LifeGoalTier.user_id == user_id)
+                    else:
+                        del_lg = del_lg.filter(LifeGoal.tier_id.in_(select(LifeGoalTier.id).filter(LifeGoalTier.user_id.is_(None))))
+                        del_tiers = del_tiers.filter(LifeGoalTier.user_id.is_(None))
+                    await db.execute(del_lg)
+                    await db.execute(del_tiers)
+
+            ex_tiers_q = select(LifeGoalTier)
+            if user_id is not None:
+                ex_tiers_q = ex_tiers_q.filter(LifeGoalTier.user_id == user_id)
+            else:
+                ex_tiers_q = ex_tiers_q.filter(LifeGoalTier.user_id.is_(None))
+            ex_tiers_res = await db.execute(ex_tiers_q)
             ex_tiers = {str(t.id): t for t in ex_tiers_res.scalars().all()}
-            
+
             for i, t in enumerate(lg["tiers"]):
                 tid = str(t["id"])
                 if tid in ex_tiers:
@@ -460,15 +596,14 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
                     ex_tiers[tid].collapsed = 1 if t.get("collapsed") else 0
                     ex_tiers[tid].ordinal = i
                 else:
-                    db.add(LifeGoalTier(id=tid, name=t["name"], emoji=t.get("emoji"), 
-                                       color=t.get("color"), collapsed=1 if t.get("collapsed") else 0, ordinal=i))
-                
+                    db.add(LifeGoalTier(id=tid, user_id=user_id, name=t["name"], emoji=t.get("emoji"), color=t.get("color"), collapsed=1 if t.get("collapsed") else 0, ordinal=i))
+
                 inc_goal_ids = [str(g["id"]) for g in t.get("goals", [])]
                 await db.execute(delete(LifeGoal).filter(LifeGoal.tier_id == tid, LifeGoal.id.not_in(inc_goal_ids)))
-                
+
                 ex_goals_res = await db.execute(select(LifeGoal).filter(LifeGoal.tier_id == tid))
                 ex_goals = {str(g.id): g for g in ex_goals_res.scalars().all()}
-                
+
                 for j, g in enumerate(t.get("goals", [])):
                     gid = str(g["id"])
                     if gid in ex_goals:
@@ -479,10 +614,7 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
                         ex_goals[gid].deadline = g.get("deadline")
                         ex_goals[gid].ordinal = j
                     else:
-                        db.add(LifeGoal(id=gid, tier_id=tid, title=g["title"], category=g.get("category"),
-                                        type=g.get("type"), done=1 if g.get("done") else 0, 
-                                        deadline=g.get("deadline"), ordinal=j))
-
+                        db.add(LifeGoal(id=gid, tier_id=tid, title=g["title"], category=g.get("category"), type=g.get("type"), done=1 if g.get("done") else 0, deadline=g.get("deadline"), ordinal=j))
     # Event Sourcing: strip large log arrays to keep event payload small, then append async-style
     try:
         from app.services.event_sourcing import append_dashboard_event
@@ -882,3 +1014,4 @@ async def add_chat_message(db: AsyncSession, share_id: str, msg_data: dict):
         "text": new_msg.text,
         "timestamp": int(new_msg.timestamp.timestamp()*1000)
     }
+

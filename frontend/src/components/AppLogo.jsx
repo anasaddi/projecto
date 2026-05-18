@@ -76,12 +76,9 @@ export function AppLogo({ size = 'md', className = '' }) {
       };
       await saveLocalState(cleanState);
       await clearAllSyncQueue();
-      // 4. Wait for backend reset (max 8s) so DB rows are deleted before reload re-fetches
+      // 4. Wait for backend reset completion before reload, otherwise stale data can come back on sync
       const { api } = await import('../api/client');
-      await Promise.race([
-        api.training.resetDailyLogs(),
-        new Promise((resolve) => setTimeout(resolve, 8000)),
-      ]).catch(() => {});
+      await api.training.resetDailyLogs();
       window.location.reload();
     } catch (err) {
       console.error('Reset failed:', err);

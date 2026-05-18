@@ -331,16 +331,7 @@ async def update_dashboard_state(
         return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
     except Exception as e:
         logger.exception("update_dashboard_state failed: %s", e)
-        fallback_data = body.data if isinstance(body.data, dict) else {}
-        return Response(
-            content=json.dumps({
-                "key": "default",
-                "data": fallback_data,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            }),
-            media_type="application/json",
-            headers={"X-Degraded": "true"},
-        )
+        raise HTTPException(status_code=503, detail="Dashboard save failed")
 
 # --- Batch Operations ---
 
@@ -354,10 +345,17 @@ async def reset_daily_logs(
     from app.cache import invalidate_dashboard, set_cached_dashboard
 
     try:
-        # HabitLog, PrayerLog, DailyCompletionLog have no user_id column — delete all rows
-        await db.execute(delete(HabitLog))
-        await db.execute(delete(PrayerLog))
-        await db.execute(delete(DailyCompletionLog))
+        # Scoped deletes by user_id when available
+        del_h = delete(HabitLog)
+        del_p = delete(PrayerLog)
+        del_d = delete(DailyCompletionLog)
+        if user_id is not None:
+            del_h = del_h.filter(HabitLog.user_id == user_id)
+            del_p = del_p.filter(PrayerLog.user_id == user_id)
+            del_d = del_d.filter(DailyCompletionLog.user_id == user_id)
+        await db.execute(del_h)
+        await db.execute(del_p)
+        await db.execute(del_d)
 
         # Clear timelineRoutines from DashboardState JSON blob
         from app.repositories.dashboard import DashboardState
@@ -377,8 +375,16 @@ async def reset_daily_logs(
             data["prayerLogs"] = {}
             data["dailyCompletionLog"] = {}
             data["timelineRoutines"] = {}
+            data["top3Manual"] = [None, None, None]
             ds.data = data
             flag_modified(ds, "data")
+
+        # Also clear Top3 slots scoped for user
+        from app.repositories.dashboard import Top3Item
+        del_top3 = delete(Top3Item)
+        if user_id is not None:
+            del_top3 = del_top3.filter(Top3Item.user_id == user_id)
+        await db.execute(del_top3)
 
         # Invalidate Redis BEFORE commit so any concurrent GET misses cache and hits DB
         await invalidate_dashboard(user_id)
@@ -397,7 +403,7 @@ async def reset_daily_logs(
     except Exception as e:
         logger.exception("reset_daily_logs failed: %s", e)
         await db.rollback()
-        return JSONResponse(status_code=200, content={"key": "default", "data": {}, "updated_at": datetime.now(timezone.utc).isoformat()}, headers={"X-Degraded": "true"})
+        return JSONResponse(status_code=503, content={"detail": "Daily reset failed"})
 
 @router.patch("/dashboard-state/batch", dependencies=[Depends(get_current_admin)])
 async def batch_update_dashboard(body: dict, db: AsyncSession = Depends(get_db)):
@@ -619,12 +625,12 @@ async def get_shared_write_access(
     except HTTPException:
         raise
     except Exception as e:
-        logger.exception("Shared write access check failed for %s, allowing write to proceed: %s", share_id, e)
+        logger.exception("Shared write access check failed for %s: %s", share_id, e)
         try:
             await db.rollback()
         except Exception:
             pass
-        return True
+        raise HTTPException(status_code=503, detail="Impossibile verificare i permessi di scrittura")
 
 @router.put("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut)
 async def update_shared_dashboard(
