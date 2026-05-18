@@ -335,7 +335,11 @@ export default function DashboardV2(): React.ReactElement {
             try {
               await clearDailyLogsOnly();
               localStorage.removeItem(POMODORO_STORAGE);
-              import('../api/client').then(({ api }) => api.training.resetDailyLogs().catch(() => {}));
+              const { api } = await import('../api/client');
+              await Promise.race([
+                api.training.resetDailyLogs(),
+                new Promise((resolve) => setTimeout(resolve, 8000)),
+              ]).catch(() => {});
               window.location.reload();
             } catch (err) {
               console.error('Dashboard reset failed:', err);

@@ -377,12 +377,14 @@ async def reset_daily_logs(
 
         if ds:
             from app.repositories.dashboard import _parse_json
-            data = _parse_json(ds.data, {}) or {}
-            if "timelineRoutines" in data:
-                data["timelineRoutines"] = {}
-                ds.data = data
-                from sqlalchemy.orm.attributes import flag_modified
-                flag_modified(ds, "data")
+            from sqlalchemy.orm.attributes import flag_modified
+            data = dict(_parse_json(ds.data, {}) or {})
+            data["dailyTaskLogs"] = {}
+            data["prayerLogs"] = {}
+            data["dailyCompletionLog"] = {}
+            data["timelineRoutines"] = {}
+            ds.data = data
+            flag_modified(ds, "data")
 
         await db.commit()
 

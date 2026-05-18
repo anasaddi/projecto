@@ -49,10 +49,14 @@ export function AppLogo({ size = 'md', className = '' }) {
     if (resetting) return;
     setResetting(true);
     try {
-      // Reset only daily logs — projects/habits/quickTasks preserved
+      // Reset only daily logs locally — projects/habits/quickTasks preserved
       await clearDailyLogsOnly();
-      // Fire-and-forget backend reset (don't block reload if server is cold)
-      import('../api/client').then(({ api }) => api.training.resetDailyLogs().catch(() => {}));
+      // Wait for backend reset (max 8s) so DB rows are deleted before reload re-fetches
+      const { api } = await import('../api/client');
+      await Promise.race([
+        api.training.resetDailyLogs(),
+        new Promise((resolve) => setTimeout(resolve, 8000)),
+      ]).catch(() => {});
       window.location.reload();
     } catch (err) {
       console.error('Reset failed:', err);
