@@ -8,6 +8,7 @@ Create Date: 2026-05-03
 from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import inspect
 
 
 # revision identifiers, used by Alembic.
@@ -18,10 +19,19 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Add nullable completed_at column — existing rows keep NULL (no data loss)
-    # Uses IF NOT EXISTS for idempotency (safe to re-run)
-    op.execute("ALTER TABLE prayer_logs ADD COLUMN IF NOT EXISTS completed_at VARCHAR(64)")
+    bind = op.get_bind()
+    inspector = inspect(bind)
+    columns = [c["name"] for c in inspector.get_columns("prayer_logs")]
+    if "completed_at" not in columns:
+        with op.batch_alter_table("prayer_logs") as batch_op:
+            batch_op.add_column(sa.Column("completed_at", sa.String(length=64), nullable=True))
 
 
 def downgrade() -> None:
-    op.drop_column('prayer_logs', 'completed_at')
+    bind = op.get_bind()
+    inspector = inspect(bind)
+    columns = [c["name"] for c in inspector.get_columns("prayer_logs")]
+    if "completed_at" in columns:
+        with op.batch_alter_table("prayer_logs") as batch_op:
+            batch_op.drop_column("completed_at")
+

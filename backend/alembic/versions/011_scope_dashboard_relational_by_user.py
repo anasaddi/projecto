@@ -8,6 +8,7 @@ Create Date: 2026-05-18
 from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import inspect
 
 
 revision: str = "011_scope_dashboard_relational_by_user"
@@ -16,48 +17,98 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-def _add_user_id(table: str) -> None:
-    op.add_column(table, sa.Column("user_id", sa.String(length=128), nullable=True))
-    op.create_foreign_key(
-        f"fk_{table}_user_id",
-        table,
-        "users",
-        ["user_id"],
-        ["id"],
-        ondelete="CASCADE",
-    )
-    op.create_index(f"ix_{table}_user_id", table, ["user_id"], unique=False)
-
-
 def upgrade() -> None:
-    _add_user_id("habits")
-    _add_user_id("habit_logs")
-    _add_user_id("projects")
-    _add_user_id("quick_tasks")
-    _add_user_id("prayer_logs")
-    _add_user_id("top3_items")
-    _add_user_id("daily_completion_log")
-    _add_user_id("life_goal_tiers")
+    bind = op.get_bind()
+    inspector = inspect(bind)
 
-    op.create_index("idx_habit_logs_user_date", "habit_logs", ["user_id", "date"], unique=False)
-    op.create_index("idx_prayer_logs_user_date", "prayer_logs", ["user_id", "date"], unique=False)
+    def _add_user_id(table: str) -> None:
+        columns = [c["name"] for c in inspector.get_columns(table)]
+        
+        with op.batch_alter_table(table) as batch_op:
+            if "user_id" not in columns:
+                batch_op.add_column(sa.Column("user_id", sa.String(length=128), nullable=True))
+            
+            fks = inspector.get_foreign_keys(table)
+            fk_names = [fk["name"] for fk in fks if fk.get("name")]
+            expected_fk = f"fk_{table}_user_id"
+            if expected_fk not in fk_names:
+                batch_op.create_foreign_key(
+                    expected_fk,
+                    "users",
+                    ["user_id"],
+                    ["id"],
+                    ondelete="CASCADE",
+                )
+            
+            indexes = [idx["name"] for idx in inspector.get_indexes(table)]
+            expected_idx = f"ix_{table}_user_id"
+            if expected_idx not in indexes:
+                batch_op.create_index(expected_idx, ["user_id"], unique=False)
 
-    op.drop_index("idx_top3_items_slot", table_name="top3_items")
-    op.create_index("idx_top3_items_user_slot", "top3_items", ["user_id", "slot"], unique=True)
+    for table in (
+        "habits",
+        "habit_logs",
+        "projects",
+        "quick_tasks",
+        "prayer_logs",
+        "top3_items",
+        "daily_completion_log",
+        "life_goal_tiers",
+    ):
+        _add_user_id(table)
 
-    op.drop_index(op.f("ix_daily_completion_log_date"), table_name="daily_completion_log")
-    op.create_index("idx_daily_completion_user_date", "daily_completion_log", ["user_id", "date"], unique=True)
+    habit_logs_indexes = [idx["name"] for idx in inspector.get_indexes("habit_logs")]
+    if "idx_habit_logs_user_date" not in habit_logs_indexes:
+        with op.batch_alter_table("habit_logs") as batch_op:
+            batch_op.create_index("idx_habit_logs_user_date", ["user_id", "date"], unique=False)
+
+    prayer_logs_indexes = [idx["name"] for idx in inspector.get_indexes("prayer_logs")]
+    if "idx_prayer_logs_user_date" not in prayer_logs_indexes:
+        with op.batch_alter_table("prayer_logs") as batch_op:
+            batch_op.create_index("idx_prayer_logs_user_date", ["user_id", "date"], unique=False)
+
+    top3_indexes = [idx["name"] for idx in inspector.get_indexes("top3_items")]
+    with op.batch_alter_table("top3_items") as batch_op:
+        if "idx_top3_items_slot" in top3_indexes:
+            batch_op.drop_index("idx_top3_items_slot")
+        if "idx_top3_items_user_slot" not in top3_indexes:
+            batch_op.create_index("idx_top3_items_user_slot", ["user_id", "slot"], unique=True)
+
+    daily_indexes = [idx["name"] for idx in inspector.get_indexes("daily_completion_log")]
+    with op.batch_alter_table("daily_completion_log") as batch_op:
+        if "ix_daily_completion_log_date" in daily_indexes:
+            batch_op.drop_index("ix_daily_completion_log_date")
+        if "idx_daily_completion_user_date" not in daily_indexes:
+            batch_op.create_index("idx_daily_completion_user_date", ["user_id", "date"], unique=True)
 
 
 def downgrade() -> None:
-    op.drop_index("idx_daily_completion_user_date", table_name="daily_completion_log")
-    op.create_index(op.f("ix_daily_completion_log_date"), "daily_completion_log", ["date"], unique=True)
+    bind = op.get_bind()
+    inspector = inspect(bind)
 
-    op.drop_index("idx_top3_items_user_slot", table_name="top3_items")
-    op.create_index("idx_top3_items_slot", "top3_items", ["slot"], unique=True)
+    daily_indexes = [idx["name"] for idx in inspector.get_indexes("daily_completion_log")]
+    with op.batch_alter_table("daily_completion_log") as batch_op:
+        if "idx_daily_completion_user_date" in daily_indexes:
+            batch_op.drop_index("idx_daily_completion_user_date")
+        if "ix_daily_completion_log_date" not in daily_indexes:
+            batch_op.create_index("ix_daily_completion_log_date", ["date"], unique=True)
 
-    op.drop_index("idx_prayer_logs_user_date", table_name="prayer_logs")
-    op.drop_index("idx_habit_logs_user_date", table_name="habit_logs")
+    top3_indexes = [idx["name"] for idx in inspector.get_indexes("top3_items")]
+    with op.batch_alter_table("top3_items") as batch_op:
+        if "idx_top3_items_user_slot" in top3_indexes:
+            batch_op.drop_index("idx_top3_items_user_slot")
+        if "idx_top3_items_slot" not in top3_indexes:
+            batch_op.create_index("idx_top3_items_slot", ["slot"], unique=True)
+
+    prayer_logs_indexes = [idx["name"] for idx in inspector.get_indexes("prayer_logs")]
+    if "idx_prayer_logs_user_date" in prayer_logs_indexes:
+        with op.batch_alter_table("prayer_logs") as batch_op:
+            batch_op.drop_index("idx_prayer_logs_user_date")
+
+    habit_logs_indexes = [idx["name"] for idx in inspector.get_indexes("habit_logs")]
+    if "idx_habit_logs_user_date" in habit_logs_indexes:
+        with op.batch_alter_table("habit_logs") as batch_op:
+            batch_op.drop_index("idx_habit_logs_user_date")
 
     for table in (
         "life_goal_tiers",
@@ -69,6 +120,20 @@ def downgrade() -> None:
         "habit_logs",
         "habits",
     ):
-        op.drop_index(f"ix_{table}_user_id", table_name=table)
-        op.drop_constraint(f"fk_{table}_user_id", table, type_="foreignkey")
-        op.drop_column(table, "user_id")
+        columns = [c["name"] for c in inspector.get_columns(table)]
+        fks = inspector.get_foreign_keys(table)
+        fk_names = [fk["name"] for fk in fks if fk.get("name")]
+        indexes = [idx["name"] for idx in inspector.get_indexes(table)]
+        
+        with op.batch_alter_table(table) as batch_op:
+            expected_idx = f"ix_{table}_user_id"
+            if expected_idx in indexes:
+                batch_op.drop_index(expected_idx)
+                
+            expected_fk = f"fk_{table}_user_id"
+            if expected_fk in fk_names:
+                batch_op.drop_constraint(expected_fk, type_="foreignkey")
+                
+            if "user_id" in columns:
+                batch_op.drop_column("user_id")
+
