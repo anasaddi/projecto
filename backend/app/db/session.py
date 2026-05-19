@@ -63,7 +63,13 @@ async def get_db():
     async with AsyncSessionLocal() as session:
         try:
             yield session
-            await session.commit()
+            try:
+                if session.is_active:
+                    await session.commit()
+            except Exception as commit_exc:
+                import logging
+                logging.getLogger("km.db").warning("Session commit failed in get_db cleanup: %s", commit_exc)
+                await session.rollback()
         except Exception:
             await session.rollback()
             raise

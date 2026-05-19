@@ -1,6 +1,6 @@
 """Scope dashboard relational tables by user_id
 
-Revision ID: 011_scope_dashboard_relational_by_user
+Revision ID: 011_scope_dashboard_user
 Revises: 010_prayer_completed_at
 Create Date: 2026-05-18
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy import inspect
 
 
-revision: str = "011_scope_dashboard_relational_by_user"
+revision: str = "011_scope_dashboard_user"
 down_revision: Union[str, None] = "010_prayer_completed_at"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
