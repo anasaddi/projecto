@@ -16,8 +16,7 @@ import { TodayCardDashboard } from '../components/dashboard/TodayCardDashboard';
 import { DayNavigationButtons } from '../components/dashboard/DayNavigationButtons';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { HabitSkeleton, ProjectSkeleton, Top3Skeleton, QuickTaskSkeleton } from '../components/dashboard/SkeletonSection';
-import { saveLocalState, clearAllSyncQueue } from '../db/localDb';
-import { cancelPendingSync } from '../store/syncMiddleware';
+import { performDashboardDailyLogsReset } from '../utils/resetDashboardDailyLogs';
 
 import {
   toDateKey,
@@ -27,7 +26,6 @@ import {
   startOfMonth,
   formatCountdown,
   resolveTop3Slots,
-  POMODORO_STORAGE,
   parseSelectedDate,
 } from '../components/dashboard/DashboardUtils';
 import { useDashboardSync } from '../hooks/useDashboardSync';
@@ -334,33 +332,7 @@ export default function DashboardV2(): React.ReactElement {
             deleteProject(confirmPayload.projectId);
           } else if (confirmId === 'reset') {
             try {
-              cancelPendingSync();
-              useDashboardStore.getState().resetDailyLogs();
-              const s = useDashboardStore.getState();
-              const cleanState = {
-                dailyTaskTemplates: s.dailyTaskTemplates,
-                dailyTaskLogs: {},
-                projects: s.projects,
-                prayerLogs: {},
-                top3Manual: s.top3Manual,
-                quickTasks: s.quickTasks,
-                dailyCompletionLog: {},
-                lifeGoals: s.lifeGoals,
-                timelineRoutines: {},
-                timelinePanelExpanded: s.timelinePanelExpanded,
-                todayTrainingExpanded: s.todayTrainingExpanded,
-                lockedHabitsCollapsed: s.lockedHabitsCollapsed,
-                projectExpandedState: s.projectExpandedState,
-                sectionOrder: s.sectionOrder,
-                activePomodoroTask: (s as any).activePomodoroTask ?? null,
-              };
-              await saveLocalState(cleanState);
-              await clearAllSyncQueue();
-              localStorage.removeItem(POMODORO_STORAGE);
-              const { api } = await import('../api/client');
-              // Important: wait for backend reset to complete before reloading,
-              // otherwise old logs may be fetched again and reappear in the heatmap.
-              await api.training.resetDailyLogs();
+              await performDashboardDailyLogsReset();
               window.location.reload();
             } catch (err) {
               console.error('Dashboard reset failed:', err);

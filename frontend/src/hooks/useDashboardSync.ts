@@ -5,6 +5,7 @@ import { getSharedDashboardWsUrl } from '../config';
 import { useDashboardStore } from '../store/dashboardStore';
 import { extractDashboardPayload, hasMeaningfulDashboardData } from '../utils/dashboardState';
 import { agentDebugLog, sampleMayDayLogs } from '../utils/agentDebugLog';
+import { DASHBOARD_LOGS_RESET_FLAG } from '../utils/resetDashboardDailyLogs';
 
 /**
  * Handles dashboard initial load: hydrate from IndexedDB if localStorage empty,
@@ -99,7 +100,9 @@ export function useDashboardSync(): void {
               habits: sampleMayDayLogs(st.dailyTaskLogs),
               completion: sampleMayDayLogs(st.dailyCompletionLog),
             },
-          }, 'B');
+            logsResetPending: sessionStorage.getItem(DASHBOARD_LOGS_RESET_FLAG) === '1',
+          }, 'B', 'post-fix');
+          sessionStorage.removeItem(DASHBOARD_LOGS_RESET_FLAG);
         }
         // #endregion
       } catch (err) {

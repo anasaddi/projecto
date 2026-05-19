@@ -1,9 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { saveLocalState, clearAllSyncQueue } from '../db/localDb';
-import { cancelPendingSync } from '../store/syncMiddleware';
-import { agentDebugLog, sampleMayDayLogs } from '../utils/agentDebugLog';
-import { STORAGE_KEY } from './dashboard/DashboardUtils';
+import { performDashboardDailyLogsReset } from '../utils/resetDashboardDailyLogs';
 
 const TargetIcon = ({ className }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -52,68 +49,7 @@ export function AppLogo({ size = 'md', className = '' }) {
     if (resetting) return;
     setResetting(true);
     try {
-      // 1. Cancel any pending debounced PUT / beforeunload beacon
-      cancelPendingSync();
-      // 2. Reset Zustand store in-memory FIRST
-      const { useDashboardStore } = await import('../store/dashboardStore');
-      useDashboardStore.getState().resetDailyLogs();
-      // 3. Write clean state directly to IndexedDB (only serializable fields — no functions)
-      const s = useDashboardStore.getState();
-      const cleanState = {
-        dailyTaskTemplates: s.dailyTaskTemplates,
-        dailyTaskLogs: {},
-        projects: s.projects,
-        prayerLogs: {},
-        top3Manual: s.top3Manual,
-        quickTasks: s.quickTasks,
-        dailyCompletionLog: {},
-        lifeGoals: s.lifeGoals,
-        timelineRoutines: {},
-        timelinePanelExpanded: s.timelinePanelExpanded,
-        todayTrainingExpanded: s.todayTrainingExpanded,
-        lockedHabitsCollapsed: s.lockedHabitsCollapsed,
-        projectExpandedState: s.projectExpandedState,
-        sectionOrder: s.sectionOrder,
-        activePomodoroTask: s.activePomodoroTask ?? null,
-      };
-      await saveLocalState(cleanState);
-      await clearAllSyncQueue();
-      // #region agent log
-      let lsMay = {};
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          lsMay = {
-            prayer: sampleMayDayLogs(parsed?.prayerLogs),
-            habits: sampleMayDayLogs(parsed?.dailyTaskLogs),
-            completion: sampleMayDayLogs(parsed?.dailyCompletionLog),
-          };
-        }
-      } catch (_) {}
-      agentDebugLog('AppLogo.jsx:handleReset', 'pre-backend-reset state', {
-        storeMay: {
-          prayer: sampleMayDayLogs(cleanState.prayerLogs),
-          habits: sampleMayDayLogs(cleanState.dailyTaskLogs),
-          completion: sampleMayDayLogs(cleanState.dailyCompletionLog),
-        },
-        localStorageMay: lsMay,
-        localStorageHasDashboardKey: !!localStorage.getItem(STORAGE_KEY),
-      }, 'A');
-      // #endregion
-      // 4. Wait for backend reset completion before reload, otherwise stale data can come back on sync
-      const { api } = await import('../api/client');
-      const resetRes = await api.training.resetDailyLogs();
-      // #region agent log
-      agentDebugLog('AppLogo.jsx:handleReset', 'backend reset response', {
-        serverMay: {
-          prayer: sampleMayDayLogs(resetRes?.data?.prayerLogs ?? resetRes?.prayerLogs),
-          habits: sampleMayDayLogs(resetRes?.data?.dailyTaskLogs ?? resetRes?.dailyTaskLogs),
-          completion: sampleMayDayLogs(resetRes?.data?.dailyCompletionLog ?? resetRes?.dailyCompletionLog),
-        },
-        resetOk: !!resetRes,
-      }, 'C');
-      // #endregion
+      await performDashboardDailyLogsReset();
       window.location.reload();
     } catch (err) {
       console.error('Reset failed:', err);

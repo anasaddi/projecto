@@ -69,9 +69,17 @@ const defaultInitial = {
 };
 
 const loaded = loadState() as Partial<SyncData> | null;
-// selectedDate è sempre resettato a oggi al refresh, non salvato in localStorage
-const initialState = loaded 
-  ? { ...defaultInitial, ...loaded, selectedDate: new Date() } 
+// Log giornalieri vivono in IndexedDB; non reidratare da localStorage legacy (stale dopo reset).
+const initialState = loaded
+  ? {
+      ...defaultInitial,
+      ...loaded,
+      dailyTaskLogs: {},
+      prayerLogs: {},
+      dailyCompletionLog: {},
+      timelineRoutines: {},
+      selectedDate: new Date(),
+    }
   : defaultInitial;
 
 // #region agent log
@@ -244,6 +252,10 @@ const dashboardStore = create<any>()(
             });
             // #endregion
 
+            const logsResetPending =
+              typeof window !== 'undefined' &&
+              sessionStorage.getItem('dashboard_logs_reset') === '1';
+
             // Merge helper for date-keyed dictionaries (e.g. prayerLogs[date][prayer]).
             // Server fills dates local doesn't have, but NEVER clobbers dates local
             // already has entries for. Prevents stale backend snapshots (including
@@ -304,30 +316,50 @@ const dashboardStore = create<any>()(
             }
             // Merge per-date instead of wholesale replacing — preserves local ticks
             // that haven't yet round-tripped to the backend.
-            if (data.dailyTaskLogs && typeof data.dailyTaskLogs === 'object') {
-              state.dailyTaskLogs = mergeByDate(state.dailyTaskLogs as Record<string, unknown>, data.dailyTaskLogs as Record<string, unknown>);
-            }
-            if (data.prayerLogs && typeof data.prayerLogs === 'object') {
-              state.prayerLogs = mergeByDate(state.prayerLogs as Record<string, unknown>, data.prayerLogs as Record<string, unknown>);
+            if (logsResetPending) {
+              state.dailyTaskLogs =
+                data.dailyTaskLogs && typeof data.dailyTaskLogs === 'object'
+                  ? (data.dailyTaskLogs as Record<string, unknown>)
+                  : {};
+              state.prayerLogs =
+                data.prayerLogs && typeof data.prayerLogs === 'object'
+                  ? (data.prayerLogs as Record<string, unknown>)
+                  : {};
+              state.dailyCompletionLog =
+                data.dailyCompletionLog && typeof data.dailyCompletionLog === 'object'
+                  ? (data.dailyCompletionLog as Record<string, DayCompletionPayload>)
+                  : {};
+              state.timelineRoutines =
+                data.timelineRoutines && typeof data.timelineRoutines === 'object'
+                  ? (data.timelineRoutines as Record<string, unknown>)
+                  : {};
+            } else {
+              if (data.dailyTaskLogs && typeof data.dailyTaskLogs === 'object') {
+                state.dailyTaskLogs = mergeByDate(state.dailyTaskLogs as Record<string, unknown>, data.dailyTaskLogs as Record<string, unknown>);
+              }
+              if (data.prayerLogs && typeof data.prayerLogs === 'object') {
+                state.prayerLogs = mergeByDate(state.prayerLogs as Record<string, unknown>, data.prayerLogs as Record<string, unknown>);
+              }
+              if (data.dailyCompletionLog && typeof data.dailyCompletionLog === 'object') {
+                state.dailyCompletionLog = mergeByDate(state.dailyCompletionLog as Record<string, unknown>, data.dailyCompletionLog as Record<string, unknown>) as Record<string, DayCompletionPayload>;
+              }
+              if (data.timelineRoutines != null && typeof data.timelineRoutines === 'object') {
+                state.timelineRoutines = mergeByDate(state.timelineRoutines as Record<string, unknown>, data.timelineRoutines as Record<string, unknown>);
+              }
             }
             // selectedDate is UI-only (navigation state); do not overwrite from server sync
-            if (data.dailyCompletionLog && typeof data.dailyCompletionLog === 'object') {
-              state.dailyCompletionLog = mergeByDate(state.dailyCompletionLog as Record<string, unknown>, data.dailyCompletionLog as Record<string, unknown>) as Record<string, DayCompletionPayload>;
-            }
             if (data.lifeGoals && ((data.lifeGoals.tiers && data.lifeGoals.tiers.length > 0) || (data.lifeGoals as any).collapsed !== undefined)) state.lifeGoals = normalizeLifeGoals(data.lifeGoals, buildDefaultLifeGoals()) as LifeGoalsState;
-            if (data.timelineRoutines != null && typeof data.timelineRoutines === 'object') {
-              state.timelineRoutines = mergeByDate(state.timelineRoutines as Record<string, unknown>, data.timelineRoutines as Record<string, unknown>);
-            }
 
             // #region agent log
             import('../utils/agentDebugLog').then(({ agentDebugLog, sampleMayDayLogs }) => {
               agentDebugLog('dashboardStore.ts:syncWithServer', 'after merge', {
+                logsResetPending,
                 mergedMay: {
                   prayer: sampleMayDayLogs(state.prayerLogs),
                   habits: sampleMayDayLogs(state.dailyTaskLogs),
                   completion: sampleMayDayLogs(state.dailyCompletionLog),
                 },
-              }, 'B');
+              }, 'B', logsResetPending ? 'post-fix' : 'pre-fix');
             });
             // #endregion
 
