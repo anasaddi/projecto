@@ -12,6 +12,7 @@ import {
 } from './slices';
 import {
   loadDashboardStateFromStorage as loadState,
+  STORAGE_KEY,
   buildDefaultLifeGoals,
   normalizeLifeGoals,
   toDateKey,
@@ -72,6 +73,22 @@ const loaded = loadState() as Partial<SyncData> | null;
 const initialState = loaded 
   ? { ...defaultInitial, ...loaded, selectedDate: new Date() } 
   : defaultInitial;
+
+// #region agent log
+if (typeof window !== 'undefined') {
+  import('../utils/agentDebugLog').then(({ agentDebugLog, sampleMayDayLogs }) => {
+    agentDebugLog('dashboardStore.ts:init', 'store boot from localStorage', {
+      hadLoadedState: !!loaded,
+      initialMay: {
+        prayer: sampleMayDayLogs(initialState.prayerLogs),
+        habits: sampleMayDayLogs(initialState.dailyTaskLogs),
+        completion: sampleMayDayLogs(initialState.dailyCompletionLog),
+      },
+      localStorageKeyPresent: !!localStorage.getItem(STORAGE_KEY),
+    }, 'A');
+  });
+}
+// #endregion
 
 function clampSelectedDateToToday(value: Date | string | undefined, fallback = new Date()): Date {
   const parsed = parseSelectedDate(value, fallback);
@@ -210,6 +227,23 @@ const dashboardStore = create<any>()(
           set((s: Record<string, unknown>) => {
             const state = s as Record<string, unknown> & SyncData;
 
+            // #region agent log
+            import('../utils/agentDebugLog').then(({ agentDebugLog, sampleMayDayLogs }) => {
+              agentDebugLog('dashboardStore.ts:syncWithServer', 'before merge', {
+                localMay: {
+                  prayer: sampleMayDayLogs(state.prayerLogs),
+                  habits: sampleMayDayLogs(state.dailyTaskLogs),
+                  completion: sampleMayDayLogs(state.dailyCompletionLog),
+                },
+                remoteMay: {
+                  prayer: sampleMayDayLogs(data.prayerLogs),
+                  habits: sampleMayDayLogs(data.dailyTaskLogs),
+                  completion: sampleMayDayLogs(data.dailyCompletionLog),
+                },
+              }, 'B');
+            });
+            // #endregion
+
             // Merge helper for date-keyed dictionaries (e.g. prayerLogs[date][prayer]).
             // Server fills dates local doesn't have, but NEVER clobbers dates local
             // already has entries for. Prevents stale backend snapshots (including
@@ -284,6 +318,19 @@ const dashboardStore = create<any>()(
             if (data.timelineRoutines != null && typeof data.timelineRoutines === 'object') {
               state.timelineRoutines = mergeByDate(state.timelineRoutines as Record<string, unknown>, data.timelineRoutines as Record<string, unknown>);
             }
+
+            // #region agent log
+            import('../utils/agentDebugLog').then(({ agentDebugLog, sampleMayDayLogs }) => {
+              agentDebugLog('dashboardStore.ts:syncWithServer', 'after merge', {
+                mergedMay: {
+                  prayer: sampleMayDayLogs(state.prayerLogs),
+                  habits: sampleMayDayLogs(state.dailyTaskLogs),
+                  completion: sampleMayDayLogs(state.dailyCompletionLog),
+                },
+              }, 'B');
+            });
+            // #endregion
+
             if (data.timelinePanelExpanded !== undefined) state.timelinePanelExpanded = data.timelinePanelExpanded;
             if (data.todayTrainingExpanded !== undefined) state.todayTrainingExpanded = data.todayTrainingExpanded;
             if (data.lockedHabitsCollapsed !== undefined) state.lockedHabitsCollapsed = data.lockedHabitsCollapsed;
