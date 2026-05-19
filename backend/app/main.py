@@ -69,8 +69,17 @@ async def lifespan(app: FastAPI):
     if db_ready:
         from app.db.session import AsyncSessionLocal
         from app.db.seed_training import seed_training_if_empty, seed_fake_history, sync_missing_exercises
+        from app.db.models import User
+        from sqlalchemy import select
         async with AsyncSessionLocal() as db:
             try:
+                # Ensure 'admin' user exists in database to satisfy foreign keys
+                res = await db.execute(select(User).filter(User.id == "admin"))
+                if not res.scalar_one_or_none():
+                    db.add(User(id="admin", email="admin@projecto.local", auth_provider="local"))
+                    await db.commit()
+                    logger.info("Admin user verified/created in users table.")
+
                 n = await seed_training_if_empty(db)
                 if n: logger.info(f"Seeded {n} exercises.")
                 added = await sync_missing_exercises(db)
