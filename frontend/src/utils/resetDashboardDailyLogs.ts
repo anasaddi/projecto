@@ -1,7 +1,6 @@
 import { saveLocalState, clearAllSyncQueue } from '../db/localDb';
 import { cancelPendingSync } from '../store/syncMiddleware';
 import { STORAGE_KEY, POMODORO_STORAGE } from '../components/dashboard/DashboardUtils';
-import { agentDebugLog, sampleMayDayLogs } from './agentDebugLog';
 
 /** Set before reload so syncWithServer replaces log dicts instead of mergeByDate. */
 export const DASHBOARD_LOGS_RESET_FLAG = 'dashboard_logs_reset';
@@ -35,30 +34,8 @@ export async function performDashboardDailyLogsReset(): Promise<void> {
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(POMODORO_STORAGE);
 
-  // #region agent log
-  agentDebugLog('resetDashboardDailyLogs.ts', 'local caches cleared', {
-    localStorageCleared: !localStorage.getItem(STORAGE_KEY),
-    storeMay: {
-      prayer: sampleMayDayLogs(cleanState.prayerLogs),
-      habits: sampleMayDayLogs(cleanState.dailyTaskLogs),
-      completion: sampleMayDayLogs(cleanState.dailyCompletionLog),
-    },
-  }, 'A', 'post-fix');
-  // #endregion
-
   const { api } = await import('../api/client');
-  const resetRes = await api.training.resetDailyLogs();
-
-  // #region agent log
-  agentDebugLog('resetDashboardDailyLogs.ts', 'backend reset response', {
-    serverMay: {
-      prayer: sampleMayDayLogs(resetRes?.data?.prayerLogs ?? resetRes?.prayerLogs),
-      habits: sampleMayDayLogs(resetRes?.data?.dailyTaskLogs ?? resetRes?.dailyTaskLogs),
-      completion: sampleMayDayLogs(resetRes?.data?.dailyCompletionLog ?? resetRes?.dailyCompletionLog),
-    },
-    resetOk: !!resetRes,
-  }, 'C', 'post-fix');
-  // #endregion
+  await api.training.resetDailyLogs();
 
   sessionStorage.setItem(DASHBOARD_LOGS_RESET_FLAG, '1');
 }

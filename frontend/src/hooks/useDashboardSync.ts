@@ -4,7 +4,6 @@ import { getLocalState } from '../db/localDb';
 import { getSharedDashboardWsUrl } from '../config';
 import { useDashboardStore } from '../store/dashboardStore';
 import { extractDashboardPayload, hasMeaningfulDashboardData } from '../utils/dashboardState';
-import { agentDebugLog, sampleMayDayLogs } from '../utils/agentDebugLog';
 import { DASHBOARD_LOGS_RESET_FLAG } from '../utils/resetDashboardDailyLogs';
 
 /**
@@ -44,15 +43,6 @@ export function useDashboardSync(): void {
         try {
           const localState = await getLocalState();
           const idbState = hasMeaningfulDashboardData(localState) ? extractDashboardPayload(localState) : null;
-          // #region agent log
-          agentDebugLog('useDashboardSync.ts:hydrate', 'indexedDB load', {
-            idbMay: idbState ? {
-              prayer: sampleMayDayLogs(idbState.prayerLogs),
-              habits: sampleMayDayLogs(idbState.dailyTaskLogs),
-              completion: sampleMayDayLogs(idbState.dailyCompletionLog),
-            } : null,
-          }, 'D');
-          // #endregion
           if (idbState && syncWithServer) {
             syncWithServer(idbState as Parameters<typeof syncWithServer>[0]);
           }
@@ -76,35 +66,13 @@ export function useDashboardSync(): void {
         }
         const payload = extractDashboardPayload(currentRes) ?? extractDashboardPayload((currentRes as { data?: unknown } | null | undefined)?.data);
 
-        // #region agent log
-        agentDebugLog('useDashboardSync.ts:fetch', 'server dashboard load', {
-          serverMay: payload ? {
-            prayer: sampleMayDayLogs(payload.prayerLogs),
-            habits: sampleMayDayLogs(payload.dailyTaskLogs),
-            completion: sampleMayDayLogs(payload.dailyCompletionLog),
-          } : null,
-          hasPayload: !!payload,
-        }, 'C');
-        // #endregion
-
         if (!cancelled && payload && syncWithServer && hasMeaningfulDashboardData(payload)) {
           syncWithServer(payload as Parameters<typeof syncWithServer>[0]);
         }
 
-        // #region agent log
         if (!cancelled) {
-          const st = useDashboardStore.getState();
-          agentDebugLog('useDashboardSync.ts:done', 'final store after sync', {
-            finalMay: {
-              prayer: sampleMayDayLogs(st.prayerLogs),
-              habits: sampleMayDayLogs(st.dailyTaskLogs),
-              completion: sampleMayDayLogs(st.dailyCompletionLog),
-            },
-            logsResetPending: sessionStorage.getItem(DASHBOARD_LOGS_RESET_FLAG) === '1',
-          }, 'B', 'post-fix');
           sessionStorage.removeItem(DASHBOARD_LOGS_RESET_FLAG);
         }
-        // #endregion
       } catch (err) {
         if (typeof window !== 'undefined' && (window as any).process?.env?.NODE_ENV !== 'production') {
           console.warn('Dashboard sync failed:', (err as Error)?.message || err);

@@ -12,7 +12,6 @@ import {
 } from './slices';
 import {
   loadDashboardStateFromStorage as loadState,
-  STORAGE_KEY,
   buildDefaultLifeGoals,
   normalizeLifeGoals,
   toDateKey,
@@ -81,22 +80,6 @@ const initialState = loaded
       selectedDate: new Date(),
     }
   : defaultInitial;
-
-// #region agent log
-if (typeof window !== 'undefined') {
-  import('../utils/agentDebugLog').then(({ agentDebugLog, sampleMayDayLogs }) => {
-    agentDebugLog('dashboardStore.ts:init', 'store boot from localStorage', {
-      hadLoadedState: !!loaded,
-      initialMay: {
-        prayer: sampleMayDayLogs(initialState.prayerLogs),
-        habits: sampleMayDayLogs(initialState.dailyTaskLogs),
-        completion: sampleMayDayLogs(initialState.dailyCompletionLog),
-      },
-      localStorageKeyPresent: !!localStorage.getItem(STORAGE_KEY),
-    }, 'A');
-  });
-}
-// #endregion
 
 function clampSelectedDateToToday(value: Date | string | undefined, fallback = new Date()): Date {
   const parsed = parseSelectedDate(value, fallback);
@@ -235,23 +218,6 @@ const dashboardStore = create<any>()(
           set((s: Record<string, unknown>) => {
             const state = s as Record<string, unknown> & SyncData;
 
-            // #region agent log
-            import('../utils/agentDebugLog').then(({ agentDebugLog, sampleMayDayLogs }) => {
-              agentDebugLog('dashboardStore.ts:syncWithServer', 'before merge', {
-                localMay: {
-                  prayer: sampleMayDayLogs(state.prayerLogs),
-                  habits: sampleMayDayLogs(state.dailyTaskLogs),
-                  completion: sampleMayDayLogs(state.dailyCompletionLog),
-                },
-                remoteMay: {
-                  prayer: sampleMayDayLogs(data.prayerLogs),
-                  habits: sampleMayDayLogs(data.dailyTaskLogs),
-                  completion: sampleMayDayLogs(data.dailyCompletionLog),
-                },
-              }, 'B');
-            });
-            // #endregion
-
             const logsResetPending =
               typeof window !== 'undefined' &&
               sessionStorage.getItem('dashboard_logs_reset') === '1';
@@ -349,19 +315,6 @@ const dashboardStore = create<any>()(
             }
             // selectedDate is UI-only (navigation state); do not overwrite from server sync
             if (data.lifeGoals && ((data.lifeGoals.tiers && data.lifeGoals.tiers.length > 0) || (data.lifeGoals as any).collapsed !== undefined)) state.lifeGoals = normalizeLifeGoals(data.lifeGoals, buildDefaultLifeGoals()) as LifeGoalsState;
-
-            // #region agent log
-            import('../utils/agentDebugLog').then(({ agentDebugLog, sampleMayDayLogs }) => {
-              agentDebugLog('dashboardStore.ts:syncWithServer', 'after merge', {
-                logsResetPending,
-                mergedMay: {
-                  prayer: sampleMayDayLogs(state.prayerLogs),
-                  habits: sampleMayDayLogs(state.dailyTaskLogs),
-                  completion: sampleMayDayLogs(state.dailyCompletionLog),
-                },
-              }, 'B', logsResetPending ? 'post-fix' : 'pre-fix');
-            });
-            // #endregion
 
             if (data.timelinePanelExpanded !== undefined) state.timelinePanelExpanded = data.timelinePanelExpanded;
             if (data.todayTrainingExpanded !== undefined) state.todayTrainingExpanded = data.todayTrainingExpanded;
