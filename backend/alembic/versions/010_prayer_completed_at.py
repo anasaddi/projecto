@@ -23,8 +23,13 @@ def upgrade() -> None:
     inspector = inspect(bind)
     columns = [c["name"] for c in inspector.get_columns("prayer_logs")]
     if "completed_at" not in columns:
-        with op.batch_alter_table("prayer_logs") as batch_op:
-            batch_op.add_column(sa.Column("completed_at", sa.String(length=64), nullable=True))
+        if bind.dialect.name == "postgresql":
+            # Add nullable completed_at column — existing rows keep NULL (no data loss)
+            # Uses IF NOT EXISTS for idempotency (safe to re-run)
+            op.execute("ALTER TABLE prayer_logs ADD COLUMN IF NOT EXISTS completed_at VARCHAR(64)")
+        else:
+            with op.batch_alter_table("prayer_logs") as batch_op:
+                batch_op.add_column(sa.Column("completed_at", sa.String(length=64), nullable=True))
 
 
 def downgrade() -> None:
@@ -32,6 +37,10 @@ def downgrade() -> None:
     inspector = inspect(bind)
     columns = [c["name"] for c in inspector.get_columns("prayer_logs")]
     if "completed_at" in columns:
-        with op.batch_alter_table("prayer_logs") as batch_op:
-            batch_op.drop_column("completed_at")
+        if bind.dialect.name == "postgresql":
+            op.drop_column('prayer_logs', 'completed_at')
+        else:
+            with op.batch_alter_table("prayer_logs") as batch_op:
+                batch_op.drop_column("completed_at")
+
 
