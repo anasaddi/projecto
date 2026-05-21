@@ -8,12 +8,16 @@ const isVercelFrontend = browserHostname.endsWith('vercel.app');
 
 // Default to same-origin API so Vercel rewrites can proxy to backend reliably.
 const DEFAULT_API_BASE = '/api';
+/** Render backend — Vercel rewrites HTTP /api but not WebSocket. */
+const RENDER_BACKEND_HOST = 'projecto-backend-7we9.onrender.com';
 
 export const API_BASE = isVercelFrontend
   ? DEFAULT_API_BASE
   : (import.meta.env.VITE_API_BASE || DEFAULT_API_BASE);
 
-const DEFAULT_WS_HOST = isDev ? `${browserHostname}:8000` : (typeof window !== 'undefined' ? window.location.host : 'localhost:8000');
+const DEFAULT_WS_HOST = isVercelFrontend
+  ? RENDER_BACKEND_HOST
+  : (isDev ? `${browserHostname}:8000` : (typeof window !== 'undefined' ? window.location.host : 'localhost:8000'));
 export const WS_HOST = import.meta.env.VITE_WS_HOST || DEFAULT_WS_HOST;
 
 export function getSharedDashboardWsUrl(shareId) {

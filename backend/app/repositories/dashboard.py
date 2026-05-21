@@ -720,6 +720,13 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
 
 # --- Delta sync (patch events) ---
 
+def _event_to_dict(raw) -> dict:
+    """Normalize Pydantic event or plain dict (never call .get on BaseModel)."""
+    if hasattr(raw, "model_dump"):
+        return raw.model_dump(by_alias=False)
+    return raw if isinstance(raw, dict) else {}
+
+
 async def apply_dashboard_events(
     db: AsyncSession,
     events: list,
@@ -738,11 +745,12 @@ async def apply_dashboard_events(
         db.add(ds)
 
     for raw in events:
-        ev_type = getattr(raw, "type", None) or raw.get("type")
-        date = getattr(raw, "date", None) or raw.get("date")
+        ev = _event_to_dict(raw)
+        ev_type = ev.get("type")
+        date = ev.get("date")
         if ev_type == "toggle_habit":
-            habit_id = getattr(raw, "habit_id", None) or raw.get("habitId")
-            done = getattr(raw, "done", None) if hasattr(raw, "done") else raw.get("done")
+            habit_id = ev.get("habit_id")
+            done = ev.get("done")
             if not date or not habit_id:
                 continue
             logs = data.setdefault("dailyTaskLogs", {})
@@ -768,9 +776,9 @@ async def apply_dashboard_events(
             else:
                 db.add(HabitLog(user_id=user_id, habit_id=str(habit_id), date=date, status=1 if done else 0))
         elif ev_type == "toggle_prayer":
-            prayer_name = getattr(raw, "prayer_name", None) or raw.get("prayerName")
-            completed = getattr(raw, "completed", None) if hasattr(raw, "completed") else raw.get("completed")
-            completed_at = getattr(raw, "completed_at", None) or raw.get("completedAt")
+            prayer_name = ev.get("prayer_name")
+            completed = ev.get("completed")
+            completed_at = ev.get("completed_at")
             if not date or not prayer_name:
                 continue
             plogs = data.setdefault("prayerLogs", {})
@@ -801,8 +809,8 @@ async def apply_dashboard_events(
                     )
                 )
         elif ev_type == "toggle_quick_task":
-            task_id = getattr(raw, "quick_task_id", None) or raw.get("quickTaskId")
-            done = getattr(raw, "done", None) if hasattr(raw, "done") else raw.get("done")
+            task_id = ev.get("quick_task_id")
+            done = ev.get("done")
             if not task_id:
                 continue
             qtasks = data.get("quickTasks") or []
@@ -820,7 +828,7 @@ async def apply_dashboard_events(
             if row:
                 row.done = 1 if done else 0
         elif ev_type == "set_completion_log":
-            completion = getattr(raw, "completion", None) or raw.get("completion") or {}
+            completion = ev.get("completion") or {}
             if not date:
                 continue
             dcl = data.setdefault("dailyCompletionLog", {})

@@ -385,7 +385,12 @@ export function syncMiddleware(config: any): any {
           setSyncStatus('syncing');
           try {
             if (usePatch) {
-              await api.training.patchDashboardState(events);
+              try {
+                await api.training.patchDashboardState(events);
+              } catch (patchErr) {
+                // PATCH can fail on mixed batches — fall back to full PUT so toggles still persist.
+                await api.training.updateDashboardState(fullState, { timeout: 60_000 });
+              }
             } else {
               await api.training.updateDashboardState(fullState, { timeout: 60_000 });
             }
