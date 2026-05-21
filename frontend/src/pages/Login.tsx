@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { cn } from '../lib/utils';
 import type { LoginResponse } from '../types/api';
+import { setAdminSession } from '../utils/authSession';
 
 export default function Login(): React.ReactElement {
   const [key, setKey] = useState('');
@@ -21,10 +22,7 @@ export default function Login(): React.ReactElement {
     try {
       const res = (await api.auth.login(key)) as LoginResponse | undefined;
       if (res?.token) {
-        localStorage.setItem('km-user-role', 'admin');
-        localStorage.setItem('km-admin-token', res.token);
-        if (res.training) localStorage.setItem('km-training-allowed', '1');
-        else localStorage.removeItem('km-training-allowed');
+        setAdminSession(!!res.training);
         window.location.href = '/dashboard';
       }
     } catch {

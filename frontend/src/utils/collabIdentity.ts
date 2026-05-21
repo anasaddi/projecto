@@ -1,6 +1,6 @@
 /** Chi sei su questo dispositivo (per "in lavorazione" sui task condivisi con Othmane).
  * Auto-detects identity from admin role:
- *  - Admin (km-user-role='admin' + km-admin-token) → Anas
+ *  - Admin (km-user-role='admin') → Anas
  *  - Guest/no-admin → Othmane
  */
 
@@ -12,9 +12,7 @@ export type CollabIdentity = 'anas' | 'othmane';
 function detectFromLoginState(): CollabIdentity {
   try {
     const role = localStorage.getItem('km-user-role');
-    const hasAdminToken = !!localStorage.getItem('km-admin-token');
-    // If logged in as admin → Anas
-    if (role === 'admin' && hasAdminToken) return 'anas';
+    if (role === 'admin') return 'anas';
     // Otherwise (guest or no admin token) → Othmane
     return 'othmane';
   } catch {

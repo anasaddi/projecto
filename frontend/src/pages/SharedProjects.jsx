@@ -78,7 +78,7 @@ async function hashPassword(pw) {
 function isUnlocked(shareId) {
   if (!shareId) return true;
   try {
-    if (localStorage.getItem('km-admin-token')) return true;
+    if (localStorage.getItem('km-user-role') === 'admin') return true;
     return !!localStorage.getItem(`km-shared-token-${shareId}`);
   } catch (_) {
     return false;

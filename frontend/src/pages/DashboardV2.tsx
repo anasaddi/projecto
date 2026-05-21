@@ -22,9 +22,6 @@ import {
   toDateKey,
   startOfDay,
   addDays,
-  startOfWeek,
-  startOfMonth,
-  formatCountdown,
   resolveTop3Slots,
   parseSelectedDate,
 } from '../components/dashboard/DashboardUtils';
@@ -67,21 +64,24 @@ export default function DashboardV2(): React.ReactElement {
   const { config } = (useGlobalConfig() as any) || { config: null as any };
   const PRAYERS: string[] = useMemo(() => config?.PRAYERS || ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'], [config]);
 
-  const [now, setNow] = useState(new Date());
-  // Track "today" separately so streak/habits don't recalculate every second
   const [today, setToday] = useState(() => new Date());
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    const tick = () => {
       const next = new Date();
-      setNow(next);
-      // Only update "today" when the date actually changes (not every second)
-      if (toDateKey(next) !== toDateKey(today)) {
-        setToday(next);
-      }
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [today]);
+      setToday((prev) => (toDateKey(next) !== toDateKey(prev) ? next : prev));
+    };
+    tick();
+    const timer = setInterval(tick, 60_000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') tick();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
 
   const todayKey = toDateKey(today);
   // Selected day (may differ from actual today when user navigates past days)
@@ -146,32 +146,6 @@ export default function DashboardV2(): React.ReactElement {
   useEffect(() => {
     if (updateStats) updateStats(doneFocusItems, totalFocusItems);
   }, [doneFocusItems, totalFocusItems, updateStats]);
-
-  // lastSavedAt is now handled in Layout.tsx
-
-  const countdowns = useMemo(() => {
-    const n = new Date(now);
-    const eod = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
-    const eow = addDays(startOfWeek(n), 7);
-    const eom = new Date(n.getFullYear(), n.getMonth() + 1, 1);
-    return [
-      {
-        label: 'Day',
-        remaining: formatCountdown(eod.getTime() - n.getTime()),
-        pct: (n.getTime() - startOfDay(n).getTime()) / (eod.getTime() - startOfDay(n).getTime()),
-      },
-      {
-        label: 'Week',
-        remaining: formatCountdown(eow.getTime() - n.getTime()),
-        pct: (n.getTime() - startOfWeek(n).getTime()) / (eow.getTime() - startOfWeek(n).getTime()),
-      },
-      {
-        label: 'Month',
-        remaining: formatCountdown(eom.getTime() - n.getTime()),
-        pct: (n.getTime() - startOfMonth(n).getTime()) / (eom.getTime() - startOfMonth(n).getTime()),
-      },
-    ] as any[];
-  }, [now]);
 
   const focusStreak = useMemo(() => {
     const totalItems = activeHabits.length + PRAYERS.length + 3;

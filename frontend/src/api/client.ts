@@ -1,6 +1,7 @@
 import { logAndToast } from '../utils/errorLog';
 import type { LoginResponse } from '../types/api';
 import { API_BASE } from '../config';
+import { clearAuthSessionFlags } from '../utils/authSession';
 
 const BASE = API_BASE;
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -17,23 +18,9 @@ export async function clearAuthAndRedirect(): Promise<void> {
   } catch {
     /* ignore */
   }
-  localStorage.removeItem('km-admin-token');
-  localStorage.removeItem('km-user-role');
-  localStorage.removeItem('km-training-allowed');
+  clearAuthSessionFlags();
   if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
     window.location.href = '/login';
-  }
-}
-
-export function isTokenExpired(token: string | null | undefined): boolean {
-  if (!token || typeof token !== 'string') return true;
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1] || '{}')) as { exp?: number };
-    const exp = payload.exp;
-    if (!exp) return false;
-    return Date.now() >= exp * 1000;
-  } catch {
-    return false;
   }
 }
 
@@ -57,14 +44,8 @@ async function fetchWithTimeout(
 }
 
 export async function request<T = unknown>(path: string, options: RequestOptions = {}): Promise<T | void> {
-  const token = localStorage.getItem('km-admin-token');
-  if (token && isTokenExpired(token)) {
-    await clearAuthAndRedirect();
-    throw new Error('Token expired');
-  }
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}`, 'x-km-access': token } : {}),
     ...options.headers,
   };
   const url = resolveApiUrl(path);
@@ -109,7 +90,7 @@ export async function request<T = unknown>(path: string, options: RequestOptions
         timeoutErr.name = 'TimeoutError';
         throw timeoutErr;
       }
-      if ((err as Error).message === 'Token expired' || (err as Error).message === 'Unauthorized') throw err;
+      if ((err as Error).message === 'Unauthorized') throw err;
       if (attempt < MAX_RETRIES) {
         await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
       } else {
@@ -136,11 +117,10 @@ export const api = {
       form.append('tipo', tipo || 'note');
       if (title) form.append('title', title);
       form.append('trust_score', String(trust_score ?? 7));
-      const token = localStorage.getItem('km-admin-token');
       return fetch(resolveApiUrl('/sources/'), {
         method: 'POST',
-        headers: token ? { 'x-km-access': token } : {},
-        body: form
+        credentials: 'include',
+        body: form,
       }).then((r) => {
         if (!r.ok) throw new Error(r.statusText);
         return r.json();
@@ -157,11 +137,10 @@ export const api = {
       form.append('tipo', tipo || 'article');
       if (title) form.append('title', title);
       form.append('trust_score', String(trust_score ?? 7));
-      const token = localStorage.getItem('km-admin-token');
       return fetch(resolveApiUrl('/sources/'), {
         method: 'POST',
-        headers: token ? { 'x-km-access': token } : {},
-        body: form
+        credentials: 'include',
+        body: form,
       }).then((r) => {
         if (!r.ok) throw new Error(r.statusText);
         return r.json();
@@ -296,6 +275,6 @@ export const api = {
     login: (key: string) =>
       request<LoginResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ key }) }),
     logout: () => request<void>('/auth/logout', { method: 'POST' }),
-    verify: () => request<unknown>('/auth/verify'),
+    verify: () => request<{ status?: string; training?: boolean }>('/auth/verify'),
   },
 };

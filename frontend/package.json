@@ -10,6 +10,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
     "check:bundle": "node scripts/check-bundle-size.mjs"
   },
   "dependencies": {
@@ -32,6 +33,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@types/react": "^18.2.0",

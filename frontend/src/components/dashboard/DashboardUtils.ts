@@ -381,40 +381,6 @@ export function normalizeLifeGoals(lg, fallback) {
   };
 }
 
-export function loadDashboardStateFromStorage(fallback = null) {
-  if (typeof window === 'undefined' || !window.localStorage) return null;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return null;
-    const fb = fallback || {};
-    const top3 = parsed.top3Manual;
-    const top3Normalized = Array.isArray(top3) ? [top3[0] ?? null, top3[1] ?? null, top3[2] ?? null] : fb.top3Manual;
-    return {
-      dailyTaskTemplates: Array.isArray(parsed.dailyTaskTemplates) ? parsed.dailyTaskTemplates : fb.dailyTaskTemplates,
-      dailyTaskLogs: parsed.dailyTaskLogs && typeof parsed.dailyTaskLogs === 'object' ? parsed.dailyTaskLogs : fb.dailyTaskLogs,
-      projects: Array.isArray(parsed.projects) ? parsed.projects : fb.projects,
-      prayerLogs: parsed.prayerLogs && typeof parsed.prayerLogs === 'object' ? parsed.prayerLogs : fb.prayerLogs,
-      selectedDate: parseSelectedDate(parsed.selectedDate, fb.selectedDate || new Date()),
-      top3Manual: top3Normalized,
-      quickTasks: Array.isArray(parsed.quickTasks) ? parsed.quickTasks : fb.quickTasks,
-      dailyCompletionLog: parsed.dailyCompletionLog && typeof parsed.dailyCompletionLog === 'object' ? parsed.dailyCompletionLog : fb.dailyCompletionLog,
-      lifeGoals: parsed.lifeGoals ? normalizeLifeGoals(parsed.lifeGoals, fb.lifeGoals) : fb.lifeGoals,
-      timelineRoutines: parsed.timelineRoutines && typeof parsed.timelineRoutines === 'object' ? parsed.timelineRoutines : fb.timelineRoutines,
-      timelinePanelExpanded: parsed.timelinePanelExpanded === false ? false : true,
-      todayTrainingExpanded: parsed.todayTrainingExpanded === false ? false : true,
-      lockedHabitsCollapsed: !!parsed.lockedHabitsCollapsed,
-      projectExpandedState: parsed.projectExpandedState && typeof parsed.projectExpandedState === 'object' ? parsed.projectExpandedState : fb.projectExpandedState || {},
-      sectionOrder: parsed.sectionOrder && typeof parsed.sectionOrder === 'object' ? parsed.sectionOrder : fb.sectionOrder,
-      activePomodoroTask: parsed.activePomodoroTask !== undefined ? parsed.activePomodoroTask : fb.activePomodoroTask,
-    };
-  } catch (err) {
-    console.error('Failed to parse dashboard state from localStorage:', err);
-    return null;
-  }
-}
-
 export const PRAYER_SLOTS =['Fajr-Dhuhr', 'Dhuhr-Asr', 'Asr-Maghrib', 'Maghrib-Isha', 'Isha-Fajr'];
 
 export function getCurrentSlotKey(date = new Date(), prayerTimes = null) {

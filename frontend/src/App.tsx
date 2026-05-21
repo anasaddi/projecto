@@ -1,17 +1,17 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import React, { Suspense, lazy, useEffect } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { Toaster, toast } from 'sonner';
 import { setToastError } from './utils/errorLog';
+import { api } from './api/client';
+import { isAdminRole, clearAuthSessionFlags } from './utils/authSession';
 
 import { DashboardStatsProvider } from './context/DashboardStatsContext';
 import { GlobalConfigProvider } from './context/GlobalConfigContext';
 import { ToastProvider } from './context/ToastContext';
 import Layout from './components/Layout';
 import AppErrorBoundary from './components/AppErrorBoundary';
-import { isTokenExpired } from './api/client';
 
 const DashboardV2 = lazy(() => import('./pages/DashboardV2'));
-
 const YouTubeViewer = lazy(() => import('./pages/YouTubeViewer'));
 const SharedProjects = lazy(() => import('./pages/SharedProjects'));
 const Training = lazy(() => import('./pages/Training2'));
@@ -28,36 +28,56 @@ function RouteLoader(): React.ReactElement {
 }
 
 function AdminRoute({ children }: { children: React.ReactNode }): React.ReactElement {
-  const role = localStorage.getItem('km-user-role');
-  const token = localStorage.getItem('km-admin-token');
-  if (role !== 'admin' || !token) {
-    return <Navigate to="/login" replace />;
-  }
-  if (isTokenExpired(token)) {
-    localStorage.removeItem('km-admin-token');
-    localStorage.removeItem('km-user-role');
-    localStorage.removeItem('km-training-allowed');
-    return <Navigate to="/login" replace />;
-  }
+  const [status, setStatus] = useState<'loading' | 'ok' | 'denied'>('loading');
+
+  useEffect(() => {
+    if (!isAdminRole()) {
+      setStatus('denied');
+      return;
+    }
+    api.auth
+      .verify()
+      .then((res) => {
+        if (res?.training) localStorage.setItem('km-training-allowed', '1');
+        else localStorage.removeItem('km-training-allowed');
+        setStatus('ok');
+      })
+      .catch(() => {
+        clearAuthSessionFlags();
+        setStatus('denied');
+      });
+  }, []);
+
+  if (status === 'loading') return <RouteLoader />;
+  if (status === 'denied') return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
 function TrainingRoute({ children }: { children: React.ReactNode }): React.ReactElement {
   const allowed = localStorage.getItem('km-training-allowed') === '1';
   if (!allowed) return <Navigate to="/dashboard" replace />;
-  return (
-    <AdminRoute>
-      {children}
-    </AdminRoute>
-  );
+  return <AdminRoute>{children}</AdminRoute>;
 }
 
 function HomePage(): React.ReactElement {
-  const role = localStorage.getItem('km-user-role');
-  const token = localStorage.getItem('km-admin-token');
-  if (role === 'admin' && token && !isTokenExpired(token)) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  const [redirect, setRedirect] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!isAdminRole()) {
+      setRedirect(false);
+      return;
+    }
+    api.auth
+      .verify()
+      .then(() => setRedirect(true))
+      .catch(() => {
+        clearAuthSessionFlags();
+        setRedirect(false);
+      });
+  }, []);
+
+  if (redirect === null) return <RouteLoader />;
+  if (redirect) return <Navigate to="/dashboard" replace />;
   return <Welcome />;
 }
 
@@ -69,9 +89,9 @@ const initAuth = (): void => {
     const currentRole = localStorage.getItem('km-user-role');
     if (currentRole !== 'admin') {
       localStorage.setItem('km-user-role', 'guest');
-      localStorage.removeItem('km-admin-token');
     }
   }
+  localStorage.removeItem('km-admin-token');
 };
 
 initAuth();

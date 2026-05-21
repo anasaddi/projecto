@@ -79,6 +79,7 @@ Render creerà automaticamente il database PostgreSQL. Devi applicare le migrazi
 | `CORS_ORIGINS` | `https://projecto-indol.vercel.app` | Origine frontend |
 | `ASSEMBLYAI_API_KEY` | (opzionale) | Per trascrizioni YouTube |
 | `OPENROUTER_API_KEY` | (opzionale) | Per AI features |
+| `REDIS_URL` | (opzionale) | Upstash Redis — cache dashboard tra worker |
 
 ---
 
@@ -100,9 +101,10 @@ python -m app.db.seed_training
 
 ## ⚠️ Note Importanti
 
-1. **Sleep dopo 15 min**: Il free tier va in sleep dopo 15 min di inattività
+1. **Sleep dopo 15 min**: Il free tier va in sleep dopo ~15 min di inattività
    - Primo accesso dopo sleep: 30-50 secondi di attesa
-   - Soluzione: Usa servizi come UptimeRobot per pingare ogni 10 min
+   - **Keep-warm:** UptimeRobot (o simile) ogni **5 min** su `https://projecto-backend-7we9.onrender.com/keepalive` — **non** solo l'URL Vercel
+   - Dettagli: [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)
 
 2. **Database gratuito**: 512MB, sufficiente per il tuo progetto
 

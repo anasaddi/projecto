@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { api } from '../api/client'
+import { isAdminRole } from '../utils/authSession'
 
 const DEFAULT_CONFIG = {
   PRAYERS: ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'],
@@ -15,8 +16,7 @@ export function GlobalConfigProvider({ children }) {
 
   useEffect(() => {
     const fetchConfig = async () => {
-      const token = localStorage.getItem('km-admin-token');
-      if (!token) {
+      if (!isAdminRole()) {
         setLoading(false);
         return;
       }

@@ -45,6 +45,15 @@ jobs:
         env:
           MAX_JS_CHUNK_KB: ${{ env.MAX_JS_CHUNK_KB }}
 
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+        working-directory: frontend
+
+      - name: Run Playwright smoke tests
+        run: npm run test:e2e
+        working-directory: frontend
+        continue-on-error: true
+
       - name: Frontend summary
         if: always()
         run: |
@@ -52,6 +61,7 @@ jobs:
           echo "- Typecheck: eseguito" >> $GITHUB_STEP_SUMMARY
           echo "- Vitest: eseguito" >> $GITHUB_STEP_SUMMARY
           echo "- Build: eseguito" >> $GITHUB_STEP_SUMMARY
+          echo "- Playwright smoke: eseguito (continue-on-error)" >> $GITHUB_STEP_SUMMARY
           echo "- Budget chunk JS massimo: ${MAX_JS_CHUNK_KB} KB" >> $GITHUB_STEP_SUMMARY
           echo "- Check bundle: eseguito" >> $GITHUB_STEP_SUMMARY
 

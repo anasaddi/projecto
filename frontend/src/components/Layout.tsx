@@ -8,6 +8,7 @@ import { Icons } from './dashboard/Icons';
 import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
 import { getCollabIdentity, setCollabIdentity, type CollabIdentity } from '../utils/collabIdentity';
+import { isAdminRole } from '../utils/authSession';
 
 interface LayoutProps {
   children: ReactNode;
@@ -67,8 +68,7 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
   }, []);
 
   const isGuest = localStorage.getItem('km-user-role') === 'guest';
-  const isAdmin =
-    localStorage.getItem('km-user-role') === 'admin' && !!localStorage.getItem('km-admin-token');
+  const isAdmin = isAdminRole();
 
   if (isGuest || !isAdmin) {
     return (
