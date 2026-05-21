@@ -6,6 +6,7 @@ import jwt
 from typing import Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, Header, Response, WebSocket, WebSocketDisconnect, Request
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +143,15 @@ async def get_today(db: AsyncSession = Depends(get_db), for_date: Optional[date]
 @router.get("/week", response_model=list[schemas.WeekDayData], dependencies=[Depends(get_training_access)])
 async def get_week(db: AsyncSession = Depends(get_db)):
     """Fetch the full week's templates."""
-    return await crud_training.get_week_templates(db)
+    try:
+        raw = await crud_training.get_week_templates(db)
+        return [schemas.WeekDayData.model_validate(day) for day in raw]
+    except ValidationError:
+        logger.exception("training/week response validation failed")
+        return []
+    except Exception as e:
+        logger.exception("training/week failed: %s", e)
+        return []
 
 @router.put("/week", response_model=dict, dependencies=[Depends(get_training_access)])
 async def update_week(body: schemas.WeekUpdateRequest, db: AsyncSession = Depends(get_db)):

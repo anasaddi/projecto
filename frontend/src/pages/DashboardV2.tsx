@@ -139,7 +139,7 @@ export default function DashboardV2(): React.ReactElement {
         <TodayCardDashboard />
 
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 pb-1">
-          <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
+          <div className="order-3 flex flex-col gap-4 min-h-0 lg:order-1 lg:w-1/4">
             {(sectionOrder.left || ['pomodoro', 'quickTasks', 'focusHeatmap']).map((sectionId: string, idx: number) => {
               const sectionProps = {
                 key: sectionId,
@@ -162,7 +162,7 @@ export default function DashboardV2(): React.ReactElement {
               return null;
             })}
           </div>
-          <div className="flex flex-col gap-4 min-h-0 lg:w-1/4">
+          <div className="order-2 flex flex-col gap-4 min-h-0 lg:order-2 lg:w-1/4">
             {(sectionOrder.center || ['top3', 'habits']).map((sectionId: string, idx: number) => {
               const sectionProps = {
                 key: sectionId,
@@ -184,7 +184,7 @@ export default function DashboardV2(): React.ReactElement {
               return null;
             })}
           </div>
-          <div className="flex flex-col gap-4 min-h-0 lg:w-2/4">
+          <div className="order-1 flex flex-col gap-4 min-h-0 lg:order-3 lg:w-2/4">
             {(sectionOrder.right || ['projects']).map((sectionId: string, idx: number) => {
               const sectionProps = {
                 key: sectionId,

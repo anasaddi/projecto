@@ -1112,7 +1112,7 @@ export default function SharedProjects() {
       <div className={`${SHARED_CONTENT_CLASS} flex flex-col gap-4 py-4 pb-12 sm:gap-6 sm:py-6 2xl:flex-row 2xl:items-start`}>
 
         {/* MAIN CONTENT: PROJECTS */}
-        <div className="order-2 min-w-0 flex-[2] space-y-4 sm:space-y-6 2xl:order-1">
+        <div className="order-1 min-w-0 flex-[2] space-y-4 sm:space-y-6">
           <header className="mb-4 rounded-[24px] sm:mb-6 sm:rounded-[32px] border border-white/10 bg-white/5 backdrop-blur-md p-4 shadow-xl dark:bg-zinc-900/30 sm:p-5 md:p-6">
             <div className="mb-4 flex flex-col justify-between gap-4 sm:mb-5 sm:gap-5 md:flex-row md:items-end">
               <div className="space-y-2">
@@ -1424,7 +1424,7 @@ export default function SharedProjects() {
         </div>
 
         {/* SIDEBAR: QUICK TASKS + CHAT */}
-        <aside className="order-1 w-full shrink-0 space-y-3 sm:space-y-4 2xl:sticky 2xl:top-6 2xl:order-2 2xl:w-[16rem] 2xl:self-start">
+        <aside className="order-2 w-full shrink-0 space-y-3 sm:space-y-4 2xl:sticky 2xl:top-6 2xl:w-[16rem] 2xl:self-start">
           {/* QUICK TASKS */}
           <div className="flex min-h-[300px] flex-col rounded-2xl sm:rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-4 sm:min-h-[340px] sm:p-6 shadow-lg backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-2xl">
             <div className="flex items-center gap-2 mb-4">

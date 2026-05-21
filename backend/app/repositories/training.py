@@ -16,6 +16,41 @@ logger = logging.getLogger(__name__)
 
 # --- Training Management ---
 
+def _json_list(val: Any) -> list:
+    parsed = _parse_json(val, [])
+    return parsed if isinstance(parsed, list) else []
+
+
+def _json_dict(val: Any) -> dict:
+    parsed = _parse_json(val, {})
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _optional_int(val: Any) -> int | None:
+    if val is None or val == "":
+        return None
+    try:
+        return int(val)
+    except (TypeError, ValueError):
+        return None
+
+
+def _template_exercise_dict(we: WorkoutDayExercise, e: Exercise) -> dict:
+    """Serialize row for TemplateExerciseOut / WeekDayData (strict Pydantic types)."""
+    return {
+        "exercise_id": str(e.id),
+        "exercise_name": str(we.custom_name or e.name or ""),
+        "category": str(e.category or "HYPERTROPHY"),
+        "instruction": str(we.instruction) if we.instruction else None,
+        "base_sets": int(we.base_sets) if we.base_sets is not None else 4,
+        "base_reps": _optional_int(we.base_reps),
+        "primary_muscles": _json_list(e.primary_muscles),
+        "secondary_muscles": _json_list(e.secondary_muscles),
+        "cns_fatigue": float(e.cns_fatigue) if e.cns_fatigue is not None else 0.0,
+        "joint_stress": _json_dict(e.joint_stress),
+        "is_active": int(e.is_active) if e.is_active is not None else 1,
+    }
+
 async def get_all_exercises(db: AsyncSession):
     try:
         res = await db.execute(select(Exercise))
@@ -73,19 +108,7 @@ async def get_today_exercises_grouped(db: AsyncSession, for_date: date | None = 
 
     hyp, str_aw = [], []
     for we, ex in rows:
-        d = {
-            "exercise_id": ex.id,
-            "exercise_name": we.custom_name or ex.name,
-            "category": ex.category,
-            "instruction": we.instruction,
-            "base_sets": we.base_sets,
-            "base_reps": we.base_reps,
-            "primary_muscles": _parse_json(ex.primary_muscles, []),
-            "secondary_muscles": _parse_json(ex.secondary_muscles, []),
-            "cns_fatigue": ex.cns_fatigue,
-            "joint_stress": _parse_json(ex.joint_stress, {}),
-            "is_active": ex.is_active,
-        }
+        d = _template_exercise_dict(we, ex)
         if ex.category == "HYPERTROPHY":
             hyp.append(d)
         else:
@@ -117,19 +140,7 @@ async def get_week_templates(db: AsyncSession):
         for we, e in all_exercises:
             if we.template_id not in exercises_by_template:
                 exercises_by_template[we.template_id] = []
-            exercises_by_template[we.template_id].append({
-                "exercise_id": str(e.id),
-                "exercise_name": str(we.custom_name or e.name),
-                "category": str(e.category),
-                "instruction": str(we.instruction or "") if we.instruction else "",
-                "base_sets": int(we.base_sets) if we.base_sets is not None else 4,
-                "base_reps": str(we.base_reps) if we.base_reps is not None else "",
-                "primary_muscles": _parse_json(e.primary_muscles, []),
-                "secondary_muscles": _parse_json(e.secondary_muscles, []),
-                "cns_fatigue": float(e.cns_fatigue) if e.cns_fatigue is not None else 0.0,
-                "joint_stress": _parse_json(e.joint_stress, {}),
-                "is_active": int(e.is_active) if e.is_active is not None else 1,
-            })
+            exercises_by_template[we.template_id].append(_template_exercise_dict(we, e))
 
         return [
             {
