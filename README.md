@@ -21,14 +21,14 @@ Local-first personal knowledge platform: Dashboard produttività, Learning (Tran
 - **Apri il frontend:** http://localhost:3000 (non la porta 8000).
 - API: http://localhost:8000 (usata in proxy dal frontend).
 
-**Se vedi "Failed to load resource: 404" in console:** avvia anche il backend sulla porta 8000 (il frontend in dev invia le richieste `/api/*` al backend in proxy). Se apri solo http://localhost:8000 vedrai la risposta JSON dell’API, non l’interfaccia.
+**Se vedi "Failed to load resource: 404" in console:** avvia anche il backend sulla porta 8000 (il frontend in dev invia le richieste `/api/*` al backend in proxy). Se apri solo http://localhost:8000 vedrai la risposta JSON dell'API, non l'interfaccia.
 
-## Produzione (Vercel + Railway)
+## Produzione (Vercel + Render)
 
-Vedi **[DEPLOY.md](DEPLOY.md)** per la guida completa.
+Vedi **[DEPLOY.md](DEPLOY.md)** e **[DEPLOY_RENDER.md](DEPLOY_RENDER.md)** per la guida completa.
 
-- **Frontend**: Vercel (root `frontend`, variabile `VITE_API_BASE`)
-- **Backend**: Railway (root `backend`, variabili `ASSEMBLYAI_API_KEY`, `OPENROUTER_API_KEY`, `CORS_ORIGINS`)
+- **Frontend**: Vercel (root `frontend`, variabile `VITE_API_BASE` se serve override)
+- **Backend**: Render (root `backend`, `bash start.sh` — Alembic + Gunicorn)
 
 Locally:
 

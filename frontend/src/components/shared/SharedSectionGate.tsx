@@ -38,6 +38,7 @@ export default function SharedSectionGate({ section, children }: SharedSectionGa
   const [needsPassword, setNeedsPassword] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [gateError, setGateError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!shareId) {
@@ -53,7 +54,10 @@ export default function SharedSectionGate({ section, children }: SharedSectionGa
         setSectionHash(hash);
         setNeedsPassword(!!hash && !isSectionUnlocked(shareId, section, hash));
       })
-      .catch(() => setNeedsPassword(false))
+      .catch(() => {
+        setGateError('Impossibile verificare i permessi di questa sezione.');
+        setNeedsPassword(true);
+      })
       .finally(() => setLoading(false));
   }, [shareId, section]);
 
@@ -76,6 +80,14 @@ export default function SharedSectionGate({ section, children }: SharedSectionGa
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620]">
         <div className="text-gray-500 font-medium">Caricamento...</div>
+      </div>
+    );
+  }
+
+  if (gateError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] p-4">
+        <div className="w-full max-w-sm text-center text-red-600 dark:text-red-400 font-medium">{gateError}</div>
       </div>
     );
   }

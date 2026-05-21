@@ -160,28 +160,12 @@ def create_app() -> FastAPI:
                     "updated_at": datetime.now(timezone.utc).isoformat(),
                 }, headers={"X-Degraded": "true"})
             if request.method == "PUT":
-                return JSONResponse(status_code=200, content={
-                    "key": "default",
-                    "data": {},
-                    "updated_at": datetime.now(timezone.utc).isoformat(),
-                }, headers={"X-Degraded": "true"})
+                return JSONResponse(status_code=503, content={"detail": "Dashboard save failed"})
         # GET/PUT shared-dashboard: never 500 — return controlled fallback or save error
         if "/api/training/shared-dashboard" in str(request.url.path):
             logger.warning("shared-dashboard %s failed, returning controlled fallback: %s", request.method, exc)
             if request.method == "GET":
-                return JSONResponse(status_code=200, content={
-                    "share_id": request.path_params.get("share_id", "nextcode") if hasattr(request, "path_params") else "nextcode",
-                    "title": "Progetti Condivisi",
-                    "data": {
-                        "projects": [],
-                        "quickTasks": [],
-                        "notes": [],
-                        "chat": [],
-                        "bonifici": [],
-                    },
-                    "updated_at": datetime.now(timezone.utc).isoformat(),
-                    "is_protected": False,
-                }, headers={"X-Degraded": "true"})
+                return JSONResponse(status_code=503, content={"detail": "Shared dashboard unavailable"})
             return JSONResponse(status_code=503, content={"detail": f"Shared dashboard save failed: {exc}"})
         # GET config/constants: return minimal config
         if "/api/config/constants" in str(request.url.path):

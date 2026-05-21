@@ -27,6 +27,14 @@ jobs:
         run: npm ci
         working-directory: frontend
 
+      - name: Typecheck frontend
+        run: npm run typecheck
+        working-directory: frontend
+
+      - name: Run frontend tests
+        run: npm run test:run
+        working-directory: frontend
+
       - name: Build frontend
         run: npm run build
         working-directory: frontend
@@ -41,6 +49,8 @@ jobs:
         if: always()
         run: |
           echo "## Frontend CI" >> $GITHUB_STEP_SUMMARY
+          echo "- Typecheck: eseguito" >> $GITHUB_STEP_SUMMARY
+          echo "- Vitest: eseguito" >> $GITHUB_STEP_SUMMARY
           echo "- Build: eseguito" >> $GITHUB_STEP_SUMMARY
           echo "- Budget chunk JS massimo: ${MAX_JS_CHUNK_KB} KB" >> $GITHUB_STEP_SUMMARY
           echo "- Check bundle: eseguito" >> $GITHUB_STEP_SUMMARY

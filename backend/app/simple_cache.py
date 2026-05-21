@@ -25,17 +25,23 @@ async def delete(key: str) -> None:
     _store.pop(key, None)
 
 # Dashboard-specific helpers
-DASHBOARD_KEY = "dashboard:default"
 SHARED_PREFIX = "shared_dashboard:"
 
-async def get_cached_dashboard_fallback() -> Optional[Any]:
-    return await get(DASHBOARD_KEY, ttl=600)
 
-async def set_cached_dashboard_fallback(data: Any) -> None:
-    await set(DASHBOARD_KEY, data, ttl=600)
+def dashboard_fallback_key(user_id: str | None = None) -> str:
+    return f"dashboard:{user_id or 'default'}"
 
-async def invalidate_dashboard_fallback() -> None:
-    await delete(DASHBOARD_KEY)
+
+async def get_cached_dashboard_fallback(user_id: str | None = None) -> Optional[Any]:
+    return await get(dashboard_fallback_key(user_id), ttl=600)
+
+
+async def set_cached_dashboard_fallback(data: Any, user_id: str | None = None) -> None:
+    await set(dashboard_fallback_key(user_id), data, ttl=600)
+
+
+async def invalidate_dashboard_fallback(user_id: str | None = None) -> None:
+    await delete(dashboard_fallback_key(user_id))
 
 async def get_cached_shared_dashboard_fallback(share_id: str) -> Optional[Any]:
     return await get(f"{SHARED_PREFIX}{share_id}", ttl=300)

@@ -62,16 +62,10 @@ function HomePage(): React.ReactElement {
 }
 
 const initAuth = (): void => {
-  const params = new URLSearchParams(window.location.search);
   const path = window.location.pathname;
   const isShared = path.startsWith('/shared/');
-  const keyParam = params.get('key');
 
-  if (keyParam) {
-    localStorage.setItem('km-user-role', 'admin');
-    localStorage.setItem('km-admin-token', keyParam);
-    window.history.replaceState({}, '', path);
-  } else if (isShared) {
+  if (isShared) {
     const currentRole = localStorage.getItem('km-user-role');
     if (currentRole !== 'admin') {
       localStorage.setItem('km-user-role', 'guest');

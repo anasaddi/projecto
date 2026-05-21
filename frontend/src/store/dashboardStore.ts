@@ -11,14 +11,12 @@ import {
   createUISlice,
 } from './slices';
 import {
-  loadDashboardStateFromStorage as loadState,
   buildDefaultLifeGoals,
   normalizeLifeGoals,
   toDateKey,
   startOfDay,
   parseSelectedDate,
 } from '../components/dashboard/DashboardUtils';
-import { getLocalState } from '../db/localDb';
 import { haptic } from '../utils/haptics';
 import { logTimelineEvent } from './storeHelpers';
 import type { DayCompletionPayload, LifeGoalsState } from '../types/dashboard';
@@ -67,19 +65,8 @@ const defaultInitial = {
   selectedDate: new Date(),
 };
 
-const loaded = loadState() as Partial<SyncData> | null;
-// Log giornalieri vivono in IndexedDB; non reidratare da localStorage legacy (stale dopo reset).
-const initialState = loaded
-  ? {
-      ...defaultInitial,
-      ...loaded,
-      dailyTaskLogs: {},
-      prayerLogs: {},
-      dailyCompletionLog: {},
-      timelineRoutines: {},
-      selectedDate: new Date(),
-    }
-  : defaultInitial;
+// Boot: defaults only; IndexedDB + server sync via useDashboardSync (no localStorage legacy).
+const initialState = defaultInitial;
 
 function clampSelectedDateToToday(value: Date | string | undefined, fallback = new Date()): Date {
   const parsed = parseSelectedDate(value, fallback);

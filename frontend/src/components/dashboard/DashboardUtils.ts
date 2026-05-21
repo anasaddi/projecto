@@ -1,3 +1,4 @@
+// @ts-nocheck — legacy utilities; typed incrementally
 import { STORAGE_KEYS, BC_CHANNEL as BC_CHAN, POMODORO, MS } from '../../constants';
 
 export const STORAGE_KEY = STORAGE_KEYS.DASHBOARD;

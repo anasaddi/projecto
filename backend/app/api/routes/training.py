@@ -324,23 +324,26 @@ async def update_dashboard_state(
 ):
     """Save the dashboard state to DB and invalidate cache. Scoped by user_id when present."""
     from app.cache import invalidate_dashboard, set_cached_dashboard
+    from app.schemas.dashboard import validate_dashboard_data
+    from pydantic import ValidationError
+
+    if not isinstance(body.data, dict):
+        raise HTTPException(status_code=400, detail="Invalid dashboard payload")
     try:
-        data = await dashboard_service.update_dashboard(db, body.data, user_id=user_id)
+        validated = validate_dashboard_data(body.data)
+        payload = validated.model_dump(by_alias=True, mode="json")
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.errors()) from e
+
+    try:
+        data = await dashboard_service.update_dashboard(db, payload, user_id=user_id)
         await invalidate_dashboard(user_id)
         await set_cached_dashboard(data, user_id)
         return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
     except Exception as e:
         logger.exception("update_dashboard_state failed: %s", e)
-        fallback_data = body.data if isinstance(body.data, dict) else {}
-        return Response(
-            content=json.dumps({
-                "key": "default",
-                "data": fallback_data,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            }),
-            media_type="application/json",
-            headers={"X-Degraded": "true"},
-        )
+        await db.rollback()
+        raise HTTPException(status_code=503, detail="Dashboard save failed") from e
 
 # --- Batch Operations ---
 
@@ -399,7 +402,7 @@ async def reset_daily_logs(
         await invalidate_dashboard(user_id)
         try:
             from app.simple_cache import invalidate_dashboard_fallback
-            await invalidate_dashboard_fallback()
+            await invalidate_dashboard_fallback(user_id)
         except Exception:
             pass
 
@@ -450,7 +453,7 @@ async def batch_update_dashboard(body: dict, db: AsyncSession = Depends(get_db))
 
 # --- Audit Events ---
 
-@router.get("/audit-events")
+@router.get("/audit-events", dependencies=[Depends(get_current_admin)])
 async def get_audit_events(
     entity_type: str | None = None,
     entity_id: str | None = None,
@@ -479,17 +482,46 @@ def verify_share_token(token: str, share_id: str, secret_key: str) -> bool:
     except Exception:
         return False
 
+def _shared_dashboard_out(
+    share_id: str,
+    title: str,
+    payload_data: dict,
+    updated_at,
+    *,
+    include_data: bool,
+    is_protected: bool,
+) -> dict:
+    if include_data:
+        clean_data = dict(payload_data)
+        clean_data.pop("passwordHash", None)
+        clean_data.pop("sectionPasswords", None)
+        data = clean_data
+    else:
+        data = None
+    return {
+        "share_id": share_id,
+        "title": title or "Progetti Condivisi",
+        "data": data,
+        "updated_at": updated_at,
+        "is_protected": is_protected,
+    }
+
+
 @router.get("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut | None)
 async def get_shared_dashboard(
-    share_id: str, 
+    share_id: str,
     db: AsyncSession = Depends(get_db),
-    x_share_token: str | None = Header(None, alias="x-share-token")
+    x_share_token: str | None = Header(None, alias="x-share-token"),
+    x_km_access: str | None = Header(None, alias="x-km-access"),
 ):
-    """Fetch a shared dashboard — Redis-first, DB fallback. PUBLIC ROUTE with password protection."""
+    """Fetch shared dashboard: admin JWT, share unlock token, or password-protected shell."""
     from app.cache import get_cached_shared_dashboard, set_cached_shared_dashboard, invalidate_shared_dashboard
     from app.config import get_settings
+    from app.api.deps import is_admin_access
+
     settings = get_settings()
-    
+    is_admin = is_admin_access(x_km_access, settings)
+
     try:
         cached = await get_cached_shared_dashboard(share_id)
         if cached is not None and not isinstance(cached, dict):
@@ -497,70 +529,73 @@ async def get_shared_dashboard(
             await invalidate_shared_dashboard(share_id)
             cached = None
         data = cached if cached else await dashboard_service.get_shared_dashboard(db, share_id)
-        
-        # Auto-create if doesn't exist (v2 - return direct response)
+
         if not data:
-            logger.info("Auto-creating shared dashboard: %s", share_id)  # v3
+            if not is_admin:
+                raise HTTPException(status_code=404, detail="Dashboard non trovato")
+            logger.info("Auto-creating shared dashboard (admin): %s", share_id)
             created = await dashboard_service.update_shared_dashboard(db, share_id, {}, title="Progetti Condivisi")
-            created_response = {
-                "share_id": share_id,
-                "title": created.get("title") or "Progetti Condivisi",
-                "data": created.get("data") or {"projects": [], "quickTasks": [], "notes": [], "chat": [], "bonifici": []},
-                "updated_at": created.get("updated_at") or datetime.now(timezone.utc),
-                "is_protected": False,
-            }
+            created_response = _shared_dashboard_out(
+                share_id,
+                created.get("title") or "Progetti Condivisi",
+                created.get("data") or {},
+                created.get("updated_at") or datetime.now(timezone.utc),
+                include_data=True,
+                is_protected=False,
+            )
             await set_cached_shared_dashboard(share_id, created_response)
-            # Build response directly to avoid race condition
             return created_response
-        
+
         if not cached:
             await set_cached_shared_dashboard(share_id, data)
 
-        payload_data = data.get("data") or {}
+        payload_data = _safe_shared_dashboard_data(data.get("data"))
         pwd_hash = payload_data.get("passwordHash")
-        
         is_protected = bool(pwd_hash)
+
+        if is_admin:
+            return _shared_dashboard_out(
+                share_id,
+                data.get("title", "Progetti Condivisi"),
+                payload_data,
+                data.get("updated_at"),
+                include_data=True,
+                is_protected=is_protected,
+            )
+
         if is_protected:
             is_unlocked = x_share_token and verify_share_token(x_share_token, share_id, settings.secret_key)
             if not is_unlocked:
-                return {
-                    "share_id": share_id,
-                    "title": data.get("title", "Progetti Condivisi"),
-                    "is_protected": True,
-                    "data": None,
-                    "updated_at": data.get("updated_at")
-                }
+                return _shared_dashboard_out(
+                    share_id,
+                    data.get("title", "Progetti Condivisi"),
+                    payload_data,
+                    data.get("updated_at"),
+                    include_data=False,
+                    is_protected=True,
+                )
+            return _shared_dashboard_out(
+                share_id,
+                data.get("title", "Progetti Condivisi"),
+                payload_data,
+                data.get("updated_at"),
+                include_data=True,
+                is_protected=True,
+            )
 
-        clean_data = dict(payload_data)
-        clean_data.pop("passwordHash", None)
-        clean_data.pop("sectionPasswords", None)
-        
-        return {
-            "share_id": share_id,
-            "title": data.get("title"),
-            "data": clean_data,
-            "updated_at": data.get("updated_at"),
-            "is_protected": is_protected
-        }
+        raise HTTPException(
+            status_code=403,
+            detail="Accesso negato. Lettura consentita solo con JWT admin.",
+        )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception("Error fetching shared dashboard %s: %s", share_id, e)
         try:
             await invalidate_shared_dashboard(share_id)
         except Exception:
             pass
-        return {
-            "share_id": share_id,
-            "title": "Progetti Condivisi",
-            "data": {
-                "projects": [],
-                "quickTasks": [],
-                "notes": [],
-                "chat": [],
-                "bonifici": [],
-            },
-            "updated_at": datetime.now(timezone.utc),
-            "is_protected": False,
-        }
+        raise HTTPException(status_code=503, detail="Impossibile caricare la shared dashboard") from e
 
 @router.get("/shared-dashboards", response_model=list[schemas.SharedDashboardOut], dependencies=[Depends(get_current_admin)])
 async def list_shared_dashboards(db: AsyncSession = Depends(get_db)):
@@ -590,7 +625,7 @@ async def unlock_shared_dashboard(share_id: str, body: schemas.SharedDashboardUn
         
     # Frontend prefix: "km-shared:"
     incoming_hash = hashlib.sha256(f"km-shared:{body.password}".encode()).hexdigest()
-    if incoming_hash != pwd_hash and body.password != pwd_hash: 
+    if incoming_hash != pwd_hash:
         raise HTTPException(status_code=403, detail="Password errata")
         
     token = create_share_token(share_id, settings.secret_key)
@@ -602,34 +637,35 @@ async def get_shared_write_access(
     x_km_access: str | None = Header(None, alias="x-km-access"),
     db: AsyncSession = Depends(get_db)
 ):
-    """Dependency to allow write access if either admin or valid share token is provided."""
+    """Write access: admin JWT (or dev raw key), or valid share token when password-protected."""
     from app.config import get_settings
+    from app.api.deps import is_admin_access
+
     settings = get_settings()
-    
-    # 1. Admin check
-    if x_km_access == settings.admin_access_key:
+
+    if is_admin_access(x_km_access, settings):
         return True
-        
-    # 2. Shared token check (best-effort: never crash before the route can save)
+
     try:
         dashboard = await dashboard_service.get_shared_dashboard(db, share_id)
         if not dashboard:
-            logger.info("Auto-creating shared dashboard for write access: %s", share_id)
-            try:
-                dashboard = await dashboard_service.update_shared_dashboard(db, share_id, {}, title="Progetti Condivisi")
-            except Exception as e:
-                logger.exception("Failed to auto-create shared dashboard for write access %s: %s", share_id, e)
-                raise HTTPException(status_code=503, detail="Impossibile preparare la shared dashboard")
-            
+            raise HTTPException(
+                status_code=403,
+                detail="Accesso negato. Solo admin può creare una shared dashboard senza password.",
+            )
+
         payload_data = _safe_shared_dashboard_data(dashboard.get("data"))
         pwd_hash = payload_data.get("passwordHash")
-        
+
         if not pwd_hash:
-            return True
-            
+            raise HTTPException(
+                status_code=403,
+                detail="Accesso negato. Scrittura consentita solo con JWT admin.",
+            )
+
         if verify_share_token(x_share_token, share_id, settings.secret_key):
             return True
-            
+
         raise HTTPException(status_code=403, detail="Accesso negato. Token mancante o non valido.")
     except HTTPException:
         raise

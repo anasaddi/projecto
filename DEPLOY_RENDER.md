@@ -62,7 +62,9 @@ Render creerà automaticamente il database PostgreSQL. Devi applicare le migrazi
 1. Visita: `https://projecto-backend-xxx.onrender.com/health`
    - Dovresti vedere: `{"status":"ok"}`
 2. Visita il frontend su Vercel
-3. Login con password: `Anasaddi2001`
+3. Login con la password impostata in `ADMIN_ACCESS_KEY` su Render (non committare credenziali nel repo)
+
+**Sicurezza:** se una password è mai stata nel repository o nella git history, **ruotala subito** su Render (Environment → `ADMIN_ACCESS_KEY`) prima del deploy post-audit.
 
 ---
 

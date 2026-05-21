@@ -3,24 +3,23 @@ import type { LoginResponse } from '../types/api';
 import { API_BASE } from '../config';
 
 const BASE = API_BASE;
-const RENDER_API_PREFIX = 'https://projecto-backend-7we9.onrender.com/api';
 const DEFAULT_TIMEOUT_MS = 30_000;
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000;
 
 function resolveApiUrl(path: string): string {
-  const url = BASE + path;
-  if (typeof window !== 'undefined' && window.location.hostname.endsWith('vercel.app')) {
-    if (url.startsWith(RENDER_API_PREFIX)) {
-      return '/api' + path;
-    }
-  }
-  return url;
+  return BASE + path;
 }
 
-export function clearAuthAndRedirect(): void {
+export async function clearAuthAndRedirect(): Promise<void> {
+  try {
+    await fetch(resolveApiUrl('/auth/logout'), { method: 'POST', credentials: 'include' });
+  } catch {
+    /* ignore */
+  }
   localStorage.removeItem('km-admin-token');
   localStorage.removeItem('km-user-role');
+  localStorage.removeItem('km-training-allowed');
   if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
     window.location.href = '/login';
   }
@@ -60,7 +59,7 @@ async function fetchWithTimeout(
 export async function request<T = unknown>(path: string, options: RequestOptions = {}): Promise<T | void> {
   const token = localStorage.getItem('km-admin-token');
   if (token && isTokenExpired(token)) {
-    clearAuthAndRedirect();
+    await clearAuthAndRedirect();
     throw new Error('Token expired');
   }
   const headers: Record<string, string> = {
@@ -75,11 +74,14 @@ export async function request<T = unknown>(path: string, options: RequestOptions
     try {
       const res = await fetchWithTimeout(
         url,
-        { ...options, headers } as RequestInit & { timeout?: number },
+        { ...options, headers, credentials: 'include' } as RequestInit & { timeout?: number },
         timeoutMs
       );
+      if (res.headers.get('X-Degraded') === 'true') {
+        throw new Error('Degraded server response');
+      }
       if (res.status === 401) {
-        clearAuthAndRedirect();
+        await clearAuthAndRedirect();
         throw new Error('Unauthorized');
       }
       if (!res.ok) {
@@ -293,6 +295,7 @@ export const api = {
   auth: {
     login: (key: string) =>
       request<LoginResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ key }) }),
+    logout: () => request<void>('/auth/logout', { method: 'POST' }),
     verify: () => request<unknown>('/auth/verify'),
   },
 };

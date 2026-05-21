@@ -5,6 +5,7 @@ import { getSharedDashboardWsUrl } from '../config';
 import { useDashboardStore } from '../store/dashboardStore';
 import { extractDashboardPayload, hasMeaningfulDashboardData } from '../utils/dashboardState';
 import { DASHBOARD_LOGS_RESET_FLAG } from '../utils/resetDashboardDailyLogs';
+import { mergeSharedDashboardData, type SharedDashboardData } from '../utils/mergeSharedDashboard';
 
 /**
  * Handles dashboard initial load: hydrate from IndexedDB if localStorage empty,
@@ -115,7 +116,9 @@ export function useDashboardSync(): void {
             return { ...prev, chat: [...chat.slice(-99), message.data] };
           });
         } else if (message.type === 'sync') {
-          updateSharedRef.current(id, () => message.data || message);
+          updateSharedRef.current(id, (prev: SharedDashboardData) =>
+            mergeSharedDashboardData(prev, message.data ?? message)
+          );
         }
         retryAttempts.current[id] = 0;
       } catch (err) {
@@ -155,7 +158,9 @@ export function useDashboardSync(): void {
               return { ...prev, chat: [...chat.slice(-99), msg.data] };
             });
           } else if (msg.type === 'sync' && msg.data) {
-            updateSharedRef.current(shareId, () => msg.data);
+            updateSharedRef.current(shareId, (prev: SharedDashboardData) =>
+              mergeSharedDashboardData(prev, msg.data)
+            );
           }
           setTimeout(() => { applyingFromSharedBC.current = false; }, 0);
         };

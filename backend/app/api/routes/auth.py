@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Header, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import jwt
 import datetime
-from typing import Optional
 from app.config import get_settings, Settings
-from app.api.deps import get_current_admin
+from app.api.deps import get_current_admin, ACCESS_COOKIE
 
 router = APIRouter()
 
@@ -23,9 +23,9 @@ async def login(req: LoginRequest, settings: Settings = Depends(get_settings)):
     payload = {"role": "admin", "sub": "admin"}
     training_key = (settings.training_access_key or "").strip()
     if training_key and req.key == training_key:
-        payload["training"] = True  # Flavio (o chi ha questa chiave) vede Training
+        payload["training"] = True
     elif req.key == settings.admin_access_key:
-        payload["training"] = True  # Anche tu (admin) vedi sempre Training
+        payload["training"] = True
     else:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -35,9 +35,28 @@ async def login(req: LoginRequest, settings: Settings = Depends(get_settings)):
     access_token = create_access_token(
         data=payload,
         secret_key=settings.secret_key,
-        expires_delta=datetime.timedelta(days=7)
+        expires_delta=datetime.timedelta(days=7),
     )
-    return {"token": access_token, "role": "admin", "training": bool(payload.get("training"))}
+    body = {"token": access_token, "role": "admin", "training": bool(payload.get("training"))}
+    response = JSONResponse(content=body)
+    response.set_cookie(
+        key=ACCESS_COOKIE,
+        value=access_token,
+        httponly=True,
+        secure=settings.is_production,
+        samesite="lax",
+        max_age=7 * 24 * 3600,
+        path="/",
+    )
+    return response
+
+
+@router.post("/logout")
+async def logout():
+    response = JSONResponse(content={"status": "ok"})
+    response.delete_cookie(key=ACCESS_COOKIE, path="/")
+    return response
+
 
 @router.get("/verify")
 async def verify_token(current_admin: dict = Depends(get_current_admin)):
@@ -45,5 +64,5 @@ async def verify_token(current_admin: dict = Depends(get_current_admin)):
     return {
         "status": "valid",
         "role": current_admin.get("role", "admin"),
-        "training": bool(current_admin.get("training"))
+        "training": bool(current_admin.get("training")),
     }

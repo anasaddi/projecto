@@ -338,22 +338,19 @@ export function syncMiddleware(config: any): any {
 
       if (persistTimeout) clearTimeout(persistTimeout);
       persistTimeout = setTimeout(() => {
-        const fullState = buildFullState();
-        /* 
-        if (typeof window !== 'undefined' && window.localStorage) {
+        void (async () => {
+          const fullState = buildFullState();
           try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(fullState));
+            await saveLocalState(fullState);
           } catch (err) {
-            console.error('Failed to save to localStorage:', err);
+            console.error('Failed to save to IndexedDB:', err);
           }
-        }
-        */
-        saveLocalState(fullState);
-        try {
-          if (channel) channel.postMessage(fullState);
-        } catch (err) {
-          console.error('Failed to post to BroadcastChannel:', err);
-        }
+          try {
+            if (channel) channel.postMessage(fullState);
+          } catch (err) {
+            console.error('Failed to post to BroadcastChannel:', err);
+          }
+        })();
       }, 500);
 
       if (syncTimeout) clearTimeout(syncTimeout);
@@ -414,13 +411,19 @@ export function syncMiddleware(config: any): any {
             // any local mutations made during the BC application window are captured
             if (persistTimeout) clearTimeout(persistTimeout);
             persistTimeout = setTimeout(() => {
-              const fullState = buildFullState();
-              saveLocalState(fullState);
-              try {
-                if (channel) channel.postMessage(fullState);
-              } catch (err) {
-                console.error('Failed to post to BroadcastChannel:', err);
-              }
+              void (async () => {
+                const fullState = buildFullState();
+                try {
+                  await saveLocalState(fullState);
+                } catch (err) {
+                  console.error('Failed to save to IndexedDB:', err);
+                }
+                try {
+                  if (channel) channel.postMessage(fullState);
+                } catch (err) {
+                  console.error('Failed to post to BroadcastChannel:', err);
+                }
+              })();
             }, 100);
           });
         }, 0);

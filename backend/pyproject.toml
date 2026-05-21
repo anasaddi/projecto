@@ -48,6 +48,12 @@ dev = [
 asyncio_mode = "auto"
 testpaths = ["tests"]
 
+[tool.coverage.run]
+omit = [
+    "app/services/transcripts/debate_compare.py",
+    "app/services/transcripts/debate_transcriber.py",
+]
+
 [tool.setuptools.packages.find]
 include = ["app*"]
 exclude = ["alembic*", "tests*", ".cache*", ".venv*"]

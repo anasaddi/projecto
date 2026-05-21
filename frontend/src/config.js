@@ -13,7 +13,8 @@ export const API_BASE = isVercelFrontend
   ? DEFAULT_API_BASE
   : (import.meta.env.VITE_API_BASE || DEFAULT_API_BASE);
 
-export const WS_HOST = import.meta.env.VITE_WS_HOST || (isDev ? `${browserHostname}:8000` : 'projecto-backend-7we9.onrender.com');
+const DEFAULT_WS_HOST = isDev ? `${browserHostname}:8000` : (typeof window !== 'undefined' ? window.location.host : 'localhost:8000');
+export const WS_HOST = import.meta.env.VITE_WS_HOST || DEFAULT_WS_HOST;
 
 export function getSharedDashboardWsUrl(shareId) {
   const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
