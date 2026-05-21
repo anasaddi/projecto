@@ -113,15 +113,23 @@ def dashboard_cache_key(user_id: str | None = None) -> str:
 
 
 async def get_cached_dashboard(user_id: str | None = None) -> Optional[dict]:
-    return await cache_get(dashboard_cache_key(user_id))
+    cached = await cache_get(dashboard_cache_key(user_id))
+    if cached is not None:
+        return cached
+    from app.simple_cache import get_cached_dashboard_fallback
+    return await get_cached_dashboard_fallback(user_id)
 
 
 async def set_cached_dashboard(data: dict, user_id: str | None = None):
     await cache_set(dashboard_cache_key(user_id), data, DASHBOARD_TTL)
+    from app.simple_cache import set_cached_dashboard_fallback
+    await set_cached_dashboard_fallback(data, user_id)
 
 
 async def invalidate_dashboard(user_id: str | None = None):
     await cache_delete(dashboard_cache_key(user_id))
+    from app.simple_cache import invalidate_dashboard_fallback
+    await invalidate_dashboard_fallback(user_id)
 
 
 def shared_dashboard_key(share_id: str) -> str:

@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     secret_key: str = "your-secret-key-for-jwt"  # Change in .env
     assemblyai_api_key: str = ""
     openrouter_api_key: str = ""
+    seed_on_start: bool = True  # prod: set SEED_ON_START=false after first deploy (faster cold start)
 
     # AI & Vector Search
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"

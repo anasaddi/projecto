@@ -96,7 +96,8 @@ async def get_dashboard_document(
         if _snapshot_is_meaningful(snapshot):
             return snapshot, ds.updated_at
 
-    data = await get_dashboard_state_aggregated(db, key, user_id)
+    ds_data_prefill = _parse_json(ds.data, {}) if ds else {}
+    data = await get_dashboard_state_aggregated(db, key, user_id, ds_data=ds_data_prefill)
     if ds is None:
         ds = DashboardState(key=key, user_id=user_id, data=data)
         db.add(ds)
@@ -108,7 +109,12 @@ async def get_dashboard_document(
     return data, ds.updated_at
 
 
-async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default", user_id: str | None = None):
+async def get_dashboard_state_aggregated(
+    db: AsyncSession,
+    key: str = "default",
+    user_id: str | None = None,
+    ds_data: dict | None = None,
+):
     # 1. Habits (Templates) - Filter by user_id if provided
     habits_query = select(Habit).order_by(Habit.ordinal)
     if user_id is not None:
@@ -239,15 +245,16 @@ async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default",
     tiers_result = await db.execute(tiers_query)
     tiers = tiers_result.scalars().all()
     
-    # We also need the top-level 'collapsed' from DashboardState for now
-    q = select(DashboardState).filter(DashboardState.key == key)
-    if user_id is not None:
-        q = q.filter(DashboardState.user_id == user_id)
-    else:
-        q = q.filter(DashboardState.user_id.is_(None))
-    res_ds = await db.execute(q.order_by(DashboardState.updated_at.desc()))
-    ds = res_ds.scalars().first()
-    ds_data = _parse_json(ds.data, {}) if ds else {}
+    # UI keys from DashboardState JSON (skip extra SELECT when caller already loaded the row)
+    if ds_data is None:
+        q = select(DashboardState).filter(DashboardState.key == key)
+        if user_id is not None:
+            q = q.filter(DashboardState.user_id == user_id)
+        else:
+            q = q.filter(DashboardState.user_id.is_(None))
+        res_ds = await db.execute(q.order_by(DashboardState.updated_at.desc()))
+        ds = res_ds.scalars().first()
+        ds_data = _parse_json(ds.data, {}) if ds else {}
     lg_collapsed = ds_data.get("lifeGoals", {}).get("collapsed", False)
     timeline_routines = ds_data.get("timelineRoutines") if isinstance(ds_data.get("timelineRoutines"), dict) else {}
     section_order = ds_data.get("sectionOrder") if isinstance(ds_data.get("sectionOrder"), dict) else None
@@ -709,6 +716,134 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
 
     # Return committed data directly — avoids re-fetching everything (10+ queries) after every PUT.
     # The frontend (syncMiddleware) does not consume the PUT response body.
+    return data
+
+# --- Delta sync (patch events) ---
+
+async def apply_dashboard_events(
+    db: AsyncSession,
+    events: list,
+    key: str = "default",
+    user_id: str | None = None,
+) -> dict:
+    """Small events only (toggle/completion). Structural CRUD → update_dashboard_from_json."""
+    ds = await _load_dashboard_state_row(db, key, user_id)
+    if ds:
+        data = _parse_json(ds.data, {})
+        if not _snapshot_is_meaningful(data):
+            data = await get_dashboard_state_aggregated(db, key, user_id, ds_data=data)
+    else:
+        data = await get_dashboard_state_aggregated(db, key, user_id)
+        ds = DashboardState(key=key, user_id=user_id, data={})
+        db.add(ds)
+
+    for raw in events:
+        ev_type = getattr(raw, "type", None) or raw.get("type")
+        date = getattr(raw, "date", None) or raw.get("date")
+        if ev_type == "toggle_habit":
+            habit_id = getattr(raw, "habit_id", None) or raw.get("habitId")
+            done = getattr(raw, "done", None) if hasattr(raw, "done") else raw.get("done")
+            if not date or not habit_id:
+                continue
+            logs = data.setdefault("dailyTaskLogs", {})
+            day_logs = list(logs.get(date) or [])
+            found = False
+            for entry in day_logs:
+                if str(entry.get("id")) == str(habit_id):
+                    entry["done"] = bool(done)
+                    found = True
+                    break
+            if not found:
+                day_logs.append({"id": str(habit_id), "done": bool(done)})
+            logs[date] = day_logs
+            q = select(HabitLog).filter(HabitLog.date == date, HabitLog.habit_id == str(habit_id))
+            if user_id is not None:
+                q = q.filter(HabitLog.user_id == user_id)
+            else:
+                q = q.filter(HabitLog.user_id.is_(None))
+            res = await db.execute(q)
+            row = res.scalar_one_or_none()
+            if row:
+                row.status = 1 if done else 0
+            else:
+                db.add(HabitLog(user_id=user_id, habit_id=str(habit_id), date=date, status=1 if done else 0))
+        elif ev_type == "toggle_prayer":
+            prayer_name = getattr(raw, "prayer_name", None) or raw.get("prayerName")
+            completed = getattr(raw, "completed", None) if hasattr(raw, "completed") else raw.get("completed")
+            completed_at = getattr(raw, "completed_at", None) or raw.get("completedAt")
+            if not date or not prayer_name:
+                continue
+            plogs = data.setdefault("prayerLogs", {})
+            day = dict(plogs.get(date) or {})
+            if completed:
+                day[str(prayer_name)] = {"completedAt": completed_at or datetime.now(timezone.utc).isoformat()}
+            else:
+                day[str(prayer_name)] = None
+            plogs[date] = day
+            q = select(PrayerLog).filter(PrayerLog.date == date, PrayerLog.prayer_name == str(prayer_name))
+            if user_id is not None:
+                q = q.filter(PrayerLog.user_id == user_id)
+            else:
+                q = q.filter(PrayerLog.user_id.is_(None))
+            res = await db.execute(q)
+            row = res.scalar_one_or_none()
+            if row:
+                row.completed = 1 if completed else 0
+                row.completed_at = completed_at if completed else None
+            else:
+                db.add(
+                    PrayerLog(
+                        user_id=user_id,
+                        date=date,
+                        prayer_name=str(prayer_name),
+                        completed=1 if completed else 0,
+                        completed_at=completed_at if completed else None,
+                    )
+                )
+        elif ev_type == "toggle_quick_task":
+            task_id = getattr(raw, "quick_task_id", None) or raw.get("quickTaskId")
+            done = getattr(raw, "done", None) if hasattr(raw, "done") else raw.get("done")
+            if not task_id:
+                continue
+            qtasks = data.get("quickTasks") or []
+            for qt in qtasks:
+                if str(qt.get("id")) == str(task_id):
+                    qt["done"] = bool(done)
+                    break
+            tq = select(QuickTask).filter(QuickTask.id == str(task_id))
+            if user_id is not None:
+                tq = tq.filter(QuickTask.user_id == user_id)
+            else:
+                tq = tq.filter(QuickTask.user_id.is_(None))
+            res = await db.execute(tq)
+            row = res.scalar_one_or_none()
+            if row:
+                row.done = 1 if done else 0
+        elif ev_type == "set_completion_log":
+            completion = getattr(raw, "completion", None) or raw.get("completion") or {}
+            if not date:
+                continue
+            dcl = data.setdefault("dailyCompletionLog", {})
+            dcl[date] = completion
+            q = select(DailyCompletionLog).filter(DailyCompletionLog.date == date)
+            if user_id is not None:
+                q = q.filter(DailyCompletionLog.user_id == user_id)
+            else:
+                q = q.filter(DailyCompletionLog.user_id.is_(None))
+            res = await db.execute(q)
+            row = res.scalar_one_or_none()
+            score = completion.get("score", 0) if isinstance(completion, dict) else 0
+            meta = {k: v for k, v in (completion or {}).items() if k != "score"} if isinstance(completion, dict) else {}
+            if row:
+                row.score = score
+                row.data = meta
+            else:
+                db.add(DailyCompletionLog(user_id=user_id, date=date, score=score, data=meta))
+
+    ds.data = _merge_dashboard_snapshot(_parse_json(ds.data, {}), data)
+    flag_modified(ds, "data")  # JSON column: in-place mutations are invisible to SQLAlchemy
+    ds.updated_at = datetime.now(timezone.utc)
+    await db.commit()
     return data
 
 # --- Shared Dashboards (Optimized) ---

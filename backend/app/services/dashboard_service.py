@@ -15,6 +15,9 @@ async def get_dashboard_with_meta(
 async def update_dashboard(db: AsyncSession, data: dict, key: str = "default", user_id: str | None = None) -> Dict[str, Any]:
     return await dashboard_repo.update_dashboard_from_json(db, data, key, user_id)
 
+async def patch_dashboard(db: AsyncSession, events: list, key: str = "default", user_id: str | None = None) -> Dict[str, Any]:
+    return await dashboard_repo.apply_dashboard_events(db, events, key, user_id)
+
 async def get_shared_dashboard(db: AsyncSession, share_id: str) -> Dict[str, Any] | None:
     return await dashboard_repo.get_shared_dashboard_aggregated(db, share_id)
 

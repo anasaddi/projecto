@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
-from app.api.routes import sources, content, insights, search, youtube, training, config, auth
+from app.api.routes import sources, content, insights, search, youtube, training, config, auth, bootstrap
 from app.config import get_settings
 from app.db.session import Base, engine
 from app.db import models
@@ -65,8 +65,8 @@ async def lifespan(app: FastAPI):
                 logger.critical("Max retries reached. Database initialization failed.")
                 db_ready = False # Ensure db_ready is False if all retries fail
 
-    # Seeding
-    if db_ready:
+    # Seeding (skip in prod after first boot via SEED_ON_START=false)
+    if db_ready and settings.seed_on_start:
         from app.db.session import AsyncSessionLocal
         from app.db.seed_training import seed_training_if_empty, seed_fake_history, sync_missing_exercises
         from app.db.models import User
@@ -199,6 +199,7 @@ def create_app() -> FastAPI:
     )
 
     # Routers
+    app.include_router(bootstrap.router, prefix="/api", tags=["bootstrap"])
     app.include_router(training.router, prefix="/api/training", tags=["training"])
     app.include_router(config.router, prefix="/api/config", tags=["config"])
     app.include_router(auth.router, prefix="/api/auth", tags=["auth"])

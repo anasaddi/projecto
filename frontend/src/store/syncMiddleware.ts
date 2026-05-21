@@ -3,6 +3,8 @@ import { API_BASE } from '../config';
 import { STORAGE_KEY, BC_CHANNEL } from '../components/dashboard/DashboardUtils';
 import { parseSelectedDate } from '../components/dashboard/DashboardUtils';
 import { saveLocalState, addToSyncQueue, getSyncQueue, clearSyncQueue } from '../db/localDb';
+import { canPatchDashboardEvents, clearDashboardEtag, detectDashboardEvents } from '../utils/dashboardEvents';
+import { setSyncStatus } from '../utils/syncStatus';
 
 let syncTimeout: ReturnType<typeof setTimeout> | null = null;
 let persistTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -15,6 +17,8 @@ let bc: BroadcastChannel | null = null;
  *  aren't lost when the tab closes during the 4-second debounce window. */
 let pendingFullState: Record<string, unknown> | null = null;
 let hasPendingPut = false;
+/** First flush after load: prev === fullState → empty events → full PUT; later flushes use PATCH when possible. */
+let lastSyncedSnapshot: Record<string, unknown> | null = null;
 
 /** Call before resetting/reloading to prevent beforeunload beacon from re-uploading stale state. */
 export function cancelPendingSync(): void {
@@ -242,25 +246,38 @@ function getBroadcastChannel(): BroadcastChannel | null {
   }
 }
 
-// Handle reconnection
+// Handle reconnection with backoff
 if (typeof window !== 'undefined') {
   window.addEventListener('online', async () => {
+    setSyncStatus('syncing');
     const queue = await getSyncQueue();
-    if (queue.length > 0) {
-      console.log('Reconnected! Flushing sync queue...');
-      const dashboardUpdates = queue.filter((i: { type?: string }) => i.type === 'dashboard_update');
-      if (dashboardUpdates.length > 0) {
-        const latest = dashboardUpdates.sort((a: { timestamp?: number }, b: { timestamp?: number }) => (b.timestamp ?? 0) - (a.timestamp ?? 0))[0];
+    if (queue.length === 0) {
+      setSyncStatus('online');
+      return;
+    }
+    console.log('Reconnected! Flushing sync queue...');
+    const dashboardUpdates = queue.filter((i: { type?: string }) => i.type === 'dashboard_update');
+    if (dashboardUpdates.length > 0) {
+      const latest = dashboardUpdates.sort(
+        (a: { timestamp?: number }, b: { timestamp?: number }) => (b.timestamp ?? 0) - (a.timestamp ?? 0)
+      )[0];
+      for (let attempt = 0; attempt < 3; attempt++) {
         try {
           await api.training.updateDashboardState(latest.data);
+          // Invalidate local ETag after sync — else next GET returns 304 with stale snapshot.
+          clearDashboardEtag();
           console.log('Sync queue flushed successfully');
+          break;
         } catch (err) {
           console.error('Failed to flush sync queue:', err);
+          if (attempt < 2) await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
         }
       }
-      await clearSyncQueue(queue.map((i: { id: string }) => i.id));
     }
+    await clearSyncQueue(queue.map((i: { id: string }) => i.id));
+    setSyncStatus(navigator.onLine ? 'online' : 'offline');
   });
+  window.addEventListener('offline', () => setSyncStatus('queued'));
 }
 
 /** State slice used by sync middleware for persistence */
@@ -360,10 +377,23 @@ export function syncMiddleware(config: any): any {
         const fullState = buildFullState();
         pendingFullState = fullState;
         hasPendingPut = true;
+        const prev = lastSyncedSnapshot || fullState;
+        const events = detectDashboardEvents(prev, fullState);
+        const usePatch = canPatchDashboardEvents(prev, fullState, events);
+
         if (navigator.onLine) {
+          setSyncStatus('syncing');
           try {
-            await api.training.updateDashboardState(fullState, { timeout: 60_000 });
+            if (usePatch) {
+              await api.training.patchDashboardState(events);
+            } else {
+              await api.training.updateDashboardState(fullState, { timeout: 60_000 });
+            }
+            // Invalidate local ETag after PUT/PATCH — else next GET returns 304 with stale snapshot.
+            clearDashboardEtag();
+            lastSyncedSnapshot = fullState;
             hasPendingPut = false;
+            setSyncStatus('online');
             isApplyingFromBC = true;
             set((s: any) => ({ ...s, lastSavedAt: Date.now() }));
             queueMicrotask(() => {
@@ -380,9 +410,11 @@ export function syncMiddleware(config: any): any {
             logError({ action: 'sync', api: 'dashboard-state' }, err as Error, { offline: !navigator.onLine });
             if (navigator.onLine) showErrorToast('Sync non riuscito. Modifiche salvate in coda.');
             await addToSyncQueue('dashboard_update', fullState);
+            setSyncStatus('queued');
           }
         } else {
           await addToSyncQueue('dashboard_update', fullState);
+          setSyncStatus('queued');
         }
       }, 2000);
     };

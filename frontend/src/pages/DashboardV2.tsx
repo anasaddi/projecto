@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useDashboardStats } from '../context/DashboardStatsContext';
 import { useGlobalConfig } from '../context/GlobalConfigContext';
 import { useDashboardStore } from '../store/dashboardStore';
+import { useFocusMetrics } from '../hooks/useFocusMetrics';
 
 import { PomodoroCompact } from '../components/dashboard/PomodoroCompact';
 import { FocusHeatmap } from '../components/dashboard/FocusHeatmap';
@@ -32,7 +33,6 @@ const PROJECT_ACCENTS = ['indigo', 'sky', 'violet', 'emerald', 'amber', 'rose'];
 
 export default function DashboardV2(): React.ReactElement {
   const dailyTaskTemplates = useDashboardStore((s) => s.dailyTaskTemplates) ?? [];
-  const dailyTaskLogs = useDashboardStore((s) => s.dailyTaskLogs) ?? {};
   const projects = useDashboardStore((s) => s.projects) ?? [];
   const prayerLogs = useDashboardStore((s) => s.prayerLogs) ?? {};
   const top3Manual = useDashboardStore((s) => s.top3Manual) ?? [null, null, null];
@@ -88,36 +88,12 @@ export default function DashboardV2(): React.ReactElement {
   const selectedDate = useMemo(() => parseSelectedDate(selectedDateRaw, today), [selectedDateRaw, today]);
   const selectedDateKey = useMemo(() => toDateKey(selectedDate), [selectedDate]);
   const isSelectedToday = selectedDateKey === todayKey;
-  const todayTaskLog = useMemo(() => {
-    const logs = (dailyTaskLogs[todayKey] as { id: string; done: boolean }[]) || [];
-    const map: Record<string, boolean> = {};
-    logs.forEach((l) => (map[l.id] = l.done));
-    return map;
-  }, [dailyTaskLogs, todayKey]);
-  const todayPrayerLog = (prayerLogs[todayKey] as Record<string, any>) || {};
-  // Prayer log for the day currently being viewed (today or a navigated past day)
   const viewPrayerLog = useMemo(
     () => (prayerLogs[selectedDateKey] as Record<string, any>) || {},
     [prayerLogs, selectedDateKey]
   );
-  
-  // Helper to check if prayer is completed (handles both old boolean and new object format)
-  const isPrayerCompleted = (prayerLogEntry: any) => {
-    if (typeof prayerLogEntry === 'object') {
-      return !!prayerLogEntry?.completedAt;
-    }
-    return !!prayerLogEntry;
-  };
 
   const activeHabits = useMemo(() => (dailyTaskTemplates as any[]).filter((t: any) => !t.locked), [dailyTaskTemplates]);
-  const todayDone = useMemo(
-    () => (activeHabits as any[]).reduce((acc: number, t: any) => acc + (todayTaskLog[t.id] ? 1 : 0), 0),
-    [activeHabits, todayTaskLog]
-  );
-  const prayerDone = useMemo(
-    () => PRAYERS.reduce((acc: number, p: string) => acc + (isPrayerCompleted(todayPrayerLog[p]) ? 1 : 0), 0),
-    [PRAYERS, todayPrayerLog]
-  );
 
   const allQuickTasks = useMemo(() => {
     const local = (quickTasks as any[]).filter((t: any) => !t.parentId).map((t: any) => ({ ...t, shareId: null }));
@@ -134,49 +110,12 @@ export default function DashboardV2(): React.ReactElement {
     () => (resolveTop3Slots as any)(projects, top3Manual as any[], allQuickTasks, lifeGoals as any, sharedDashboards as any[]),
     [projects, top3Manual, allQuickTasks, lifeGoals, sharedDashboards]
   );
-  const top3DoneCount = useMemo(
-    () => (top3Resolved as any[]).filter((s: any) => s && !s.missing && s.done).length,
-    [top3Resolved]
-  );
 
-  const totalFocusItems = activeHabits.length + PRAYERS.length + 3;
-  const doneFocusItems = todayDone + prayerDone + top3DoneCount;
-  const todayFocusScore = totalFocusItems ? doneFocusItems / totalFocusItems : 0;
+  const { doneFocusItems, totalFocusItems } = useFocusMetrics();
 
   useEffect(() => {
     if (updateStats) updateStats(doneFocusItems, totalFocusItems);
   }, [doneFocusItems, totalFocusItems, updateStats]);
-
-  const focusStreak = useMemo(() => {
-    const totalItems = activeHabits.length + PRAYERS.length + 3;
-    // Streak always counts from TODAY backwards
-    const todayDate = startOfDay(new Date());
-    let s = 0;
-    for (let i = 0; i < 30; i++) {
-      const d = addDays(todayDate, -i);
-      const key = toDateKey(d);
-      const taskLog = (dailyTaskLogs[key] as { id: string; done: boolean }[]) || [];
-      const taskLogMap: Record<string, boolean> = {};
-      taskLog.forEach((l) => (taskLogMap[l.id] = l.done));
-      const prayerLog = (prayerLogs[key] as Record<string, any>) || {};
-      const cl = (dailyCompletionLog[key] as { quick?: string[]; project?: string[] }) || {
-        quick: [],
-        project: [],
-      };
-      const habitsDone = (activeHabits as any[]).reduce((acc: number, t: any) => acc + (taskLogMap[t.id] ? 1 : 0), 0);
-      // Handle both old boolean and new object format for prayer logs
-      const prayersDone = PRAYERS.reduce((acc: number, p: string) => {
-        const entry = prayerLog[p];
-        const isCompleted = typeof entry === 'object' ? !!entry?.completedAt : !!entry;
-        return acc + (isCompleted ? 1 : 0);
-      }, 0);
-      const tasksDone = Math.min(3, (cl.quick?.length || 0) + (cl.project?.length || 0));
-      const score = totalItems ? (habitsDone + prayersDone + tasksDone) / totalItems : 0;
-      if (score >= 0.8) s++;
-      else break;
-    }
-    return s;
-  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits, today, PRAYERS]);
 
   const confirmId = confirmState && typeof confirmState === 'object' && 'id' in confirmState ? (confirmState as { id: string }).id : undefined;
   const confirmPayload = confirmState && typeof confirmState === 'object' && 'payload' in confirmState ? (confirmState as { payload?: { shareId?: string; projectId?: string; goalId?: string } }).payload : undefined;

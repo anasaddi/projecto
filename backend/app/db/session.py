@@ -63,13 +63,15 @@ async def get_db():
     async with AsyncSessionLocal() as session:
         try:
             yield session
-            try:
-                if session.is_active:
-                    await session.commit()
-            except Exception as commit_exc:
-                import logging
-                logging.getLogger("km.db").warning("Session commit failed in get_db cleanup: %s", commit_exc)
-                await session.rollback()
+            # Commit only when mutated — pure GET handlers avoid an extra round-trip.
+            if session.dirty or session.new or session.deleted:
+                try:
+                    if session.is_active:
+                        await session.commit()
+                except Exception as commit_exc:
+                    import logging
+                    logging.getLogger("km.db").warning("Session commit failed in get_db cleanup: %s", commit_exc)
+                    await session.rollback()
         except Exception:
             await session.rollback()
             raise

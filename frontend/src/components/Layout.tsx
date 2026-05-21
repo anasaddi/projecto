@@ -9,6 +9,7 @@ import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
 import { getCollabIdentity, setCollabIdentity, type CollabIdentity } from '../utils/collabIdentity';
 import { isAdminRole } from '../utils/authSession';
+import { getSyncStatus, subscribeSyncStatus, type SyncStatus } from '../utils/syncStatus';
 
 interface LayoutProps {
   children: ReactNode;
@@ -41,6 +42,9 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
     return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches;
   });
   const [collabWho, setCollabWho] = useState<CollabIdentity>(() => getCollabIdentity());
+  const [syncStatus, setSyncStatusState] = useState<SyncStatus>(() => getSyncStatus());
+
+  useEffect(() => subscribeSyncStatus(setSyncStatusState), []);
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
     localStorage.setItem('km-theme', isDark ? 'dark' : 'light');
@@ -206,6 +210,21 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
             : 'w-full'
         )}
       >
+        {syncStatus !== 'online' && (
+          <div
+            className={cn(
+              'text-center text-xs py-1.5 px-3 border-b',
+              syncStatus === 'offline' && 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 border-amber-200/60 dark:border-amber-800/40',
+              syncStatus === 'queued' && 'bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-200 border-sky-200/60 dark:border-sky-800/40',
+              syncStatus === 'syncing' && 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-200 border-indigo-200/60 dark:border-indigo-800/40',
+            )}
+            role="status"
+          >
+            {syncStatus === 'offline' && 'Sei offline — le modifiche restano sul dispositivo'}
+            {syncStatus === 'queued' && 'Modifiche in coda — sincronizzazione appena possibile'}
+            {syncStatus === 'syncing' && 'Sincronizzazione in corso…'}
+          </div>
+        )}
         {children}
       </main>
     </div>

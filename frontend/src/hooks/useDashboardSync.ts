@@ -6,10 +6,12 @@ import { useDashboardStore } from '../store/dashboardStore';
 import { extractDashboardPayload, hasMeaningfulDashboardData } from '../utils/dashboardState';
 import { DASHBOARD_LOGS_RESET_FLAG } from '../utils/resetDashboardDailyLogs';
 import { mergeSharedDashboardData, type SharedDashboardData } from '../utils/mergeSharedDashboard';
+import { mergeDashboardInWorker, shouldUseMergeWorker } from '../utils/dashboardMergeClient';
+import type { MergePayload } from '../utils/dashboardMerge';
 
 /**
  * Handles dashboard initial load: hydrate from IndexedDB instantly,
- * fetch from API in background, manage shared dashboards WebSocket/BroadcastChannel.
+ * fetch bootstrap in background, manage shared dashboards WS/BC.
  */
 export function useDashboardSync(): void {
   const syncWithServer = useDashboardStore((s: any) => s.syncWithServer);
@@ -27,29 +29,55 @@ export function useDashboardSync(): void {
   useEffect(() => {
     let cancelled = false;
 
-    async function fetchDashboardWithRetry() {
+    function pickMergeSlice(state: Record<string, unknown>): MergePayload {
+      return {
+        dailyTaskTemplates: state.dailyTaskTemplates,
+        dailyTaskLogs: state.dailyTaskLogs,
+        projects: state.projects,
+        prayerLogs: state.prayerLogs,
+        top3Manual: state.top3Manual,
+        quickTasks: state.quickTasks,
+        dailyCompletionLog: state.dailyCompletionLog,
+        lifeGoals: state.lifeGoals,
+        timelineRoutines: state.timelineRoutines,
+        projectExpandedState: state.projectExpandedState,
+        sectionOrder: state.sectionOrder,
+        activePomodoroTask: state.activePomodoroTask,
+      };
+    }
+
+    async function applyServerPayload(raw: unknown) {
+      if (cancelled || !raw || !syncWithServer) return;
+      const payload =
+        extractDashboardPayload(raw) ?? extractDashboardPayload((raw as { data?: unknown }).data);
+      if (!payload || !hasMeaningfulDashboardData(payload)) return;
+
+      const state = useDashboardStore.getState() as Record<string, unknown>;
+      let toApply = payload as MergePayload;
+      if (shouldUseMergeWorker(toApply)) {
+        toApply = await mergeDashboardInWorker(pickMergeSlice(state), toApply);
+      }
+      syncWithServer(toApply as Parameters<typeof syncWithServer>[0]);
+      if (!cancelled) sessionStorage.removeItem(DASHBOARD_LOGS_RESET_FLAG);
+    }
+
+    async function fetchBootstrapWithRetry() {
       for (let attempt = 0; attempt < 3; attempt++) {
-        const currentRes = await api.training.getDashboardState({ timeout: 20_000 }).catch(() => null);
-        if (cancelled || !currentRes) {
+        const boot = await api.bootstrap.get({ timeout: 20_000 }).catch(() => null);
+        if (cancelled || !boot) {
           if (attempt < 2) await new Promise((r) => setTimeout(r, 3000 * (attempt + 1)));
           continue;
         }
-        if (currentRes.notModified) return;
-
-        const payload =
-          extractDashboardPayload(currentRes) ??
-          extractDashboardPayload((currentRes as { data?: unknown }).data);
-
-        if (payload && syncWithServer && hasMeaningfulDashboardData(payload)) {
-          syncWithServer(payload as Parameters<typeof syncWithServer>[0]);
+        if (boot.notModified) return;
+        if (Array.isArray(boot.shared_dashboards) && setSharedDashboards) {
+          setSharedDashboards(boot.shared_dashboards);
         }
-        if (!cancelled) sessionStorage.removeItem(DASHBOARD_LOGS_RESET_FLAG);
+        if (boot.dashboard) await applyServerPayload(boot.dashboard);
         return;
       }
     }
 
     async function hydrateAndFetch() {
-      // 1. IndexedDB → instant UI (local-first)
       try {
         const localState = await getLocalState();
         const idbState = hasMeaningfulDashboardData(localState)
@@ -64,19 +92,8 @@ export function useDashboardSync(): void {
 
       if (!cancelled) setIsLoaded(true);
 
-      // 2. Background sync: shared boards + dashboard in parallel
       try {
-        const [,] = await Promise.all([
-          api.training
-            .listSharedDashboards({ timeout: 10_000 })
-            .then((shared) => {
-              if (!cancelled && Array.isArray(shared) && setSharedDashboards) {
-                setSharedDashboards(shared);
-              }
-            })
-            .catch(() => null),
-          fetchDashboardWithRetry(),
-        ]);
+        await fetchBootstrapWithRetry();
       } catch (err) {
         if (typeof window !== 'undefined' && (window as any).process?.env?.NODE_ENV !== 'production') {
           console.warn('Dashboard sync failed:', (err as Error)?.message || err);

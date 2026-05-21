@@ -4,16 +4,11 @@ import { Card, CardHeader, Badge } from './Card';
 import { Icons } from './Icons';
 import { MS } from '../../constants';
 import { useDashboardStore } from '../../store/dashboardStore';
+import { useFocusMetrics } from '../../hooks/useFocusMetrics';
 import { toDateKey, addDays, startOfDay, startOfWeek, startOfMonth, formatCountdown, parseSelectedDate } from './DashboardUtils';
-
-const PRAYERS = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
 export function PrayersCountdownsV2() {
   const selectedDateRaw = useDashboardStore((s) => s.selectedDate);
-  const dailyTaskTemplates = useDashboardStore((s) => s.dailyTaskTemplates) ?? [];
-  const dailyTaskLogs = useDashboardStore((s) => s.dailyTaskLogs) ?? {};
-  const prayerLogs = useDashboardStore((s) => s.prayerLogs) ?? {};
-  const dailyCompletionLog = useDashboardStore((s) => s.dailyCompletionLog) ?? {};
 
   const selectedDate = useMemo(() => parseSelectedDate(selectedDateRaw, new Date()), [selectedDateRaw]);
   const todayKey = useMemo(() => toDateKey(selectedDate), [selectedDate]);
@@ -26,67 +21,10 @@ export function PrayersCountdownsV2() {
     return () => clearInterval(id);
   }, []);
 
-  // Focus Score logic
-  const activeHabits = useMemo(() => dailyTaskTemplates.filter(t => !t.locked), [dailyTaskTemplates]);
-  
-  const todayTaskLogMap = useMemo(() => {
-    const logs = dailyTaskLogs[todayKey] || [];
-    const map = {};
-    logs.forEach(l => map[l.id] = l.done);
-    return map;
-  }, [dailyTaskLogs, todayKey]);
-
-  const todayPrayerLog = useMemo(() => prayerLogs[todayKey] || {}, [prayerLogs, todayKey]);
-  
-  // Helper to check if prayer is completed (handles both old boolean and new object format)
-  const isPrayerCompleted = (prayerLogEntry) => {
-    if (typeof prayerLogEntry === 'object') {
-      return !!prayerLogEntry?.completedAt;
-    }
-    return !!prayerLogEntry;
-  };
-  
-  const cl = useMemo(() => dailyCompletionLog[todayKey] || { quick: [], project: [] }, [dailyCompletionLog, todayKey]);
-  
-  const todayDone = useMemo(() => activeHabits.reduce((acc, t) => acc + (todayTaskLogMap[t.id] ? 1 : 0), 0), [activeHabits, todayTaskLogMap]);
-  const prayerDone = useMemo(() => PRAYERS.reduce((acc, p) => acc + (isPrayerCompleted(todayPrayerLog[p]) ? 1 : 0), 0), [todayPrayerLog]);
-  const tasksDone = useMemo(() => Math.min(3, (cl.quick?.length || 0) + (cl.project?.length || 0)), [cl]);
-  
-  const totalFocusItems = activeHabits.length + PRAYERS.length + 3;
-  const doneFocusItems = todayDone + prayerDone + tasksDone;
-  const todayFocusScore = totalFocusItems ? doneFocusItems / totalFocusItems : 0;
-  
+  const { focusStreak, todayFocusScore } = useFocusMetrics();
   const percentage = Math.round(todayFocusScore * 100);
   const circumference = 2 * Math.PI * 40;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
-  const focusStreak = useMemo(() => {
-    let s = 0;
-    const totalItems = activeHabits.length + PRAYERS.length + 3;
-    // Bug D fix: Streak always counts from TODAY backwards, not from selectedDate
-    const today = startOfDay(new Date());
-    for (let i = 0; i < 30; i++) {
-      const d = addDays(today, -i);
-      const key = toDateKey(d);
-      const taskLog = (dailyTaskLogs[key]) || [];
-      const taskLogMap = {};
-      taskLog.forEach((l) => (taskLogMap[l.id] = l.done));
-      const prayerLog = (prayerLogs[key]) || {};
-      const complLog = (dailyCompletionLog[key]) || { quick: [], project: [] };
-      const hDone = activeHabits.reduce((acc, t) => acc + (taskLogMap[t.id] ? 1 : 0), 0);
-      // Handle both old boolean and new object format for prayer logs
-      const pDone = PRAYERS.reduce((acc, p) => {
-        const entry = prayerLog[p];
-        const isCompleted = typeof entry === 'object' ? !!entry?.completedAt : !!entry;
-        return acc + (isCompleted ? 1 : 0);
-      }, 0);
-      const tDone = Math.min(3, (complLog.quick?.length || 0) + (complLog.project?.length || 0));
-      const score = totalItems ? (hDone + pDone + tDone) / totalItems : 0;
-      if (score >= 0.8) s++;
-      else break;
-    }
-    return s;
-  }, [dailyTaskLogs, prayerLogs, dailyCompletionLog, activeHabits]);
 
   const countdowns = useMemo(() => {
     const n = new Date();

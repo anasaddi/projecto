@@ -79,7 +79,8 @@ Render creerà automaticamente il database PostgreSQL. Devi applicare le migrazi
 | `CORS_ORIGINS` | `https://projecto-indol.vercel.app` | Origine frontend |
 | `ASSEMBLYAI_API_KEY` | (opzionale) | Per trascrizioni YouTube |
 | `OPENROUTER_API_KEY` | (opzionale) | Per AI features |
-| `REDIS_URL` | (opzionale) | Upstash Redis — cache dashboard tra worker |
+| `REDIS_URL` | (opzionale) | Upstash Redis — cache dashboard condivisa tra worker Render; senza Redis usa cache in-memory L1 per processo |
+| `SEED_ON_START` | `true` (default) | Imposta `false` in produzione se il DB è già popolato e vuoi evitare seed ad ogni cold start |
 
 ---
 

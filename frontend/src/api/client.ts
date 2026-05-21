@@ -110,6 +110,35 @@ export async function request<T = unknown>(path: string, options: RequestOptions
   throw lastErr;
 }
 
+export interface BootstrapResponse {
+  notModified?: boolean;
+  dashboard?: DashboardStateResponse | null;
+  shared_dashboards?: unknown[];
+  config?: Record<string, unknown>;
+}
+
+async function fetchBootstrap(timeoutMs: number): Promise<BootstrapResponse> {
+  const etag = typeof localStorage !== 'undefined' ? localStorage.getItem(DASHBOARD_ETAG_KEY) : null;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (etag) headers['If-None-Match'] = etag;
+
+  const url = resolveApiUrl('/bootstrap');
+  const res = await fetchWithTimeout(url, { method: 'GET', headers, credentials: 'include' }, timeoutMs);
+
+  if (res.status === 304) return { notModified: true };
+  if (res.status === 401) {
+    await clearAuthAndRedirect();
+    throw new Error('Unauthorized');
+  }
+  if (!res.ok) throw new Error(`Bootstrap failed with status ${res.status}`);
+
+  const newEtag = res.headers.get('ETag');
+  if (newEtag && typeof localStorage !== 'undefined') {
+    localStorage.setItem(DASHBOARD_ETAG_KEY, newEtag);
+  }
+  return (await res.json()) as BootstrapResponse;
+}
+
 async function fetchDashboardState(path: string, timeoutMs: number): Promise<DashboardStateResponse> {
   const etag = typeof localStorage !== 'undefined' ? localStorage.getItem(DASHBOARD_ETAG_KEY) : null;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -293,6 +322,11 @@ export const api = {
         body: JSON.stringify({ data }),
         ...opts,
       }),
+    patchDashboardState: (events: unknown[]) =>
+      request('/training/dashboard-state', {
+        method: 'PATCH',
+        body: JSON.stringify({ events }),
+      }),
     resetDailyLogs: () =>
       request('/training/dashboard-reset-daily', {
         method: 'POST',
@@ -308,6 +342,9 @@ export const api = {
   },
   config: {
     getConstants: () => request<unknown>('/config/constants'),
+  },
+  bootstrap: {
+    get: (opts?: RequestOptions) => fetchBootstrap(opts?.timeout ?? DEFAULT_TIMEOUT_MS),
   },
   auth: {
     login: (key: string) =>

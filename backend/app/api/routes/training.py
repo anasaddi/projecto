@@ -9,54 +9,13 @@ from fastapi.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
 
-# Minimal empty dashboard state when DB/cache fails
-EMPTY_DASHBOARD = {
-    "dailyTaskTemplates": [],
-    "dailyTaskLogs": {},
-    "projects": [],
-    "quickTasks": [],
-    "prayerLogs": {},
-    "top3Manual": [None, None, None],
-    "dailyCompletionLog": {},
-    "lifeGoals": {"collapsed": False, "tiers": []},
-}
-
-
-def _has_meaningful_dashboard_data(data: Any) -> bool:
-    if not isinstance(data, dict):
-        return False
-    life_goals = data.get("lifeGoals") if isinstance(data.get("lifeGoals"), dict) else None
-    tiers = life_goals.get("tiers") if isinstance(life_goals, dict) else None
-    return any(
-        [
-            isinstance(data.get("dailyTaskTemplates"), list) and len(data.get("dailyTaskTemplates") or []) > 0,
-            isinstance(data.get("projects"), list) and len(data.get("projects") or []) > 0,
-            isinstance(data.get("quickTasks"), list) and len(data.get("quickTasks") or []) > 0,
-            isinstance(tiers, list) and any(isinstance(t, dict) and len(t.get("goals") or []) > 0 for t in tiers),
-        ]
-    )
-
-
-def _dashboard_snapshot_or_empty(data: Any) -> dict:
-    return data if isinstance(data, dict) and _has_meaningful_dashboard_data(data) else EMPTY_DASHBOARD
-
-
-def _dashboard_etag(user_id: str | None, data: Any, updated_at: datetime | None = None) -> str:
-    uid = user_id or "default"
-    if updated_at is not None:
-        return f'W/"{uid}-{int(updated_at.timestamp())}"'
-    import hashlib
-    payload = json.dumps(data, sort_keys=True, default=str)
-    digest = hashlib.sha256(payload.encode()).hexdigest()[:16]
-    return f'W/"{uid}-{digest}"'
-
-
-def _safe_shared_dashboard_data(data: Any) -> dict:
-    if isinstance(data, dict):
-        return data
-    if isinstance(data, list):
-        return {"items": data}
-    return {}
+from app.api._dashboard_helpers import (
+    EMPTY_DASHBOARD,
+    dashboard_etag,
+    dashboard_snapshot_or_empty,
+    has_meaningful_dashboard_data,
+    safe_shared_dashboard_data,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
 from app.api.deps import get_current_admin, get_current_user, get_training_access
@@ -65,6 +24,7 @@ from app.db.session import get_db
 from app import schemas
 from app.repositories import training as crud_training
 from app.services import dashboard_service
+from app.schemas.dashboard_events import DashboardPatchRequest
 from app.repositories import migration as crud_migration
 from app.websockets import manager
 
@@ -298,11 +258,11 @@ async def get_dashboard_state(
     t0 = time.perf_counter()
     try:
         cached = await get_cached_dashboard(user_id)
-        if _has_meaningful_dashboard_data(cached):
+        if has_meaningful_dashboard_data(cached):
             elapsed_ms = (time.perf_counter() - t0) * 1000
             logger.info("get_dashboard_state cache hit in %.1fms (user=%s)", elapsed_ms, user_id or "default")
             updated_at = datetime.now(timezone.utc)
-            etag = _dashboard_etag(user_id, cached)
+            etag = dashboard_etag(user_id, cached)
             if request.headers.get("if-none-match") == etag:
                 return Response(status_code=304, headers={"ETag": etag})
             response.headers["ETag"] = etag
@@ -314,13 +274,13 @@ async def get_dashboard_state(
         await set_cached_dashboard(data, user_id)
         elapsed_ms = (time.perf_counter() - t0) * 1000
         logger.info("get_dashboard_state DB fetch in %.1fms (user=%s)", elapsed_ms, user_id or "default")
-        etag = _dashboard_etag(user_id, data, updated_at)
+        etag = dashboard_etag(user_id, data, updated_at)
         if request.headers.get("if-none-match") == etag:
             return Response(status_code=304, headers={"ETag": etag})
         response.headers["ETag"] = etag
         return {
             "key": "default",
-            "data": _dashboard_snapshot_or_empty(data),
+            "data": dashboard_snapshot_or_empty(data),
             "updated_at": updated_at or datetime.now(timezone.utc),
         }
     except Exception as e:
@@ -343,10 +303,10 @@ async def get_dashboard_state_at(
         raise HTTPException(status_code=400, detail="Invalid 'at' timestamp (use ISO 8601)")
     agg_id = user_id or "default"
     data = await get_state_at(db, agg_id, at=at_dt)
-    if not _has_meaningful_dashboard_data(data):
+    if not has_meaningful_dashboard_data(data):
         logger.info("Dashboard time-travel snapshot empty; falling back to current DB state")
         data = await dashboard_service.get_dashboard(db, user_id=user_id)
-    return {"key": "default", "data": _dashboard_snapshot_or_empty(data), "updated_at": at_dt}
+    return {"key": "default", "data": dashboard_snapshot_or_empty(data), "updated_at": at_dt}
 
 @router.put("/dashboard-state", response_model=schemas.DashboardStateOut)
 async def update_dashboard_state(
@@ -376,6 +336,26 @@ async def update_dashboard_state(
         logger.exception("update_dashboard_state failed: %s", e)
         await db.rollback()
         raise HTTPException(status_code=503, detail="Dashboard save failed") from e
+
+
+@router.patch("/dashboard-state", response_model=schemas.DashboardStateOut)
+async def patch_dashboard_state(
+    body: DashboardPatchRequest,
+    db: AsyncSession = Depends(get_db),
+    user_id: str | None = Depends(get_current_user),
+):
+    """Apply small delta events (habit/prayer/quick-task toggles) without full PUT payload."""
+    from app.cache import invalidate_dashboard, set_cached_dashboard
+
+    try:
+        data = await dashboard_service.patch_dashboard(db, body.events, user_id=user_id)
+        await invalidate_dashboard(user_id)
+        await set_cached_dashboard(data, user_id)
+        return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
+    except Exception as e:
+        logger.exception("patch_dashboard_state failed: %s", e)
+        await db.rollback()
+        raise HTTPException(status_code=503, detail="Dashboard patch failed") from e
 
 # --- Batch Operations ---
 
@@ -581,7 +561,7 @@ async def get_shared_dashboard(
         if not cached:
             await set_cached_shared_dashboard(share_id, data)
 
-        payload_data = _safe_shared_dashboard_data(data.get("data"))
+        payload_data = safe_shared_dashboard_data(data.get("data"))
         pwd_hash = payload_data.get("passwordHash")
         is_protected = bool(pwd_hash)
 
@@ -686,7 +666,7 @@ async def get_shared_write_access(
                 detail="Accesso negato. Solo admin può creare una shared dashboard senza password.",
             )
 
-        payload_data = _safe_shared_dashboard_data(dashboard.get("data"))
+        payload_data = safe_shared_dashboard_data(dashboard.get("data"))
         pwd_hash = payload_data.get("passwordHash")
 
         if not pwd_hash:
@@ -823,7 +803,7 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
             pass
         return
 
-    payload_data = _safe_shared_dashboard_data(dashboard.get("data"))
+    payload_data = safe_shared_dashboard_data(dashboard.get("data"))
     pwd_hash = payload_data.get("passwordHash")
     
     # 2. Token verification if protected
@@ -878,7 +858,7 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
 
             # Security: if dashboard is protected, allow only chat if no token, 
             # and block full data updates unless token/admin
-            payload_data = _safe_shared_dashboard_data(dashboard.get("data"))
+            payload_data = safe_shared_dashboard_data(dashboard.get("data"))
             pwd_hash = payload_data.get("passwordHash")
             
             if pwd_hash:
