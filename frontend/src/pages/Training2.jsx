@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { api } from '../api/client';
 import WeeklyCalendar from '../components/WeeklyCalendar';
 import StrengthTable2 from '../components/StrengthTable2';
@@ -53,8 +53,11 @@ export default function Training2() {
 
   const [awProgram, setAwProgram] = useState(AW_PROGRAM_FALLBACK);
   const [allProgressions, setAllProgressions] = useState({});
+  const loadInFlightRef = useRef(false);
 
   const loadWeekData = useCallback(async (isInitial = false) => {
+    if (loadInFlightRef.current) return;
+    loadInFlightRef.current = true;
     if (isInitial) setLoading(true);
     setLoadError(false);
     try {
@@ -132,6 +135,7 @@ export default function Training2() {
       console.error("Errore caricamento dati:", err);
       if (isInitial) setLoadError(true);
     } finally {
+      loadInFlightRef.current = false;
       if (isInitial) setLoading(false);
     }
   }, []);

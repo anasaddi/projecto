@@ -84,7 +84,7 @@ export async function request<T = unknown>(path: string, options: RequestOptions
         };
         err.status = res.status;
         err.body = body;
-        if (!silent) {
+        if (!silent && attempt >= MAX_RETRIES) {
           logAndToast(
             { api: path, action: 'request' },
             err,
@@ -349,10 +349,11 @@ export const api = {
         ...opts,
       }),
     listSharedDashboards: (opts?: RequestOptions) => request<unknown>('/training/shared-dashboards', opts ?? {}),
-    updateSharedDashboard: (shareId: string, data: unknown, title?: string) =>
+    updateSharedDashboard: (shareId: string, data: unknown, title?: string, opts?: RequestOptions) =>
       request(`/training/shared-dashboard/${encodeURIComponent(shareId)}`, {
         method: 'PUT',
         body: JSON.stringify({ data, title }),
+        ...opts,
       }),
   },
   config: {

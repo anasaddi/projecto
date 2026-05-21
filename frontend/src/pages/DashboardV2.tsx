@@ -138,6 +138,7 @@ export default function DashboardV2(): React.ReactElement {
         {/* Training Section - Full Width */}
         <TodayCardDashboard />
 
+        {/* Mobile: projects → top3/habits → pomodoro/quick/heatmap; desktop: left | center | right */}
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 pb-1">
           <div className="order-3 flex flex-col gap-4 min-h-0 lg:order-1 lg:w-1/4">
             {(sectionOrder.left || ['pomodoro', 'quickTasks', 'focusHeatmap']).map((sectionId: string, idx: number) => {

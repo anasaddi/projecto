@@ -51,26 +51,25 @@ def _template_exercise_dict(we: WorkoutDayExercise, e: Exercise) -> dict:
         "is_active": int(e.is_active) if e.is_active is not None else 1,
     }
 
+
+def _exercise_out_dict(ex: Exercise) -> dict:
+    """Serialize Exercise row for ExerciseOut (strict Pydantic types)."""
+    return {
+        "id": str(ex.id) if ex.id else "",
+        "name": str(ex.name) if ex.name else "Unnamed",
+        "category": str(ex.category) if ex.category else "HYPERTROPHY",
+        "primary_muscles": _json_list(ex.primary_muscles),
+        "secondary_muscles": _json_list(ex.secondary_muscles),
+        "cns_fatigue": float(ex.cns_fatigue) if ex.cns_fatigue is not None else 0.0,
+        "joint_stress": _json_dict(ex.joint_stress),
+        "is_active": int(ex.is_active) if ex.is_active is not None else 1,
+    }
+
+
 async def get_all_exercises(db: AsyncSession):
-    try:
-        res = await db.execute(select(Exercise))
-        exercises = res.scalars().all()
-        return [
-            {
-                "id": str(ex.id) if ex.id else "",
-                "name": str(ex.name) if ex.name else "Unnamed",
-                "category": str(ex.category) if ex.category else "HYPERTROPHY",
-                "primary_muscles": _parse_json(ex.primary_muscles, []),
-                "secondary_muscles": _parse_json(ex.secondary_muscles, []),
-                "cns_fatigue": float(ex.cns_fatigue) if ex.cns_fatigue is not None else 0.0,
-                "joint_stress": _parse_json(ex.joint_stress, {}),
-                "is_active": int(ex.is_active) if ex.is_active is not None else 1
-            }
-            for ex in exercises
-        ]
-    except Exception as e:
-        logger.error(f"Error in get_all_exercises: {e}")
-        return []
+    res = await db.execute(select(Exercise))
+    exercises = res.scalars().all()
+    return [_exercise_out_dict(ex) for ex in exercises]
 
 async def get_today_template(db: AsyncSession, for_date: date | None = None):
     target = for_date or date.today()
@@ -117,43 +116,37 @@ async def get_today_exercises_grouped(db: AsyncSession, for_date: date | None = 
 
 async def get_week_templates(db: AsyncSession):
     """Fetch all week templates with exercises — single JOINed query instead of N+1."""
-    try:
-        res = await db.execute(select(WorkoutDayTemplate).order_by(WorkoutDayTemplate.weekday))
-        templates = res.scalars().all()
+    res = await db.execute(select(WorkoutDayTemplate).order_by(WorkoutDayTemplate.weekday))
+    templates = res.scalars().all()
 
-        if not templates:
-            return []
-
-        template_ids = [t.id for t in templates]
-
-        # Single query: all exercises for all templates, JOINed with Exercise
-        ex_res = await db.execute(
-            select(WorkoutDayExercise, Exercise)
-            .join(Exercise, Exercise.id == WorkoutDayExercise.exercise_id)
-            .filter(WorkoutDayExercise.template_id.in_(template_ids))
-            .order_by(WorkoutDayExercise.template_id, WorkoutDayExercise.ordinal)
-        )
-        all_exercises = ex_res.all()
-
-        # Group exercises by template_id
-        exercises_by_template = {}
-        for we, e in all_exercises:
-            if we.template_id not in exercises_by_template:
-                exercises_by_template[we.template_id] = []
-            exercises_by_template[we.template_id].append(_template_exercise_dict(we, e))
-
-        return [
-            {
-                "template_id": str(t.id),
-                "day_name": str(t.day_name),
-                "weekday": int(t.weekday) if t.weekday is not None else 0,
-                "exercises": exercises_by_template.get(t.id, []),
-            }
-            for t in templates
-        ]
-    except Exception as e:
-        logger.error(f"Error in get_week_templates: {e}")
+    if not templates:
         return []
+
+    template_ids = [t.id for t in templates]
+
+    ex_res = await db.execute(
+        select(WorkoutDayExercise, Exercise)
+        .join(Exercise, Exercise.id == WorkoutDayExercise.exercise_id)
+        .filter(WorkoutDayExercise.template_id.in_(template_ids))
+        .order_by(WorkoutDayExercise.template_id, WorkoutDayExercise.ordinal)
+    )
+    all_exercises = ex_res.all()
+
+    exercises_by_template: dict[Any, list] = {}
+    for we, e in all_exercises:
+        if we.template_id not in exercises_by_template:
+            exercises_by_template[we.template_id] = []
+        exercises_by_template[we.template_id].append(_template_exercise_dict(we, e))
+
+    return [
+        {
+            "template_id": str(t.id),
+            "day_name": str(t.day_name),
+            "weekday": int(t.weekday) if t.weekday is not None else 0,
+            "exercises": exercises_by_template.get(t.id, []),
+        }
+        for t in templates
+    ]
 
 async def update_week_templates(db: AsyncSession, days: list[WeekDayUpdateData]):
     for d in days:

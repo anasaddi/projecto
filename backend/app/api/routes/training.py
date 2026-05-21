@@ -91,10 +91,22 @@ async def migrate_data(db: AsyncSession = Depends(get_db)):
     """Migrate data from old JSON blobs to relational tables."""
     return await crud_migration.migrate_json_to_relational(db)
 
+def _validate_template_exercises(rows: list[dict]) -> list[schemas.TemplateExerciseOut]:
+    return [schemas.TemplateExerciseOut.model_validate(row) for row in rows]
+
+
 @router.get("/exercises", response_model=list[schemas.ExerciseOut], dependencies=[Depends(get_training_access)])
 async def get_exercises(db: AsyncSession = Depends(get_db)):
     """Public route for the muscle-exercise matrix."""
-    return await crud_training.get_all_exercises(db)
+    try:
+        raw = await crud_training.get_all_exercises(db)
+        return [schemas.ExerciseOut.model_validate(row) for row in raw]
+    except ValidationError:
+        logger.exception("training/exercises response validation failed")
+        raise HTTPException(status_code=500, detail="Exercise serialization failed")
+    except Exception as e:
+        logger.exception("training/exercises failed: %s", e)
+        raise HTTPException(status_code=503, detail="Exercise list unavailable")
 
 _AW_PROGRAM_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "aw_training_program.json"
 
@@ -124,21 +136,20 @@ async def get_today(db: AsyncSession = Depends(get_db), for_date: Optional[date]
         hyp, strength_aw = await crud_training.get_today_exercises_grouped(db, for_date)
         is_fallback = template.weekday is not None and template.weekday != target.weekday()
         return schemas.TodayResponse(
-            template_id=template.id,
-            day_name=template.day_name,
-            hypertrophy_exercises=hyp,
-            strength_aw_exercises=strength_aw,
+            template_id=str(template.id),
+            day_name=str(template.day_name),
+            hypertrophy_exercises=_validate_template_exercises(hyp),
+            strength_aw_exercises=_validate_template_exercises(strength_aw),
             is_fallback=is_fallback,
         )
+    except ValidationError:
+        logger.exception("training/today response validation failed")
+        raise HTTPException(status_code=500, detail="Today template serialization failed")
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception("training/today failed: %s", e)
-        return schemas.TodayResponse(
-            template_id="",
-            day_name="Nessun template per oggi",
-            hypertrophy_exercises=[],
-            strength_aw_exercises=[],
-            is_fallback=False,
-        )
+        raise HTTPException(status_code=503, detail="Today template unavailable")
 
 @router.get("/week", response_model=list[schemas.WeekDayData], dependencies=[Depends(get_training_access)])
 async def get_week(db: AsyncSession = Depends(get_db)):
@@ -148,10 +159,10 @@ async def get_week(db: AsyncSession = Depends(get_db)):
         return [schemas.WeekDayData.model_validate(day) for day in raw]
     except ValidationError:
         logger.exception("training/week response validation failed")
-        return []
+        raise HTTPException(status_code=500, detail="Week template serialization failed")
     except Exception as e:
         logger.exception("training/week failed: %s", e)
-        return []
+        raise HTTPException(status_code=503, detail="Week templates unavailable")
 
 @router.put("/week", response_model=dict, dependencies=[Depends(get_training_access)])
 async def update_week(body: schemas.WeekUpdateRequest, db: AsyncSession = Depends(get_db)):

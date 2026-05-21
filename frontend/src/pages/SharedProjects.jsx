@@ -94,6 +94,17 @@ function sharedFetchOpts(shareId) {
   };
 }
 
+function buildSharedSyncSnapshot(state) {
+  return JSON.stringify({
+    title: state.title ?? '',
+    projects: Array.isArray(state.projects) ? state.projects : [],
+    quickTasks: Array.isArray(state.quickTasks) ? state.quickTasks : [],
+    notes: normalizeSharedNotes(state.notes),
+    chat: Array.isArray(state.chat) ? state.chat : [],
+    bonifici: Array.isArray(state.bonifici) ? state.bonifici : [],
+  });
+}
+
 function handleSharedAccessError(err, { setNeedsPassword, setDashboard }) {
   const status = err?.status;
   if (status === 403) {
@@ -625,6 +636,21 @@ export default function SharedProjects() {
   const pollInterval = useRef(null);
   const mountedRef = useRef(true);
   const applyingFromBCRef = useRef(false);
+  const skipRemoteSyncRef = useRef(true);
+  const lastPushedSnapshotRef = useRef(null);
+  const pollInFlightRef = useRef(false);
+  const pollDelayMsRef = useRef(4000);
+  const pollStoppedRef = useRef(false);
+  const dashboardErrorRef = useRef(null);
+
+  useEffect(() => {
+    dashboardErrorRef.current = dashboard.error;
+  }, [dashboard.error]);
+
+  const markRemoteSnapshot = (snapshotState) => {
+    lastPushedSnapshotRef.current = buildSharedSyncSnapshot(snapshotState);
+    skipRemoteSyncRef.current = true;
+  };
 
   const applyDashboardFromPayload = (msg) => {
     if (msg.type === 'chat') {
@@ -632,10 +658,12 @@ export default function SharedProjects() {
       setDashboard(prev => {
         const chat = Array.isArray(prev.chat) ? prev.chat : [];
         if (chat.some(m => m.id === newMsg.id)) return prev;
-        return {
+        const next = {
           ...prev,
           chat: [...chat.slice(-99), newMsg]
         };
+        markRemoteSnapshot(next);
+        return next;
       });
       return;
     }
@@ -658,8 +686,23 @@ export default function SharedProjects() {
       if (serverTitle !== null) next.title = serverTitle;
       next.loading = false;
       next.error = null;
+      markRemoteSnapshot(next);
       return next;
     });
+  };
+
+  const stopPolling = () => {
+    pollStoppedRef.current = true;
+    if (pollInterval.current) {
+      clearInterval(pollInterval.current);
+      pollInterval.current = null;
+    }
+  };
+
+  const schedulePolling = () => {
+    if (pollStoppedRef.current || !id) return;
+    if (pollInterval.current) clearInterval(pollInterval.current);
+    pollInterval.current = setInterval(refetchFromApi, pollDelayMsRef.current);
   };
 
   const connect = () => {
@@ -723,29 +766,33 @@ export default function SharedProjects() {
   };
 
   const refetchFromApi = () => {
-    if (!id || dashboard.error?.includes('404') || dashboard.error?.includes('non trovat')) return;
+    if (!id || pollInFlightRef.current || pollStoppedRef.current) return;
+    const errMsg = dashboardErrorRef.current;
+    if (errMsg?.includes('404') || errMsg?.includes('non trovat')) return;
+    pollInFlightRef.current = true;
     api.training.getSharedDashboard(id, sharedFetchOpts(id))
       .then((data) => {
         if (!mountedRef.current) return;
+        pollDelayMsRef.current = 4000;
         applyDashboardFromPayload(data);
       })
       .catch((err) => {
         const status = err?.status;
         if (status === 403) {
           handleSharedAccessError(err, { setNeedsPassword, setDashboard });
-          if (pollInterval.current) {
-            clearInterval(pollInterval.current);
-            pollInterval.current = null;
-          }
+          stopPolling();
           return;
         }
         if (status === 404 || status === 500 || status === 503) {
           console.warn(`[SharedProjects] Stopping poll for ${id}: ${status} error`);
-          if (pollInterval.current) {
-            clearInterval(pollInterval.current);
-            pollInterval.current = null;
-          }
+          stopPolling();
+          return;
         }
+        pollDelayMsRef.current = Math.min(pollDelayMsRef.current * 2, 30000);
+        schedulePolling();
+      })
+      .finally(() => {
+        pollInFlightRef.current = false;
       });
   };
 
@@ -771,15 +818,17 @@ export default function SharedProjects() {
   }, [id]);
 
   useEffect(() => {
-    if (!id || dashboard.isConnected || dashboard.error) return;
-    pollInterval.current = setInterval(refetchFromApi, 4000);
+    if (!id || dashboard.isConnected || dashboard.error || needsPassword) return;
+    pollStoppedRef.current = false;
+    pollDelayMsRef.current = 4000;
+    schedulePolling();
     return () => {
       if (pollInterval.current) {
         clearInterval(pollInterval.current);
         pollInterval.current = null;
       }
     };
-  }, [id, dashboard.isConnected, dashboard.error]);
+  }, [id, dashboard.isConnected, dashboard.error, needsPassword]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -834,11 +883,16 @@ export default function SharedProjects() {
     };
   }, [id]);
 
-  // Invio aggiornamenti debounced: WebSocket + REST + BC
+  // Invio aggiornamenti debounced: WebSocket + REST + BC (solo modifiche locali)
   useEffect(() => {
-    if (!id || dashboard.loading || applyingFromBCRef.current) return;
+    if (!id || dashboard.loading || applyingFromBCRef.current || needsPassword) return;
 
     const timeoutId = setTimeout(() => {
+      if (skipRemoteSyncRef.current) {
+        skipRemoteSyncRef.current = false;
+        return;
+      }
+
       const data = {
         projects: Array.isArray(dashboard.projects) ? dashboard.projects : [],
         projectOrder: Array.isArray(dashboard.projects) ? dashboard.projects.map(p => p.id) : [],
@@ -847,12 +901,23 @@ export default function SharedProjects() {
         chat: Array.isArray(dashboard.chat) ? dashboard.chat : [],
         bonifici: Array.isArray(dashboard.bonifici) ? dashboard.bonifici : [],
       };
+      const snap = buildSharedSyncSnapshot({
+        title: dashboard.title,
+        projects: data.projects,
+        quickTasks: data.quickTasks,
+        notes: data.notes,
+        chat: data.chat,
+        bonifici: data.bonifici,
+      });
+      if (snap === lastPushedSnapshotRef.current) return;
+      lastPushedSnapshotRef.current = snap;
+
       const payload = { type: 'sync', title: dashboard.title ?? '', data };
 
       if (ws.current?.readyState === WebSocket.OPEN) {
         ws.current.send(JSON.stringify(payload));
       }
-      api.training.updateSharedDashboard(id, data, payload.title).catch(() => {});
+      api.training.updateSharedDashboard(id, data, payload.title, { silent: true }).catch(() => {});
       
       try {
         const bc = new BroadcastChannel(`km-shared-${id}`);
@@ -862,7 +927,7 @@ export default function SharedProjects() {
     }, 400);
 
     return () => clearTimeout(timeoutId);
-  }, [id, dashboard.projects, dashboard.quickTasks, dashboard.notes, dashboard.chat, dashboard.bonifici, dashboard.title]);
+  }, [id, needsPassword, dashboard.loading, dashboard.projects, dashboard.quickTasks, dashboard.notes, dashboard.chat, dashboard.bonifici, dashboard.title]);
 
   // Helper per aggiornare lo stato locale in modo atomico
   const updateLocal = (updater) => {
@@ -1109,6 +1174,7 @@ export default function SharedProjects() {
         onConfirm={() => updateLocal({ chat: [] })}
         onCancel={() => setConfirmResetChat(false)}
       />
+      {/* Mobile: header + projects/notes first; sidebar (quick/chat) after; 2xl: sidebar right */}
       <div className={`${SHARED_CONTENT_CLASS} flex flex-col gap-4 py-4 pb-12 sm:gap-6 sm:py-6 2xl:flex-row 2xl:items-start`}>
 
         {/* MAIN CONTENT: PROJECTS */}

@@ -55,3 +55,18 @@ def test_get_week_returns_200_with_valid_schema(mock_get_week, client):
     assert len(body) == 1
     assert body[0]["exercises"][0]["base_reps"] == 5
     mock_get_week.assert_awaited_once()
+
+
+@patch(
+    "app.api.routes.training.crud_training.get_week_templates",
+    new_callable=AsyncMock,
+    side_effect=RuntimeError("db down"),
+)
+def test_get_week_returns_503_on_repository_failure(mock_get_week, client):
+    token = _training_jwt()
+    saved = dict(client.headers)
+    client.headers.clear()
+    r = client.get("/api/training/week", headers={"x-km-access": token})
+    client.headers.update(saved)
+    assert r.status_code == 503
+    mock_get_week.assert_awaited_once()
