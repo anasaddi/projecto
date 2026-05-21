@@ -37,6 +37,8 @@ interface RequestOptions {
   headers?: Record<string, string>;
   body?: string;
   timeout?: number;
+  /** Skip toast on errors (e.g. expected 403 on shared poll). */
+  silent?: boolean;
 }
 
 async function fetchWithTimeout(
@@ -52,6 +54,7 @@ async function fetchWithTimeout(
 }
 
 export async function request<T = unknown>(path: string, options: RequestOptions = {}): Promise<T | void> {
+  const silent = options.silent === true;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...options.headers,
@@ -81,12 +84,14 @@ export async function request<T = unknown>(path: string, options: RequestOptions
         };
         err.status = res.status;
         err.body = body;
-        logAndToast(
-          { api: path, action: 'request' },
-          err,
-          `Errore di rete (${res.status}). Riprova.`,
-          { status: res.status }
-        );
+        if (!silent) {
+          logAndToast(
+            { api: path, action: 'request' },
+            err,
+            `Errore di rete (${res.status}). Riprova.`,
+            { status: res.status }
+          );
+        }
         throw err;
       }
       if (res.status === 204) return;
@@ -99,10 +104,14 @@ export async function request<T = unknown>(path: string, options: RequestOptions
         throw timeoutErr;
       }
       if ((err as Error).message === 'Unauthorized') throw err;
+      const status = (err as Error & { status?: number }).status;
+      if (status != null && status >= 400 && status < 500) throw err;
       if (attempt < MAX_RETRIES) {
         await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
       } else {
-        logAndToast({ api: path, action: 'request' }, err as Error, 'Connessione fallita. Controlla la rete e riprova.');
+        if (!silent) {
+          logAndToast({ api: path, action: 'request' }, err as Error, 'Connessione fallita. Controlla la rete e riprova.');
+        }
         throw err;
       }
     }
@@ -331,8 +340,14 @@ export const api = {
       request('/training/dashboard-reset-daily', {
         method: 'POST',
       }),
-    getSharedDashboard: (shareId: string) =>
-      request<unknown>(`/training/shared-dashboard/${encodeURIComponent(shareId)}`),
+    getSharedDashboard: (shareId: string, opts?: RequestOptions) =>
+      request<unknown>(`/training/shared-dashboard/${encodeURIComponent(shareId)}`, opts ?? {}),
+    unlockSharedDashboard: (shareId: string, password: string, opts?: RequestOptions) =>
+      request<{ token?: string }>(`/training/shared-dashboard/${encodeURIComponent(shareId)}/unlock`, {
+        method: 'POST',
+        body: JSON.stringify({ password }),
+        ...opts,
+      }),
     listSharedDashboards: (opts?: RequestOptions) => request<unknown>('/training/shared-dashboards', opts ?? {}),
     updateSharedDashboard: (shareId: string, data: unknown, title?: string) =>
       request(`/training/shared-dashboard/${encodeURIComponent(shareId)}`, {

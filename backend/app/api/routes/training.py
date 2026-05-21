@@ -18,7 +18,7 @@ from app.api._dashboard_helpers import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
-from app.api.deps import get_current_admin, get_current_user, get_training_access
+from app.api.deps import get_current_admin, get_current_user, get_training_access, resolve_access_token
 
 from app.db.session import get_db
 from app import schemas
@@ -524,7 +524,7 @@ async def get_shared_dashboard(
     share_id: str,
     db: AsyncSession = Depends(get_db),
     x_share_token: str | None = Header(None, alias="x-share-token"),
-    x_km_access: str | None = Header(None, alias="x-km-access"),
+    access_token: str | None = Depends(resolve_access_token),
 ):
     """Fetch shared dashboard: admin JWT, share unlock token, or password-protected shell."""
     from app.cache import get_cached_shared_dashboard, set_cached_shared_dashboard, invalidate_shared_dashboard
@@ -532,7 +532,7 @@ async def get_shared_dashboard(
     from app.api.deps import is_admin_access
 
     settings = get_settings()
-    is_admin = is_admin_access(x_km_access, settings)
+    is_admin = is_admin_access(access_token, settings)
 
     try:
         cached = await get_cached_shared_dashboard(share_id)
@@ -646,7 +646,7 @@ async def unlock_shared_dashboard(share_id: str, body: schemas.SharedDashboardUn
 async def get_shared_write_access(
     share_id: str,
     x_share_token: str | None = Header(None, alias="x-share-token"),
-    x_km_access: str | None = Header(None, alias="x-km-access"),
+    access_token: str | None = Depends(resolve_access_token),
     db: AsyncSession = Depends(get_db)
 ):
     """Write access: admin JWT (or dev raw key), or valid share token when password-protected."""
@@ -655,7 +655,7 @@ async def get_shared_write_access(
 
     settings = get_settings()
 
-    if is_admin_access(x_km_access, settings):
+    if is_admin_access(access_token, settings):
         return True
 
     try:

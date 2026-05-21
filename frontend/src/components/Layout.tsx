@@ -177,14 +177,48 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
               ))}
             </div>
           )}
-          <motion.span
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: lastSavedAt ? 1 : 0, x: 0 }}
-            className="hidden md:flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 min-w-[60px]"
-          >
-            <Icons.Check className="h-3.5 w-3.5" />
-            Salvato
-          </motion.span>
+          {(() => {
+            const showSync =
+              syncStatus === 'syncing' ||
+              syncStatus === 'queued' ||
+              syncStatus === 'offline' ||
+              !!lastSavedAt;
+            const label =
+              syncStatus === 'offline'
+                ? 'Offline'
+                : syncStatus === 'queued'
+                  ? 'In coda'
+                  : syncStatus === 'syncing'
+                    ? 'Salvataggio…'
+                    : 'Salvato';
+            const colorClass =
+              syncStatus === 'offline' || syncStatus === 'queued'
+                ? 'text-amber-600 dark:text-amber-400'
+                : syncStatus === 'syncing'
+                  ? 'text-indigo-600 dark:text-indigo-400'
+                  : 'text-emerald-600 dark:text-emerald-400';
+            return (
+              <motion.span
+                initial={false}
+                animate={{ opacity: showSync ? 1 : 0, x: 0 }}
+                className={cn(
+                  'hidden md:flex items-center gap-1 text-xs font-semibold min-w-[88px] justify-end',
+                  colorClass
+                )}
+                role="status"
+                aria-live="polite"
+              >
+                {syncStatus === 'offline' || syncStatus === 'queued' ? (
+                  <Icons.Clock className="h-3.5 w-3.5 shrink-0" />
+                ) : syncStatus === 'syncing' ? (
+                  <Icons.Refresh className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                ) : (
+                  <Icons.Check className="h-3.5 w-3.5 shrink-0" />
+                )}
+                {label}
+              </motion.span>
+            );
+          })()}
           <Button
             variant="ghost"
             onClick={() => {
@@ -210,21 +244,6 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
             : 'w-full'
         )}
       >
-        {syncStatus !== 'online' && (
-          <div
-            className={cn(
-              'text-center text-xs py-1.5 px-3 border-b',
-              syncStatus === 'offline' && 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 border-amber-200/60 dark:border-amber-800/40',
-              syncStatus === 'queued' && 'bg-sky-50 dark:bg-sky-950/40 text-sky-800 dark:text-sky-200 border-sky-200/60 dark:border-sky-800/40',
-              syncStatus === 'syncing' && 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-200 border-indigo-200/60 dark:border-indigo-800/40',
-            )}
-            role="status"
-          >
-            {syncStatus === 'offline' && 'Sei offline — le modifiche restano sul dispositivo'}
-            {syncStatus === 'queued' && 'Modifiche in coda — sincronizzazione appena possibile'}
-            {syncStatus === 'syncing' && 'Sincronizzazione in corso…'}
-          </div>
-        )}
         {children}
       </main>
     </div>

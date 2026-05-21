@@ -12,6 +12,7 @@ import { Icons } from '../components/dashboard/Icons';
 import FinanzeSection from '../components/shared/FinanzeSection';
 import { DASHBOARD_CONTENT_CLASS } from '../constants/layout';
 import { useToast } from '../context/ToastContext';
+import { isAdminRole } from '../utils/authSession';
 /**
  * ----------------------------------------------------------------------
  * UTILS
@@ -83,6 +84,32 @@ function isUnlocked(shareId) {
   } catch (_) {
     return false;
   }
+}
+
+function sharedFetchOpts(shareId) {
+  const token = localStorage.getItem(`km-shared-token-${shareId}`);
+  return {
+    silent: true,
+    ...(token ? { headers: { 'x-share-token': token } } : {}),
+  };
+}
+
+function handleSharedAccessError(err, { setNeedsPassword, setDashboard }) {
+  const status = err?.status;
+  if (status === 403) {
+    if (isAdminRole()) {
+      setDashboard((prev) => ({
+        ...prev,
+        loading: false,
+        error: 'Sessione scaduta. Riaccedi da /login.',
+      }));
+    } else {
+      setNeedsPassword(true);
+      setDashboard((prev) => ({ ...prev, loading: false, error: null }));
+    }
+    return true;
+  }
+  return false;
 }
 
 function createSharedNote(overrides = {}) {
@@ -697,16 +724,21 @@ export default function SharedProjects() {
 
   const refetchFromApi = () => {
     if (!id || dashboard.error?.includes('404') || dashboard.error?.includes('non trovat')) return;
-    const token = localStorage.getItem(`km-shared-token-${id}`);
-    const opts = token ? { headers: { 'x-share-token': token } } : {};
-    api.training.getSharedDashboard(id, opts)
+    api.training.getSharedDashboard(id, sharedFetchOpts(id))
       .then((data) => {
         if (!mountedRef.current) return;
         applyDashboardFromPayload(data);
       })
       .catch((err) => {
-        // Stop polling on 404/500 errors to prevent spamming console
-        const status = err?.response?.status || err?.status;
+        const status = err?.status;
+        if (status === 403) {
+          handleSharedAccessError(err, { setNeedsPassword, setDashboard });
+          if (pollInterval.current) {
+            clearInterval(pollInterval.current);
+            pollInterval.current = null;
+          }
+          return;
+        }
         if (status === 404 || status === 500 || status === 503) {
           console.warn(`[SharedProjects] Stopping poll for ${id}: ${status} error`);
           if (pollInterval.current) {
@@ -757,12 +789,11 @@ export default function SharedProjects() {
     }
 
     let cancelled = false;
-    const token = localStorage.getItem(`km-shared-token-${id}`);
-    const opts = token ? { headers: { 'x-share-token': token } } : {};
 
-    api.training.getSharedDashboard(id, opts)
+    api.training.getSharedDashboard(id, sharedFetchOpts(id))
       .then((data) => {
         if (cancelled || !mountedRef.current) return;
+        const token = localStorage.getItem(`km-shared-token-${id}`);
         if (data?.is_protected && !token) {
           setNeedsPassword(true);
           setDashboard(prev => ({ ...prev, loading: false, error: null }));
@@ -772,6 +803,7 @@ export default function SharedProjects() {
       })
       .catch((err) => {
         if (cancelled || !mountedRef.current) return;
+        if (handleSharedAccessError(err, { setNeedsPassword, setDashboard })) return;
         setDashboard(prev => ({
           ...prev,
           loading: false,
@@ -993,7 +1025,7 @@ export default function SharedProjects() {
     if (!pw) return;
     setPasswordError(null);
     try {
-      const { token } = await api.training.unlockSharedDashboard(id, pw);
+      const { token } = await api.training.unlockSharedDashboard(id, pw, { silent: true });
       if (token) {
         localStorage.setItem(`km-shared-token-${id}`, token);
         setNeedsPassword(false);

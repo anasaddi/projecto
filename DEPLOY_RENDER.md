@@ -82,6 +82,12 @@ Render creerà automaticamente il database PostgreSQL. Devi applicare le migrazi
 | `REDIS_URL` | (opzionale) | Upstash Redis — cache dashboard condivisa tra worker Render; senza Redis usa cache in-memory L1 per processo |
 | `SEED_ON_START` | `true` (default) | Imposta `false` in produzione se il DB è già popolato e vuoi evitare seed ad ogni cold start |
 
+### Variabili Vercel (frontend)
+
+| Variabile | Valore | Note |
+|---|---|---|
+| `VITE_WS_HOST` | `projecto-backend-7we9.onrender.com` | WebSocket verso Render (Vercel non fa proxy WS) |
+
 ---
 
 ## 🔧 Comandi Utili
