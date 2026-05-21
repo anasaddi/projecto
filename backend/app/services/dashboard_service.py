@@ -1,9 +1,16 @@
 from app.repositories import dashboard as dashboard_repo
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple
+from datetime import datetime
 
 async def get_dashboard(db: AsyncSession, key: str = "default", user_id: str | None = None) -> Dict[str, Any]:
-    return await dashboard_repo.get_dashboard_state_aggregated(db, key, user_id)
+    data, _ = await dashboard_repo.get_dashboard_document(db, key, user_id)
+    return data
+
+async def get_dashboard_with_meta(
+    db: AsyncSession, key: str = "default", user_id: str | None = None
+) -> Tuple[Dict[str, Any], datetime | None]:
+    return await dashboard_repo.get_dashboard_document(db, key, user_id)
 
 async def update_dashboard(db: AsyncSession, data: dict, key: str = "default", user_id: str | None = None) -> Dict[str, Any]:
     return await dashboard_repo.update_dashboard_from_json(db, data, key, user_id)

@@ -12,6 +12,7 @@ export function clearAuthSessionFlags(): void {
   localStorage.removeItem('km-user-role');
   localStorage.removeItem('km-training-allowed');
   localStorage.removeItem('km-admin-token');
+  localStorage.removeItem('km-dashboard-etag');
 }
 
 export function setAdminSession(training: boolean): void {

@@ -7,6 +7,10 @@
       "destination": "https://projecto-backend-7we9.onrender.com/api/$1"
     },
     {
+      "source": "/keepalive",
+      "destination": "https://projecto-backend-7we9.onrender.com/keepalive"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

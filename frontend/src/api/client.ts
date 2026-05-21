@@ -7,6 +7,14 @@ const BASE = API_BASE;
 const DEFAULT_TIMEOUT_MS = 30_000;
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000;
+const DASHBOARD_ETAG_KEY = 'km-dashboard-etag';
+
+export interface DashboardStateResponse {
+  notModified?: boolean;
+  key?: string;
+  data?: unknown;
+  updated_at?: string;
+}
 
 function resolveApiUrl(path: string): string {
   return BASE + path;
@@ -100,6 +108,36 @@ export async function request<T = unknown>(path: string, options: RequestOptions
     }
   }
   throw lastErr;
+}
+
+async function fetchDashboardState(path: string, timeoutMs: number): Promise<DashboardStateResponse> {
+  const etag = typeof localStorage !== 'undefined' ? localStorage.getItem(DASHBOARD_ETAG_KEY) : null;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (etag) headers['If-None-Match'] = etag;
+
+  const url = resolveApiUrl(path);
+  const res = await fetchWithTimeout(
+    url,
+    { method: 'GET', headers, credentials: 'include' },
+    timeoutMs
+  );
+
+  if (res.status === 304) {
+    return { notModified: true };
+  }
+  if (res.status === 401) {
+    await clearAuthAndRedirect();
+    throw new Error('Unauthorized');
+  }
+  if (!res.ok) {
+    throw new Error(`Request failed with status ${res.status}`);
+  }
+
+  const newEtag = res.headers.get('ETag');
+  if (newEtag && typeof localStorage !== 'undefined') {
+    localStorage.setItem(DASHBOARD_ETAG_KEY, newEtag);
+  }
+  return (await res.json()) as DashboardStateResponse;
 }
 
 export const api = {
@@ -246,7 +284,7 @@ export const api = {
         method: 'POST',
       }),
     getDashboardState: (opts?: RequestOptions) =>
-      request<{ data?: unknown }>('/training/dashboard-state', opts ?? {}),
+      fetchDashboardState('/training/dashboard-state', opts?.timeout ?? DEFAULT_TIMEOUT_MS),
     getDashboardStateAt: (at: string, opts?: RequestOptions) =>
       request<{ data?: unknown }>(`/training/dashboard-state/at?at=${encodeURIComponent(at)}`, opts ?? {}),
     updateDashboardState: (data: unknown, opts?: { timeout?: number }) =>

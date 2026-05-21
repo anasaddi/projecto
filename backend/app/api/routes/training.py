@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import date, datetime, timezone, time, timedelta
 import jwt
 from typing import Optional, Any
-from fastapi import APIRouter, Depends, HTTPException, Header, Response, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, Header, Response, WebSocket, WebSocketDisconnect, Request
 from fastapi.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
@@ -39,6 +39,16 @@ def _has_meaningful_dashboard_data(data: Any) -> bool:
 
 def _dashboard_snapshot_or_empty(data: Any) -> dict:
     return data if isinstance(data, dict) and _has_meaningful_dashboard_data(data) else EMPTY_DASHBOARD
+
+
+def _dashboard_etag(user_id: str | None, data: Any, updated_at: datetime | None = None) -> str:
+    uid = user_id or "default"
+    if updated_at is not None:
+        return f'W/"{uid}-{int(updated_at.timestamp())}"'
+    import hashlib
+    payload = json.dumps(data, sort_keys=True, default=str)
+    digest = hashlib.sha256(payload.encode()).hexdigest()[:16]
+    return f'W/"{uid}-{digest}"'
 
 
 def _safe_shared_dashboard_data(data: Any) -> dict:
@@ -277,10 +287,12 @@ async def skip_today(db: AsyncSession = Depends(get_db)):
 
 @router.get("/dashboard-state", response_model=schemas.DashboardStateOut | None)
 async def get_dashboard_state(
+    request: Request,
+    response: Response,
     db: AsyncSession = Depends(get_db),
     user_id: str | None = Depends(get_current_user),
 ):
-    """Fetch the dashboard state — Redis-first, DB fallback. Filtered by user_id when present."""
+    """Fetch dashboard — Redis-first, then 1-query document snapshot, ETag/304 supported."""
     import time
     from app.cache import get_cached_dashboard, set_cached_dashboard
     t0 = time.perf_counter()
@@ -289,14 +301,28 @@ async def get_dashboard_state(
         if _has_meaningful_dashboard_data(cached):
             elapsed_ms = (time.perf_counter() - t0) * 1000
             logger.info("get_dashboard_state cache hit in %.1fms (user=%s)", elapsed_ms, user_id or "default")
-            return {"key": "default", "data": cached, "updated_at": datetime.now(timezone.utc)}
+            updated_at = datetime.now(timezone.utc)
+            etag = _dashboard_etag(user_id, cached)
+            if request.headers.get("if-none-match") == etag:
+                return Response(status_code=304, headers={"ETag": etag})
+            response.headers["ETag"] = etag
+            return {"key": "default", "data": cached, "updated_at": updated_at}
         if cached:
             logger.info("Ignoring empty dashboard cache hit; fetching DB snapshot")
-        data = await dashboard_service.get_dashboard(db, user_id=user_id)
+
+        data, updated_at = await dashboard_service.get_dashboard_with_meta(db, user_id=user_id)
         await set_cached_dashboard(data, user_id)
         elapsed_ms = (time.perf_counter() - t0) * 1000
         logger.info("get_dashboard_state DB fetch in %.1fms (user=%s)", elapsed_ms, user_id or "default")
-        return {"key": "default", "data": data, "updated_at": datetime.now(timezone.utc)}
+        etag = _dashboard_etag(user_id, data, updated_at)
+        if request.headers.get("if-none-match") == etag:
+            return Response(status_code=304, headers={"ETag": etag})
+        response.headers["ETag"] = etag
+        return {
+            "key": "default",
+            "data": _dashboard_snapshot_or_empty(data),
+            "updated_at": updated_at or datetime.now(timezone.utc),
+        }
     except Exception as e:
         logger.exception("get_dashboard_state failed: %s", e)
         return {"key": "default", "data": EMPTY_DASHBOARD, "updated_at": datetime.now(timezone.utc)}

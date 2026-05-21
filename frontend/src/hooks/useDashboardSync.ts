@@ -8,9 +8,8 @@ import { DASHBOARD_LOGS_RESET_FLAG } from '../utils/resetDashboardDailyLogs';
 import { mergeSharedDashboardData, type SharedDashboardData } from '../utils/mergeSharedDashboard';
 
 /**
- * Handles dashboard initial load: hydrate from IndexedDB if localStorage empty,
- * fetch from API, and manage shared dashboards WebSocket/BroadcastChannel.
- * Call once in DashboardV2; effects run when store state (e.g. isLoaded, sharedDashboards) is ready.
+ * Handles dashboard initial load: hydrate from IndexedDB instantly,
+ * fetch from API in background, manage shared dashboards WebSocket/BroadcastChannel.
  */
 export function useDashboardSync(): void {
   const syncWithServer = useDashboardStore((s: any) => s.syncWithServer);
@@ -18,16 +17,6 @@ export function useDashboardSync(): void {
   const setIsLoaded = useDashboardStore((s: any) => s.setIsLoaded);
   const sharedDashboards = useDashboardStore((s: any) => s.sharedDashboards) ?? [];
   const updateSharedDashboardData = useDashboardStore((s: any) => s.updateSharedDashboardData);
-  const dailyTaskTemplates = useDashboardStore((s: any) => s.dailyTaskTemplates) ?? [];
-  const quickTasks = useDashboardStore((s: any) => s.quickTasks) ?? [];
-  const projects = useDashboardStore((s: any) => s.projects) ?? [];
-  const lifeGoals = useDashboardStore((s: any) => s.lifeGoals) ?? { tiers: [] };
-
-  const hasLocalData = Boolean(
-    (dailyTaskTemplates?.length ?? 0) > 0 ||
-      (quickTasks?.length ?? 0) > 0 ||
-      (projects?.length ?? 0) > 0
-  );
 
   const wsConnections = useRef<Record<string, WebSocket>>({});
   const bcChannels = useRef<Record<string, BroadcastChannel>>({});
@@ -38,50 +27,63 @@ export function useDashboardSync(): void {
   useEffect(() => {
     let cancelled = false;
 
-    async function hydrateAndFetch() {
-      try {
-        // 1. Try to load from IndexedDB first for instant UI
-        try {
-          const localState = await getLocalState();
-          const idbState = hasMeaningfulDashboardData(localState) ? extractDashboardPayload(localState) : null;
-          if (idbState && syncWithServer) {
-            syncWithServer(idbState as Parameters<typeof syncWithServer>[0]);
-          }
-        } catch (err) {
-          console.warn('Failed to load from IndexedDB:', err);
-        }
-
-        // 2. Fetch shared dashboards metadata
-        const shared = await api.training.listSharedDashboards({ timeout: 10_000 }).catch(() => null);
-        if (!cancelled && Array.isArray(shared) && setSharedDashboards) {
-          setSharedDashboards(shared);
-        }
-
-        // 3. Fetch and apply latest dashboard state from server with retry
-        // Covers cold start: backend may take 30-60s to wake up on Render free tier
-        let currentRes = null;
-        for (let attempt = 0; attempt < 3; attempt++) {
-          currentRes = await api.training.getDashboardState({ timeout: 20_000 }).catch(() => null);
-          if (currentRes) break;
+    async function fetchDashboardWithRetry() {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const currentRes = await api.training.getDashboardState({ timeout: 20_000 }).catch(() => null);
+        if (cancelled || !currentRes) {
           if (attempt < 2) await new Promise((r) => setTimeout(r, 3000 * (attempt + 1)));
+          continue;
         }
-        const payload = extractDashboardPayload(currentRes) ?? extractDashboardPayload((currentRes as { data?: unknown } | null | undefined)?.data);
+        if (currentRes.notModified) return;
 
-        if (!cancelled && payload && syncWithServer && hasMeaningfulDashboardData(payload)) {
+        const payload =
+          extractDashboardPayload(currentRes) ??
+          extractDashboardPayload((currentRes as { data?: unknown }).data);
+
+        if (payload && syncWithServer && hasMeaningfulDashboardData(payload)) {
           syncWithServer(payload as Parameters<typeof syncWithServer>[0]);
         }
+        if (!cancelled) sessionStorage.removeItem(DASHBOARD_LOGS_RESET_FLAG);
+        return;
+      }
+    }
 
-        if (!cancelled) {
-          sessionStorage.removeItem(DASHBOARD_LOGS_RESET_FLAG);
+    async function hydrateAndFetch() {
+      // 1. IndexedDB → instant UI (local-first)
+      try {
+        const localState = await getLocalState();
+        const idbState = hasMeaningfulDashboardData(localState)
+          ? extractDashboardPayload(localState)
+          : null;
+        if (idbState && syncWithServer) {
+          syncWithServer(idbState as Parameters<typeof syncWithServer>[0]);
         }
+      } catch (err) {
+        console.warn('Failed to load from IndexedDB:', err);
+      }
+
+      if (!cancelled) setIsLoaded(true);
+
+      // 2. Background sync: shared boards + dashboard in parallel
+      try {
+        const [,] = await Promise.all([
+          api.training
+            .listSharedDashboards({ timeout: 10_000 })
+            .then((shared) => {
+              if (!cancelled && Array.isArray(shared) && setSharedDashboards) {
+                setSharedDashboards(shared);
+              }
+            })
+            .catch(() => null),
+          fetchDashboardWithRetry(),
+        ]);
       } catch (err) {
         if (typeof window !== 'undefined' && (window as any).process?.env?.NODE_ENV !== 'production') {
           console.warn('Dashboard sync failed:', (err as Error)?.message || err);
         }
-      } finally {
-        if (!cancelled) setIsLoaded(true);
       }
     }
+
     hydrateAndFetch();
 
     return () => {
@@ -91,7 +93,6 @@ export function useDashboardSync(): void {
 
   const isLoaded = useDashboardStore((s: any) => s.isLoaded);
 
-  // Stable ref so connectWs always uses the latest updateSharedDashboardData
   const updateSharedRef = useRef(updateSharedDashboardData);
   useEffect(() => { updateSharedRef.current = updateSharedDashboardData; }, [updateSharedDashboardData]);
 
@@ -132,7 +133,6 @@ export function useDashboardSync(): void {
       const attempt = (retryAttempts.current[id] ?? 0) + 1;
       retryAttempts.current[id] = attempt;
       const delay = Math.min(1000 * Math.pow(2, attempt - 1), 30000);
-      console.log(`WS ${id} closed — reconnect in ${delay}ms (attempt ${attempt})`);
       retryDelays.current[id] = setTimeout(() => {
         delete retryDelays.current[id];
         connectWs.current(id);

@@ -241,7 +241,8 @@ function calculateProgressPercent(
   return Math.min(100, Math.round((totalCompleted / totalExpected) * 100)) || 0;
 }
 
-export function useTodayTraining(forDate?: string): UseTodayTrainingReturn {
+export function useTodayTraining(forDate?: string, options?: { enabled?: boolean }): UseTodayTrainingReturn {
+  const enabled = options?.enabled !== false;
   const [selectedDay, setSelectedDay] = useState<DayTemplate | null>(null);
   const [allProgressions, setAllProgressions] = useState<Record<string, ProgressionData>>({});
   const [awProgram, setAwProgram] = useState<AwProgram | null>(null);
@@ -256,6 +257,11 @@ export function useTodayTraining(forDate?: string): UseTodayTrainingReturn {
   // Fetch today's training data
   // No auth gate - let the API handle authorization and set errors reactively
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       setLoading(true);
       setError(null);
@@ -317,7 +323,7 @@ export function useTodayTraining(forDate?: string): UseTodayTrainingReturn {
 
     fetchData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [forDate]); // Re-fetch when date changes
+  }, [forDate, enabled]); // Re-fetch when date changes or section becomes visible
 
   // Calculate progress percentage
   const progressPercent = useMemo(() => {

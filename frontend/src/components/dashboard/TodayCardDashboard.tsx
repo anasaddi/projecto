@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dumbbell, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTodayTraining } from '../../hooks/useTodayTraining';
@@ -61,10 +61,26 @@ const TodayCardSkeleton = () => (
 
 export function TodayCardDashboard(): React.ReactElement | null {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [shouldLoadTraining, setShouldLoadTraining] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
   const storeDate = useDashboardStore((s) => s.selectedDate);
   const forDate = storeDate instanceof Date
     ? storeDate.toISOString().slice(0, 10)
     : typeof storeDate === 'string' ? storeDate.slice(0, 10) : undefined;
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) setShouldLoadTraining(true);
+      },
+      { rootMargin: '400px' }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
   const {
     selectedDay,
     allProgressions,
@@ -74,7 +90,7 @@ export function TodayCardDashboard(): React.ReactElement | null {
     loading,
     error,
     onProgressionChange,
-  } = useTodayTraining(forDate);
+  } = useTodayTraining(forDate, { enabled: isExpanded && shouldLoadTraining });
 
   // Only show rest day if fetch completed AND it was for the correct date
   const fetchedForExpected = !forDate || selectedDate?.slice(0, 10) === forDate;
@@ -83,7 +99,7 @@ export function TodayCardDashboard(): React.ReactElement | null {
       ? new Date(forDate + 'T12:00:00').toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })
       : 'Oggi';
     return (
-      <Card className="flex flex-col overflow-hidden">
+      <Card ref={sectionRef} className="flex flex-col overflow-hidden">
         <CardHeader
           icon={Dumbbell}
           iconColor="text-indigo-500"
@@ -105,7 +121,7 @@ export function TodayCardDashboard(): React.ReactElement | null {
   // Show collapsed card with error message on error
   if (error && !loading) {
     return (
-      <Card className="flex flex-col overflow-hidden">
+      <Card ref={sectionRef} className="flex flex-col overflow-hidden">
         <CardHeader
           icon={Dumbbell}
           iconColor="text-indigo-500"
@@ -128,7 +144,7 @@ export function TodayCardDashboard(): React.ReactElement | null {
   const isToday = selectedDate?.slice(0, 10) === todayDateStr;
 
   return (
-    <Card className="flex flex-col overflow-hidden">
+    <Card ref={sectionRef} className="flex flex-col overflow-hidden">
       <CardHeader
         icon={Dumbbell}
         iconColor="text-indigo-500"

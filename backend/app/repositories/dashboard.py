@@ -14,6 +14,48 @@ from app.repositories.base import _parse_json
 
 logger = logging.getLogger(__name__)
 
+SNAPSHOT_KEYS = (
+    "dailyTaskTemplates",
+    "dailyTaskLogs",
+    "projects",
+    "quickTasks",
+    "prayerLogs",
+    "top3Manual",
+    "dailyCompletionLog",
+    "lifeGoals",
+    "timelineRoutines",
+    "timelinePanelExpanded",
+    "todayTrainingExpanded",
+    "lockedHabitsCollapsed",
+    "projectExpandedState",
+    "sectionOrder",
+    "activePomodoroTask",
+)
+
+
+def _snapshot_is_meaningful(data: Any) -> bool:
+    if not isinstance(data, dict):
+        return False
+    life_goals = data.get("lifeGoals") if isinstance(data.get("lifeGoals"), dict) else None
+    tiers = life_goals.get("tiers") if isinstance(life_goals, dict) else None
+    return any(
+        [
+            isinstance(data.get("dailyTaskTemplates"), list) and len(data.get("dailyTaskTemplates") or []) > 0,
+            isinstance(data.get("projects"), list) and len(data.get("projects") or []) > 0,
+            isinstance(data.get("quickTasks"), list) and len(data.get("quickTasks") or []) > 0,
+            isinstance(tiers, list) and any(isinstance(t, dict) and len(t.get("goals") or []) > 0 for t in tiers),
+        ]
+    )
+
+
+def _merge_dashboard_snapshot(existing: dict, incoming: dict) -> dict:
+    merged = dict(existing)
+    for key in SNAPSHOT_KEYS:
+        if key in incoming:
+            merged[key] = incoming[key]
+    return merged
+
+
 def _serialize_dt(dt: Any) -> Any:
     """Helper to convert datetime to ISO string for JSON serialization."""
     if isinstance(dt, datetime):
@@ -31,6 +73,40 @@ def _normalize_shared_dashboard_data(data: Any) -> dict:
     return {}
 
 # --- Dashboard (Aggregated View for Frontend) ---
+
+async def _load_dashboard_state_row(
+    db: AsyncSession, key: str = "default", user_id: str | None = None
+) -> DashboardState | None:
+    q = select(DashboardState).filter(DashboardState.key == key)
+    if user_id is not None:
+        q = q.filter(DashboardState.user_id == user_id)
+    else:
+        q = q.filter(DashboardState.user_id.is_(None))
+    res = await db.execute(q.order_by(DashboardState.updated_at.desc()))
+    return res.scalars().first()
+
+
+async def get_dashboard_document(
+    db: AsyncSession, key: str = "default", user_id: str | None = None
+) -> tuple[dict, datetime | None]:
+    """Fast path: read persisted JSON snapshot (1 query). Fallback: aggregate once and persist."""
+    ds = await _load_dashboard_state_row(db, key, user_id)
+    if ds:
+        snapshot = _parse_json(ds.data, {})
+        if _snapshot_is_meaningful(snapshot):
+            return snapshot, ds.updated_at
+
+    data = await get_dashboard_state_aggregated(db, key, user_id)
+    if ds is None:
+        ds = DashboardState(key=key, user_id=user_id, data=data)
+        db.add(ds)
+    else:
+        ds.data = data
+    flag_modified(ds, "data")
+    ds.updated_at = datetime.now(timezone.utc)
+    await db.commit()
+    return data, ds.updated_at
+
 
 async def get_dashboard_state_aggregated(db: AsyncSession, key: str = "default", user_id: str | None = None):
     # 1. Habits (Templates) - Filter by user_id if provided
@@ -615,11 +691,15 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
                         ex_goals[gid].ordinal = j
                     else:
                         db.add(LifeGoal(id=gid, tier_id=tid, title=g["title"], category=g.get("category"), type=g.get("type"), done=1 if g.get("done") else 0, deadline=g.get("deadline"), ordinal=j))
+    # Persist full snapshot for fast GET (document read path)
+    ds.data = _merge_dashboard_snapshot(_parse_json(ds.data, {}), data)
+    flag_modified(ds, "data")
+    ds.updated_at = datetime.now(timezone.utc)
+
     # Event Sourcing: strip large log arrays to keep event payload small, then append async-style
     try:
         from app.services.event_sourcing import append_dashboard_event
         agg_id = user_id or "default"
-        # Strip dailyTaskLogs and dailyCompletionLog (bulk data) to keep event payload small
         compact_data = {k: v for k, v in data.items() if k not in ("dailyTaskLogs", "dailyCompletionLog", "prayerLogs")}
         await append_dashboard_event(db, agg_id, compact_data, user_id)
     except Exception:

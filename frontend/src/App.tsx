@@ -4,6 +4,7 @@ import { Toaster, toast } from 'sonner';
 import { setToastError } from './utils/errorLog';
 import { api } from './api/client';
 import { isAdminRole, clearAuthSessionFlags } from './utils/authSession';
+import { warmBackend } from './utils/warmBackend';
 
 import { DashboardStatsProvider } from './context/DashboardStatsContext';
 import { GlobalConfigProvider } from './context/GlobalConfigContext';
@@ -99,6 +100,8 @@ initAuth();
 export default function App(): React.ReactElement {
   useEffect(() => {
     setToastError((msg: string) => toast.error(msg));
+    const path = window.location.pathname;
+    if (path === '/' || path === '/login') warmBackend();
   }, []);
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
