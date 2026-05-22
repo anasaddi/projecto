@@ -17,6 +17,7 @@ import {
 } from './DashboardUtils';
 import { getCollabIdentity, collabDisplayName } from '../../utils/collabIdentity';
 import { useToast } from '../../context/ToastContext';
+import { setDragPayload } from '../../utils/dragPayload';
 
 /** Pill “premium” meta — workspace shared / emphasized */
 function assigneeMetaStyles(wb) {
@@ -334,11 +335,7 @@ export function DenseTaskNode({
   const handleDragStart = (e) => {
     e.stopPropagation();
     const payload = { type: 'project-task', projectId, taskId: node.id, parentId, shareId: shareId ?? undefined };
-    const raw = JSON.stringify(payload);
-    e.dataTransfer.setData('application/x-projecto-drag', raw);
-    e.dataTransfer.setData('application/json', raw);
-    e.dataTransfer.setData('text/plain', raw);
-    e.dataTransfer.effectAllowed = 'move';
+    setDragPayload(e.dataTransfer, payload);
   };
 
   const me = getCollabIdentity();

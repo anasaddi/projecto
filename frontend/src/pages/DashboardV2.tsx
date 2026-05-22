@@ -13,6 +13,7 @@ import { Top3SectionV2 } from '../components/dashboard/Top3SectionV2';
 import { HabitsSection } from '../components/dashboard/HabitsSection';
 import { ProjectsSectionV2 } from '../components/dashboard/ProjectsSectionV2';
 import { LifeGoalsSection } from '../components/dashboard/LifeGoalsSection';
+import { parseDragPayload, setDragPayload } from '../utils/dragPayload';
 import { TodayCardDashboard } from '../components/dashboard/TodayCardDashboard';
 import { DayNavigationButtons } from '../components/dashboard/DayNavigationButtons';
 import { ConfirmModal } from '../components/ConfirmModal';
@@ -146,15 +147,12 @@ export default function DashboardV2(): React.ReactElement {
                 key: sectionId,
                 draggable: true,
                 onDragStart: (e: React.DragEvent) => {
-                  e.dataTransfer.setData('application/json', JSON.stringify({ type: 'section', column: 'left', fromIndex: idx }));
-                  e.dataTransfer.effectAllowed = 'move';
+                  setDragPayload(e.dataTransfer, { type: 'section', column: 'left', fromIndex: idx });
                 },
                 onDragOver: (e: React.DragEvent) => e.preventDefault(),
                 onDrop: (e: React.DragEvent) => {
-                  try {
-                    const p = JSON.parse(e.dataTransfer.getData('application/json'));
-                    if (p.type === 'section' && p.column === 'left') reorderSection('left', p.fromIndex, idx);
-                  } catch (_) {}
+                  const p = parseDragPayload(e.dataTransfer);
+                  if (p?.type === 'section' && p.column === 'left') reorderSection('left', p.fromIndex as number, idx);
                 },
               };
               if (sectionId === 'pomodoro') return <div {...sectionProps} className="transition-all duration-300"><PomodoroCompact /></div>;
@@ -169,15 +167,12 @@ export default function DashboardV2(): React.ReactElement {
                 key: sectionId,
                 draggable: true,
                 onDragStart: (e: React.DragEvent) => {
-                  e.dataTransfer.setData('application/json', JSON.stringify({ type: 'section', column: 'center', fromIndex: idx }));
-                  e.dataTransfer.effectAllowed = 'move';
+                  setDragPayload(e.dataTransfer, { type: 'section', column: 'center', fromIndex: idx });
                 },
                 onDragOver: (e: React.DragEvent) => e.preventDefault(),
                 onDrop: (e: React.DragEvent) => {
-                  try {
-                    const p = JSON.parse(e.dataTransfer.getData('application/json'));
-                    if (p.type === 'section' && p.column === 'center') reorderSection('center', p.fromIndex, idx);
-                  } catch (_) {}
+                  const p = parseDragPayload(e.dataTransfer);
+                  if (p?.type === 'section' && p.column === 'center') reorderSection('center', p.fromIndex as number, idx);
                 },
               };
               if (sectionId === 'top3') return <div {...sectionProps} className="transition-all duration-300">{isLoaded ? <Top3SectionV2 /> : <Top3Skeleton />}</div>;
@@ -191,15 +186,12 @@ export default function DashboardV2(): React.ReactElement {
                 key: sectionId,
                 draggable: true,
                 onDragStart: (e: React.DragEvent) => {
-                  e.dataTransfer.setData('application/json', JSON.stringify({ type: 'section', column: 'right', fromIndex: idx }));
-                  e.dataTransfer.effectAllowed = 'move';
+                  setDragPayload(e.dataTransfer, { type: 'section', column: 'right', fromIndex: idx });
                 },
                 onDragOver: (e: React.DragEvent) => e.preventDefault(),
                 onDrop: (e: React.DragEvent) => {
-                  try {
-                    const p = JSON.parse(e.dataTransfer.getData('application/json'));
-                    if (p.type === 'section' && p.column === 'right') reorderSection('right', p.fromIndex, idx);
-                  } catch (_) {}
+                  const p = parseDragPayload(e.dataTransfer);
+                  if (p?.type === 'section' && p.column === 'right') reorderSection('right', p.fromIndex as number, idx);
                 },
               };
               if (sectionId === 'projects') return <div {...sectionProps} className="transition-all duration-300">{isLoaded ? <ProjectsSectionV2 PROJECT_ACCENTS={PROJECT_ACCENTS} /> : <ProjectSkeleton />}</div>;

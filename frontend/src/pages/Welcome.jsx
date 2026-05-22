@@ -1,18 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppLogo } from '../components/AppLogo';
+import { useThemePreference } from '../hooks/useThemePreference';
 
 export default function Welcome() {
-  const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem('km-theme');
-    if (saved) return saved === 'dark';
-    return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches;
-  });
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDark);
-    localStorage.setItem('km-theme', isDark ? 'dark' : 'light');
-  }, [isDark]);
+  const { isDark, toggleTheme } = useThemePreference();
 
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center bg-zinc-50 dark:bg-[#0b0e14] transition-colors duration-500 overflow-hidden">
@@ -85,7 +77,7 @@ export default function Welcome() {
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
         type="button"
-        onClick={() => setIsDark(!isDark)}
+        onClick={toggleTheme}
         className="fixed bottom-8 right-8 flex h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-white/[0.05] border border-zinc-200 dark:border-white/[0.1] shadow-xl text-lg hover:scale-110 active:scale-95 transition-all z-50"
       >
         {isDark ? '☀️' : '🌙'}

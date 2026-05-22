@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Icons } from './Icons';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { startOfDay, addDays, toDateKey, parseSelectedDate } from './DashboardUtils';
+import { readIsDark, writeTheme } from '../../hooks/useThemePreference';
 
 const WEEKDAYS_SHORT = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
 const MONTHS_SHORT = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
@@ -14,13 +15,10 @@ export function DayNavigationButtons() {
   const setSelectedDate = useDashboardStore((s) => s.setSelectedDate);
 
   // Theme — synced with Layout via custom event (single source of truth)
-  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
+  const [isDark, setIsDark] = useState(() => readIsDark());
 
   useEffect(() => {
-    const handler = () => {
-      const saved = localStorage.getItem('km-theme');
-      setIsDark(saved === 'dark');
-    };
+    const handler = () => setIsDark(readIsDark());
     window.addEventListener('theme-changed', handler);
     return () => window.removeEventListener('theme-changed', handler);
   }, []);
@@ -28,9 +26,7 @@ export function DayNavigationButtons() {
   const toggleTheme = () => {
     const next = !isDark;
     setIsDark(next);
-    localStorage.setItem('km-theme', next ? 'dark' : 'light');
-    document.documentElement.classList.toggle('dark', next);
-    window.dispatchEvent(new Event('theme-changed'));
+    writeTheme(next);
   };
 
   const today = new Date();

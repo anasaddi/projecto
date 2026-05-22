@@ -273,36 +273,19 @@ async def get_dashboard_state(
     user_id: str | None = Depends(get_current_user),
 ):
     """Fetch dashboard — Redis-first, then 1-query document snapshot, ETag/304 supported."""
-    import time
-    from app.cache import get_cached_dashboard, set_cached_dashboard
-    t0 = time.perf_counter()
-    try:
-        cached = await get_cached_dashboard(user_id)
-        if has_meaningful_dashboard_data(cached):
-            elapsed_ms = (time.perf_counter() - t0) * 1000
-            logger.info("get_dashboard_state cache hit in %.1fms (user=%s)", elapsed_ms, user_id or "default")
-            updated_at = datetime.now(timezone.utc)
-            etag = dashboard_etag(user_id, cached)
-            if request.headers.get("if-none-match") == etag:
-                return Response(status_code=304, headers={"ETag": etag})
-            response.headers["ETag"] = etag
-            return {"key": "default", "data": cached, "updated_at": updated_at}
-        if cached:
-            logger.info("Ignoring empty dashboard cache hit; fetching DB snapshot")
+    from app.services.dashboard_read import dashboard_read_to_response, read_dashboard_for_client
 
-        data, updated_at = await dashboard_service.get_dashboard_with_meta(db, user_id=user_id)
-        await set_cached_dashboard(data, user_id)
-        elapsed_ms = (time.perf_counter() - t0) * 1000
-        logger.info("get_dashboard_state DB fetch in %.1fms (user=%s)", elapsed_ms, user_id or "default")
-        etag = dashboard_etag(user_id, data, updated_at)
-        if request.headers.get("if-none-match") == etag:
-            return Response(status_code=304, headers={"ETag": etag})
-        response.headers["ETag"] = etag
-        return {
-            "key": "default",
-            "data": dashboard_snapshot_or_empty(data),
-            "updated_at": updated_at or datetime.now(timezone.utc),
-        }
+    try:
+        result = await read_dashboard_for_client(
+            db,
+            user_id=user_id,
+            if_none_match=request.headers.get("if-none-match"),
+            log_label="get_dashboard_state",
+        )
+        if result.not_modified:
+            return Response(status_code=304, headers={"ETag": result.etag})
+        response.headers["ETag"] = result.etag
+        return dashboard_read_to_response(result)
     except Exception as e:
         logger.exception("get_dashboard_state failed: %s", e)
         return {"key": "default", "data": EMPTY_DASHBOARD, "updated_at": datetime.now(timezone.utc)}

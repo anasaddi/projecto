@@ -1,5 +1,6 @@
 import React from 'react';
 import { useToast } from '../../context/ToastContext';
+import { parseDragPayload, setDragPayload } from '../../utils/dragPayload';
 
 /**
  * Draggable wrapper for a single project card (normal or shared).
@@ -12,11 +13,7 @@ export function ProjectCard({ dragPayload, onDrop, children, className = 'cursor
     <div
       draggable
       onDragStart={(e) => {
-        const raw = JSON.stringify(dragPayload);
-        e.dataTransfer.setData('application/x-projecto-drag', raw);
-        e.dataTransfer.setData('application/json', raw);
-        e.dataTransfer.setData('text/plain', raw);
-        e.dataTransfer.effectAllowed = 'move';
+        setDragPayload(e.dataTransfer, dragPayload);
       }}
       onDragOver={(e) => {
         e.preventDefault();
@@ -27,7 +24,8 @@ export function ProjectCard({ dragPayload, onDrop, children, className = 'cursor
         e.preventDefault();
         e.currentTarget.classList.remove('ring-2', 'ring-indigo-400');
         try {
-          const p = JSON.parse(e.dataTransfer.getData('application/json'));
+          const p = parseDragPayload(e.dataTransfer);
+          if (!p) return;
           const validTypes = ['project', 'project-task', 'quick', 'sharedProject'];
           if (!validTypes.includes(p.type)) {
             showToast?.('Elemento non valido per questa posizione', { type: 'warning' });

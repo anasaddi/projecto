@@ -10,6 +10,7 @@ import { Button } from './ui/Button';
 import { getCollabIdentity, setCollabIdentity, type CollabIdentity } from '../utils/collabIdentity';
 import { isAdminRole } from '../utils/authSession';
 import { getSyncStatus, subscribeSyncStatus, type SyncStatus } from '../utils/syncStatus';
+import { useThemePreference } from '../hooks/useThemePreference';
 
 interface LayoutProps {
   children: ReactNode;
@@ -35,41 +36,11 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
     return () => clearTimeout(t);
   }, [lastSavedAt, setLastSavedAt]);
 
-  const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem('km-theme');
-    if (saved) return saved === 'dark';
-    // Auto-detect from system preference
-    return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches;
-  });
+  const { isDark, setIsDark, toggleTheme } = useThemePreference();
   const [collabWho, setCollabWho] = useState<CollabIdentity>(() => getCollabIdentity());
   const [syncStatus, setSyncStatusState] = useState<SyncStatus>(() => getSyncStatus());
 
   useEffect(() => subscribeSyncStatus(setSyncStatusState), []);
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDark);
-    localStorage.setItem('km-theme', isDark ? 'dark' : 'light');
-  }, [isDark]);
-
-  // Listen for system theme changes (only when no manual override)
-  useEffect(() => {
-    const mq = window.matchMedia?.('(prefers-color-scheme: dark)');
-    if (!mq) return;
-    const handler = (e: MediaQueryListEvent) => {
-      if (!localStorage.getItem('km-theme')) setIsDark(e.matches);
-    };
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-
-  // Sync when mobile bottom bar toggles theme
-  useEffect(() => {
-    const handler = () => {
-      const saved = localStorage.getItem('km-theme');
-      if (saved) setIsDark(saved === 'dark');
-    };
-    window.addEventListener('theme-changed', handler);
-    return () => window.removeEventListener('theme-changed', handler);
-  }, []);
 
   const isGuest = localStorage.getItem('km-user-role') === 'guest';
   const isAdmin = isAdminRole();
@@ -80,7 +51,7 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
         <main className="flex-1 overflow-auto">{children}</main>
         <Button
           variant="ghost"
-          onClick={() => setIsDark((d) => !d)}
+          onClick={toggleTheme}
           className="fixed bottom-4 right-4 z-50 h-10 w-10 p-0 rounded-full bg-white/80 dark:bg-zinc-800 shadow-lg"
           aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
         >
@@ -221,14 +192,7 @@ export default function Layout({ children }: LayoutProps): React.ReactElement {
           })()}
           <Button
             variant="ghost"
-            onClick={() => {
-              setIsDark((d) => {
-                const next = !d;
-                localStorage.setItem('km-theme', next ? 'dark' : 'light');
-                setTimeout(() => window.dispatchEvent(new Event('theme-changed')), 0);
-                return next;
-              });
-            }}
+            onClick={toggleTheme}
             className="hidden md:flex h-10 w-10 p-0 rounded-xl"
             aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
           >

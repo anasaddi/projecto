@@ -3,13 +3,11 @@ import { motion } from 'framer-motion';
 import { ChevronUp, History as HistoryIcon } from 'lucide-react';
 import { api } from '../../api/client';
 import { Card, ColHeader, ModernInput, ModernCheckbox } from './TrainingUI';
+import { calc1RM } from '../../utils/trainingUtils';
 
 const format1RM = (weight, reps) => {
-  const w = parseFloat(weight);
-  const r = parseInt(reps, 10);
-  if (!w || !r) return '-';
-  if (r === 1) return `${w.toFixed(1)}`;
-  const rm = w * (1 + r / 35);
+  const rm = calc1RM(weight, reps);
+  if (rm == null) return '-';
   return `${(Math.round(rm * 2) / 2).toFixed(1)}`;
 };
 

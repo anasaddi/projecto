@@ -6,6 +6,7 @@ import { TaskCheckbox, KebabMenu } from './DashboardComponents';
 import { formatDeadline, getDeadlineColorClass } from './DashboardUtils';
 import { useLongPressActions } from '../../hooks/useLongPressActions';
 import { useToast } from '../../context/ToastContext';
+import { parseDragPayload, setDragPayload } from '../../utils/dragPayload';
 
 export function QuickTaskRow({
   task, isShared, localIdx, idx, pinned, isHovered,
@@ -171,12 +172,7 @@ export function QuickTaskRow({
           fromIndex: localIdx,
           shareId: isShared ? task.shareId : null,
         };
-        const raw = JSON.stringify(payload);
-        e.dataTransfer.setData('application/x-quick', raw);
-        e.dataTransfer.setData('application/x-projecto-drag', raw);
-        e.dataTransfer.setData('application/json', raw);
-        e.dataTransfer.setData('text/plain', raw);
-        e.dataTransfer.effectAllowed = 'move';
+        setDragPayload(e.dataTransfer, payload, ['application/x-quick']);
       }}
       onDragOver={!isShared ? (e) => {
         if (e.dataTransfer.types.includes('application/x-quick')) e.preventDefault();

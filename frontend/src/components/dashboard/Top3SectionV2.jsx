@@ -5,6 +5,7 @@ import { resolveTop3Slots } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { useToast } from '../../context/ToastContext';
 import { Card, CardHeader, Badge } from './Card';
+import { parseDragPayload } from '../../utils/dragPayload';
 
 export function Top3SectionV2() {
   const [dragOverIndex, setDragOverIndex] = useState(null);
@@ -131,26 +132,11 @@ export function Top3SectionV2() {
     });
   };
 
-  const readDragPayload = (dataTransfer) => {
-    const candidateTypes = ['application/x-projecto-drag', 'application/x-quick', 'application/json', 'text/plain'];
-    for (const type of candidateTypes) {
-      try {
-        const raw = dataTransfer.getData(type);
-        if (!raw) continue;
-        const payload = JSON.parse(raw);
-        if (payload && typeof payload === 'object') return payload;
-      } catch {
-        // Try the next MIME type.
-      }
-    }
-    return null;
-  };
-
   const onDrop = (e, idx) => {
     e.preventDefault();
     setDragOverIndex(null);
     try {
-      const payload = readDragPayload(e.dataTransfer);
+      const payload = parseDragPayload(e.dataTransfer);
       if (!payload) {
         showToast?.('Trascinamento non valido', { type: 'warning' });
         return;

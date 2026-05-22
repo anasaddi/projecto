@@ -72,7 +72,7 @@ export const DEADLINE = {
 export const STORAGE_KEYS = {
   DASHBOARD: 'dashboard_data',
   POMODORO: 'pomodoro_state',
-  THEME: 'theme_preference',
+  THEME: 'km-theme',
   LAST_SYNC: 'last_sync_at',
 };
 

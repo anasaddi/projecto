@@ -21,6 +21,7 @@ import FinanzeSection from '../components/shared/FinanzeSection';
 import { DASHBOARD_CONTENT_CLASS } from '../constants/layout';
 import { useToast } from '../context/ToastContext';
 import { isAdminRole } from '../utils/authSession';
+import { parseDragPayload, setDragPayload } from '../utils/dragPayload';
 /**
  * ----------------------------------------------------------------------
  * UTILS (shared-specific only; dashboard helpers from DashboardUtils)
@@ -1306,8 +1307,7 @@ export default function SharedProjects() {
                   <div
                     draggable
                     onDragStart={(e) => {
-                      e.dataTransfer.setData('application/json', JSON.stringify(dragPayload));
-                      e.dataTransfer.effectAllowed = 'move';
+                      setDragPayload(e.dataTransfer, dragPayload);
                     }}
                     onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('ring-2', 'ring-indigo-400'); }}
                     onDragLeave={(e) => e.currentTarget.classList.remove('ring-2', 'ring-indigo-400')}
@@ -1315,7 +1315,8 @@ export default function SharedProjects() {
                       e.preventDefault();
                       e.currentTarget.classList.remove('ring-2', 'ring-indigo-400');
                       try {
-                        const p = JSON.parse(e.dataTransfer.getData('application/json'));
+                        const p = parseDragPayload(e.dataTransfer);
+                        if (!p) return;
                         const validTypes = ['project'];
                         if (!validTypes.includes(p.type)) {
                           showToast?.('Puoi trascinare solo progetti qui', { type: 'warning' });
