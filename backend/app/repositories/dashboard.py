@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Any, List, Dict
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -72,6 +73,26 @@ def _normalize_shared_dashboard_data(data: Any) -> dict:
         return {"items": parsed}
     return {}
 
+
+def _build_task_tree(task_list, parent_id=None, _depth=0):
+    """Build nested task tree from flat Task rows (max depth 10)."""
+    if _depth > 10:
+        return []
+    nodes = []
+    for t in [x for x in task_list if x.parent_id == parent_id]:
+        node = {
+            "id": t.id,
+            "title": t.title,
+            "done": bool(t.done),
+            "deadline": t.deadline,
+            "children": _build_task_tree(task_list, t.id, _depth + 1),
+        }
+        if getattr(t, "ordinal", None) is not None:
+            node["ordinal"] = t.ordinal
+        nodes.append(node)
+    return nodes
+
+
 # --- Dashboard (Aggregated View for Frontend) ---
 
 async def _load_dashboard_state_row(
@@ -115,32 +136,61 @@ async def get_dashboard_state_aggregated(
     user_id: str | None = None,
     ds_data: dict | None = None,
 ):
-    # 1. Habits (Templates) - Filter by user_id if provided
-    habits_query = select(Habit).order_by(Habit.ordinal)
-    if user_id is not None:
-        habits_query = habits_query.filter(Habit.user_id == user_id)
-    else:
-        habits_query = habits_query.filter(Habit.user_id.is_(None))
-    habits_result = await db.execute(habits_query)
-    habits = habits_result.scalars().all()
-    dailyTaskTemplates = [{"id": h.id, "title": h.title, "locked": bool(h.locked), "ordinal": h.ordinal} for h in habits]
-
-    # 2. Habit Logs (Bounded to last 365 days) - Filter by user_id if provided
     since_date = (datetime.now(timezone.utc) - timedelta(days=365)).strftime("%Y-%m-%d")
-    logs_query = select(HabitLog).filter(HabitLog.date >= since_date)
-    if user_id is not None:
-        logs_query = logs_query.filter(HabitLog.user_id == user_id)
-    else:
-        logs_query = logs_query.filter(HabitLog.user_id.is_(None))
-    logs_result = await db.execute(logs_query)
+
+    def _user_filter(query, model):
+        if user_id is not None:
+            return query.filter(model.user_id == user_id)
+        return query.filter(model.user_id.is_(None))
+
+    habits_query = _user_filter(select(Habit).order_by(Habit.ordinal), Habit)
+    logs_query = _user_filter(select(HabitLog).filter(HabitLog.date >= since_date), HabitLog)
+    qt_query = _user_filter(
+        select(QuickTask).order_by(QuickTask.ordinal, QuickTask.created_at.desc()), QuickTask
+    )
+    pr_query = _user_filter(select(PrayerLog).filter(PrayerLog.date >= since_date), PrayerLog)
+    top3_query = _user_filter(select(Top3Item).order_by(Top3Item.slot), Top3Item)
+    dc_query = _user_filter(
+        select(DailyCompletionLog).filter(DailyCompletionLog.date >= since_date), DailyCompletionLog
+    )
+    tiers_query = _user_filter(
+        select(LifeGoalTier).options(selectinload(LifeGoalTier.goals)).order_by(LifeGoalTier.ordinal),
+        LifeGoalTier,
+    )
+
+    (
+        habits_result,
+        logs_result,
+        qt_result,
+        pr_result,
+        top3_result,
+        dc_result,
+        tiers_result,
+    ) = await asyncio.gather(
+        db.execute(habits_query),
+        db.execute(logs_query),
+        db.execute(qt_query),
+        db.execute(pr_query),
+        db.execute(top3_query),
+        db.execute(dc_query),
+        db.execute(tiers_query),
+    )
+
+    habits = habits_result.scalars().all()
+    dailyTaskTemplates = [
+        {"id": h.id, "title": h.title, "locked": bool(h.locked), "ordinal": h.ordinal} for h in habits
+    ]
+
     logs = logs_result.scalars().all()
     dailyTaskLogs = {}
     for l in logs:
-        if l.date not in dailyTaskLogs: dailyTaskLogs[l.date] = []
+        if l.date not in dailyTaskLogs:
+            dailyTaskLogs[l.date] = []
         dailyTaskLogs[l.date].append({"id": l.habit_id, "done": bool(l.status)})
 
-    # 3. Personal Projects & Tasks (Single-pass build) - Filter by user_id if provided
-    projs_query = select(Project).filter(Project.share_id == None).order_by(Project.ordinal, Project.created_at.desc())
+    projs_query = select(Project).filter(Project.share_id == None).order_by(
+        Project.ordinal, Project.created_at.desc()
+    )
     if user_id is not None:
         projs_query = projs_query.filter(Project.user_id == user_id)
     else:
@@ -149,71 +199,45 @@ async def get_dashboard_state_aggregated(
     projs = projs_result.scalars().all()
     proj_ids = [p.id for p in projs]
 
-    tasks_result = await db.execute(select(Task).filter(Task.project_id.in_(proj_ids)).order_by(Task.ordinal, Task.created_at))
-    all_tasks = tasks_result.scalars().all()
+    all_tasks = []
+    if proj_ids:
+        tasks_result = await db.execute(
+            select(Task).filter(Task.project_id.in_(proj_ids)).order_by(Task.ordinal, Task.created_at)
+        )
+        all_tasks = tasks_result.scalars().all()
 
     tasks_by_project = {pid: [] for pid in proj_ids}
     for t in all_tasks:
         tasks_by_project[t.project_id].append(t)
 
-    def build_tree(task_list, parent_id=None, _depth=0):
-        if _depth > 10:
-            return []
-        nodes = []
-        for t in [x for x in task_list if x.parent_id == parent_id]:
-            nodes.append({
-                "id": t.id,
-                "title": t.title,
-                "done": bool(t.done),
-                "deadline": t.deadline,
-                "ordinal": t.ordinal,
-                "children": build_tree(task_list, t.id, _depth + 1)
-            })
-        return nodes
-
     projects = [
-        {"id": p.id, "title": p.title, "ordinal": p.ordinal, "tasks": build_tree(tasks_by_project.get(p.id, []))}
+        {
+            "id": p.id,
+            "title": p.title,
+            "ordinal": p.ordinal,
+            "tasks": _build_task_tree(tasks_by_project.get(p.id, [])),
+        }
         for p in projs
     ]
 
-    # 4. QuickTasks - Filter by user_id if provided
-    qt_query = select(QuickTask).order_by(QuickTask.ordinal, QuickTask.created_at.desc())
-    if user_id is not None:
-        qt_query = qt_query.filter(QuickTask.user_id == user_id)
-    else:
-        qt_query = qt_query.filter(QuickTask.user_id.is_(None))
-    qt_result = await db.execute(qt_query)
-    quickTasks = [{"id": q.id, "title": q.title, "done": bool(q.done), "deadline": q.deadline, "ordinal": q.ordinal} for q in qt_result.scalars().all()]
+    quickTasks = [
+        {"id": q.id, "title": q.title, "done": bool(q.done), "deadline": q.deadline, "ordinal": q.ordinal}
+        for q in qt_result.scalars().all()
+    ]
 
-    # 5. Prayer Logs - Filter by user_id if provided
-    pr_query = select(PrayerLog).filter(PrayerLog.date >= since_date)
-    if user_id is not None:
-        pr_query = pr_query.filter(PrayerLog.user_id == user_id)
-    else:
-        pr_query = pr_query.filter(PrayerLog.user_id.is_(None))
-    pr_result = await db.execute(pr_query)
     pr_logs = pr_result.scalars().all()
     prayerLogs = {}
     for pr in pr_logs:
-        if pr.date not in prayerLogs: prayerLogs[pr.date] = {}
-        # Return {completedAt: "..."} format for completed prayers with timestamp,
-        # or true for legacy completed prayers without timestamp (backward compat)
-        # or null for uncompleted prayers
+        if pr.date not in prayerLogs:
+            prayerLogs[pr.date] = {}
         if pr.completed:
             if pr.completed_at:
                 prayerLogs[pr.date][pr.prayer_name] = {"completedAt": pr.completed_at}
             else:
-                prayerLogs[pr.date][pr.prayer_name] = True  # Legacy: no timestamp available
+                prayerLogs[pr.date][pr.prayer_name] = True
         else:
             prayerLogs[pr.date][pr.prayer_name] = None
 
-    # 6. Top3 Items
-    top3_query = select(Top3Item).order_by(Top3Item.slot)
-    if user_id is not None:
-        top3_query = top3_query.filter(Top3Item.user_id == user_id)
-    else:
-        top3_query = top3_query.filter(Top3Item.user_id.is_(None))
-    top3_result = await db.execute(top3_query)
     top3_rows = top3_result.scalars().all()
     top3Manual = [None, None, None]
     for tr in top3_rows:
@@ -223,26 +247,12 @@ async def get_dashboard_state_aggregated(
                 "taskId": tr.task_id,
                 "quickTaskId": tr.quick_task_id,
                 "title": tr.title,
-                "done": bool(tr.done)
+                "done": bool(tr.done),
             }
 
-    # 7. Daily Completion Log - Filter by user_id if provided
-    dc_query = select(DailyCompletionLog).filter(DailyCompletionLog.date >= since_date)  # 365 days
-    if user_id is not None:
-        dc_query = dc_query.filter(DailyCompletionLog.user_id == user_id)
-    else:
-        dc_query = dc_query.filter(DailyCompletionLog.user_id.is_(None))
-    dc_result = await db.execute(dc_query)
     dc_logs = dc_result.scalars().all()
     dailyCompletionLog = {dc.date: {"score": dc.score, **(dc.data or {})} for dc in dc_logs}
 
-    # 8. Life Goals (Tiered)
-    tiers_query = select(LifeGoalTier).options(selectinload(LifeGoalTier.goals)).order_by(LifeGoalTier.ordinal)
-    if user_id is not None:
-        tiers_query = tiers_query.filter(LifeGoalTier.user_id == user_id)
-    else:
-        tiers_query = tiers_query.filter(LifeGoalTier.user_id.is_(None))
-    tiers_result = await db.execute(tiers_query)
     tiers = tiers_result.scalars().all()
     
     # UI keys from DashboardState JSON (skip extra SELECT when caller already loaded the row)
@@ -600,14 +610,18 @@ async def update_dashboard_from_json(db: AsyncSession, data: dict, key: str = "d
                 del_dc = del_dc.filter(DailyCompletionLog.user_id.is_(None))
             await db.execute(del_dc)
         else:
-            for d_str, log in completion_log.items():
-                existing_q = select(DailyCompletionLog).filter(DailyCompletionLog.date == d_str)
+            dates = list(completion_log.keys())
+            existing_by_date: dict[str, DailyCompletionLog] = {}
+            if dates:
+                existing_q = select(DailyCompletionLog).filter(DailyCompletionLog.date.in_(dates))
                 if user_id is not None:
                     existing_q = existing_q.filter(DailyCompletionLog.user_id == user_id)
                 else:
                     existing_q = existing_q.filter(DailyCompletionLog.user_id.is_(None))
-                existing = await db.execute(existing_q)
-                dc = existing.scalar_one_or_none()
+                existing_res = await db.execute(existing_q)
+                existing_by_date = {dc.date: dc for dc in existing_res.scalars().all()}
+            for d_str, log in completion_log.items():
+                dc = existing_by_date.get(d_str)
                 score = log.get("score", 0)
                 meta = {k: v for k, v in log.items() if k != "score"}
                 if dc:
@@ -881,19 +895,8 @@ async def get_shared_dashboard_aggregated(db: AsyncSession, share_id: str):
     for t in all_tasks:
         tasks_by_project[t.project_id].append(t)
 
-    def build_tree(task_list, parent_id=None, _depth=0):
-        if _depth > 10:
-            return []
-        nodes = []
-        for t in [x for x in task_list if x.parent_id == parent_id]:
-            nodes.append({
-                "id": t.id, "title": t.title, "done": bool(t.done),
-                "deadline": t.deadline, "children": build_tree(task_list, t.id, _depth + 1)
-            })
-        return nodes
-
     projects = [
-        {"id": p.id, "title": p.title, "tasks": build_tree(tasks_by_project.get(p.id, []))}
+        {"id": p.id, "title": p.title, "tasks": _build_task_tree(tasks_by_project.get(p.id, []))}
         for p in projs
     ]
 
@@ -989,19 +992,8 @@ async def get_all_shared_dashboards_aggregated(db: AsyncSession):
         share_id = sd.share_id
         projs = projs_by_share.get(share_id, [])
 
-        def build_tree(task_list, parent_id=None, _depth=0):
-            if _depth > 10:
-                return []
-            nodes = []
-            for t in [x for x in task_list if x.parent_id == parent_id]:
-                nodes.append({
-                    "id": t.id, "title": t.title, "done": bool(t.done),
-                    "deadline": t.deadline, "children": build_tree(task_list, t.id, _depth + 1)
-                })
-            return nodes
-
         projects = [
-            {"id": p.id, "title": p.title, "tasks": build_tree(tasks_by_project.get(p.id, []))}
+            {"id": p.id, "title": p.title, "tasks": _build_task_tree(tasks_by_project.get(p.id, []))}
             for p in projs
         ]
 

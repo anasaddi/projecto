@@ -32,6 +32,13 @@ from app.websockets import manager
 router = APIRouter()
 
 
+def _require_shared_dashboards_enabled() -> None:
+    from app.config import get_settings
+
+    if not get_settings().shared_dashboards_enabled:
+        raise HTTPException(status_code=503, detail="Shared dashboards temporarily disabled")
+
+
 @router.get("/ping")
 async def ping(db: AsyncSession = Depends(get_db)):
     from app.db.models import Exercise, WorkoutDayTemplate, DailySchedule
@@ -433,35 +440,43 @@ async def reset_daily_logs(
         return JSONResponse(status_code=503, content={"detail": "Daily reset failed"})
 
 @router.patch("/dashboard-state/batch", dependencies=[Depends(get_current_admin)])
-async def batch_update_dashboard(body: dict, db: AsyncSession = Depends(get_db)):
-    """Process multiple dashboard mutations in a single transaction.
-    
-    Body format: { "operations": [ { "type": "toggle_task", "projectId": "...", "taskId": "...", "done": true }, ... ] }
-    """
+async def batch_update_dashboard(body: schemas.DashboardBatchUpdate, db: AsyncSession = Depends(get_db)):
+    """Process multiple dashboard mutations in a single transaction."""
     from app.repositories.audit import record_event
-    operations = body.get("operations", [])
+
+    operations = body.operations
     if not operations:
         return {"status": "ok", "processed": 0}
-    
+
     results = []
     for op in operations:
-        op_type = op.get("type")
+        op_type = op.type
+        op_data = op.model_dump()
         try:
             if op_type == "toggle_task":
-                # Record audit event
-                await record_event(db, "task", op.get("taskId", ""), "toggled",
-                                   new_data={"done": op.get("done")})
+                await record_event(
+                    db,
+                    "task",
+                    op_data.get("taskId", ""),
+                    "toggled",
+                    new_data={"done": op_data.get("done")},
+                )
             elif op_type == "toggle_quick_task":
-                await record_event(db, "quick_task", op.get("taskId", ""), "toggled",
-                                   new_data={"done": op.get("done")})
+                await record_event(
+                    db,
+                    "quick_task",
+                    op_data.get("taskId", ""),
+                    "toggled",
+                    new_data={"done": op_data.get("done")},
+                )
             results.append({"type": op_type, "status": "ok"})
         except Exception as e:
             results.append({"type": op_type, "status": "error", "message": str(e)})
-    
-    # Apply the full state update after batch
-    if body.get("state"):
-        await dashboard_service.update_dashboard(db, body["state"])
+
+    if body.state:
+        await dashboard_service.update_dashboard(db, body.state)
         from app.cache import invalidate_dashboard
+
         await invalidate_dashboard()
 
     return {"status": "ok", "processed": len(results), "results": results}
@@ -497,31 +512,6 @@ def verify_share_token(token: str, share_id: str, secret_key: str) -> bool:
     except Exception:
         return False
 
-def _shared_dashboard_out(
-    share_id: str,
-    title: str,
-    payload_data: dict,
-    updated_at,
-    *,
-    include_data: bool,
-    is_protected: bool,
-) -> dict:
-    if include_data:
-        clean_data = dict(payload_data)
-        clean_data.pop("passwordHash", None)
-        clean_data.pop("sectionPasswords", None)
-        data = clean_data
-    else:
-        data = None
-    return {
-        "share_id": share_id,
-        "title": title or "Progetti Condivisi",
-        "data": data,
-        "updated_at": updated_at,
-        "is_protected": is_protected,
-    }
-
-
 @router.get("/shared-dashboard/{share_id}", response_model=schemas.SharedDashboardOut | None)
 async def get_shared_dashboard(
     share_id: str,
@@ -530,6 +520,7 @@ async def get_shared_dashboard(
     access_token: str | None = Depends(resolve_access_token),
 ):
     """Fetch shared dashboard: admin JWT, share unlock token, or password-protected shell."""
+    _require_shared_dashboards_enabled()
     from app.cache import invalidate_shared_dashboard
     from app.config import get_settings
     from app.api.deps import is_admin_access
@@ -579,6 +570,7 @@ async def get_shared_dashboard(
 @router.get("/shared-dashboards", response_model=list[schemas.SharedDashboardOut], dependencies=[Depends(get_current_admin)])
 async def list_shared_dashboards(db: AsyncSession = Depends(get_db)):
     """Fetch all shared dashboards. ADMIN ONLY."""
+    _require_shared_dashboards_enabled()
     try:
         return await dashboard_service.get_all_shared_dashboards(db)
     except Exception as e:
@@ -588,6 +580,7 @@ async def list_shared_dashboards(db: AsyncSession = Depends(get_db)):
 @router.post("/shared-dashboard/{share_id}/unlock", response_model=schemas.SharedDashboardUnlockResponse)
 async def unlock_shared_dashboard(share_id: str, body: schemas.SharedDashboardUnlockRequest, db: AsyncSession = Depends(get_db)):
     """Verify password and return a temporary access token for a shared dashboard."""
+    _require_shared_dashboards_enabled()
     import hashlib
     from app.config import get_settings
     settings = get_settings()
@@ -664,6 +657,7 @@ async def update_shared_dashboard(
     access=Depends(get_shared_write_access)
 ):
     """Update or create a shared dashboard. Invalidates cache + broadcasts. ADMIN OR TOKEN."""
+    _require_shared_dashboards_enabled()
     from app.cache import invalidate_shared_dashboard, set_cached_shared_dashboard
     from app.repositories.audit import record_event
     from app.repositories.dashboard import upsert_shared_dashboard_metadata
@@ -732,7 +726,8 @@ async def update_shared_dashboard(
 async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: AsyncSession = Depends(get_db)):
     import logging
     logger = logging.getLogger("km.ws")
-    
+
+    _require_shared_dashboards_enabled()
     from app.config import get_settings
     settings = get_settings()
     from fastapi.encoders import jsonable_encoder
@@ -806,7 +801,7 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
 
             # Security: if dashboard is protected, allow only chat if no token, 
             # and block full data updates unless token/admin
-            payload_data = safe_shared_dashboard_data(dashboard.get("data"))
+            payload_data = safe_shared_dashboard_data(record.get("data"))
             pwd_hash = payload_data.get("passwordHash")
             
             if pwd_hash:
