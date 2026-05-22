@@ -27,20 +27,36 @@ export function useBackoffPoller(
   const pollFnRef = useRef(pollFn);
   pollFnRef.current = pollFn;
 
-  const stop = useCallback(() => {
-    stoppedRef.current = true;
+  const clearTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
   }, []);
 
+  const schedule = useCallback(
+    (ms: number) => {
+      clearTimer();
+      timerRef.current = setInterval(() => {
+        void tickRef.current();
+      }, ms);
+    },
+    [clearTimer]
+  );
+
+  const tickRef = useRef<() => Promise<void>>(async () => {});
+
+  const stop = useCallback(() => {
+    stoppedRef.current = true;
+    clearTimer();
+  }, [clearTimer]);
+
   const reset = useCallback(() => {
     stoppedRef.current = false;
     delayRef.current = baseIntervalMs;
   }, [baseIntervalMs]);
 
-  const tick = useCallback(async () => {
+  tickRef.current = async () => {
     if (stoppedRef.current || inFlightRef.current) return;
     inFlightRef.current = true;
     try {
@@ -53,27 +69,26 @@ export function useBackoffPoller(
         return;
       }
       delayRef.current = Math.min(delayRef.current * 2, maxIntervalMs);
-      if (timerRef.current) clearInterval(timerRef.current);
-      timerRef.current = setInterval(tick, delayRef.current);
+      schedule(delayRef.current);
     } finally {
       inFlightRef.current = false;
     }
-  }, [baseIntervalMs, maxIntervalMs, stop, stopOnStatus]);
+  };
+
+  const pollNow = useCallback(async () => {
+    await tickRef.current();
+  }, []);
 
   useEffect(() => {
     if (!enabled) {
-      if (timerRef.current) clearInterval(timerRef.current);
-      timerRef.current = null;
+      clearTimer();
       return;
     }
     stoppedRef.current = false;
     delayRef.current = baseIntervalMs;
-    timerRef.current = setInterval(tick, baseIntervalMs);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      timerRef.current = null;
-    };
-  }, [enabled, baseIntervalMs, tick]);
+    schedule(baseIntervalMs);
+    return clearTimer;
+  }, [enabled, baseIntervalMs, schedule, clearTimer]);
 
-  return { stop, reset, isStopped: () => stoppedRef.current };
-}
+  return { stop: stop, reset, pollNow, isStopped: () => stoppedRef.current };
+};

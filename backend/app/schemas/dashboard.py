@@ -165,3 +165,40 @@ class DashboardStatePayload(BaseModel):
 def validate_dashboard_data(data: dict[str, Any]) -> DashboardStatePayload:
     """Validate and coerce dashboard state blob from API/DB."""
     return DashboardStatePayload.model_validate(data)
+
+
+# --- API response / update models ---
+
+class DashboardStateOut(BaseModel):
+    key: str
+    data: dict
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class DashboardStateUpdate(BaseModel):
+    data: dict
+
+
+class SharedDashboardOut(BaseModel):
+    share_id: str
+    title: str
+    data: Optional[dict | list] = None
+    updated_at: Optional[datetime] = None
+    is_protected: bool = False
+
+    model_config = {"from_attributes": True}
+
+
+class SharedDashboardUpdate(BaseModel):
+    data: dict | list
+    title: Optional[str] = None
+
+
+class SharedDashboardUnlockRequest(BaseModel):
+    password: str
+
+
+class SharedDashboardUnlockResponse(BaseModel):
+    token: str

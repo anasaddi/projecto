@@ -10,6 +10,12 @@ from app.schemas.dashboard import (
     QuickTask,
     LifeGoalsPayload,
     validate_dashboard_data,
+    DashboardStateOut,
+    DashboardStateUpdate,
+    SharedDashboardOut,
+    SharedDashboardUpdate,
+    SharedDashboardUnlockRequest,
+    SharedDashboardUnlockResponse,
 )
 from app.schemas.training import (
     ExerciseOut,
@@ -31,12 +37,6 @@ from app.schemas.training import (
     TrainingProgressionUpdate,
     DailyScheduleOut,
     DailyScheduleUpdate,
-    DashboardStateOut,
-    DashboardStateUpdate,
-    SharedDashboardOut,
-    SharedDashboardUpdate,
-    SharedDashboardUnlockRequest,
-    SharedDashboardUnlockResponse,
 )
 
 __all__ = [

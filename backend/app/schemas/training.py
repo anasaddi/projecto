@@ -105,46 +105,16 @@ class ExerciseActiveUpdate(BaseModel):
     is_active: int
 
 
-# --- Dashboard ---
+# --- Dashboard (re-exported from dashboard schema module) ---
 
-class DashboardStateOut(BaseModel):
-    key: str
-    data: dict
-    updated_at: datetime
-
-    model_config = {"from_attributes": True}
-
-
-class DashboardStateUpdate(BaseModel):
-    data: dict
-
-
-# --- Shared Dashboard ---
-
-class SharedDashboardOut(BaseModel):
-    share_id: str
-    title: str
-    data: Optional[dict | list] = None
-    updated_at: Optional[datetime] = None
-    is_protected: bool = False
-
-    model_config = {"from_attributes": True}
-
-
-class SharedDashboardUpdate(BaseModel):
-    data: dict | list
-    title: Optional[str] = None
-
-
-class SharedDashboardUnlockRequest(BaseModel):
-    password: str
-
-
-class SharedDashboardUnlockResponse(BaseModel):
-    token: str
-
-
-# --- Workout Logs ---
+from app.schemas.dashboard import (
+    DashboardStateOut,
+    DashboardStateUpdate,
+    SharedDashboardOut,
+    SharedDashboardUpdate,
+    SharedDashboardUnlockRequest,
+    SharedDashboardUnlockResponse,
+)
 
 class ExercisePrimaryMusclesUpdate(BaseModel):
     primary_muscles: list[str] = []

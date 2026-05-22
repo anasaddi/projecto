@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../api/client';
@@ -22,6 +22,9 @@ import { DASHBOARD_CONTENT_CLASS } from '../constants/layout';
 import { useToast } from '../context/ToastContext';
 import { isAdminRole } from '../utils/authSession';
 import { parseDragPayload, setDragPayload } from '../utils/dragPayload';
+import { mergeSharedDashboardData } from '../utils/mergeSharedDashboard';
+import { useBackoffPoller } from '../hooks/useBackoffPoller';
+import { useSnapshotDedup } from '../hooks/useSnapshotDedup';
 /**
  * ----------------------------------------------------------------------
  * UTILS (shared-specific only; dashboard helpers from DashboardUtils)
@@ -567,26 +570,18 @@ export default function SharedProjects() {
   const reconnectTimeout = useRef(null);
   const heartbeatInterval = useRef(null);
   const restDebounceRef = useRef(null);
-  const pollInterval = useRef(null);
   const mountedRef = useRef(true);
   const applyingFromBCRef = useRef(false);
-  const skipRemoteSyncRef = useRef(true);
-  const lastPushedSnapshotRef = useRef(null);
-  const pollInFlightRef = useRef(false);
-  const pollDelayMsRef = useRef(4000);
-  const pollStoppedRef = useRef(false);
   const dashboardErrorRef = useRef(null);
+
+  const { markRemote: markRemoteSnapshot, consumeSkipSync, isDuplicatePush, markPushed } =
+    useSnapshotDedup(buildSharedSyncSnapshot);
 
   useEffect(() => {
     dashboardErrorRef.current = dashboard.error;
   }, [dashboard.error]);
 
-  const markRemoteSnapshot = (snapshotState) => {
-    lastPushedSnapshotRef.current = buildSharedSyncSnapshot(snapshotState);
-    skipRemoteSyncRef.current = true;
-  };
-
-  const applyDashboardFromPayload = (msg) => {
+  const applyDashboardFromPayload = useCallback((msg) => {
     if (msg.type === 'chat') {
       const newMsg = msg.data;
       setDashboard(prev => {
@@ -603,41 +598,55 @@ export default function SharedProjects() {
     }
 
     const dataPayload = msg.data || msg;
-    const serverProjects = Array.isArray(dataPayload.projects) ? dataPayload.projects : null;
-    const serverQuickTasks = Array.isArray(dataPayload.quickTasks) ? dataPayload.quickTasks : null;
-    const serverNotes = Array.isArray(dataPayload.notes) ? normalizeSharedNotes(dataPayload.notes) : null;
-    const serverChat = Array.isArray(dataPayload.chat) ? dataPayload.chat : null;
-    const serverBonifici = Array.isArray(dataPayload.bonifici) ? dataPayload.bonifici : null;
     const serverTitle = msg.title || null;
+    const hasNotes = Array.isArray(dataPayload.notes);
 
     setDashboard(prev => {
-      const next = { ...prev };
-      if (serverProjects !== null) next.projects = serverProjects;
-      if (serverQuickTasks !== null) next.quickTasks = serverQuickTasks;
-      if (serverNotes !== null) next.notes = serverNotes;
-      if (serverChat !== null) next.chat = serverChat;
-      if (serverBonifici !== null) next.bonifici = serverBonifici;
+      const merged = mergeSharedDashboardData(prev, dataPayload);
+      const next = {
+        ...prev,
+        projects: merged.projects ?? prev.projects,
+        quickTasks: merged.quickTasks ?? prev.quickTasks,
+        chat: merged.chat ?? prev.chat,
+        bonifici: merged.bonifici ?? prev.bonifici,
+        notes: hasNotes ? normalizeSharedNotes(merged.notes ?? dataPayload.notes) : prev.notes,
+      };
       if (serverTitle !== null) next.title = serverTitle;
       next.loading = false;
       next.error = null;
       markRemoteSnapshot(next);
       return next;
     });
-  };
+  }, [markRemoteSnapshot]);
 
-  const stopPolling = () => {
-    pollStoppedRef.current = true;
-    if (pollInterval.current) {
-      clearInterval(pollInterval.current);
-      pollInterval.current = null;
-    }
-  };
+  const pollEnabled = !!(id && !dashboard.isConnected && !dashboard.error && !needsPassword);
 
-  const schedulePolling = () => {
-    if (pollStoppedRef.current || !id) return;
-    if (pollInterval.current) clearInterval(pollInterval.current);
-    pollInterval.current = setInterval(refetchFromApi, pollDelayMsRef.current);
-  };
+  const { stop: stopPolling, reset: resetPolling, pollNow } = useBackoffPoller(
+    useCallback(async () => {
+      if (!id) return;
+      const errMsg = dashboardErrorRef.current;
+      if (errMsg?.includes('404') || errMsg?.includes('non trovat')) return;
+      try {
+        const data = await api.training.getSharedDashboard(id, sharedFetchOpts(id));
+        if (!mountedRef.current) return;
+        applyDashboardFromPayload(data);
+      } catch (err) {
+        const status = err?.status;
+        if (status === 403) {
+          handleSharedAccessError(err, { setNeedsPassword, setDashboard });
+        }
+        if (status === 404 || status === 500 || status === 503) {
+          console.warn(`[SharedProjects] Stopping poll for ${id}: ${status} error`);
+        }
+        throw err;
+      }
+    }, [id, applyDashboardFromPayload]),
+    { enabled: pollEnabled, stopOnStatus: [403, 404, 500, 503] }
+  );
+
+  useEffect(() => {
+    if (pollEnabled) resetPolling();
+  }, [pollEnabled, resetPolling]);
 
   const connect = () => {
     if (!id || ws.current?.readyState === WebSocket.OPEN) return;
@@ -699,44 +708,13 @@ export default function SharedProjects() {
     };
   };
 
-  const refetchFromApi = () => {
-    if (!id || pollInFlightRef.current || pollStoppedRef.current) return;
-    const errMsg = dashboardErrorRef.current;
-    if (errMsg?.includes('404') || errMsg?.includes('non trovat')) return;
-    pollInFlightRef.current = true;
-    api.training.getSharedDashboard(id, sharedFetchOpts(id))
-      .then((data) => {
-        if (!mountedRef.current) return;
-        pollDelayMsRef.current = 4000;
-        applyDashboardFromPayload(data);
-      })
-      .catch((err) => {
-        const status = err?.status;
-        if (status === 403) {
-          handleSharedAccessError(err, { setNeedsPassword, setDashboard });
-          stopPolling();
-          return;
-        }
-        if (status === 404 || status === 500 || status === 503) {
-          console.warn(`[SharedProjects] Stopping poll for ${id}: ${status} error`);
-          stopPolling();
-          return;
-        }
-        pollDelayMsRef.current = Math.min(pollDelayMsRef.current * 2, 30000);
-        schedulePolling();
-      })
-      .finally(() => {
-        pollInFlightRef.current = false;
-      });
-  };
-
   useEffect(() => {
     const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && id) refetchFromApi();
+      if (document.visibilityState === 'visible' && id) pollNow();
     };
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => document.removeEventListener('visibilitychange', onVisibilityChange);
-  }, [id]);
+  }, [id, pollNow]);
 
   useEffect(() => {
     if (!id) return;
@@ -749,20 +727,7 @@ export default function SharedProjects() {
       setTimeout(() => { applyingFromBCRef.current = false; }, 0);
     };
     return () => bc.close();
-  }, [id]);
-
-  useEffect(() => {
-    if (!id || dashboard.isConnected || dashboard.error || needsPassword) return;
-    pollStoppedRef.current = false;
-    pollDelayMsRef.current = 4000;
-    schedulePolling();
-    return () => {
-      if (pollInterval.current) {
-        clearInterval(pollInterval.current);
-        pollInterval.current = null;
-      }
-    };
-  }, [id, dashboard.isConnected, dashboard.error, needsPassword]);
+  }, [id, applyDashboardFromPayload]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -822,10 +787,7 @@ export default function SharedProjects() {
     if (!id || dashboard.loading || applyingFromBCRef.current || needsPassword) return;
 
     const timeoutId = setTimeout(() => {
-      if (skipRemoteSyncRef.current) {
-        skipRemoteSyncRef.current = false;
-        return;
-      }
+      if (consumeSkipSync()) return;
 
       const data = {
         projects: Array.isArray(dashboard.projects) ? dashboard.projects : [],
@@ -835,16 +797,16 @@ export default function SharedProjects() {
         chat: Array.isArray(dashboard.chat) ? dashboard.chat : [],
         bonifici: Array.isArray(dashboard.bonifici) ? dashboard.bonifici : [],
       };
-      const snap = buildSharedSyncSnapshot({
+      const snapState = {
         title: dashboard.title,
         projects: data.projects,
         quickTasks: data.quickTasks,
         notes: data.notes,
         chat: data.chat,
         bonifici: data.bonifici,
-      });
-      if (snap === lastPushedSnapshotRef.current) return;
-      lastPushedSnapshotRef.current = snap;
+      };
+      if (isDuplicatePush(snapState)) return;
+      markPushed(snapState);
 
       const payload = { type: 'sync', title: dashboard.title ?? '', data };
 
@@ -1029,7 +991,7 @@ export default function SharedProjects() {
         setShareToken(id, token);
         setNeedsPassword(false);
         setPasswordInput('');
-        refetchFromApi();
+        pollNow();
         // Force reconnect WS to use the new token
         if (ws.current) {
           ws.current.close();
