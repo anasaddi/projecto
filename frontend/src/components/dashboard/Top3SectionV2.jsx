@@ -5,7 +5,7 @@ import { resolveTop3Slots } from './DashboardUtils';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { useToast } from '../../context/ToastContext';
 import { Card, CardHeader, Badge } from './Card';
-import { parseDragPayload } from '../../utils/dragPayload';
+import { parseDragPayload, setDragPayload } from '../../utils/dragPayload';
 
 export function Top3SectionV2() {
   const [dragOverIndex, setDragOverIndex] = useState(null);
@@ -210,9 +210,8 @@ export function Top3SectionV2() {
               key={idx}
               data-slot-index={idx}
               draggable={filled}
-              onDragStart={filled ? (e) => { 
-                e.dataTransfer.setData('application/json', JSON.stringify({ type: 'top3', fromIndex: idx })); 
-                e.dataTransfer.effectAllowed = 'move'; 
+              onDragStart={filled ? (e) => {
+                setDragPayload(e.dataTransfer, { type: 'top3', fromIndex: idx });
               } : undefined}
               onDragOver={(e) => {
                 e.preventDefault();

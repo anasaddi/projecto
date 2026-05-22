@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
 
@@ -23,6 +23,18 @@ export function ConfirmModal({
   onConfirm,
   onCancel,
 }) {
+  const cancelRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    cancelRef.current?.focus();
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') onCancel?.();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open, onCancel]);
+
   if (!open) return null;
 
   const isDanger = variant === 'danger';
@@ -43,7 +55,7 @@ export function ConfirmModal({
           {message}
         </p>
         <div className="flex gap-3 justify-end">
-          <Button variant="ghost" onClick={onCancel}>
+          <Button ref={cancelRef} variant="ghost" onClick={onCancel}>
             {cancelLabel}
           </Button>
           <Button

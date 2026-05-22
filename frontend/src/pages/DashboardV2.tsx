@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useDashboardStats } from '../context/DashboardStatsContext';
 import { useGlobalConfig } from '../context/GlobalConfigContext';
 import { useDashboardStore } from '../store/dashboardStore';
+import { useShallow } from 'zustand/react/shallow';
 import { useFocusMetrics } from '../hooks/useFocusMetrics';
 
 import { PomodoroCompact } from '../components/dashboard/PomodoroCompact';
@@ -33,17 +34,41 @@ import { DASHBOARD_CONTENT_CLASS } from '../constants/layout';
 const PROJECT_ACCENTS = ['indigo', 'sky', 'violet', 'emerald', 'amber', 'rose'];
 
 export default function DashboardV2(): React.ReactElement {
-  const dailyTaskTemplates = useDashboardStore((s) => s.dailyTaskTemplates) ?? [];
-  const projects = useDashboardStore((s) => s.projects) ?? [];
-  const prayerLogs = useDashboardStore((s) => s.prayerLogs) ?? {};
-  const top3Manual = useDashboardStore((s) => s.top3Manual) ?? [null, null, null];
-  const quickTasks = useDashboardStore((s) => s.quickTasks) ?? [];
-  const dailyCompletionLog = useDashboardStore((s) => s.dailyCompletionLog) ?? {};
-  const lifeGoals = useDashboardStore((s) => s.lifeGoals) ?? { tiers: [] };
-  const sharedDashboards = useDashboardStore((s) => s.sharedDashboards) ?? [];
-  const isLoaded = useDashboardStore((s) => s.isLoaded);
-  const lastSavedAt = useDashboardStore((s) => s.lastSavedAt);
-  const confirmState = useDashboardStore((s) => s.confirmState);
+  const {
+    dailyTaskTemplates,
+    projects,
+    prayerLogs,
+    top3Manual,
+    quickTasks,
+    dailyCompletionLog,
+    lifeGoals,
+    sharedDashboards,
+    isLoaded,
+    lastSavedAt,
+    confirmState,
+    selectedDateRaw,
+    sectionOrder,
+  } = useDashboardStore(
+    useShallow((s) => ({
+      dailyTaskTemplates: s.dailyTaskTemplates ?? [],
+      projects: s.projects ?? [],
+      prayerLogs: s.prayerLogs ?? {},
+      top3Manual: s.top3Manual ?? [null, null, null],
+      quickTasks: s.quickTasks ?? [],
+      dailyCompletionLog: s.dailyCompletionLog ?? {},
+      lifeGoals: s.lifeGoals ?? { tiers: [] },
+      sharedDashboards: s.sharedDashboards ?? [],
+      isLoaded: s.isLoaded,
+      lastSavedAt: s.lastSavedAt,
+      confirmState: s.confirmState,
+      selectedDateRaw: s.selectedDate,
+      sectionOrder: s.sectionOrder ?? {
+        left: ['pomodoro', 'quickTasks', 'focusHeatmap'],
+        center: ['top3', 'habits'],
+        right: ['projects'],
+      },
+    }))
+  );
   const setIsLoaded = useDashboardStore((s) => s.setIsLoaded);
   const setLastSavedAt = useDashboardStore((s) => s.setLastSavedAt);
   const setConfirmState = useDashboardStore((s) => s.setConfirmState);
@@ -51,12 +76,6 @@ export default function DashboardV2(): React.ReactElement {
   const deleteGoal = useDashboardStore((s) => s.deleteGoal);
   const deleteSharedDashboardProject = useDashboardStore((s) => s.deleteSharedDashboardProject);
   const togglePrayer = useDashboardStore((s) => s.togglePrayer);
-  const selectedDateRaw = useDashboardStore((s) => s.selectedDate);
-  const sectionOrder = useDashboardStore((s) => s.sectionOrder) ?? {
-    left: ['pomodoro', 'quickTasks', 'focusHeatmap'],
-    center: ['top3', 'habits'],
-    right: ['projects'],
-  };
   const reorderSection = useDashboardStore((s) => s.reorderSection);
 
   useDashboardSync();

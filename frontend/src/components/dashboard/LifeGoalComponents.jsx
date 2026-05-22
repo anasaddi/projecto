@@ -5,6 +5,7 @@ import { Badge, ProgressBar, ActionButton } from './Card';
 import { KebabMenu } from './DashboardComponents';
 import { useLongPressActions } from '../../hooks/useLongPressActions';
 import { PROJECT_CARD_STYLES, getAccentColor } from './ProjectCardStyles';
+import { setDragPayload } from '../../utils/dragPayload';
 
 export function LifeGoalCard({
   goal, accent, stats, percentage,
@@ -67,8 +68,7 @@ export function LifeGoalCard({
         draggable
         {...lgZoneProps}
         onDragStart={(e) => {
-          e.dataTransfer.setData('application/json', JSON.stringify({ type: 'lifeGoal', goalId: goal.id }));
-          e.dataTransfer.effectAllowed = 'move';
+          setDragPayload(e.dataTransfer, { type: 'lifeGoal', goalId: goal.id });
         }}
         className={`group/goal relative flex items-center gap-3 overflow-hidden rounded-2xl border border-zinc-200/70 bg-white px-3 py-2 shadow-sm transition-all hover:border-zinc-300 hover:shadow-md dark:border-white/[0.08] dark:bg-[#0b0e14]/70 ${deadlineEditing === goal.id ? 'z-30' : 'z-auto'}`}
       >
@@ -143,8 +143,7 @@ export function LifeGoalCard({
     <div
       draggable
       onDragStart={(e) => {
-        e.dataTransfer.setData('application/json', JSON.stringify({ type: 'lifeGoal', goalId: goal.id }));
-        e.dataTransfer.effectAllowed = 'move';
+        setDragPayload(e.dataTransfer, { type: 'lifeGoal', goalId: goal.id });
       }}
       className={`group/goal relative flex flex-col overflow-hidden rounded-3xl border border-zinc-200/70 bg-white shadow-sm transition-all hover:border-zinc-300 hover:shadow-[0_26px_60px_-36px_rgba(79,70,229,0.22)] dark:border-white/[0.08] dark:bg-[#0b0e14]/70 dark:shadow-none ${deadlineEditing === goal.id ? 'z-30' : 'z-auto'}`}
     >

@@ -29,6 +29,7 @@ import { parseDragPayload, setDragPayload } from '../utils/dragPayload';
 import { mergeSharedDashboardData } from '../utils/mergeSharedDashboard';
 import { useBackoffPoller } from '../hooks/useBackoffPoller';
 import { useSnapshotDedup } from '../hooks/useSnapshotDedup';
+import { getSharedBroadcastChannel, closeSharedBroadcastChannel } from '../utils/sharedBroadcast';
 /**
  * ----------------------------------------------------------------------
  * UTILS (shared-specific only; dashboard helpers from DashboardUtils)
@@ -659,7 +660,12 @@ export default function SharedProjects() {
     if (pollEnabled) resetPolling();
   }, [pollEnabled, resetPolling]);
 
-  const connect = () => {
+  const applyDashboardFromPayloadRef = useRef(applyDashboardFromPayload);
+  useEffect(() => {
+    applyDashboardFromPayloadRef.current = applyDashboardFromPayload;
+  }, [applyDashboardFromPayload]);
+
+  const connect = useCallback(() => {
     if (!id || ws.current?.readyState === WebSocket.OPEN) return;
 
     const url = getSharedDashboardWsUrl(id);
@@ -696,7 +702,7 @@ export default function SharedProjects() {
           console.warn('WS rate limited:', msg.message);
           return;
         }
-        applyDashboardFromPayload(msg);
+        applyDashboardFromPayloadRef.current(msg);
       } catch (e) {
         console.error("WS Parse error", e);
       }
@@ -711,13 +717,13 @@ export default function SharedProjects() {
       setDashboard(prev => ({ ...prev, isConnected: false }));
       ws.current = null;
       if (mountedRef.current && id) {
-        reconnectTimeout.current = setTimeout(connect, 3000);
+        reconnectTimeout.current = setTimeout(() => connect(), 3000);
       }
     };
 
     ws.current.onerror = () => {
     };
-  };
+  }, [id]);
 
   useEffect(() => {
     const onVisibilityChange = () => {
@@ -729,16 +735,24 @@ export default function SharedProjects() {
 
   useEffect(() => {
     if (!id) return;
-    const bc = new BroadcastChannel(`km-shared-${id}`);
-    bc.onmessage = (e) => {
+    const bc = getSharedBroadcastChannel(id);
+    if (!bc) return;
+    const handler = (e) => {
       const msg = e?.data;
       if (!msg || applyingFromBCRef.current) return;
       applyingFromBCRef.current = true;
-      applyDashboardFromPayload(msg);
+      applyDashboardFromPayloadRef.current(msg);
       setTimeout(() => { applyingFromBCRef.current = false; }, 0);
     };
-    return () => bc.close();
-  }, [id, applyDashboardFromPayload]);
+    bc.onmessage = handler;
+    return () => {
+      bc.onmessage = null;
+    };
+  }, [id]);
+
+  useEffect(() => () => {
+    if (id) closeSharedBroadcastChannel(id);
+  }, [id]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -774,6 +788,7 @@ export default function SharedProjects() {
     return () => {
       cancelled = true;
       mountedRef.current = false;
+      closeSharedBroadcastChannel(id);
       if (heartbeatInterval.current) {
         clearInterval(heartbeatInterval.current);
         heartbeatInterval.current = null;
@@ -791,7 +806,7 @@ export default function SharedProjects() {
         restDebounceRef.current = null;
       }
     };
-  }, [id]);
+  }, [id, connect]);
 
   // Invio aggiornamenti debounced: WebSocket + REST + BC (solo modifiche locali)
   useEffect(() => {
@@ -826,11 +841,7 @@ export default function SharedProjects() {
       }
       api.training.updateSharedDashboard(id, data, payload.title, { silent: true }).catch(() => {});
       
-      try {
-        const bc = new BroadcastChannel(`km-shared-${id}`);
-        bc.postMessage(payload);
-        bc.close();
-      } catch (_) { }
+      getSharedBroadcastChannel(id)?.postMessage(payload);
     }, 400);
 
     return () => clearTimeout(timeoutId);
@@ -951,11 +962,7 @@ export default function SharedProjects() {
     }
 
     if (!applyingFromBCRef.current && id) {
-      try {
-        const bc = new BroadcastChannel(`km-shared-${id}`);
-        bc.postMessage(payload);
-        bc.close();
-      } catch (_) { }
+      getSharedBroadcastChannel(id)?.postMessage(payload);
     }
 
     // Scroll gestito da useEffect su dashboard.chat.length
