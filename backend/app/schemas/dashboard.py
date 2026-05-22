@@ -202,3 +202,13 @@ class SharedDashboardUnlockRequest(BaseModel):
 
 class SharedDashboardUnlockResponse(BaseModel):
     token: str
+
+
+class DashboardBatchOperation(BaseModel):
+    type: str
+    model_config = {"extra": "allow"}
+
+
+class DashboardBatchUpdate(BaseModel):
+    operations: list[DashboardBatchOperation] = Field(default_factory=list)
+    state: Optional[dict[str, Any]] = None

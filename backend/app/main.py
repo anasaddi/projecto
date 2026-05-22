@@ -176,7 +176,7 @@ def create_app() -> FastAPI:
             })
         logger.error(f"Unhandled exception: {exc}", exc_info=True)
         content = {"detail": str(exc)}
-        if not settings.is_production:
+        if settings.debug:
             content["traceback"] = traceback.format_exc()
         return JSONResponse(status_code=500, content=content)
 

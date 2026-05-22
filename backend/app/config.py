@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     assemblyai_api_key: str = ""
     openrouter_api_key: str = ""
     seed_on_start: bool = True  # prod: set SEED_ON_START=false after first deploy (faster cold start)
+    shared_dashboards_enabled: bool = True  # SHARED_DASHBOARDS_ENABLED=false disables shared routes
+    debug: bool = False  # DEBUG=true exposes tracebacks in API error responses
 
     # AI & Vector Search
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"

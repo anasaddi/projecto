@@ -16,6 +16,8 @@ from app.schemas.dashboard import (
     SharedDashboardUpdate,
     SharedDashboardUnlockRequest,
     SharedDashboardUnlockResponse,
+    DashboardBatchUpdate,
+    DashboardBatchOperation,
 )
 from app.schemas.training import (
     ExerciseOut,
@@ -81,4 +83,6 @@ __all__ = [
     "SharedDashboardUpdate",
     "SharedDashboardUnlockRequest",
     "SharedDashboardUnlockResponse",
+    "DashboardBatchUpdate",
+    "DashboardBatchOperation",
 ]
