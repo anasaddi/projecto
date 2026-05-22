@@ -1,4 +1,5 @@
 import { mergeSharedDashboardData, type SharedDashboardData } from './mergeSharedDashboard';
+import { mergeById } from './mergeById';
 
 export type MergePayload = Record<string, unknown>;
 
@@ -15,19 +16,12 @@ function mergeFlatDict(local?: Record<string, unknown>, incoming?: Record<string
   return out;
 }
 
-function mergeById(local: unknown, incoming: unknown): unknown[] {
-  const localArr = Array.isArray(local) ? local : [];
-  const incomingArr = Array.isArray(incoming) ? incoming : [];
-  const byId = new Map<string, unknown>();
-  for (const entry of incomingArr) {
-    const id = (entry as { id?: string })?.id;
-    if (id) byId.set(id, entry);
-  }
-  for (const entry of localArr) {
-    const id = (entry as { id?: string })?.id;
-    if (id) byId.set(id, entry);
-  }
-  return Array.from(byId.values());
+function mergeByIdArrays(local: unknown, incoming: unknown): unknown[] {
+  return mergeById(
+    (Array.isArray(local) ? local : []) as Array<{ id?: string }>,
+    (Array.isArray(incoming) ? incoming : []) as Array<{ id?: string }>,
+    'local'
+  );
 }
 
 function mergeDateKeyedDict(
@@ -83,9 +77,9 @@ export function mergeDashboardServerPayload(local: MergePayload, incoming: Merge
         incoming[key] as Record<string, unknown>
       );
     } else if (key === 'sharedDashboards') {
-      out[key] = mergeById(out[key], incoming[key]);
+      out[key] = mergeByIdArrays(out[key], incoming[key]);
     } else if (ARRAY_KEYS.has(key)) {
-      out[key] = mergeById(out[key], incoming[key]);
+      out[key] = mergeByIdArrays(out[key], incoming[key]);
     } else if (key === 'activePomodoroTask') {
       if (out[key] == null && incoming[key] != null) out[key] = incoming[key];
     } else {

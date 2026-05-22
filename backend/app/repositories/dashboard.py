@@ -851,6 +851,15 @@ async def apply_dashboard_events(
     ds.data = _merge_dashboard_snapshot(_parse_json(ds.data, {}), data)
     flag_modified(ds, "data")  # JSON column: in-place mutations are invisible to SQLAlchemy
     ds.updated_at = datetime.now(timezone.utc)
+
+    applied = [_event_to_dict(raw) for raw in events]
+    if applied:
+        try:
+            from app.services.event_sourcing import append_dashboard_patch_event
+            await append_dashboard_patch_event(db, user_id or "default", applied, user_id)
+        except Exception:
+            pass
+
     await db.commit()
     return data
 

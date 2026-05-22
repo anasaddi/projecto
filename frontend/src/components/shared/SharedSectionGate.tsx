@@ -1,29 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../api/client';
+import {
+  hashSharedPassword,
+  isSectionUnlocked,
+  setSectionUnlockHash,
+} from '../../utils/sharedAccess';
 
 const SECTION_LABELS: Record<string, string> = {
   training: 'Training',
   transcript: 'Transcript',
 };
-
-async function hashPassword(pw: string): Promise<string> {
-  const enc = new TextEncoder();
-  const buf = await crypto.subtle.digest('SHA-256', enc.encode(`km-shared:${pw}`));
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-function isSectionUnlocked(shareId: string, section: string, passwordHash: string | null): boolean {
-  if (!shareId || !section || !passwordHash) return true;
-  try {
-    const stored = localStorage.getItem(`km-shared-section-${shareId}-${section}`);
-    return stored === passwordHash;
-  } catch {
-    return false;
-  }
-}
 
 interface SharedSectionGateProps {
   section: string;
@@ -65,11 +52,9 @@ export default function SharedSectionGate({ section, children }: SharedSectionGa
     const pw = passwordInput.trim();
     if (!pw || !sectionHash) return;
     setPasswordError(null);
-    const h = await hashPassword(pw);
-    if (h === sectionHash) {
-      try {
-        localStorage.setItem(`km-shared-section-${shareId}-${section}`, sectionHash);
-      } catch {}
+    const h = await hashSharedPassword(pw);
+    if (h === sectionHash && shareId) {
+      setSectionUnlockHash(shareId, section, sectionHash);
       setNeedsPassword(false);
     } else {
       setPasswordError('Password errata');

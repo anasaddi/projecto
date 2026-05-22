@@ -3,15 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ModernInput, ModernCheckbox } from './training/TrainingUI';
 import { api } from '../api/client';
 
-// --- Utility Functions ---
-const calc1RM = (weight, reps) => {
-  const w = parseFloat(weight);
-  const r = parseInt(reps, 10);
-  if (!w || !r) return null;
-  if (r === 1) return w;
-  // Formula Epley conservativa (divisore 35 invece di 30 per essere più "safe")
-  return w * (1 + r / 35);
-};
+import { calc1RM } from '../utils/trainingUtils';
 
 const roundToHalf = (n) => (Math.round(n * 2) / 2).toFixed(1);
 const format1RM = (weight, reps) => {

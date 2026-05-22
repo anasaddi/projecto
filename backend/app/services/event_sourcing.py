@@ -11,6 +11,7 @@ from app.db.audit import DomainEvent
 
 
 EVENT_TYPE_DASHBOARD_UPDATED = "DashboardStateUpdated"
+EVENT_TYPE_DASHBOARD_PATCH = "DashboardEventsApplied"
 AGGREGATE_DASHBOARD = "dashboard"
 
 
@@ -26,6 +27,23 @@ async def append_dashboard_event(
         aggregate_id=aggregate_id,
         event_type=EVENT_TYPE_DASHBOARD_UPDATED,
         payload=payload,
+        user_id=user_id,
+    )
+    db.add(event)
+
+
+async def append_dashboard_patch_event(
+    db: AsyncSession,
+    aggregate_id: str,
+    events: list[dict[str, Any]],
+    user_id: str | None = None,
+) -> None:
+    """Record applied PATCH events for time-travel / audit."""
+    event = DomainEvent(
+        aggregate_type=AGGREGATE_DASHBOARD,
+        aggregate_id=aggregate_id,
+        event_type=EVENT_TYPE_DASHBOARD_PATCH,
+        payload={"events": events},
         user_id=user_id,
     )
     db.add(event)

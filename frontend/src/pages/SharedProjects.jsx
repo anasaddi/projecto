@@ -6,7 +6,15 @@ import { getSharedDashboardWsUrl } from '../config';
 import { StandardProjectCard, CreateProjectCard } from '../components/dashboard/ProjectComponents';
 import { KebabMenu } from '../components/dashboard/DashboardComponents';
 import { DenseTaskNode } from '../components/dashboard/DenseTaskNode';
-import { countTreeStats as countTreeStatsUtil } from '../components/dashboard/DashboardUtils';
+import { countTreeStats as countTreeStatsUtil, uid, formatDeadline, getDeadlineColorClass, updateNodeInTree, removeNodeFromTree } from '../components/dashboard/DashboardUtils';
+import {
+  hashSharedPassword,
+  sharedFetchOpts,
+  getShareToken,
+  setShareToken,
+  isShareUnlocked,
+  SHARE_EXPANDED_PREFIX,
+} from '../utils/sharedAccess';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { Icons } from '../components/dashboard/Icons';
 import FinanzeSection from '../components/shared/FinanzeSection';
@@ -15,84 +23,9 @@ import { useToast } from '../context/ToastContext';
 import { isAdminRole } from '../utils/authSession';
 /**
  * ----------------------------------------------------------------------
- * UTILS
+ * UTILS (shared-specific only; dashboard helpers from DashboardUtils)
  * ----------------------------------------------------------------------
  */
-function uid(prefix = 'id') {
-  return `${prefix}-${Math.random().toString(36).slice(2, 9)}-${Date.now().toString(36)}`;
-}
-function toDateKey(date = new Date()) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-function fromDateKey(v) {
-  if (!v) return null;
-  const [y, m, d] = String(v).split('-').map(Number);
-  return y && m && d ? new Date(y, m - 1, d) : null;
-}
-function formatDeadline(v) {
-  const d = fromDateKey(v);
-  return d ? `${d.getDate()}/${d.getMonth() + 1}` : '';
-}
-function startOfDay(date = new Date()) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function getDeadlineColorClass(deadlineKey, isDone) {
-  if (!deadlineKey || isDone) return 'text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50';
-  const today = startOfDay(new Date());
-  const dead = fromDateKey(deadlineKey);
-  if (!dead) return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20';
-  const daysUntil = Math.round((dead - today) / 86400000);
-  if (daysUntil < 0) return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20';
-  if (daysUntil <= 2) return 'text-red-600 dark:text-red-400 bg-red-50/80 dark:bg-red-900/30';
-  if (daysUntil <= 7) return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20';
-  return 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-900/20';
-}
-
-function updateNodeInTree(nodes, nodeId, updater) {
-  return nodes.map((node) => {
-    if (node.id === nodeId) return updater(node);
-    return { ...node, children: updateNodeInTree(Array.isArray(node.children) ? node.children : [], nodeId, updater) };
-  });
-}
-
-function removeNodeFromTree(nodes, nodeId) {
-  return nodes
-    .filter((node) => node.id !== nodeId)
-    .map((node) => ({ ...node, children: removeNodeFromTree(Array.isArray(node.children) ? node.children : [], nodeId) }));
-}
-
-async function hashPassword(pw) {
-  const enc = new TextEncoder();
-  // Aligning with backend prefix
-  const buf = await crypto.subtle.digest('SHA-256', enc.encode(`km-shared:${pw}`));
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-function isUnlocked(shareId) {
-  if (!shareId) return true;
-  try {
-    if (localStorage.getItem('km-user-role') === 'admin') return true;
-    return !!localStorage.getItem(`km-shared-token-${shareId}`);
-  } catch (_) {
-    return false;
-  }
-}
-
-function sharedFetchOpts(shareId) {
-  const token = localStorage.getItem(`km-shared-token-${shareId}`);
-  return {
-    silent: true,
-    ...(token ? { headers: { 'x-share-token': token } } : {}),
-  };
-}
 
 function buildSharedSyncSnapshot(state) {
   return JSON.stringify({
@@ -387,7 +320,7 @@ function SharedListDashboard() {
     setPwdSaving(true);
     setPwdError(null);
     try {
-      const mainHash = pwdInput.trim() ? await hashPassword(pwdInput.trim()) : null;
+      const mainHash = pwdInput.trim() ? await hashSharedPassword(pwdInput.trim()) : null;
 
       await api.training.updateSharedDashboard(settingsModalFor, {
         passwordHash: mainHash,
@@ -599,14 +532,14 @@ export default function SharedProjects() {
 
   const [expandedProjects, setExpandedProjects] = useState(() => {
     try {
-      const saved = localStorage.getItem(`km-shared-expanded-${id}`);
+      const saved = localStorage.getItem(`${SHARE_EXPANDED_PREFIX}${id}`);
       return saved ? JSON.parse(saved) : {};
     } catch (_) { return {}; }
   });
 
   useEffect(() => {
     if (id) {
-      localStorage.setItem(`km-shared-expanded-${id}`, JSON.stringify(expandedProjects));
+      localStorage.setItem(`${SHARE_EXPANDED_PREFIX}${id}`, JSON.stringify(expandedProjects));
     }
   }, [expandedProjects, id]);
 
@@ -709,7 +642,7 @@ export default function SharedProjects() {
     if (!id || ws.current?.readyState === WebSocket.OPEN) return;
 
     const url = getSharedDashboardWsUrl(id);
-    const token = localStorage.getItem(`km-shared-token-${id}`);
+    const token = getShareToken(id);
     const finalUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
     try {
       ws.current = new WebSocket(finalUrl);
@@ -842,7 +775,7 @@ export default function SharedProjects() {
     api.training.getSharedDashboard(id, sharedFetchOpts(id))
       .then((data) => {
         if (cancelled || !mountedRef.current) return;
-        const token = localStorage.getItem(`km-shared-token-${id}`);
+        const token = getShareToken(id);
         if (data?.is_protected && !token) {
           setNeedsPassword(true);
           setDashboard(prev => ({ ...prev, loading: false, error: null }));
@@ -1092,7 +1025,7 @@ export default function SharedProjects() {
     try {
       const { token } = await api.training.unlockSharedDashboard(id, pw, { silent: true });
       if (token) {
-        localStorage.setItem(`km-shared-token-${id}`, token);
+        setShareToken(id, token);
         setNeedsPassword(false);
         setPasswordInput('');
         refetchFromApi();

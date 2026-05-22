@@ -5,6 +5,7 @@ import { parseSelectedDate } from '../components/dashboard/DashboardUtils';
 import { saveLocalState, addToSyncQueue, getSyncQueue, clearSyncQueue } from '../db/localDb';
 import { canPatchDashboardEvents, clearDashboardEtag, detectDashboardEvents } from '../utils/dashboardEvents';
 import { setSyncStatus } from '../utils/syncStatus';
+import { mergeById } from '../utils/mergeById';
 
 let syncTimeout: ReturnType<typeof setTimeout> | null = null;
 let persistTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -133,26 +134,6 @@ function mergeSharedDashboards(
   return Array.from(byId.values());
 }
 
-/** Merge arrays of objects by their id field. Local entries win over incoming.
- *  This prevents server data (potentially stale) from overwriting recent local
- *  changes like checkbox toggles, task edits, etc. */
-function mergeById(local: unknown, incoming: unknown): unknown[] {
-  const localArr = Array.isArray(local) ? local : [];
-  const incomingArr = Array.isArray(incoming) ? incoming : [];
-  const byId = new Map<string, unknown>();
-  // First add all incoming entries
-  for (const entry of incomingArr) {
-    const id = (entry as { id?: string })?.id;
-    if (id) byId.set(id, entry);
-  }
-  // Local wins — overlay over incoming
-  for (const entry of localArr) {
-    const id = (entry as { id?: string })?.id;
-    if (id) byId.set(id, entry);
-  }
-  return Array.from(byId.values());
-}
-
 /** Merge date-keyed dict: local wins per inner-key when local is truthy,
  *  server/other-tab fills in missing inner keys. */
 function mergeDateKeyedDict(
@@ -227,7 +208,11 @@ function applyIncomingState(set: SetState, data: unknown): void {
       } else if (ARRAY_MERGE_KEYS.has(key)) {
         // Merge arrays by id — local wins over incoming to prevent race conditions
         // where server data (stale) overwrites recent local checkbox toggles
-        draft[key] = mergeById(draft[key], incoming[key]);
+        draft[key] = mergeById(
+          (Array.isArray(draft[key]) ? draft[key] : []) as Array<{ id?: string }>,
+          (Array.isArray(incoming[key]) ? incoming[key] : []) as Array<{ id?: string }>,
+          'local'
+        );
       } else {
         draft[key] = incoming[key];
       }

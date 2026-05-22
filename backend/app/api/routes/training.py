@@ -207,7 +207,7 @@ async def get_all_progressions(db: AsyncSession = Depends(get_db)):
         return await crud_training.get_all_progressions(db)
     except Exception as e:
         logger.exception("training/progression failed: %s", e)
-        return []
+        raise HTTPException(status_code=503, detail="Progressions unavailable") from e
 
 @router.get("/progression/{exercise_id}", response_model=Optional[schemas.TrainingProgressionOut], dependencies=[Depends(get_training_access)])
 async def get_progression(exercise_id: str, db: AsyncSession = Depends(get_db)):
@@ -230,7 +230,7 @@ async def get_schedule(start_date: Optional[date] = None, days_count: int = 14, 
         return await crud_training.get_daily_schedule(db, target_date, days_count)
     except Exception as e:
         logger.exception("get_schedule failed: %s", e)
-        return []
+        raise HTTPException(status_code=503, detail="Schedule unavailable") from e
 
 @router.patch("/schedule/{schedule_date}", response_model=schemas.DailyScheduleOut, dependencies=[Depends(get_training_access)])
 async def update_schedule_completion(schedule_date: date, body: schemas.DailyScheduleUpdate, db: AsyncSession = Depends(get_db)):
@@ -547,73 +547,37 @@ async def get_shared_dashboard(
     access_token: str | None = Depends(resolve_access_token),
 ):
     """Fetch shared dashboard: admin JWT, share unlock token, or password-protected shell."""
-    from app.cache import get_cached_shared_dashboard, set_cached_shared_dashboard, invalidate_shared_dashboard
+    from app.cache import invalidate_shared_dashboard
     from app.config import get_settings
     from app.api.deps import is_admin_access
+    from app.services.shared_dashboard_access import (
+        auto_create_shared_dashboard,
+        fetch_shared_dashboard_internal,
+        shared_dashboard_out,
+    )
 
     settings = get_settings()
     is_admin = is_admin_access(access_token, settings)
 
     try:
-        cached = await get_cached_shared_dashboard(share_id)
-        if cached is not None and not isinstance(cached, dict):
-            logger.warning("Ignoring malformed shared dashboard cache for %s (type=%s)", share_id, type(cached).__name__)
-            await invalidate_shared_dashboard(share_id)
-            cached = None
-        data = cached if cached else await dashboard_service.get_shared_dashboard(db, share_id)
+        record = await fetch_shared_dashboard_internal(db, share_id)
 
-        if not data:
+        if not record:
             if not is_admin:
                 raise HTTPException(status_code=404, detail="Dashboard non trovato")
             logger.info("Auto-creating shared dashboard (admin): %s", share_id)
-            created = await dashboard_service.update_shared_dashboard(db, share_id, {}, title="Progetti Condivisi")
-            created_response = _shared_dashboard_out(
-                share_id,
-                created.get("title") or "Progetti Condivisi",
-                created.get("data") or {},
-                created.get("updated_at") or datetime.now(timezone.utc),
-                include_data=True,
-                is_protected=False,
-            )
-            await set_cached_shared_dashboard(share_id, created_response)
-            return created_response
+            record = await auto_create_shared_dashboard(db, share_id)
+            return shared_dashboard_out(record, include_data=True)
 
-        if not cached:
-            await set_cached_shared_dashboard(share_id, data)
-
-        payload_data = safe_shared_dashboard_data(data.get("data"))
-        pwd_hash = payload_data.get("passwordHash")
-        is_protected = bool(pwd_hash)
+        payload_data = safe_shared_dashboard_data(record.get("data"))
+        is_protected = bool(payload_data.get("passwordHash"))
 
         if is_admin:
-            return _shared_dashboard_out(
-                share_id,
-                data.get("title", "Progetti Condivisi"),
-                payload_data,
-                data.get("updated_at"),
-                include_data=True,
-                is_protected=is_protected,
-            )
+            return shared_dashboard_out(record, include_data=True)
 
         if is_protected:
             is_unlocked = x_share_token and verify_share_token(x_share_token, share_id, settings.secret_key)
-            if not is_unlocked:
-                return _shared_dashboard_out(
-                    share_id,
-                    data.get("title", "Progetti Condivisi"),
-                    payload_data,
-                    data.get("updated_at"),
-                    include_data=False,
-                    is_protected=True,
-                )
-            return _shared_dashboard_out(
-                share_id,
-                data.get("title", "Progetti Condivisi"),
-                payload_data,
-                data.get("updated_at"),
-                include_data=True,
-                is_protected=True,
-            )
+            return shared_dashboard_out(record, include_data=is_unlocked)
 
         raise HTTPException(
             status_code=403,
@@ -636,7 +600,7 @@ async def list_shared_dashboards(db: AsyncSession = Depends(get_db)):
         return await dashboard_service.get_all_shared_dashboards(db)
     except Exception as e:
         logger.exception("training/shared-dashboards failed: %s", e)
-        return []
+        raise HTTPException(status_code=503, detail="Shared dashboards list unavailable") from e
 
 @router.post("/shared-dashboard/{share_id}/unlock", response_model=schemas.SharedDashboardUnlockResponse)
 async def unlock_shared_dashboard(share_id: str, body: schemas.SharedDashboardUnlockRequest, db: AsyncSession = Depends(get_db)):
@@ -789,33 +753,21 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
     from app.config import get_settings
     settings = get_settings()
     from fastapi.encoders import jsonable_encoder
-    from app.cache import get_cached_shared_dashboard, set_cached_shared_dashboard, invalidate_shared_dashboard
+    from app.services.shared_dashboard_access import fetch_shared_dashboard_internal, shared_dashboard_out
 
-    # 1. Fetch dashboard to check protection (best-effort, never crash the handshake)
+    # 1. Fetch dashboard (unified cache+DB internal shape)
     try:
-        dashboard = await get_cached_shared_dashboard(share_id)
-        if dashboard is not None and not isinstance(dashboard, dict):
-            logger.warning("Ignoring malformed shared dashboard cache in websocket for %s (type=%s)", share_id, type(dashboard).__name__)
-            try:
-                await invalidate_shared_dashboard(share_id)
-            except Exception:
-                pass
-            dashboard = None
-        if not dashboard:
-            dashboard = await dashboard_service.get_shared_dashboard(db, share_id)
-            if dashboard:
-                await set_cached_shared_dashboard(share_id, dashboard)
+        record = await fetch_shared_dashboard_internal(db, share_id)
 
-        if not dashboard:
+        if not record:
             logger.info("Auto-creating shared dashboard for websocket: %s", share_id)
-            dashboard = await dashboard_service.update_shared_dashboard(db, share_id, {}, title="Progetti Condivisi")
-            if dashboard:
-                await set_cached_shared_dashboard(share_id, dashboard)
+            from app.services.shared_dashboard_access import auto_create_shared_dashboard
+            record = await auto_create_shared_dashboard(db, share_id)
     except Exception as e:
         logger.exception("WebSocket pre-connect fetch failed for %s: %s", share_id, e)
-        dashboard = None
+        record = None
 
-    if not dashboard:
+    if not record:
         try:
             await websocket.accept()
             await websocket.close(code=1008)
@@ -823,7 +775,7 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
             pass
         return
 
-    payload_data = safe_shared_dashboard_data(dashboard.get("data"))
+    payload_data = safe_shared_dashboard_data(record.get("data"))
     pwd_hash = payload_data.get("passwordHash")
     
     # 2. Token verification if protected
@@ -840,15 +792,8 @@ async def websocket_shared_dashboard(websocket: WebSocket, share_id: str, db: As
     # 3. Connect and send initial sanitized state
     await manager.connect(websocket, share_id)
     try:
-        dashboard_to_send = dict(dashboard)
-        dashboard_to_send["type"] = "sync"
-        
-        if pwd_hash:
-            clean_data = dict(payload_data)
-            clean_data.pop("passwordHash", None)
-            clean_data.pop("sectionPasswords", None)
-            dashboard_to_send["data"] = clean_data
-
+        out = shared_dashboard_out(record, include_data=True)
+        dashboard_to_send = {**out, "type": "sync"}
         await websocket.send_json(jsonable_encoder(dashboard_to_send))
 
         while True:

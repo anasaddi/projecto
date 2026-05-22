@@ -323,7 +323,10 @@ export default function TodayCard({ selectedDay, allProgressions, selectedDate, 
   const awEx = useMemo(() => expandAwExercises(rawAwEx, allProgressions, awProgram), [rawAwEx, allProgressions, awProgram]);
 
   const commitProg = useCallback((exerciseId, newProg) => {
-    onProgressionChange?.(exerciseId, newProg);
+    if (onProgressionChange) {
+      onProgressionChange(exerciseId, newProg);
+      return;
+    }
     clearTimeout(saveTimers.current[exerciseId]);
     saveTimers.current[exerciseId] = setTimeout(() => {
       api.training.updateProgression(exerciseId, newProg);

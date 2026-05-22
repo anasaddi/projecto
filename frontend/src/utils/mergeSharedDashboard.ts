@@ -1,3 +1,5 @@
+import { mergeById } from './mergeById';
+
 export type SharedDashboardData = {
   projects?: unknown[];
   quickTasks?: Array<{ id?: string; done?: boolean; title?: string }>;
@@ -6,18 +8,7 @@ export type SharedDashboardData = {
   bonifici?: unknown[];
 };
 
-function mergeById<T extends { id?: string }>(local: T[], remote: T[]): T[] {
-  const byId = new Map<string, T>();
-  for (const item of local) {
-    if (item?.id) byId.set(item.id, item);
-  }
-  for (const item of remote) {
-    if (item?.id) byId.set(item.id, item);
-  }
-  return Array.from(byId.values());
-}
-
-/** Merge incoming WS/BC payload into local shared state (per-key merge, not full replace). */
+/** Merge incoming WS/BC payload into local shared state (local wins on id collision). */
 export function mergeSharedDashboardData(
   prev: SharedDashboardData,
   incoming: unknown
@@ -39,11 +30,12 @@ export function mergeSharedDashboardData(
   if (Array.isArray(remote.projects)) {
     merged.projects = mergeById(
       (base.projects ?? []) as Array<{ id?: string }>,
-      remote.projects as Array<{ id?: string }>
+      remote.projects as Array<{ id?: string }>,
+      'local'
     );
   }
   if (Array.isArray(remote.quickTasks)) {
-    merged.quickTasks = mergeById(base.quickTasks ?? [], remote.quickTasks);
+    merged.quickTasks = mergeById(base.quickTasks ?? [], remote.quickTasks, 'local');
   }
   if (Array.isArray(remote.chat)) {
     const chat = [...(base.chat ?? [])];
