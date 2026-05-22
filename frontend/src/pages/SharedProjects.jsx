@@ -16,6 +16,10 @@ import {
   SHARE_EXPANDED_PREFIX,
 } from '../utils/sharedAccess';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { Card, Badge } from '../components/dashboard/Card';
+import { AddItemInputBar } from '../components/dashboard/AddItemInputBar';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
 import { Icons } from '../components/dashboard/Icons';
 import FinanzeSection from '../components/shared/FinanzeSection';
 import { DASHBOARD_CONTENT_CLASS } from '../constants/layout';
@@ -30,6 +34,22 @@ import { useSnapshotDedup } from '../hooks/useSnapshotDedup';
  * UTILS (shared-specific only; dashboard helpers from DashboardUtils)
  * ----------------------------------------------------------------------
  */
+
+function SharedPanelShell({ children, className = '' }) {
+  return (
+    <Card hover={false} className={`rounded-2xl sm:rounded-[28px] border-zinc-200/70 bg-white/[0.88] p-4 sm:p-6 shadow-lg backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-2xl ${className}`}>
+      {children}
+    </Card>
+  );
+}
+
+function SharedStatusBadge({ children, variant = 'primary', className = '' }) {
+  return (
+    <Badge variant={variant} size="xs" className={`uppercase tracking-[0.16em] ${className}`}>
+      {children}
+    </Badge>
+  );
+}
 
 function buildSharedSyncSnapshot(state) {
   return JSON.stringify({
@@ -356,18 +376,16 @@ function SharedListDashboard() {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.08),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.06),transparent_18%),linear-gradient(180deg,#f8fafc_0%,#f3f6fb_100%)] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 text-gray-900 select-none [&_input]:select-text [&_textarea]:select-text dark:bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.16),transparent_24%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.08),transparent_18%),linear-gradient(180deg,#0b0f18_0%,#0e131b_100%)] dark:text-gray-100">
       <div className="max-w-4xl mx-auto">
-        <header className="mb-6 sm:mb-8 rounded-2xl sm:rounded-[32px] border border-zinc-200/70 bg-white/[0.88] p-4 sm:p-7 shadow-lg backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-2xl">
+        <SharedPanelShell className="mb-6 sm:mb-8 sm:rounded-[32px] p-4 sm:p-7">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-            <span className="inline-flex rounded-full border border-indigo-200/80 bg-indigo-500/10 px-2 sm:px-3 py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/20 dark:text-indigo-300">
-              Shared workspace
-            </span>
+            <SharedStatusBadge className="text-[10px] sm:text-xs tracking-[0.18em]">Shared workspace</SharedStatusBadge>
           </div>
           <h1 className="mb-2 text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">I miei Condivisi</h1>
           <p className="max-w-2xl text-sm font-medium text-gray-500 dark:text-gray-400">Dashboard condivise collegate alla tua area, con accesso rapido, avanzamento e strumenti collaborativi.</p>
-        </header>
+        </SharedPanelShell>
 
         {/* Pannello di controllo: gestione password per sezione */}
-        <div className="mb-6 sm:mb-10 rounded-2xl sm:rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-4 sm:p-6 shadow-lg backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/85 dark:shadow-2xl">
+        <SharedPanelShell className="mb-6 sm:mb-10 dark:bg-[#11161f]/85">
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-zinc-700 dark:text-zinc-200">Pannello di controllo</h2>
           <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
             Clicca <strong>Password</strong> su ogni card per impostare la password di accesso principale.
@@ -376,7 +394,7 @@ function SharedListDashboard() {
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
             Pulsante <strong>Password</strong> su ogni shared ↓
           </p>
-        </div>
+        </SharedPanelShell>
 
         {settingsModalFor && (
           <div
@@ -385,7 +403,7 @@ function SharedListDashboard() {
             aria-modal="true"
             onClick={(e) => e.target === e.currentTarget && closeSettings()}
           >
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-700 max-w-md w-full p-6 my-8">
+            <Card hover={false} className="max-w-md w-full p-6 my-8 dark:bg-zinc-900">
               <h2 className="text-lg font-bold text-zinc-900 dark:text-white mb-1">
                 Password per &quot;{settingsSd?.title || settingsModalFor}&quot;
               </h2>
@@ -396,32 +414,27 @@ function SharedListDashboard() {
               <div className="space-y-4 mb-6">
                 <div>
                   <label className="block text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400 mb-1.5">Accesso principale (intero shared)</label>
-                  <input
+                  <Input
                     type="password"
                     autoComplete="new-password"
                     value={pwdInput}
                     onChange={(e) => { setPwdInput(e.target.value); setPwdError(null); }}
                     placeholder={settingsSd?.data?.passwordHash ? '•••••••• (inserisci nuova per cambiare)' : 'Inserisci password'}
-                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    inputSize="md"
                   />
                 </div>
               </div>
 
               {pwdError && <p className="text-sm text-red-500 mb-4">{pwdError}</p>}
               <div className="flex gap-3 justify-end">
-                <button type="button" onClick={closeSettings} className="px-4 py-2 rounded-xl text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                <Button variant="ghost" onClick={closeSettings}>
                   Annulla
-                </button>
-                <button
-                  type="button"
-                  onClick={saveAllPasswords}
-                  disabled={pwdSaving}
-                  className="px-4 py-2 rounded-xl text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50"
-                >
+                </Button>
+                <Button variant="primary" onClick={saveAllPasswords} disabled={pwdSaving}>
                   {pwdSaving ? 'Salvataggio...' : 'Salva'}
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           </div>
         )}
 
@@ -464,9 +477,7 @@ function SharedListDashboard() {
                         <Icons.Lock className="w-3.5 h-3.5" />
                         <span className="text-xs font-semibold hidden sm:inline">{(sd.data?.passwordHash) ? 'Modifica' : 'Password'}</span>
                       </button>
-                      <span className="rounded-full border border-indigo-200/80 bg-indigo-500/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/20 dark:text-indigo-300">
-                        Shared
-                      </span>
+                      <SharedStatusBadge>Shared</SharedStatusBadge>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-4">
@@ -1015,7 +1026,7 @@ export default function SharedProjects() {
   if (needsPassword) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-[#0B0F19] dark:to-[#121620] p-4">
-        <div className="w-full max-w-sm bg-white dark:bg-[#161920] rounded-2xl border border-gray-200 dark:border-gray-800 p-8 shadow-xl">
+        <Card hover={false} className="w-full max-w-sm p-8 dark:bg-[#161920]">
           <div className="flex justify-center mb-6">
             <div className="p-3 rounded-full bg-indigo-100 dark:bg-indigo-500/20">
               <Icons.Lock className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
@@ -1025,29 +1036,32 @@ export default function SharedProjects() {
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
             Inserisci la password per accedere a questo spazio condiviso
           </p>
-          <input
+          <Input
             type="password"
             autoComplete="off"
             value={passwordInput}
             onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(null); }}
             onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
             placeholder="Password"
-            className="mb-4 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+            inputSize="lg"
+            className="mb-4"
             autoFocus
           />
           {passwordError && <p className="text-sm text-red-500 mb-4">{passwordError}</p>}
-          <button
+          <Button
             type="button"
+            variant="primary"
+            fullWidth
             onClick={handleUnlock}
             disabled={!passwordInput.trim()}
-            className="w-full py-3 rounded-xl bg-indigo-500 text-white font-medium hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="py-3"
           >
             Accedi
-          </button>
+          </Button>
           <p className="text-xs text-gray-400 text-center mt-4">
             La password verrà salvata nel browser per i prossimi accessi
           </p>
-        </div>
+        </Card>
       </div>
     );
   }
@@ -1094,9 +1108,7 @@ export default function SharedProjects() {
                     onChange={(e) => updateLocal({ title: e.target.value })}
                     className="w-full rounded-2xl border border-transparent bg-transparent px-1 py-0.5 text-xl font-semibold tracking-tight text-gray-900 outline-none transition-colors dark:text-white sm:w-auto sm:px-2 sm:py-1 sm:text-2xl md:text-3xl"
                   />
-                  <span className="rounded-full border border-indigo-200/80 bg-indigo-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/20 dark:text-indigo-300">
-                    Shared
-                  </span>
+                  <SharedStatusBadge className="tracking-[0.18em]">Shared</SharedStatusBadge>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <span className="rounded-full bg-zinc-100/80 px-2.5 py-1 font-mono text-xs text-zinc-500 dark:bg-white/[0.05] dark:text-zinc-400">/shared/{id}</span>
@@ -1118,19 +1130,23 @@ export default function SharedProjects() {
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="flex items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300"
+                        className="flex items-center gap-2"
                       >
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                        LIVE
+                        <SharedStatusBadge variant="success" className="tracking-[0.18em] gap-1.5 py-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                          LIVE
+                        </SharedStatusBadge>
                       </motion.div>
                     ) : (
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="flex items-center gap-2 rounded-full border border-slate-200/80 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:border-slate-500/20 dark:bg-slate-500/10 dark:text-slate-300"
+                        className="flex items-center gap-2"
                       >
-                        <div className="w-1.5 h-1.5 rounded-full bg-slate-500" />
-                        Sincronizzazione manuale
+                        <SharedStatusBadge variant="default" className="tracking-[0.18em] gap-1.5 py-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                          Sincronizzazione manuale
+                        </SharedStatusBadge>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -1388,7 +1404,7 @@ export default function SharedProjects() {
         {/* SIDEBAR: QUICK TASKS + CHAT */}
         <aside className="order-2 w-full shrink-0 space-y-3 sm:space-y-4 2xl:sticky 2xl:top-6 2xl:w-[16rem] 2xl:self-start">
           {/* QUICK TASKS */}
-          <div className="flex min-h-[300px] flex-col rounded-2xl sm:rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-4 sm:min-h-[340px] sm:p-6 shadow-lg backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-2xl">
+          <SharedPanelShell className="flex min-h-[300px] flex-col sm:min-h-[340px]">
             <div className="flex items-center gap-2 mb-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400">
                 <Icons.Zap className="w-4 h-4" />
@@ -1400,21 +1416,13 @@ export default function SharedProjects() {
             </div>
 
             <div className="space-y-3 flex-1 flex flex-col">
-              <div className="relative">
-                <input
-                  value={quickTaskDraft}
-                  onChange={(e) => setQuickTaskDraft(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addQuickTask(quickTaskDraft)}
-                  className="w-full rounded-2xl border border-zinc-200/70 bg-zinc-100/80 py-3 pl-4 pr-10 text-sm text-zinc-900 outline-none transition-colors dark:border-white/[0.06] dark:bg-white/[0.04] dark:text-zinc-100"
-                  placeholder="Nuova task veloce..."
-                />
-                <button
-                  onClick={() => { addQuickTask(quickTaskDraft); setQuickTaskDraft(""); }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl p-2 text-gray-400 transition-colors hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-amber-500/10"
-                >
-                  <Icons.Plus className="w-4 h-4" />
-                </button>
-              </div>
+              <AddItemInputBar
+                value={quickTaskDraft}
+                onChange={setQuickTaskDraft}
+                onSubmit={() => { addQuickTask(quickTaskDraft); setQuickTaskDraft(''); }}
+                placeholder="Nuova task veloce..."
+                buttonColor="amber"
+              />
 
               <div className="space-y-2 flex-1 overflow-y-auto custom-scrollbar pr-1 max-h-[280px] sm:max-h-[320px]">
                 <AnimatePresence initial={false}>
@@ -1484,10 +1492,10 @@ export default function SharedProjects() {
                 )}
               </div>
             </div>
-          </div>
+          </SharedPanelShell>
 
           {/* CHAT BOX */}
-          <div className="flex min-h-[360px] flex-col rounded-2xl sm:rounded-[28px] border border-zinc-200/70 bg-white/[0.88] p-4 sm:min-h-[420px] sm:p-6 shadow-lg backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#11161f]/90 dark:shadow-2xl">
+          <SharedPanelShell className="flex min-h-[360px] flex-col sm:min-h-[420px]">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
@@ -1572,7 +1580,7 @@ export default function SharedProjects() {
                 <Icons.Send className="w-4 h-4" />
               </button>
             </form>
-          </div>
+          </SharedPanelShell>
         </aside>
 
       </div>

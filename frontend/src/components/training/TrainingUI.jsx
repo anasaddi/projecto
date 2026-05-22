@@ -1,15 +1,17 @@
 ﻿import React from 'react';
+import { cn } from '../../lib/utils';
+import { Card as DashboardCard } from '../dashboard/Card';
 
 // Piccole intestazioni per kg, r, s
 export const ColHeader = ({ label, className = '' }) => (
   <span className={`text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.15em] text-center w-full block ${className}`}>{label}</span>
 );
 
-// Shared UI Components
+/** Training tables — shared dashboard Card, no hover lift */
 export const Card = ({ children, className = '' }) => (
-  <div className={`rounded-2xl bg-white/70 dark:bg-[#0c0d0e]/80 backdrop-blur-xl border border-zinc-200/60 dark:border-white/[0.08] shadow-xl shadow-zinc-200/20 dark:shadow-black/20 overflow-hidden ${className}`}>
+  <DashboardCard hover={false} className={className}>
     {children}
-  </div>
+  </DashboardCard>
 );
 
 export const SectionHeader = ({ icon: Icon, title, subtitle, colorClass }) => (
@@ -30,7 +32,9 @@ export const AthleteAvatar = ({ initial, colorClass }) => (
   </div>
 );
 
-// Form Input UI
+const inputBase =
+  'h-8 w-full rounded-lg border border-zinc-200/80 bg-zinc-50 text-center text-xs font-bold text-zinc-900 outline-none transition-colors placeholder:text-zinc-300 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-100 dark:placeholder:text-zinc-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20';
+
 export const ModernInput = ({ value, onChange, placeholder, type = 'text', step, className = '' }) => {
   const isNumericValue = value === '' || value === null || (!isNaN(parseFloat(value)) && isFinite(value));
   const actualType = (type === 'number' && value && !isNumericValue) ? 'text' : type;
@@ -42,9 +46,16 @@ export const ModernInput = ({ value, onChange, placeholder, type = 'text', step,
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className={`h-8 w-full rounded-lg border border-zinc-200/80 bg-zinc-50 text-center text-xs font-bold text-zinc-900 outline-none transition-colors placeholder:text-zinc-300 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-100 dark:placeholder:text-zinc-600 ${className}`}
+      className={cn(inputBase, className)}
     />
   );
+};
+
+const checkboxAccent = {
+  'accent-indigo-500': 'accent-indigo-500',
+  'accent-blue-500': 'accent-blue-500',
+  'accent-emerald-500': 'accent-emerald-500',
+  'accent-amber-500': 'accent-amber-500',
 };
 
 export const ModernCheckbox = ({ checked, onChange, colorClass = 'accent-indigo-500' }) => (
@@ -52,7 +63,9 @@ export const ModernCheckbox = ({ checked, onChange, colorClass = 'accent-indigo-
     type="checkbox"
     checked={checked}
     onChange={onChange}
-    className={`w-4 h-4 rounded border border-zinc-300 dark:border-white/[0.1] bg-white dark:bg-zinc-950 transition-all cursor-pointer hover:border-indigo-500 shadow-sm ${colorClass}`}
+    className={cn(
+      'w-4 h-4 rounded border border-zinc-300 dark:border-white/[0.1] bg-white dark:bg-zinc-950 transition-all cursor-pointer hover:border-indigo-500 shadow-sm',
+      checkboxAccent[colorClass] || colorClass
+    )}
   />
 );
-

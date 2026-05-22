@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ModernInput, ModernCheckbox } from './training/TrainingUI';
+import { Card, ModernInput, ModernCheckbox } from './training/TrainingUI';
 import { api } from '../api/client';
 
 import { calc1RM } from '../utils/trainingUtils';
@@ -32,15 +32,6 @@ const createMonthData = () => WEEK_CONFIGS.map(cfg => ({
 }));
 
 const STORAGE_KEY = (id) => `strength_v2_${id}`;
-
-// --- Components ---
-const Card = ({ children, className = '' }) => (
-  <div className={`rounded-xl bg-white dark:bg-[#151718] border border-zinc-200/60 dark:border-white/[0.06] shadow-sm overflow-hidden ${className}`}>
-    {children}
-  </div>
-);
-
-
 
 const Checkbox = ({ checked, onChange, colorClass = 'accent-indigo-500' }) => (
   <input
