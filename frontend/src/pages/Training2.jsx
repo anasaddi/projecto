@@ -15,7 +15,8 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import {
   sanitizeProgressionData,
   getActiveMonth,
-  getActiveWeek
+  getActiveWeek,
+  mergeScheduleWithTemplates,
 } from '../utils/trainingUtils';
 import { groupAwExercises } from '../utils/awGrouping';
 
@@ -70,7 +71,6 @@ export default function Training2() {
       console.log('[Training2] templates count:', templates.length, 'first template:', templates[0]);
       console.log('[Training2] scheduleData count:', scheduleData?.length, 'first entry:', scheduleData?.[0]);
 
-      // Merge schedule con i template (per avere esercizi e date reali)
       let scheduleToUse = scheduleData || [];
       if (scheduleToUse.length === 0 && templates?.length > 0) {
         const today = new Date();
@@ -86,18 +86,14 @@ export default function Training2() {
             date_: d.toISOString(),
             template_id: tid ?? null,
             is_completed: 0,
-            template: t || { exercises: [], day_name: 'Riposo', weekday: mon0 }
           };
         });
       }
-      const mergedData = scheduleToUse.map(day => {
-        const template = templates.find(t => t.template_id === day.template_id || t.id === day.template_id);
-        const mergedTemplate = template || { exercises: [], day_name: 'Riposo', weekday: new Date(day.date || day.date_).getDay() };
-        return {
-          ...day,
-          template: mergedTemplate
-        };
-      });
+
+      const mergedData = mergeScheduleWithTemplates(scheduleToUse, templates);
+      if (mergedData[0]) {
+        console.log('[Training2] merged first day:', mergedData[0].template_id, 'exercises:', mergedData[0].template?.exercises?.length);
+      }
 
       setWeekData(mergedData);
       setAwProgram(awData && Object.keys(awData).length ? awData : AW_PROGRAM_FALLBACK);

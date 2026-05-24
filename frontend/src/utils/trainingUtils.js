@@ -85,3 +85,43 @@ export const getActiveWeek = (progressionData, exerciseId) => {
   if (maxWeek === 0) return 1;
   return Math.min(maxWeek, 5); 
 };
+
+const getTemplateId = (t) => t?.template_id ?? t?.id ?? null;
+
+const restTemplateForDay = (day) => {
+  const raw = (day?.date || day?.date_ || '').toString().slice(0, 10);
+  const weekday = raw ? new Date(`${raw}T12:00:00`).getDay() : 0;
+  return { exercises: [], day_name: 'Riposo', weekday, template_id: null };
+};
+
+/** Merge schedule rows with workout templates; infer template when template_id is null. */
+export const mergeScheduleWithTemplates = (scheduleDays, templates) => {
+  if (!templates?.length) {
+    return (scheduleDays || []).map(day => ({
+      ...day,
+      template_id: day.template_id ?? null,
+      template: restTemplateForDay(day),
+    }));
+  }
+
+  let prevTemplateIdx = -1;
+  const effectiveTemplateIds = (scheduleDays || []).map((day) => {
+    if (day.template_id) {
+      const idx = templates.findIndex(t => getTemplateId(t) === day.template_id);
+      if (idx >= 0) prevTemplateIdx = idx;
+      return day.template_id;
+    }
+    if (day.is_completed) return null;
+    const nextIdx = prevTemplateIdx >= 0 ? (prevTemplateIdx + 1) % templates.length : 0;
+    prevTemplateIdx = nextIdx;
+    return getTemplateId(templates[nextIdx]);
+  });
+
+  return (scheduleDays || []).map((day, i) => {
+    const tid = effectiveTemplateIds[i];
+    const template = tid
+      ? templates.find(t => getTemplateId(t) === tid) || restTemplateForDay(day)
+      : restTemplateForDay(day);
+    return { ...day, template_id: tid, template };
+  });
+};
