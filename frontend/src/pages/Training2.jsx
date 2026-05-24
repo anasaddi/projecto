@@ -505,18 +505,17 @@ export default function Training2() {
                           <UnifiedExerciseTable mode="iso" title="Isometria Pesante" exercises={awGroups.isoHeavy} programData={awProgram?.heavy} progressions={allProgressions}
                             onProgressionChange={handleProgressionChange} initialWeek={getActiveWeek(allProgressions[awGroups.isoHeavy[0]?.exercise_id])} resetTrigger={selectedDate} />
                         )}
-                        {awGroups.maxDay?.map(ex => (
+                        {awGroups.maxDay?.length > 0 && (
                           <UnifiedExerciseTable
-                            key={ex.exercise_id}
                             mode="maxday"
-                            exercise={ex}
+                            exercise={awGroups.maxDay[0]}
                             programData={awProgram?.max_day}
                             progressions={allProgressions}
                             onProgressionChange={handleProgressionChange}
-                            initialWeek={getActiveWeek(allProgressions[ex.exercise_id])}
+                            initialWeek={getActiveWeek(allProgressions[awGroups.maxDay[0]?.exercise_id])}
                             resetTrigger={selectedDate}
                           />
-                        ))}
+                        )}
                         {awGroups.speed?.length > 0 && (
                           <UnifiedExerciseTable mode="speed" exercises={awGroups.speed} progressions={allProgressions} onProgressionChange={handleProgressionChange} />
                         )}

@@ -20,10 +20,16 @@ import {
   SPEED_CONFIG,
 } from '../../constants/trainingConstants';
 
-// ─── Shared helpers ──────────────────────────────────────────────────────────
+// ─── Shared design tokens ────────────────────────────────────────────────────
 
-const CARD_BORDER = 'border-amber-100 dark:border-amber-900/30';
-const HEADER_BG = 'bg-gradient-to-r from-amber-50/50 to-transparent dark:from-amber-500/10 dark:to-transparent border-b border-gray-100 dark:border-zinc-800/80';
+const CARD_BORDER = 'border-amber-500/20 dark:border-amber-500/25';
+const HEADER_BG = 'bg-gradient-to-r from-amber-500/[0.06] to-transparent dark:from-amber-500/10 border-b border-zinc-200/60 dark:border-zinc-800/80';
+const TABLE_WRAP = 'overflow-x-auto custom-scrollbar';
+const THEAD = 'bg-zinc-50/80 dark:bg-zinc-800/60';
+const TH = 'py-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400';
+const TH_ANAS = `${TH} text-center text-blue-500 w-[118px]`;
+const TH_FLAVIO = `${TH} text-center text-emerald-500 w-[118px]`;
+const TD_ATHLETE = 'py-1 px-2 border-r border-zinc-100 dark:border-zinc-800/50 last:border-r-0 w-[118px]';
 
 const format1RM = (weight, reps) => {
   const rm = calc1RM(weight, reps);
@@ -45,24 +51,51 @@ const formatDate = (d) => {
   try { const [, m, day] = d.split('-'); return `${day}/${m}`; } catch { return d; }
 };
 
-function TableHeader({ title, subtitle, currentWeek, onWeekChange, weekCount = 5, cycleDividers = false }) {
+function AwSectionHeader({
+  title,
+  subtitle,
+  currentWeek,
+  onWeekChange,
+  weekCount = 5,
+  cycleDividers = false,
+  weekBelow = false,
+  compactWeek = false,
+}) {
   return (
-    <div className={`px-4 py-3 flex items-center justify-between ${HEADER_BG}`}>
-      <div className="flex items-center gap-3">
-        <div className="w-1.5 h-8 bg-amber-500 rounded-full" />
-        <div>
-          <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider">{title}</h3>
-          {subtitle && (
-            <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-500/20 px-1.5 py-0.5 rounded">
-              {subtitle}
-            </span>
-          )}
+    <div className={`px-3 py-2.5 ${HEADER_BG} ${weekBelow ? 'space-y-2' : ''}`}>
+      <div className={`flex ${weekBelow ? 'flex-col' : 'flex-row items-center justify-between'} gap-2`}>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-1 h-7 bg-amber-500 rounded-full shrink-0" />
+          <div className="min-w-0">
+            <h3 className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider truncate">{title}</h3>
+            {subtitle && (
+              <span className="inline-block mt-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                {subtitle}
+              </span>
+            )}
+          </div>
         </div>
+        {onWeekChange && (
+          <WeekSelector
+            weeks={weekCount}
+            current={currentWeek}
+            onChange={onWeekChange}
+            cycleDividers={cycleDividers}
+            compact={compactWeek}
+            className={weekBelow ? 'w-full' : 'shrink-0'}
+          />
+        )}
       </div>
-      {onWeekChange && (
-        <WeekSelector weeks={weekCount} current={currentWeek} onChange={onWeekChange} cycleDividers={cycleDividers} />
-      )}
     </div>
+  );
+}
+
+function AthletePairHeader({ suffix = 'kg/r' }) {
+  return (
+    <>
+      <th className={TH_ANAS}>Anas{suffix ? ` (${suffix})` : ''}</th>
+      <th className={TH_FLAVIO}>Flavio{suffix ? ` (${suffix})` : ''}</th>
+    </>
   );
 }
 
@@ -108,7 +141,7 @@ function VolumeTable({ title, exercises, progressions, initialWeek, resetTrigger
 
   return (
     <Card className={CARD_BORDER}>
-      <TableHeader
+      <AwSectionHeader
         title={title}
         subtitle={`Settimana ${currentWeek}`}
         currentWeek={currentWeek}
@@ -151,8 +184,7 @@ function VolumeTable({ title, exercises, progressions, initialWeek, resetTrigger
               <th className="py-2 px-3">Esercizio</th>
               <th className="py-2 px-1 w-8 text-center" />
               <th className="py-2 px-1 w-8 text-center" />
-              <th className="py-2 px-2 text-center text-blue-500">Anas (kg/r)</th>
-              <th className="py-2 px-2 text-center text-emerald-500">Flavio (kg/r)</th>
+              <AthletePairHeader />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/20">
@@ -252,22 +284,15 @@ function IsoTable({ title, exercises, programData, progressions, initialWeek, re
 
   return (
     <Card className={CARD_BORDER}>
-      <div className={`px-4 py-3 ${HEADER_BG}`}>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-1.5 h-8 bg-amber-500 rounded-full" />
-            <div>
-              <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wider">{title}</h3>
-              <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-500/20 px-1.5 py-0.5 rounded">
-                {isHeavy ? '85% 1RM · 2×5s' : '60% 1RM · 2×15s'} · Settimana {currentWeek}
-              </span>
-            </div>
-          </div>
-        </div>
-        <WeekSelector weeks={5} current={currentWeek} onChange={setCurrentWeek} className="w-full" />
-      </div>
+      <AwSectionHeader
+        title={title}
+        subtitle={`${isHeavy ? '85% 1RM · 2×5s' : '60% 1RM · 2×15s'} · W${currentWeek}`}
+        currentWeek={currentWeek}
+        onWeekChange={setCurrentWeek}
+        weekBelow
+      />
 
-      <div className="overflow-x-auto custom-scrollbar border-b border-gray-100 dark:border-zinc-800/60">
+      <div className={`${TABLE_WRAP} border-b border-zinc-200/60 dark:border-zinc-800/60`}>
         <table className="w-full text-left border-collapse">
           <thead className="bg-gray-50/80 dark:bg-zinc-800/60">
             <tr className="text-xs font-bold uppercase tracking-widest text-zinc-400 border-b border-gray-100 dark:border-zinc-800">
@@ -302,8 +327,7 @@ function IsoTable({ title, exercises, programData, progressions, initialWeek, re
             <tr className="text-xs font-bold uppercase tracking-widest text-zinc-400 border-b border-gray-100 dark:border-zinc-800">
               <th className="py-2 px-3">Esercizio</th>
               <th className="py-2 px-1 w-8 text-center" />
-              <th className="py-2 px-2 text-center text-blue-500">Anas (kg/s)</th>
-              <th className="py-2 px-2 text-center text-emerald-500">Flavio (kg/s)</th>
+              <AthletePairHeader suffix="kg/s" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/20">
@@ -420,17 +444,18 @@ function MaxDayTable({ exercise, programData, progressions, initialWeek, resetTr
 
   return (
     <Card className={CARD_BORDER}>
-      <div className={`px-4 py-3 bg-gradient-to-b from-amber-50/50 to-transparent dark:from-amber-500/10 dark:to-transparent border-b border-gray-100 dark:border-zinc-800/80`}>
-        <div className="flex flex-col items-center justify-center mb-3">
-          <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-widest text-center">{exercise.exercise_name || 'Max Day'}</h3>
-          <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-500/20 px-1.5 py-0.5 rounded text-center">
-            30-36 Rep · W{currentWeek} · C{cycleOf(currentWeek) + 1} (rot. {protoWeek(currentWeek)}/5)
-          </span>
-        </div>
-        <WeekSelector weeks={20} current={currentWeek} onChange={setCurrentWeek} cycleDividers compact className="w-full" />
-      </div>
+      <AwSectionHeader
+        title="Max Day"
+        subtitle={`30-36 Rep · W${currentWeek} · C${cycleOf(currentWeek) + 1}`}
+        currentWeek={currentWeek}
+        onWeekChange={setCurrentWeek}
+        weekCount={20}
+        cycleDividers
+        weekBelow
+        compactWeek
+      />
 
-      <div className="overflow-x-auto custom-scrollbar">
+      <div className={TABLE_WRAP}>
         <table className="w-full text-left border-collapse">
           <thead className="bg-gray-50/95 dark:bg-zinc-800/95">
             <tr className="text-xs font-bold uppercase tracking-tighter border-b border-gray-100 dark:border-zinc-800">
@@ -523,20 +548,15 @@ function SpeedTable({ exercises, progressions, onProgressionChange }) {
 
   return (
     <Card className={CARD_BORDER}>
-      <div className={`px-4 py-3 bg-gradient-to-b from-amber-50/50 to-transparent dark:from-amber-500/10 dark:to-transparent border-b border-gray-100 dark:border-zinc-800/80`}>
-        <div className="flex flex-col items-center justify-center gap-1">
-          <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-widest text-center">Speed</h3>
-          <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-100/50 dark:bg-amber-500/20 px-1.5 py-0.5 rounded text-center">50% 1RM + BANDS · 6×6</span>
-        </div>
-      </div>
-      <div className="overflow-x-auto custom-scrollbar">
+      <AwSectionHeader title="Speed" subtitle="50% 1RM + BANDS · 6×6" />
+
+      <div className={TABLE_WRAP}>
         <table className="w-full text-left border-collapse">
           <thead className="bg-gray-50/80 dark:bg-zinc-800/60">
             <tr className="text-xs font-bold uppercase tracking-tighter text-gray-400 border-b border-gray-100 dark:border-zinc-800">
               <th className="py-2 px-3">Esercizio</th>
               <th className="py-2 px-2 text-center w-14">Peso</th>
-              <th className="py-2 px-2 text-center text-blue-500">Anas (kg)</th>
-              <th className="py-2 px-2 text-center text-emerald-500">Flavio (kg)</th>
+              <AthletePairHeader suffix="kg" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/30">

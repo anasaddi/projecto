@@ -1,6 +1,9 @@
 import React from 'react';
 import { ModernInput, ModernCheckbox } from './TrainingUI';
 
+const COMPACT_INPUT = 'w-9 h-7 py-0 text-[11px]';
+const COMPACT_INPUT_SM = 'w-7 h-7 py-0 text-[11px]';
+
 const ACCENTS = {
   anas: 'accent-blue-500',
   flavio: 'accent-emerald-500',
@@ -23,14 +26,14 @@ export function AthleteCell({
           type="text"
           value={values[`${prefix}_sx`] ?? ''}
           onChange={v => onChange(`${prefix}_sx`, v)}
-          className="w-10 py-1 text-xs"
+          className={`${COMPACT_INPUT} ${className}`}
           placeholder="sx"
         />
         <ModernInput
           type="text"
           value={values[`${prefix}_dx`] ?? ''}
           onChange={v => onChange(`${prefix}_dx`, v)}
-          className="w-10 py-1 text-xs"
+          className={`${COMPACT_INPUT} ${className}`}
           placeholder="dx"
         />
         <ModernCheckbox
@@ -49,14 +52,14 @@ export function AthleteCell({
           type="text"
           value={values.weight ?? ''}
           onChange={v => onChange('weight', v)}
-          className="w-12 py-1 text-xs"
+          className={COMPACT_INPUT}
           placeholder="kg"
         />
         <ModernInput
           type="text"
           value={values.secs ?? ''}
           onChange={v => onChange('secs', v)}
-          className="w-10 py-1 text-xs"
+          className={COMPACT_INPUT_SM}
           placeholder="sec"
         />
         <ModernCheckbox
@@ -75,7 +78,7 @@ export function AthleteCell({
           type="text"
           value={values.weight ?? ''}
           onChange={v => onChange('weight', v)}
-          className="w-10 py-1 text-xs"
+          className={`${COMPACT_INPUT} ${className}`}
           placeholder="kg"
         />
         <ModernCheckbox
@@ -93,14 +96,14 @@ export function AthleteCell({
         type="text"
         value={values.weight ?? ''}
         onChange={v => onChange('weight', v)}
-        className="w-10 py-1 text-xs"
+        className={COMPACT_INPUT}
         placeholder="kg"
       />
       <ModernInput
         type="text"
         value={values.reps ?? ''}
         onChange={v => onChange('reps', v)}
-        className="w-8 py-1 text-xs"
+        className={COMPACT_INPUT_SM}
         placeholder="r"
       />
       <ModernCheckbox
