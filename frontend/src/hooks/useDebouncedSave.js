@@ -7,6 +7,7 @@ export function useDebouncedSave(
   { delay = 750, onProgressionChange, enabled = true } = {}
 ) {
   const skip = useRef(true);
+  const payloadJson = JSON.stringify(payload ?? null);
 
   useEffect(() => {
     skip.current = true;
@@ -19,9 +20,10 @@ export function useDebouncedSave(
       return;
     }
     const t = setTimeout(() => {
-      api.training.updateProgression(exerciseId, payload);
-      onProgressionChange?.(exerciseId, payload);
+      const data = JSON.parse(payloadJson);
+      api.training.updateProgression(exerciseId, data);
+      onProgressionChange?.(exerciseId, data);
     }, delay);
     return () => clearTimeout(t);
-  }, [payload, exerciseId, delay, enabled, onProgressionChange]);
+  }, [payloadJson, exerciseId, delay, enabled, onProgressionChange]);
 }

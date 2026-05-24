@@ -655,6 +655,17 @@ const buildHypDefault = (baseReps) => ({
   flavio: { w: '', r: baseReps ? String(baseReps) : '', completed: false },
 });
 
+const strVal = (v) => {
+  if (v === null || v === undefined || v === 0 || v === '0') return '';
+  return String(v);
+};
+
+const normHypEntry = (entry, baseReps) => entry ? {
+  w: strVal(entry.weight ?? entry.w),
+  r: strVal(entry.reps ?? entry.r) || (baseReps ? String(baseReps) : ''),
+  completed: !!entry.completed,
+} : null;
+
 const parseHypRows = (rows, baseReps) => {
   if (!rows?.length) return null;
   const a = rows.find(r => r.set === 1);
@@ -665,12 +676,20 @@ const parseHypRows = (rows, baseReps) => {
   };
 };
 
+const resolveHypData = ({ initialRows, initialData, baseReps }) => {
+  const fb = buildHypDefault(baseReps);
+  if (initialData?.anas || initialData?.flavio) {
+    return {
+      anas: normHypEntry(initialData.anas, baseReps) || fb.anas,
+      flavio: normHypEntry(initialData.flavio, baseReps) || fb.flavio,
+    };
+  }
+  return parseHypRows(initialRows, baseReps) || fb;
+};
+
 function HypertrophyRow({ exercise, index, onRowsChange, onProgressionChange, initialRows, initialData, isOdd, showHistory = true }) {
   const { exercise_id, exercise_name, base_sets, base_reps } = exercise;
-  const [data, setData] = useState(() => {
-    if (initialData?.anas || initialData?.flavio) return initialData;
-    return parseHypRows(initialRows, base_reps) || buildHypDefault(base_reps);
-  });
+  const [data, setData] = useState(() => resolveHypData({ initialRows, initialData, baseReps: base_reps }));
   const [expanded, setExpanded] = useState(false);
   const [history, setHistory] = useState([]);
   const [histLoading, setHistLoading] = useState(false);
@@ -678,7 +697,7 @@ function HypertrophyRow({ exercise, index, onRowsChange, onProgressionChange, in
 
   useEffect(() => {
     if (initialData?.anas || initialData?.flavio) return;
-    setData(parseHypRows(initialRows, base_reps) || buildHypDefault(base_reps));
+    setData(resolveHypData({ initialRows, initialData, baseReps: base_reps }));
     skip.current = true;
   }, [exercise_id, initialRows, initialData, base_reps]);
 
@@ -831,27 +850,26 @@ function HypertrophyCard({ exercise, onRowsChange, onProgressionChange, initialR
   const [expanded, setExpanded] = useState(expandedOverride);
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [data, setData] = useState(() => {
-    if (initialData) return initialData;
-    return parseHypRows(initialRows, base_reps) || buildHypDefault(base_reps);
-  });
+  const [data, setData] = useState(() => resolveHypData({ initialRows, initialData, baseReps: base_reps }));
   const skip = useRef(true);
 
   useEffect(() => {
-    if (!initialData) return;
+    if (skip.current) { skip.current = false; return; }
     const t = setTimeout(() => {
-      api.training.updateProgression(exercise_id, data);
-      onProgressionChange?.(exercise_id, data);
+      const payload = {
+        anas: { weight: data.anas.w, reps: data.anas.r, completed: data.anas.completed },
+        flavio: { weight: data.flavio.w, reps: data.flavio.r, completed: data.flavio.completed },
+      };
+      api.training.updateProgression(exercise_id, payload);
+      onProgressionChange?.(exercise_id, payload);
     }, 1000);
     return () => clearTimeout(t);
-  }, [data, exercise_id, initialData, onProgressionChange]);
+  }, [data, exercise_id, onProgressionChange]);
 
   useEffect(() => {
-    if (initialRows?.length) {
-      const parsed = parseHypRows(initialRows, base_reps);
-      if (parsed) setData(parsed);
-    }
-  }, [exercise_id, initialRows, base_reps]);
+    setData(resolveHypData({ initialRows, initialData, baseReps: base_reps }));
+    skip.current = true;
+  }, [exercise_id, initialRows, initialData, base_reps]);
 
   const upd = (athlete, field, value) => {
     setData(prev => {
