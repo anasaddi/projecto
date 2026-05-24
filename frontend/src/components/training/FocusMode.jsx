@@ -2,8 +2,7 @@
 import { motion } from 'framer-motion';
 import { ChevronDown, Target, Link2 } from 'lucide-react';
 import StrengthTable2 from '../StrengthTable2';
-import HypertrophyTable from './HypertrophyTable';
-import ExerciseTable from './ExerciseTable';
+import UnifiedExerciseTable from './UnifiedExerciseTable';
 
 const FocusMode = ({
   isOpen,
@@ -91,23 +90,26 @@ const FocusMode = ({
             <div className="max-w-md mx-auto relative group">
               <div className="absolute inset-0 bg-emerald-500/5 blur-xl transition-colors pointer-events-none rounded-[24px]" />
               <div className="relative">
-                <HypertrophyTable 
-                  exercise={exercise} 
-                  onRowsChange={handleRowsChange} 
+                <UnifiedExerciseTable
+                  mode="hypertrophy-card"
+                  exercise={exercise}
+                  onRowsChange={handleRowsChange}
                   onProgressionChange={handleProgressionChange}
-                  initialRows={setsByExercise[exercise.exercise_id]} 
-                  expandedOverride={true} 
+                  initialRows={setsByExercise[exercise.exercise_id]}
+                  expandedOverride={true}
                   initialData={allProgressions[exercise.exercise_id]}
                 />
               </div>
             </div>
           ) : (
             <div className="bg-zinc-950 p-2 rounded-2xl w-full mx-auto max-w-2xl border border-zinc-800">
-              <ExerciseTable 
-                exercise={exercise} 
-                onRowsChange={handleRowsChange} 
-                expandedOverride={true} 
+              <UnifiedExerciseTable
+                mode="generic"
+                exercise={exercise}
+                onRowsChange={handleRowsChange}
+                expandedOverride={true}
                 initialData={allProgressions[exercise.exercise_id]}
+                onProgressionChange={handleProgressionChange}
               />
             </div>
           )}

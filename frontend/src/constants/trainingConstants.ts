@@ -102,3 +102,27 @@ export const SPEED_CONFIG: SpeedConfig[] = [
 
 /** Labels for the 4-week strength cycle */
 export const STRENGTH_WEEK_LABELS = ['5×5', '4×4', 'AMRAP', '3×5'];
+
+// ─── AW Volume Configuration ───────────────────────────────────────────────
+
+export const AW_STD = ['2×10', '3×8', '4×8', '5×7', '6×7'];
+export const AW_ALT = ['2×8', '2×10', '2×12', '3×10', '3×12'];
+
+export interface AwVolumeConfig {
+  label: string;
+  weight: string;
+  pattern: 'std' | 'alt';
+}
+
+export const AW_VOL_CONFIG: Record<string, AwVolumeConfig> = {
+  aw_v1_dita:         { label: 'Dita',              weight: '12',  pattern: 'std' },
+  aw_v1_back_press:   { label: 'Back Pressure',     weight: '15',  pattern: 'std' },
+  aw_v1_wrist_wrench: { label: 'Wrist Wrench',      weight: '10',  pattern: 'alt' },
+  aw_v1_side_press:   { label: 'Side Pressure',     weight: '12',  pattern: 'std' },
+  aw_v1_ulnar_chop:   { label: 'Ulnar Chop',        weight: '5-8', pattern: 'std' },
+  aw_v2_pronazione:   { label: 'Pronazione',        weight: '10',  pattern: 'std' },
+  aw_v2_cupping:      { label: 'Cupping Fat Grip',  weight: '15',  pattern: 'alt' },
+  aw_v2_supination:   { label: 'Supination',        weight: '10',  pattern: 'std' },
+  aw_v2_rising:       { label: 'Rising',            weight: '10',  pattern: 'std' },
+  aw_v2_rev_pron:     { label: 'Reverse Pronation', weight: '5',   pattern: 'std' },
+};

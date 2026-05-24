@@ -6,16 +6,8 @@ import { Dumbbell, Swords, Target, Undo2, Redo2, History as HistoryIcon, User, A
 import TodayCard from '../components/training/TodayCard';
 import { AppLogo } from '../components/AppLogo';
 
-// Import modular components
-import { Card, SectionHeader } from '../components/training/TrainingUI';
-import HypertrophySection from '../components/training/HypertrophySection';
-import HypertrophyTable from '../components/training/HypertrophyTable';
-import ExerciseTable from '../components/training/ExerciseTable';
-import AWVolumeTableGroup from '../components/training/AWVolumeTable';
-import AWIsoTableGroup from '../components/training/AWIsoTable';
+import UnifiedExerciseTable from '../components/training/UnifiedExerciseTable';
 import { AW_PROGRAM_FALLBACK } from '../components/training/AWProgramReference';
-import AWMaxDayTable from '../components/training/AWMaxDayTable';
-import AWSpeedTable from '../components/training/AWSpeedTable';
 import FocusMode from '../components/training/FocusMode';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 
@@ -495,23 +487,41 @@ export default function Training2() {
                       </div>
                       <span className="text-sm font-black uppercase tracking-[0.25em] text-zinc-800 dark:text-zinc-200 bg-clip-text text-transparent bg-gradient-to-r from-amber-600 to-orange-600 dark:from-amber-400 dark:to-orange-400">Armwrestling</span>
                     </div>
-                    {awGroups.vol1.length > 0 && <AWVolumeTableGroup title="Volume 1" exercises={awGroups.vol1} onRowsChange={handleRowsChange} progressions={allProgressions} initialWeek={getActiveWeek(allProgressions[awGroups.vol1[0]?.exercise_id])} resetTrigger={selectedDate} />}
-                    {awGroups.vol2.length > 0 && <AWVolumeTableGroup title="Volume 2" exercises={awGroups.vol2} onRowsChange={handleRowsChange} progressions={allProgressions} initialWeek={getActiveWeek(allProgressions[awGroups.vol2[0]?.exercise_id])} resetTrigger={selectedDate} />}
-                    {awGroups.isoLight.length > 0 && <AWIsoTableGroup title="Isometria Leggera" exercises={awGroups.isoLight} onRowsChange={handleRowsChange} programData={awProgram?.light} progressions={allProgressions} initialWeek={getActiveWeek(allProgressions[awGroups.isoLight[0]?.exercise_id])} resetTrigger={selectedDate} />}
-                    {awGroups.isoHeavy.length > 0 && <AWIsoTableGroup title="Isometria Pesante" exercises={awGroups.isoHeavy} onRowsChange={handleRowsChange} programData={awProgram?.heavy} progressions={allProgressions} initialWeek={getActiveWeek(allProgressions[awGroups.isoHeavy[0]?.exercise_id])} resetTrigger={selectedDate} />}
+                    {awGroups.vol1.length > 0 && (
+                      <UnifiedExerciseTable mode="volume" title="Volume 1" exercises={awGroups.vol1} progressions={allProgressions}
+                        onProgressionChange={handleProgressionChange} initialWeek={getActiveWeek(allProgressions[awGroups.vol1[0]?.exercise_id])} resetTrigger={selectedDate} />
+                    )}
+                    {awGroups.vol2.length > 0 && (
+                      <UnifiedExerciseTable mode="volume" title="Volume 2" exercises={awGroups.vol2} progressions={allProgressions}
+                        onProgressionChange={handleProgressionChange} initialWeek={getActiveWeek(allProgressions[awGroups.vol2[0]?.exercise_id])} resetTrigger={selectedDate} />
+                    )}
+                    {awGroups.isoLight.length > 0 && (
+                      <UnifiedExerciseTable mode="iso" title="Isometria Leggera" exercises={awGroups.isoLight} programData={awProgram?.light} progressions={allProgressions}
+                        onProgressionChange={handleProgressionChange} initialWeek={getActiveWeek(allProgressions[awGroups.isoLight[0]?.exercise_id])} resetTrigger={selectedDate} />
+                    )}
+                    {awGroups.isoHeavy.length > 0 && (
+                      <UnifiedExerciseTable mode="iso" title="Isometria Pesante" exercises={awGroups.isoHeavy} programData={awProgram?.heavy} progressions={allProgressions}
+                        onProgressionChange={handleProgressionChange} initialWeek={getActiveWeek(allProgressions[awGroups.isoHeavy[0]?.exercise_id])} resetTrigger={selectedDate} />
+                    )}
                     {awGroups.maxDay?.map(ex => (
-                      <AWMaxDayTable
+                      <UnifiedExerciseTable
                         key={ex.exercise_id}
+                        mode="maxday"
                         exercise={ex}
                         programData={awProgram?.max_day}
                         progressions={allProgressions}
+                        onProgressionChange={handleProgressionChange}
                         initialWeek={getActiveWeek(allProgressions[ex.exercise_id])}
                         resetTrigger={selectedDate}
-                        onRowsChange={handleRowsChange}
                       />
                     ))}
-                    {awGroups.speed?.length > 0 && <AWSpeedTable exercises={awGroups.speed} progressions={allProgressions} />}
-                    {awGroups.others.map(ex => <ExerciseTable key={ex.exercise_id} exercise={ex} onRowsChange={handleRowsChange} initialData={allProgressions[ex.exercise_id]} />)}
+                    {awGroups.speed?.length > 0 && (
+                      <UnifiedExerciseTable mode="speed" exercises={awGroups.speed} progressions={allProgressions} onProgressionChange={handleProgressionChange} />
+                    )}
+                    {awGroups.others.map(ex => (
+                      <UnifiedExerciseTable key={ex.exercise_id} mode="generic" exercise={ex} onRowsChange={handleRowsChange}
+                        initialData={allProgressions[ex.exercise_id]} onProgressionChange={handleProgressionChange} />
+                    ))}
                   </section>
                 )}
               </div>
@@ -526,7 +536,8 @@ export default function Training2() {
                       </div>
                       <span className="text-sm font-black uppercase tracking-[0.25em] text-zinc-800 dark:text-zinc-200 bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400">Ipertrofia</span>
                     </div>
-                    <HypertrophySection
+                    <UnifiedExerciseTable
+                      mode="hypertrophy-grid"
                       exercises={hypEx}
                       onRowsChange={handleRowsChange}
                       onProgressionChange={handleProgressionChange}
