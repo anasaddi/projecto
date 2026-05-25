@@ -19,6 +19,7 @@ import {
   ModernInput,
   AthleteAvatar,
   AthleteSessionRow,
+  AthleteSubHeaders,
   ACCENT,
   TABLE,
   ROW,
@@ -187,10 +188,19 @@ function VolumeTable({ title, exercises, progressions, initialWeek, resetTrigger
         <TrainingTable>
           <TrainingThead>
             <tr className={TABLE.theadRow}>
-              <TrainingTh>Esercizio</TrainingTh>
-              <TrainingTh center className="w-8" />
-              <TrainingTh center className="w-8" />
-              <AthleteColumnHeaders />
+              <TrainingTh rowSpan={2} className="align-middle min-w-[8rem]">Esercizio</TrainingTh>
+              <TrainingTh rowSpan={2} center className="w-16 align-middle">Target</TrainingTh>
+              <TrainingTh rowSpan={2} center className="w-10 align-middle">#</TrainingTh>
+              <TrainingTh center colSpan={3} className="text-blue-600 dark:text-blue-400 border-l border-zinc-200/70 dark:border-zinc-700/80 bg-blue-500/[0.06]">
+                Anas
+              </TrainingTh>
+              <TrainingTh center colSpan={3} className="text-emerald-600 dark:text-emerald-400 border-l border-zinc-200/70 dark:border-zinc-700/80 bg-emerald-500/[0.06]">
+                Flavio
+              </TrainingTh>
+            </tr>
+            <tr className={TABLE.theadRow}>
+              <AthleteSubHeaders athlete="anas" />
+              <AthleteSubHeaders athlete="flavio" />
             </tr>
           </TrainingThead>
           <tbody className={TABLE.tbody}>
@@ -844,9 +854,9 @@ function HypertrophyGrid({ exercises, onRowsChange, onProgressionChange, setsByE
     >
       <span className={ROW.index}>#</span>
       <span>Esercizio</span>
-      <div className="flex items-center justify-end gap-4 sm:gap-6 pr-1">
-        <span className="text-blue-500 w-24 text-center">Anas</span>
-        <span className="text-emerald-500 w-24 text-center">Flavio</span>
+      <div className="flex items-center justify-end gap-6 sm:gap-10 pr-2">
+        <span className={cn('text-blue-500 text-center', ROW.athleteColMin)}>Anas · kg · r · ✓</span>
+        <span className={cn('text-emerald-500 text-center', ROW.athleteColMin)}>Flavio · kg · r · ✓</span>
       </div>
       <span />
     </div>

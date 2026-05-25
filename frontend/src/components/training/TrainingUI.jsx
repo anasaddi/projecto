@@ -15,6 +15,7 @@ import {
   ROW,
   COLLAPSE,
   SCROLLBAR_CSS,
+  ATHLETE_CELL,
 } from './trainingDesignSystem';
 
 // Piccole intestazioni per kg, r, s
@@ -147,6 +148,21 @@ export function TrainingTd({ children, className = '', athlete = false, ...rest 
   );
 }
 
+const thAnasGroup = cn(TABLE.thGroup, 'text-blue-600 dark:text-blue-400 border-l border-zinc-200/70 dark:border-zinc-700/80');
+const thFlavioGroup = cn(TABLE.thGroup, 'text-emerald-600 dark:text-emerald-400 border-l border-zinc-200/70 dark:border-zinc-700/80');
+
+/** Sub-header cells for kg / reps / check under Anas or Flavio */
+export function AthleteSubHeaders({ athlete = 'anas' }) {
+  const color = athlete === 'anas' ? 'text-blue-500' : 'text-emerald-500';
+  return (
+    <>
+      <th className={cn(TABLE.thSub, color)}>kg</th>
+      <th className={cn(TABLE.thSub, color)}>r</th>
+      <th className={cn(TABLE.thSub, color, 'w-10')}>✓</th>
+    </>
+  );
+}
+
 export function AthleteColumnHeaders({ suffix = 'kg/r', mode = 'pair' }) {
   if (mode === 'sxdx') {
     return (
@@ -155,8 +171,16 @@ export function AthleteColumnHeaders({ suffix = 'kg/r', mode = 'pair' }) {
         <th className={cn(TABLE.thSxDx, 'text-blue-500')}>A DX</th>
         <th className={cn(TABLE.thSxDx, 'text-emerald-500')}>F SX</th>
         <th className={cn(TABLE.thSxDx, 'text-emerald-500')}>F DX</th>
-        <th className={cn(TABLE.thSxDx, 'text-blue-500 w-9')}>A ✓</th>
-        <th className={cn(TABLE.thSxDx, 'text-emerald-500 w-9')}>F ✓</th>
+        <th className={cn(TABLE.thSxDx, 'text-blue-500 w-10')}>A ✓</th>
+        <th className={cn(TABLE.thSxDx, 'text-emerald-500 w-10')}>F ✓</th>
+      </>
+    );
+  }
+  if (mode === 'weight-reps-check') {
+    return (
+      <>
+        <th className={thAnasGroup} colSpan={3}>Anas</th>
+        <th className={thFlavioGroup} colSpan={3}>Flavio</th>
       </>
     );
   }
@@ -439,9 +463,9 @@ export function SessionColumnHeader({ showReps = false, className = '' }) {
     >
       <span className="text-center">#</span>
       <span>Esercizio</span>
-      <div className="flex items-center justify-end gap-4 sm:gap-6 min-w-0">
-        <span className="text-blue-500 w-[7.5rem] text-center">Anas {showReps ? 'kg·r·✓' : 'kg·✓'}</span>
-        <span className="text-emerald-500 w-[7.5rem] text-center">Flavio {showReps ? 'kg·r·✓' : 'kg·✓'}</span>
+      <div className="flex items-center justify-end gap-6 sm:gap-10 min-w-0">
+        <span className={cn('text-blue-500 text-center', ROW.athleteColMin)}>Anas {showReps ? 'kg · r · ✓' : 'kg · ✓'}</span>
+        <span className={cn('text-emerald-500 text-center', ROW.athleteColMin)}>Flavio {showReps ? 'kg · r · ✓' : 'kg · ✓'}</span>
       </div>
     </div>
   );
@@ -462,7 +486,7 @@ export function AthleteInputs({
     ? (athlete === 'anas' ? 'Anas' : 'Flavio')
     : (athlete === 'anas' ? 'A' : 'F');
   return (
-    <div className={cn(ROW.athleteBlock, 'min-w-0')}>
+    <div className={cn(ROW.athleteBlock, ROW.athleteColMin, 'min-w-0')}>
       <span className={cn(ROW.athleteLabel, showAthleteNames && 'w-11', athlete === 'anas' ? 'text-blue-500' : 'text-emerald-500')}>
         {label}
       </span>
@@ -603,7 +627,7 @@ export function CalendarExerciseChip({ name, accent = 'strength', subtitle }) {
 
 export function TrainingPageLayout({ children }) {
   return (
-    <div className={cn(PAGE.maxWidth, 'mx-auto', PAGE.sectionGap, 'px-4 sm:px-5', PAGE.layoutPy)}>
+    <div className={cn(PAGE.maxWidth, 'mx-auto', PAGE.sectionGap, PAGE.layoutPx, PAGE.layoutPy)}>
       {children}
       <style dangerouslySetInnerHTML={{ __html: SCROLLBAR_CSS }} />
     </div>

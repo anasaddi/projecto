@@ -374,24 +374,32 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
         subtitle={`Mese ${currentMonth}`}
         right={tmControls}
       />
-      <div className="px-3 py-1.5 border-b border-zinc-200/60 dark:border-zinc-800/80">
+      <div className="px-4 py-2 border-b border-zinc-200/60 dark:border-zinc-800/80">
         <PeriodPills accent="strength" count={6} current={currentMonth} onChange={setCurrentMonth} label={m => `M${m}`} className="w-full" />
       </div>
 
-      <div className="p-3">
+      <div className="px-4 py-4">
         <div className={TABLE.inner}>
           <TrainingTable>
             <TrainingThead>
               <tr className={TABLE.theadRow}>
-                <TrainingTh center className="w-6">W</TrainingTh>
-                <TrainingTh center className="w-12">SCH</TrainingTh>
-                <TrainingTh center className="w-8">%</TrainingTh>
-                <TrainingTh center className="text-blue-500">Anas KG</TrainingTh>
-                <TrainingTh center className="text-blue-500">Anas 1RM</TrainingTh>
-                <TrainingTh center className="w-8">✓</TrainingTh>
-                <TrainingTh center className="text-emerald-500">Flavio KG</TrainingTh>
-                <TrainingTh center className="text-emerald-500">Flavio 1RM</TrainingTh>
-                <TrainingTh center className="w-8">✓</TrainingTh>
+                <TrainingTh center rowSpan={2} className="w-10 align-middle">W</TrainingTh>
+                <TrainingTh center rowSpan={2} className="w-14 align-middle">Set</TrainingTh>
+                <TrainingTh center rowSpan={2} className="w-12 align-middle">%</TrainingTh>
+                <TrainingTh center colSpan={3} className="text-blue-600 dark:text-blue-400 border-l border-zinc-200/70 dark:border-zinc-700/80 bg-blue-500/[0.06]">
+                  Anas
+                </TrainingTh>
+                <TrainingTh center colSpan={3} className="text-emerald-600 dark:text-emerald-400 border-l border-zinc-200/70 dark:border-zinc-700/80 bg-emerald-500/[0.06]">
+                  Flavio
+                </TrainingTh>
+              </tr>
+              <tr className={TABLE.theadRow}>
+                <TrainingTh center className="text-blue-500 border-l border-zinc-200/70 dark:border-zinc-700/80">kg</TrainingTh>
+                <TrainingTh center className="text-blue-500">1RM</TrainingTh>
+                <TrainingTh center className="text-blue-500 w-11">✓</TrainingTh>
+                <TrainingTh center className="text-emerald-500 border-l border-zinc-200/70 dark:border-zinc-700/80">kg</TrainingTh>
+                <TrainingTh center className="text-emerald-500">1RM</TrainingTh>
+                <TrainingTh center className="text-emerald-500 w-11">✓</TrainingTh>
               </tr>
             </TrainingThead>
             <tbody className={TABLE.tbody}>

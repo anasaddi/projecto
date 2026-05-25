@@ -1,5 +1,6 @@
 import React from 'react';
 import { CompactInput, ModernCheckbox } from './TrainingUI';
+import { ATHLETE_CELL } from './trainingTableTheme';
 
 const ACCENTS = {
   anas: 'accent-blue-500',
@@ -18,7 +19,7 @@ export function AthleteCell({
   if (mode === 'sx-dx') {
     const prefix = athlete === 'anas' ? 'anas' : 'flavio';
     return (
-      <div className={`flex items-center gap-0.5 justify-center ${className}`}>
+      <div className={`${ATHLETE_CELL} ${className}`}>
         <CompactInput
           value={values[`${prefix}_sx`] ?? ''}
           onChange={v => onChange(`${prefix}_sx`, v)}
@@ -42,7 +43,7 @@ export function AthleteCell({
 
   if (mode === 'weight-secs') {
     return (
-      <div className={`flex items-center gap-0.5 justify-center ${className}`}>
+      <div className={`${ATHLETE_CELL} ${className}`}>
         <CompactInput value={values.weight ?? ''} onChange={v => onChange('weight', v)} placeholder="kg" />
         <CompactInput value={values.secs ?? ''} onChange={v => onChange('secs', v)} size="sm" placeholder="sec" />
         <ModernCheckbox
@@ -56,7 +57,7 @@ export function AthleteCell({
 
   if (mode === 'weight-only') {
     return (
-      <div className={`flex items-center gap-0.5 justify-center ${className}`}>
+      <div className={`${ATHLETE_CELL} ${className}`}>
         <CompactInput value={values.weight ?? ''} onChange={v => onChange('weight', v)} className={className} placeholder="kg" />
         <ModernCheckbox
           checked={!!values.completed}
@@ -68,7 +69,7 @@ export function AthleteCell({
   }
 
   return (
-    <div className={`flex items-center gap-0.5 justify-center ${className}`}>
+    <div className={`${ATHLETE_CELL} ${className}`}>
       <CompactInput value={values.weight ?? ''} onChange={v => onChange('weight', v)} placeholder="kg" />
       <CompactInput value={values.reps ?? ''} onChange={v => onChange('reps', v)} size="sm" placeholder="r" />
       <ModernCheckbox

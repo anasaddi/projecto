@@ -345,7 +345,7 @@ export default function Training2() {
 
         {/* Top Navigation Bar */}
         <header className="sticky top-0 z-40 border-b border-zinc-200/50 dark:border-white/[0.06] bg-white/70 dark:bg-[#0b0e14]/70 backdrop-blur-xl shrink-0 transition-colors">
-          <div className="max-w-[1600px] mx-auto px-4 sm:px-5 h-14 sm:h-16 flex items-center justify-between">
+          <div className="w-full max-w-[min(100%,92rem)] mx-auto px-5 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3.5">
               <div className="transition-transform active:scale-95 shrink-0">
                 <AppLogo size="sm" />

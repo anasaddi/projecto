@@ -8,10 +8,12 @@ export {
   PERIOD_BTN,
   PERIOD_BTN_IDLE,
   type TrainingAccent,
+  ATHLETE_CELL,
 } from './trainingTableTheme';
 
 export const PAGE = {
-  maxWidth: 'max-w-6xl',
+  maxWidth: 'w-full max-w-[min(100%,92rem)]',
+  layoutPx: 'px-5 sm:px-6 lg:px-8',
   sectionGap: 'space-y-5',
   layoutPy: 'py-5 pb-12',
   surface:
@@ -34,9 +36,10 @@ export const ROW = {
   grid:
     'grid items-center gap-x-2 sm:gap-x-4 px-3 py-3 sm:py-3.5 text-sm transition-colors',
   gridCols:
-    'grid-cols-[2rem_minmax(0,1fr)_minmax(0,auto)] max-sm:grid-cols-[2rem_minmax(0,1fr)] max-sm:[&>*:last-child]:col-span-2 max-sm:[&>*:last-child]:justify-self-stretch',
+    'grid-cols-[2.5rem_minmax(10rem,1fr)_minmax(22rem,1fr)] max-sm:grid-cols-[2.5rem_minmax(0,1fr)] max-sm:[&>*:last-child]:col-span-2 max-sm:[&>*:last-child]:justify-self-stretch',
   gridColsHistory:
-    'grid-cols-[2rem_minmax(0,1fr)_minmax(0,auto)_2rem] max-sm:grid-cols-[2rem_minmax(0,1fr)_2rem]',
+    'grid-cols-[2.5rem_minmax(10rem,1fr)_minmax(22rem,1fr)_2.5rem] max-sm:grid-cols-[2.5rem_minmax(0,1fr)_2.5rem]',
+  athleteColMin: 'min-w-[10.5rem]',
   index: 'text-[11px] font-black text-zinc-400 tabular-nums text-center',
   name: 'text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate leading-snug',
   badge: 'text-[10px] font-bold uppercase tracking-wide text-white px-1.5 py-0.5 rounded shrink-0',
