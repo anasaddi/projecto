@@ -1,7 +1,19 @@
 ﻿import React from 'react';
 import { cn } from '../../lib/utils';
 import { Card as DashboardCard } from '../dashboard/Card';
-import { ACCENT, TABLE, COMPACT_INPUT, COMPACT_INPUT_SM, PERIOD_TRACK, PERIOD_BTN, PERIOD_BTN_IDLE } from './trainingTableTheme';
+import {
+  ACCENT,
+  TABLE,
+  COMPACT_INPUT,
+  COMPACT_INPUT_SM,
+  PERIOD_TRACK,
+  PERIOD_BTN,
+  PERIOD_BTN_IDLE,
+  PAGE,
+  BRAND,
+  ROW,
+  SCROLLBAR_CSS,
+} from './trainingDesignSystem';
 
 // Piccole intestazioni per kg, r, s
 export const ColHeader = ({ label, className = '' }) => (
@@ -266,4 +278,219 @@ export const ModernCheckbox = ({ checked, onChange, colorClass = 'accent-indigo-
   />
 );
 
-export { TABLE, ACCENT, COMPACT_INPUT, COMPACT_INPUT_SM, PERIOD_TRACK, PERIOD_BTN, PERIOD_BTN_IDLE };
+export function TrainingSurface({ children, className = '', flat = false }) {
+  return (
+    <div className={cn(flat ? PAGE.surfaceFlat : PAGE.surface, className)}>
+      {children}
+    </div>
+  );
+}
+
+export function TrainingSessionHeader({ title, subtitle, progressPercent, right }) {
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 px-4 py-3 border-b border-zinc-200/60 dark:border-zinc-800/80">
+      <div className="min-w-0">
+        {subtitle && (
+          <span className={cn('text-[10px] font-black uppercase tracking-[0.2em]', BRAND.label)}>
+            {subtitle}
+          </span>
+        )}
+        <h2 className="text-lg sm:text-xl font-black text-zinc-900 dark:text-zinc-50 capitalize tracking-tight mt-0.5 truncate">
+          {title}
+        </h2>
+      </div>
+      <div className="flex items-center gap-3 shrink-0">
+        {progressPercent != null && (
+          <div className="flex flex-col items-end gap-1 min-w-[100px]">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+              {progressPercent}%
+            </span>
+            <div className={cn('w-full h-1.5 rounded-full overflow-hidden', BRAND.progressTrack)}>
+              <div className={cn('h-full rounded-full transition-all duration-500', BRAND.progress)} style={{ width: `${Math.min(100, progressPercent)}%` }} />
+            </div>
+          </div>
+        )}
+        {right}
+      </div>
+    </div>
+  );
+}
+
+export function TrainingSection({ accent = 'neutral', title, subtitle, right, children, className = '', noBorder }) {
+  return (
+    <div className={cn(!noBorder && 'border-b border-zinc-200/60 dark:border-zinc-800/80 last:border-b-0', className)}>
+      <TrainingBlockHeader accent={accent} title={title} subtitle={subtitle} right={right} />
+      {children}
+    </div>
+  );
+}
+
+export function AthleteInputs({
+  weight,
+  reps,
+  completed,
+  onWeight,
+  onReps,
+  onToggle,
+  athlete = 'anas',
+}) {
+  const checkColor = athlete === 'anas' ? 'accent-blue-500' : 'accent-emerald-500';
+  return (
+    <div className={ROW.athleteBlock}>
+      <span className={cn(ROW.athleteLabel, athlete === 'anas' ? 'text-blue-500' : 'text-emerald-500')}>
+        {athlete === 'anas' ? 'A' : 'F'}
+      </span>
+      <CompactInput value={weight} onChange={onWeight} placeholder="kg" type="number" step="0.5" />
+      {onReps && <CompactInput value={reps} onChange={onReps} size="sm" placeholder="r" />}
+      <ModernCheckbox checked={completed} onChange={onToggle} colorClass={checkColor} />
+    </div>
+  );
+}
+
+export function AthleteSessionRow({
+  index,
+  exerciseName,
+  badge,
+  accent = 'neutral',
+  anasWeight = '',
+  flavioWeight = '',
+  anasReps,
+  flavioReps,
+  anasCompleted = false,
+  flavioCompleted = false,
+  onAnasWeight,
+  onFlavioWeight,
+  onAnasReps,
+  onFlavioReps,
+  onAnasToggle,
+  onFlavioToggle,
+  trailing,
+  className = '',
+}) {
+  const a = ACCENT[accent] || ACCENT.neutral;
+  const bothDone = anasCompleted && flavioCompleted;
+  const badgeBg =
+    accent === 'strength' ? 'bg-blue-600' :
+    accent === 'aw' ? 'bg-amber-600' :
+    accent === 'hyp' ? 'bg-emerald-600' : 'bg-zinc-500';
+
+  return (
+    <div
+      className={cn(
+        ROW.grid,
+        ROW.gridCols,
+        trailing ? ROW.gridColsHistory : '',
+        ROW.divider,
+        a.rowHover,
+        bothDone && ROW.done,
+        className
+      )}
+    >
+      <span className={ROW.index}>{String(index).padStart(2, '0')}</span>
+      <div className="min-w-0 flex items-center gap-2">
+        <span className={cn(ROW.name, bothDone && 'text-zinc-400 dark:text-zinc-600')}>{exerciseName}</span>
+        {badge && <span className={cn(ROW.badge, badgeBg)}>{badge}</span>}
+      </div>
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <AthleteInputs
+          athlete="anas"
+          weight={anasWeight}
+          reps={anasReps}
+          completed={anasCompleted}
+          onWeight={onAnasWeight}
+          onReps={onAnasReps}
+          onToggle={onAnasToggle}
+        />
+        <AthleteInputs
+          athlete="flavio"
+          weight={flavioWeight}
+          reps={flavioReps}
+          completed={flavioCompleted}
+          onWeight={onFlavioWeight}
+          onReps={onFlavioReps}
+          onToggle={onFlavioToggle}
+        />
+      </div>
+      {trailing && <div className="flex justify-center">{trailing}</div>}
+    </div>
+  );
+}
+
+export function TrainingDayHeader({
+  dayName,
+  dayNum,
+  isToday,
+  isSelected,
+  isCompleted,
+  onClick,
+  onToggleComplete,
+}) {
+  return (
+    <div className="relative px-1 pt-2 pb-1">
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+          'flex flex-col items-center gap-0.5 py-2.5 rounded-xl transition-all w-full border',
+          isSelected
+            ? cn(BRAND.ring, 'bg-indigo-50/80 dark:bg-indigo-500/10 border-indigo-300/60 dark:border-indigo-500/40')
+            : isToday
+              ? 'border-indigo-200/80 dark:border-indigo-500/30 bg-white dark:bg-zinc-900/60'
+              : 'border-zinc-200/60 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-900/30 hover:border-zinc-300 dark:hover:border-zinc-700'
+        )}
+      >
+        <span className={cn('text-[9px] font-black uppercase tracking-widest', isToday ? BRAND.label : 'text-zinc-400')}>
+          {dayName}
+        </span>
+        <span className="text-sm font-black tabular-nums text-zinc-900 dark:text-zinc-100">{dayNum}</span>
+      </button>
+      {onToggleComplete && (
+        <button
+          type="button"
+          onClick={e => { e.stopPropagation(); onToggleComplete(); }}
+          className={cn(
+            'absolute top-1 right-1 p-0.5 rounded-md transition-all z-10',
+            isCompleted ? 'text-white bg-emerald-500' : 'text-zinc-300 hover:text-emerald-500'
+          )}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function CalendarExerciseChip({ name, accent = 'strength', subtitle }) {
+  const a = ACCENT[accent] || ACCENT.neutral;
+  return (
+    <div className={cn('rounded-lg border px-2 py-1.5 text-center min-h-[2.75rem] flex flex-col justify-center', a.cardBorder, a.headerBg)}>
+      <span className="text-[9px] font-bold uppercase tracking-tight text-zinc-800 dark:text-zinc-200 line-clamp-2 leading-tight">
+        {name}
+      </span>
+      {subtitle && <span className={cn('text-[8px] font-semibold mt-0.5', a.subtitle)}>{subtitle}</span>}
+    </div>
+  );
+}
+
+export function TrainingPageLayout({ children }) {
+  return (
+    <div className={cn(PAGE.maxWidth, 'mx-auto', PAGE.sectionGap, 'px-4 py-4 pb-10')}>
+      {children}
+      <style dangerouslySetInnerHTML={{ __html: SCROLLBAR_CSS }} />
+    </div>
+  );
+}
+
+export {
+  TABLE,
+  ACCENT,
+  COMPACT_INPUT,
+  COMPACT_INPUT_SM,
+  PERIOD_TRACK,
+  PERIOD_BTN,
+  PERIOD_BTN_IDLE,
+  PAGE,
+  BRAND,
+  ROW,
+  SCROLLBAR_CSS,
+};

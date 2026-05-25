@@ -11,6 +11,7 @@ export default function AwUnifiedPanel({
   selectedDate,
   onProgressionChange,
   onRowsChange,
+  embedded = false,
 }) {
   const tabs = useMemo(() => {
     const list = [];
@@ -97,34 +98,41 @@ export default function AwUnifiedPanel({
 
   const current = tabs.find(t => t.id === active) || tabs[0];
 
-  return (
-    <TrainingCard accent="aw">
-      <TrainingBlockHeader
-        accent="aw"
-        title="Armwrestling"
-        subtitle={`Un pannello · ${tabs.length} blocchi`}
-        stacked
-        right={
-          <div className={cn(PERIOD_TRACK, 'gap-1.5 p-1')}>
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActive(tab.id)}
-                className={cn(
-                  PERIOD_BTN,
-                  'px-3 h-7 rounded-lg text-[10px] uppercase tracking-wider',
-                  active === tab.id ? aw.pillActive : PERIOD_BTN_IDLE
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        }
-      />
+  const tabsBar = (
+    <div className={cn(PERIOD_TRACK, 'gap-1.5 p-1 flex flex-wrap')}>
+      {tabs.map(tab => (
+        <button
+          key={tab.id}
+          type="button"
+          onClick={() => setActive(tab.id)}
+          className={cn(
+            PERIOD_BTN,
+            'px-3 h-7 rounded-lg text-[10px] uppercase tracking-wider',
+            active === tab.id ? aw.pillActive : PERIOD_BTN_IDLE
+          )}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
 
-      <div className="bg-white/50 dark:bg-zinc-900/20">
+  const body = (
+    <>
+      {!embedded && (
+        <TrainingBlockHeader
+          accent="aw"
+          title="Armwrestling"
+          subtitle={`Un pannello · ${tabs.length} blocchi`}
+          stacked
+          right={tabsBar}
+        />
+      )}
+      {embedded && (
+        <div className="px-3 py-2 border-b border-zinc-100/90 dark:border-zinc-800/50">{tabsBar}</div>
+      )}
+
+      <div className={embedded ? '' : 'bg-white/50 dark:bg-zinc-900/20'}>
         {current.mode === 'others' ? (
           <div className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
             {current.exercises.map(ex => (
@@ -155,6 +163,9 @@ export default function AwUnifiedPanel({
           />
         )}
       </div>
-    </TrainingCard>
+    </>
   );
+
+  if (embedded) return <div className="min-w-0">{body}</div>;
+  return <TrainingCard accent="aw">{body}</TrainingCard>;
 }

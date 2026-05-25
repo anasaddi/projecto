@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { api } from '../api/client';
 import WeeklyCalendar from '../components/WeeklyCalendar';
-import StrengthTable2 from '../components/StrengthTable2';
-import { Dumbbell, Swords, Target, Undo2, Redo2, History as HistoryIcon, User, Activity, X, Calendar as CalendarIcon, SkipForward, ChevronDown, ChevronUp } from 'lucide-react';
+import { Target, X, SkipForward, ChevronDown, ChevronUp } from 'lucide-react';
 import TodayCard from '../components/training/TodayCard';
 import { AppLogo } from '../components/AppLogo';
-
-import UnifiedExerciseTable from '../components/training/UnifiedExerciseTable';
-import AwUnifiedPanel from '../components/training/AwUnifiedPanel';
-import { CategorySectionTitle } from '../components/training/TrainingUI';
+import DayDetailPanel from '../components/training/DayDetailPanel';
+import { TrainingPageLayout, TrainingSurface, TrainingSessionHeader } from '../components/training/TrainingUI';
 import { AW_PROGRAM_FALLBACK } from '../components/training/AWProgramReference';
 import FocusMode from '../components/training/FocusMode';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -70,9 +67,6 @@ export default function Training2() {
         throw new Error("Template settimanali non validi o mancanti");
       }
 
-      console.log('[Training2] templates count:', templates.length, 'first template:', templates[0]);
-      console.log('[Training2] scheduleData count:', scheduleData?.length, 'first entry:', scheduleData?.[0]);
-
       let scheduleToUse = scheduleData || [];
       if (scheduleToUse.length === 0 && templates?.length > 0) {
         const today = new Date();
@@ -93,10 +87,6 @@ export default function Training2() {
       }
 
       const mergedData = mergeScheduleWithTemplates(scheduleToUse, templates);
-      if (mergedData[0]) {
-        console.log('[Training2] merged first day:', mergedData[0].template_id, 'exercises:', mergedData[0].template?.exercises?.length);
-      }
-
       setWeekData(mergedData);
       setAwProgram(awData && Object.keys(awData).length ? awData : AW_PROGRAM_FALLBACK);
 
@@ -398,25 +388,7 @@ export default function Training2() {
           </div>
         </header>
 
-        <main className="max-w-[1280px] mx-auto px-4 py-2 space-y-3 bg-transparent">
-          {/* Status bar */}
-          <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-black text-zinc-500 uppercase tracking-widest">{selectedDay?.day_name || 'Rest Day'}</span>
-              <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg px-2 py-1">
-                <div className="w-16 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
-                </div>
-                <span className="text-xs font-black text-zinc-500">{progressPercent}%</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-1">
-              <button onClick={handleUndo} disabled={historyIndex <= 0} className="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:text-blue-500 disabled:opacity-30"><Undo2 size={13} /></button>
-              <button onClick={handleRedo} disabled={historyIndex >= history.length - 1} className="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:text-blue-500 disabled:opacity-30"><Redo2 size={13} /></button>
-            </div>
-          </div>
-
-          {/* TODAY CARD — compact session overview */}
+        <TrainingPageLayout>
           {selectedDay && (
             <TodayCard
               selectedDay={selectedDay}
@@ -429,98 +401,60 @@ export default function Training2() {
             />
           )}
 
-          {/* Calendar Section */}
-          <div style={{ marginTop: '20px' }}>
-            <ErrorBoundary>
-              <section className="space-y-4">
-                {/* Full calendar — collapsible */}
-                {calendarOpen && (
-                  <WeeklyCalendar
-                    schedule={weekData}
-                    progressions={allProgressions}
-                    onSelectDay={handleDaySelect}
-                    onEditAction={handleUpdateTemplate}
-                    onToggleComplete={handleToggleDayComplete}
-                    awProgram={awProgram}
-                    currentMaxDayWeek={getActiveWeek(allProgressions['aw_max']) || 1}
-                    onRefreshWeek={() => loadWeekData(false)}
-                    loading={loading}
-                    selectedDate={selectedDate}
-                  />
-                )}
-              </section>
-            </ErrorBoundary>
-          </div>
-
-          {/* Exercises Grid */}
-          <div className="pt-8 space-y-6">
-            {activeExercises.length === 0 ? (
-              <p className="text-center text-sm text-zinc-400 py-8">Nessun esercizio per questo giorno.</p>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-8 gap-y-6 items-start">
-                  {strengthEx.length > 0 && (
-                    <ErrorBoundary>
-                      <section className="min-w-0 space-y-3">
-                        <CategorySectionTitle icon={Swords} label="Forza" accent="strength" />
-                        {strengthEx.map(ex => (
-                          <StrengthTable2
-                            key={`v2-${ex.exercise_id}`}
-                            exercise={ex}
-                            onRowsChange={handleRowsChange}
-                            onProgressionChange={handleProgressionChange}
-                            initialMonth={getActiveMonth(allProgressions[ex.exercise_id])}
-                            resetTrigger={selectedDate}
-                          />
-                        ))}
-                      </section>
-                    </ErrorBoundary>
-                  )}
-
-                  {awEx.length > 0 && (
-                    <ErrorBoundary>
-                      <section className="min-w-0">
-                        <AwUnifiedPanel
-                          awGroups={awGroups}
-                          allProgressions={allProgressions}
-                          awProgram={awProgram}
-                          selectedDate={selectedDate}
-                          onProgressionChange={handleProgressionChange}
-                          onRowsChange={handleRowsChange}
-                        />
-                      </section>
-                    </ErrorBoundary>
-                  )}
-                </div>
-
-                {hypEx.length > 0 && (
-                  <div className="pt-6">
-                    <ErrorBoundary>
-                      <CategorySectionTitle icon={Dumbbell} label="Ipertrofia" accent="hyp" />
-                      <UnifiedExerciseTable
-                        mode="hypertrophy-grid"
-                        exercises={hypEx}
-                        onRowsChange={handleRowsChange}
-                        onProgressionChange={handleProgressionChange}
-                        setsByExercise={setsByExercise}
-                        allProgressions={allProgressions}
-                      />
-                    </ErrorBoundary>
-                  </div>
-                )}
-              </>
+          <TrainingSurface>
+            <TrainingSessionHeader
+              title="Calendario · 3 settimane"
+              subtitle="Seleziona un giorno"
+              right={
+                <button
+                  type="button"
+                  onClick={() => setCalendarOpen(o => !o)}
+                  className="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-indigo-500 transition-colors"
+                  aria-expanded={calendarOpen}
+                >
+                  {calendarOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
+              }
+            />
+            {calendarOpen && (
+              <ErrorBoundary>
+                <WeeklyCalendar
+                  schedule={weekData}
+                  progressions={allProgressions}
+                  onSelectDay={handleDaySelect}
+                  onEditAction={handleUpdateTemplate}
+                  onToggleComplete={handleToggleDayComplete}
+                  awProgram={awProgram}
+                  currentMaxDayWeek={getActiveWeek(allProgressions['aw_max']) || 1}
+                  onRefreshWeek={() => loadWeekData(false)}
+                  loading={loading}
+                  selectedDate={selectedDate}
+                />
+              </ErrorBoundary>
             )}
-          </div>
-        </main>
+          </TrainingSurface>
+
+          <DayDetailPanel
+            dayName={selectedDay?.day_name}
+            strengthEx={strengthEx}
+            awGroups={awGroups}
+            awEx={awEx}
+            hypEx={hypEx}
+            allProgressions={allProgressions}
+            awProgram={awProgram}
+            selectedDate={selectedDate}
+            onProgressionChange={handleProgressionChange}
+            onRowsChange={handleRowsChange}
+            setsByExercise={setsByExercise}
+            progressPercent={progressPercent}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            canUndo={historyIndex > 0}
+            canRedo={historyIndex < history.length - 1}
+          />
+        </TrainingPageLayout>
       </div> {/* Fine relative z-10 */}
 
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #3f3f46; }
-      `}} />
     </div>
   );
 }

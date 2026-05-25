@@ -10,55 +10,23 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { CompactExerciseCard } from './training/CalendarComponents';
+import { TrainingDayHeader, CalendarExerciseChip } from './training/TrainingUI';
+import { PAGE } from './training/trainingDesignSystem';
 
 // --- Costanti ---
 const GIORNI = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
 
-const AW_CARD_STYLE = {
-  border: 'border-amber-300/70 dark:border-amber-600/30',
-  bg: 'bg-gradient-to-br from-amber-50/80 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/10',
-  badge: 'bg-amber-500',
-  label: 'text-amber-800 dark:text-amber-300',
-  dot: 'bg-amber-400',
-};
-
-const CYCLE_COLORS = [
-  { ...AW_CARD_STYLE },
-  { ...AW_CARD_STYLE, border: 'border-orange-400/60 dark:border-orange-500/30', badge: 'bg-orange-500', dot: 'bg-orange-400' },
-  { ...AW_CARD_STYLE, border: 'border-rose-400/60 dark:border-rose-500/30', badge: 'bg-rose-500', dot: 'bg-rose-400' },
-  { ...AW_CARD_STYLE, border: 'border-violet-400/60 dark:border-violet-500/30', badge: 'bg-violet-500', dot: 'bg-violet-400' },
-];
-
-function AwMiniCard({ type, title, week, awProgram }) {
-  const cycle = type === 'max'
-    ? CYCLE_COLORS[Math.floor(((week || 1) - 1) / 5) % 4]
-    : { ...AW_CARD_STYLE };
-
-  const maxExercises = type === 'max' && awProgram
-    ? (awProgram?.max_day?.weeks?.find(w => w.week === (((week || 1) - 1) % 5) + 1)?.exercises || []).map(e => e.name.toUpperCase())
+function AwCalendarChip({ type, title, week, awProgram }) {
+  const protoW = (((week || 1) - 1) % 5) + 1;
+  const maxNames = type === 'max' && awProgram
+    ? (awProgram?.max_day?.weeks?.find(w => w.week === protoW)?.exercises || []).map(e => e.name).join(' · ')
     : null;
-
   return (
-    <div className={`relative group flex flex-col rounded-xl border ${cycle.border} ${cycle.bg} p-1.5 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden justify-center min-h-[4.5rem] text-center`}>
-      <div className="flex flex-col items-center justify-center w-full gap-1">
-        <div className={`w-4 h-4 rounded ${cycle.badge} shadow-sm flex items-center justify-center shrink-0`}>
-          <Target size={9} className="text-white" />
-        </div>
-        <span className={`text-xs font-bold uppercase tracking-tight text-center px-1 line-clamp-1 leading-tight ${cycle.label}`}>{title}</span>
-        <span className={`text-xs scale-90 font-bold px-1 py-0.5 rounded bg-white/20 dark:bg-black/20 ${cycle.label} shrink-0 whitespace-nowrap`}>W{week}</span>
-      </div>
-
-      {type === 'max' && (
-        <div className="flex flex-wrap justify-center gap-1 mt-2.5 w-full">
-          {maxExercises?.length > 0 ? maxExercises.map((name, i) => (
-            <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[8px] bg-white/80 dark:bg-zinc-900/60 border border-amber-200/60 dark:border-amber-700/30 shadow-sm">
-              <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${cycle.dot}`} />
-              <span className="text-xs scale-90 font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-tighter leading-tight">{name}</span>
-            </span>
-          )) : <span className="text-xs text-zinc-400 font-medium mt-1">—</span>}
-        </div>
-      )}
-    </div>
+    <CalendarExerciseChip
+      name={title}
+      accent="aw"
+      subtitle={type === 'max' && maxNames ? maxNames.slice(0, 28) : `W${week}`}
+    />
   );
 }
 
@@ -131,7 +99,7 @@ function WeeklyCalendar({ onSelectDay, progressions, schedule, loading, onEditAc
         <div
           className="grid gap-x-2 min-w-max items-start"
           style={{
-            gridTemplateColumns: `repeat(${schedule?.length || 1}, 155px)`,
+            gridTemplateColumns: `repeat(${schedule?.length || 1}, ${PAGE.columnWidth})`,
             gridTemplateRows: 'auto auto auto auto',
           }}
         >
@@ -194,42 +162,16 @@ function WeeklyCalendar({ onSelectDay, progressions, schedule, loading, onEditAc
                 />
 
                 {/* Header (Row 1) - Enhanced Forecast Button Style */}
-                <div
-                  className="px-2 pt-3 pb-2 z-10"
-                  style={{ gridColumn: col, gridRow: 1 }}
-                >
-                  <div className="relative">
-                    <button
-                      onClick={() => template && onSelectDay(template, dayStr)}
-                      className={`flex flex-col items-center gap-0.5 py-3 rounded-2xl transition-all duration-300 w-full border shadow-sm
-                        ${isSelected
-                          ? 'bg-zinc-900 border-zinc-900 shadow-xl shadow-zinc-900/10 dark:bg-white dark:border-white'
-                          : isToday
-                            ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/30'
-                            : 'bg-white border-zinc-200/60 dark:bg-white/[0.02] dark:border-white/[0.06] hover:border-zinc-300 dark:hover:border-white/[0.12]'
-                        }`}
-                    >
-                      <span className={`text-xs scale-90 font-black uppercase tracking-widest ${isSelected ? 'text-zinc-400 dark:text-zinc-500' :
-                        isToday ? 'text-indigo-500' : 'text-zinc-400'
-                        }`}>{dayName}</span>
-                      <span className={`text-sm font-black leading-none tabular-nums ${isSelected ? 'text-white dark:text-zinc-950' :
-                        isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-800 dark:text-zinc-100'
-                        }`}>{dateObj.getDate()}</span>
-
-                      <div className="flex gap-1 h-1 items-center mt-1">
-                        {template?.exercises?.some(e => e.category === 'STRENGTH' && e.is_active !== 0) && <div className="w-1 h-1 rounded-full bg-indigo-500" />}
-                        {template?.exercises?.some(e => e.category === 'AW' && e.is_active !== 0) && <div className="w-1 h-1 rounded-full bg-amber-500" />}
-                        {template?.exercises?.some(e => e.category === 'HYPERTROPHY' && e.is_active !== 0) && <div className="w-1 h-1 rounded-full bg-emerald-500" />}
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={(e) => { e.stopPropagation(); toggleComplete(day.date || day.date_, day.is_completed); }}
-                      className={`absolute top-1.5 right-1.5 p-1 rounded-lg transition-all z-20 ${day.is_completed ? 'text-white bg-emerald-500 shadow-sm' : 'text-zinc-300 dark:text-zinc-600 hover:text-indigo-500'}`}
-                    >
-                      <CheckCircle2 size={10} />
-                    </button>
-                  </div>
+                <div className="px-1 pt-2 pb-1 z-10" style={{ gridColumn: col, gridRow: 1 }}>
+                  <TrainingDayHeader
+                    dayName={dayName}
+                    dayNum={dateObj.getDate()}
+                    isToday={isToday}
+                    isSelected={isSelected}
+                    isCompleted={!!day.is_completed}
+                    onClick={() => template && onSelectDay(template, dayStr)}
+                    onToggleComplete={() => toggleComplete(day.date || day.date_, day.is_completed)}
+                  />
                 </div>
 
                 {/* FORZA (Row 2) */}
@@ -240,7 +182,11 @@ function WeeklyCalendar({ onSelectDay, progressions, schedule, loading, onEditAc
                   </div>
                   <div className="flex flex-col gap-2.5 h-full">
                     {getExercises('strength').map((ex, eIdx) => (
-                      <CompactExerciseCard key={`str-${eIdx}`} exercise={ex} showMuscleNames={showMuscleNames} progressions={progressions} date={day.date || day.date_} isEditMode={isEditMode} onEditAction={(a, ex) => handleEditAction(a, ex, day.template_id)} />
+                      isEditMode ? (
+                        <CompactExerciseCard key={`str-${eIdx}`} exercise={ex} showMuscleNames={showMuscleNames} progressions={progressions} date={day.date || day.date_} isEditMode onEditAction={(a, ex) => handleEditAction(a, ex, day.template_id)} />
+                      ) : (
+                        <CalendarExerciseChip key={`str-${eIdx}`} name={ex.exercise_name || ex.name} accent="strength" subtitle={showMuscleNames ? ex.muscle_group : undefined} />
+                      )
                     ))}
                     {getExercises('strength').length === 0 && (
                       <div className="flex-1 min-h-[80px] rounded-[1.25rem] border border-dashed border-zinc-200 dark:border-zinc-800/60 flex items-center justify-center opacity-40">
@@ -259,7 +205,7 @@ function WeeklyCalendar({ onSelectDay, progressions, schedule, loading, onEditAc
                   <div className="flex flex-col gap-2.5 h-full">
                     {!isEditMode ? getExercises('aw').map((ex, eIdx) => {
                       const props = getAwCardProps(ex);
-                      return <AwMiniCard key={`aw-${eIdx}`} type={props.type} title={props.title} week={currentMaxDayWeek || 1} awProgram={awProgram} />;
+                      return <AwCalendarChip key={`aw-${eIdx}`} type={props.type} title={props.title} week={currentMaxDayWeek || 1} awProgram={awProgram} />;
                     }) : getExercises('aw').map((ex, eIdx) => (
                       <CompactExerciseCard key={`aw-${eIdx}`} exercise={ex} showMuscleNames={showMuscleNames} progressions={progressions} date={day.date || day.date_} isEditMode={isEditMode} onEditAction={(a, ex) => handleEditAction(a, ex, day.template_id)} />
                     ))}
@@ -279,7 +225,11 @@ function WeeklyCalendar({ onSelectDay, progressions, schedule, loading, onEditAc
                   </div>
                   <div className="flex flex-col gap-2.5 h-full">
                     {getExercises('hyper').map((ex, eIdx) => (
-                      <CompactExerciseCard key={`hyp-${eIdx}`} exercise={ex} showMuscleNames={showMuscleNames} progressions={progressions} date={day.date || day.date_} isEditMode={isEditMode} onEditAction={(a, ex) => handleEditAction(a, ex, day.template_id)} />
+                      isEditMode ? (
+                        <CompactExerciseCard key={`hyp-${eIdx}`} exercise={ex} showMuscleNames={showMuscleNames} progressions={progressions} date={day.date || day.date_} isEditMode onEditAction={(a, ex) => handleEditAction(a, ex, day.template_id)} />
+                      ) : (
+                        <CalendarExerciseChip key={`hyp-${eIdx}`} name={ex.exercise_name || ex.name} accent="hyp" />
+                      )
                     ))}
                     {getExercises('hyper').length === 0 && (
                       <div className="flex-1 min-h-[80px] rounded-[1.25rem] border border-dashed border-zinc-200 dark:border-zinc-800/60 flex items-center justify-center opacity-40">
@@ -294,13 +244,6 @@ function WeeklyCalendar({ onSelectDay, progressions, schedule, loading, onEditAc
         </div>
       </div>
 
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        .custom-scrollbar::-webkit-scrollbar { height: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
-      `}} />
     </div>
   );
 }

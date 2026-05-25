@@ -47,7 +47,7 @@ const createMonthData = () => WEEK_CONFIGS.map(cfg => ({
 const STORAGE_KEY = (id) => `strength_v2_${id}`;
 
 // --- Main Component ---
-export default function StrengthTable2({ exercise, onRowsChange, onProgressionChange, initialMonth, resetTrigger }) {
+export default function StrengthTable2({ exercise, onRowsChange, onProgressionChange, initialMonth, resetTrigger, embedded = false }) {
   const { exercise_id, exercise_name } = exercise;
   const storageKey = STORAGE_KEY(exercise_id);
 
@@ -366,8 +366,8 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
     </div>
   );
 
-  return (
-    <TrainingCard accent="strength">
+  const inner = (
+    <>
       <TrainingBlockHeader
         accent="strength"
         title={exercise_name}
@@ -593,6 +593,9 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
           </div>
         </div>
       </div>
-    </TrainingCard>
+    </>
   );
+
+  if (embedded) return <div className="min-w-0">{inner}</div>;
+  return <TrainingCard accent="strength">{inner}</TrainingCard>;
 }

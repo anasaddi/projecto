@@ -18,8 +18,10 @@ import {
   ColHeader,
   ModernInput,
   AthleteAvatar,
+  AthleteSessionRow,
   ACCENT,
   TABLE,
+  ROW,
 } from './TrainingUI';
 import { cn } from '../../lib/utils';
 import WeekSelector from './WeekSelector';
@@ -640,7 +642,7 @@ function GenericTable({ exercise, onRowsChange, expandedOverride = false, initia
                 <div className="w-[160px] text-center text-emerald-500">Flavio</div>
               </div>
               {rows.map(r => (
-                <div key={r.id} className="grid grid-cols-[2rem_3.5rem_auto_auto] gap-4 items-center px-2 py-2 bg-gray-50/50 dark:bg-zinc-800/30 rounded-xl hover:bg-gray-100/50 dark:hover:bg-zinc-800/50 transition-colors justify-between">
+                <div key={r.id} className="grid grid-cols-[2rem_3.5rem_auto_auto] gap-4 items-center px-2 py-2 bg-zinc-50/80 dark:bg-zinc-800/30 rounded-xl hover:bg-zinc-100/80 dark:hover:bg-zinc-800/50 transition-colors justify-between">
                   <div className="text-center font-bold text-gray-700 dark:text-gray-300 text-xs">{r.set}</div>
                   <div className="text-center text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-900/30 rounded px-1 py-0.5">{base_sets}x{base_reps || '—'}</div>
                   {['anas', 'flavio'].map(athlete => (
@@ -765,41 +767,38 @@ function HypertrophyRow({ exercise, index, onRowsChange, onProgressionChange, in
       .finally(() => setHistLoading(false));
   }, [expanded, exercise_id, showHistory]);
 
-  const doneA = data.anas.completed;
-  const doneF = data.flavio.completed;
-  const bothDone = doneA && doneF;
+  const historyBtn = showHistory ? (
+    <button
+      type="button"
+      onClick={() => setExpanded(p => !p)}
+      className="p-1 rounded-lg text-zinc-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
+    >
+      {expanded ? <ChevronUp size={13} /> : <HistoryIcon size={13} />}
+    </button>
+  ) : null;
 
   return (
     <>
-      <div className={`grid items-center gap-x-3 px-4 py-3 transition-colors
-        grid-cols-[1.5rem_minmax(0,1fr)_3.5rem_4.2rem_4.2rem_1.75rem_4.2rem_4.2rem_1.75rem_1.75rem]
-        ${isOdd ? 'bg-zinc-50/60 dark:bg-white/[0.02]' : 'bg-white dark:bg-transparent'}
-        ${bothDone ? 'bg-emerald-50/60 dark:bg-emerald-950/10' : ''}`}>
-        <div className="flex items-center justify-center"><span className="text-xs font-black text-zinc-400 tabular-nums">{String(index + 1).padStart(2, '0')}</span></div>
-        <div className="min-w-0 flex flex-col items-center justify-center text-center">
-          <div className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate w-full leading-tight">{shortenName(exercise_name)}</div>
-          <div className="text-xs font-black text-emerald-600 dark:text-emerald-400 mt-0.5 uppercase tracking-widest leading-none">{base_sets || 2}×</div>
-        </div>
-        <div className="flex items-center justify-center">
-          <div className={`w-10 h-7 rounded-lg flex items-center justify-center text-xs font-black shadow-sm transition-all ${doneA ? 'bg-blue-500 text-white scale-110' : 'bg-blue-100/50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-500/20'}`}>ANAS</div>
-        </div>
-        <div className="flex items-center justify-center"><CompactInput value={data.anas.w} onChange={v => upd('anas', 'w', v)} placeholder="kg" /></div>
-        <div className="flex items-center justify-center"><CompactInput value={data.anas.r} onChange={v => upd('anas', 'r', v)} size="sm" placeholder="r" /></div>
-        <div className="flex items-center justify-center"><ModernCheckbox checked={doneA} onChange={() => tog('anas')} colorClass="accent-blue-500" /></div>
-        <div className="flex items-center justify-center">
-          <div className={`w-10 h-7 rounded-lg flex items-center justify-center text-xs font-black shadow-sm transition-all ${doneF ? 'bg-emerald-500 text-white scale-110' : 'bg-emerald-100/50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'}`}>FLAVIO</div>
-        </div>
-        <div className="flex items-center justify-center"><CompactInput value={data.flavio.w} onChange={v => upd('flavio', 'w', v)} placeholder="kg" /></div>
-        <div className="flex items-center justify-center"><CompactInput value={data.flavio.r} onChange={v => upd('flavio', 'r', v)} size="sm" placeholder="r" /></div>
-        <div className="flex items-center justify-center"><ModernCheckbox checked={doneF} onChange={() => tog('flavio')} colorClass="accent-emerald-500" /></div>
-        {showHistory && (
-          <div className="flex items-center justify-center">
-            <button type="button" onClick={() => setExpanded(p => !p)} className="p-1 rounded-lg text-zinc-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors flex items-center justify-center">
-              {expanded ? <ChevronUp size={13} /> : <HistoryIcon size={13} />}
-            </button>
-          </div>
-        )}
-      </div>
+      <AthleteSessionRow
+        index={index + 1}
+        exerciseName={shortenName(exercise_name)}
+        badge={`${base_sets || 2}×${base_reps || ''}`}
+        accent="hyp"
+        anasWeight={data.anas.w}
+        flavioWeight={data.flavio.w}
+        anasReps={data.anas.r}
+        flavioReps={data.flavio.r}
+        anasCompleted={data.anas.completed}
+        flavioCompleted={data.flavio.completed}
+        onAnasWeight={v => upd('anas', 'w', v)}
+        onFlavioWeight={v => upd('flavio', 'w', v)}
+        onAnasReps={v => upd('anas', 'r', v)}
+        onFlavioReps={v => upd('flavio', 'r', v)}
+        onAnasToggle={() => tog('anas')}
+        onFlavioToggle={() => tog('flavio')}
+        trailing={historyBtn}
+        className={isOdd ? 'bg-zinc-50/40 dark:bg-white/[0.02]' : ''}
+      />
       {showHistory && (
         <AnimatePresence initial={false}>
           {expanded && (
@@ -827,50 +826,61 @@ function HypertrophyRow({ exercise, index, onRowsChange, onProgressionChange, in
   );
 }
 
-function HypertrophyGrid({ exercises, onRowsChange, onProgressionChange, setsByExercise, allProgressions }) {
+function HypertrophyGrid({ exercises, onRowsChange, onProgressionChange, setsByExercise, allProgressions, embedded = false }) {
   if (!exercises?.length) return null;
   const hyp = ACCENT.hyp;
+
+  const headerRow = (
+    <div
+      className={cn(
+        ROW.grid,
+        ROW.gridColsHistory,
+        'hidden sm:grid text-[10px] font-bold uppercase tracking-widest text-zinc-400 border-b',
+        hyp.headerBg
+      )}
+    >
+      <span className={ROW.index}>#</span>
+      <span>Esercizio</span>
+      <div className="flex items-center justify-end gap-4 sm:gap-6 pr-1">
+        <span className="text-blue-500 w-24 text-center">Anas</span>
+        <span className="text-emerald-500 w-24 text-center">Flavio</span>
+      </div>
+      <span />
+    </div>
+  );
+
+  const rows = (
+    <div className={TABLE.tbody}>
+      {exercises.map((ex, idx) => (
+        <HypertrophyRow
+          key={ex.exercise_id}
+          index={idx}
+          exercise={ex}
+          isOdd={idx % 2 !== 0}
+          onRowsChange={onRowsChange}
+          onProgressionChange={onProgressionChange}
+          initialRows={setsByExercise?.[ex.exercise_id]}
+          initialData={allProgressions?.[ex.exercise_id]}
+        />
+      ))}
+    </div>
+  );
+
+  if (embedded) {
+    return (
+      <div className="min-w-0">
+        {headerRow}
+        {rows}
+      </div>
+    );
+  }
 
   return (
     <section className="min-w-0">
       <TrainingCard accent="hyp" className="min-w-0">
         <TrainingBlockHeader accent="hyp" title="Ipertrofia & Accessori" subtitle="Isolamento e volume" />
-        <div
-          className={cn(
-            'hidden md:grid items-center gap-x-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400',
-            'grid-cols-[1.5rem_minmax(0,1fr)_3.5rem_4.2rem_4.2rem_1.75rem_4.2rem_4.2rem_1.75rem_1.75rem]',
-            'px-4 py-2 border-b',
-            hyp.headerBg
-          )}
-        >
-          <span /><span />
-          <div className="flex justify-center items-center gap-1.5 py-1 px-2 rounded-lg bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/20">
-            <span className="text-blue-600 dark:text-blue-400">ANAS</span>
-          </div>
-          <span className="text-center">Kg</span>
-          <span className="text-center">Rep</span>
-          <span className="text-center">✓</span>
-          <div className="flex justify-center items-center gap-1.5 py-1 px-2 rounded-lg bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20">
-            <span className="text-emerald-600 dark:text-emerald-400">FLAVIO</span>
-          </div>
-          <span className="text-center">Kg</span>
-          <span className="text-center">Rep</span>
-          <span className="text-center">✓</span>
-        </div>
-        <div className={TABLE.tbody}>
-          {exercises.map((ex, idx) => (
-            <HypertrophyRow
-              key={ex.exercise_id}
-              index={idx}
-              exercise={ex}
-              isOdd={idx % 2 !== 0}
-              onRowsChange={onRowsChange}
-              onProgressionChange={onProgressionChange}
-              initialRows={setsByExercise?.[ex.exercise_id]}
-              initialData={allProgressions?.[ex.exercise_id]}
-            />
-          ))}
-        </div>
+        {headerRow}
+        {rows}
       </TrainingCard>
     </section>
   );
@@ -1037,7 +1047,7 @@ export default function UnifiedExerciseTable({
     case 'speed':
       return <SpeedTable exercises={exercises} progressions={prog} onProgressionChange={onProgressionChange} embedded={embedded} />;
     case 'hypertrophy-grid':
-      return <HypertrophyGrid exercises={exercises} onRowsChange={onRowsChange} onProgressionChange={onProgressionChange} setsByExercise={setsByExercise} allProgressions={prog} />;
+      return <HypertrophyGrid exercises={exercises} onRowsChange={onRowsChange} onProgressionChange={onProgressionChange} setsByExercise={setsByExercise} allProgressions={prog} embedded={embedded} />;
     case 'hypertrophy-card':
       return <HypertrophyCard exercise={exercise} onRowsChange={onRowsChange} onProgressionChange={onProgressionChange} initialRows={initialRows} expandedOverride={expandedOverride} initialData={initialData} />;
     case 'generic':
