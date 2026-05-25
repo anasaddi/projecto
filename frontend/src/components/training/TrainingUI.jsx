@@ -1,7 +1,7 @@
 ﻿import React from 'react';
 import { cn } from '../../lib/utils';
 import { Card as DashboardCard } from '../dashboard/Card';
-import { ACCENT, TABLE, COMPACT_INPUT, PERIOD_TRACK, PERIOD_BTN, PERIOD_BTN_IDLE } from './trainingTableTheme';
+import { ACCENT, TABLE, COMPACT_INPUT, COMPACT_INPUT_SM, PERIOD_TRACK, PERIOD_BTN, PERIOD_BTN_IDLE } from './trainingTableTheme';
 
 // Piccole intestazioni per kg, r, s
 export const ColHeader = ({ label, className = '' }) => (
@@ -266,4 +266,4 @@ export const ModernCheckbox = ({ checked, onChange, colorClass = 'accent-indigo-
   />
 );
 
-export { TABLE, ACCENT, PERIOD_TRACK, PERIOD_BTN, PERIOD_BTN_IDLE };
+export { TABLE, ACCENT, COMPACT_INPUT, COMPACT_INPUT_SM, PERIOD_TRACK, PERIOD_BTN, PERIOD_BTN_IDLE };
