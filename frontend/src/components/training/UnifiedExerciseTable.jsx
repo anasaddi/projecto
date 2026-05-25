@@ -99,6 +99,13 @@ function AthletePairHeader({ suffix = 'kg/r' }) {
   );
 }
 
+function TableShell({ embedded, children, className = CARD_BORDER }) {
+  if (embedded) {
+    return <div className="border-t border-zinc-100/80 dark:border-zinc-800/60">{children}</div>;
+  }
+  return <Card className={className}>{children}</Card>;
+}
+
 function SlotInput({ exerciseId, slotKey, athlete, mode, defaults, progressions, onProgressionChange }) {
   const allData = progressions?.[exerciseId] || {};
   const saved = allData[slotKey]?.[athlete];
@@ -132,7 +139,7 @@ function SlotInput({ exerciseId, slotKey, athlete, mode, defaults, progressions,
 
 // ─── Volume mode ─────────────────────────────────────────────────────────────
 
-function VolumeTable({ title, exercises, progressions, initialWeek, resetTrigger, onProgressionChange }) {
+function VolumeTable({ title, exercises, progressions, initialWeek, resetTrigger, onProgressionChange, embedded = false }) {
   const [currentWeek, setCurrentWeek] = useState(initialWeek || 1);
 
   useEffect(() => {
@@ -140,7 +147,7 @@ function VolumeTable({ title, exercises, progressions, initialWeek, resetTrigger
   }, [initialWeek, resetTrigger]);
 
   return (
-    <Card className={CARD_BORDER}>
+    <TableShell embedded={embedded}>
       <AwSectionHeader
         title={title}
         subtitle={`Settimana ${currentWeek}`}
@@ -238,7 +245,7 @@ function VolumeTable({ title, exercises, progressions, initialWeek, resetTrigger
           </tbody>
         </table>
       </div>
-    </Card>
+    </TableShell>
   );
 }
 
@@ -266,7 +273,7 @@ const getIsoCfg = (exercise_id, exercise_name, isHeavy, index) => {
   return { label: ISO_LABELS[index % ISO_LABELS.length], weight: weights[index % weights.length], target: isHeavy ? '2×5s' : '2×15s', isHeavy };
 };
 
-function IsoTable({ title, exercises, programData, progressions, initialWeek, resetTrigger, onProgressionChange }) {
+function IsoTable({ title, exercises, programData, progressions, initialWeek, resetTrigger, onProgressionChange, embedded = false }) {
   const [currentWeek, setCurrentWeek] = useState(initialWeek || 1);
   const isHeavy = title?.toLowerCase().includes('pesante') || title?.toLowerCase().includes('heavy')
     || (exercises[0]?.exercise_id || '').includes('heavy');
@@ -283,7 +290,7 @@ function IsoTable({ title, exercises, programData, progressions, initialWeek, re
     : exercises;
 
   return (
-    <Card className={CARD_BORDER}>
+    <TableShell embedded={embedded}>
       <AwSectionHeader
         title={title}
         subtitle={`${isHeavy ? '85% 1RM · 2×5s' : '60% 1RM · 2×15s'} · W${currentWeek}`}
@@ -359,7 +366,7 @@ function IsoTable({ title, exercises, programData, progressions, initialWeek, re
           </tbody>
         </table>
       </div>
-    </Card>
+    </TableShell>
   );
 }
 
@@ -431,7 +438,7 @@ function MaxDayRow({ week, slot, exName, refAnas, refFlavio, exerciseId, savedDa
   );
 }
 
-function MaxDayTable({ exercise, programData, progressions, initialWeek, resetTrigger, onProgressionChange }) {
+function MaxDayTable({ exercise, programData, progressions, initialWeek, resetTrigger, onProgressionChange, embedded = false }) {
   const [currentWeek, setCurrentWeek] = useState(initialWeek || 1);
   const [localData, setLocalData] = useState(() => progressions?.[exercise?.exercise_id] || {});
 
@@ -443,7 +450,7 @@ function MaxDayTable({ exercise, programData, progressions, initialWeek, resetTr
   const weekExercises = programData.weeks.find(w => w.week === protoWeek(currentWeek))?.exercises || [];
 
   return (
-    <Card className={CARD_BORDER}>
+    <TableShell embedded={embedded}>
       <AwSectionHeader
         title="Max Day"
         subtitle={`30-36 Rep · W${currentWeek} · C${cycleOf(currentWeek) + 1}`}
@@ -489,7 +496,7 @@ function MaxDayTable({ exercise, programData, progressions, initialWeek, resetTr
           </tbody>
         </table>
       </div>
-    </Card>
+    </TableShell>
   );
 }
 
@@ -542,12 +549,12 @@ function SpeedRow({ baseExerciseId, cfg, progressions, onProgressionChange }) {
   );
 }
 
-function SpeedTable({ exercises, progressions, onProgressionChange }) {
+function SpeedTable({ exercises, progressions, onProgressionChange, embedded = false }) {
   if (!exercises?.length) return null;
   const baseId = exercises[0]?.exercise_id || 'aw_speed';
 
   return (
-    <Card className={CARD_BORDER}>
+    <TableShell embedded={embedded}>
       <AwSectionHeader title="Speed" subtitle="50% 1RM + BANDS · 6×6" />
 
       <div className={TABLE_WRAP}>
@@ -566,7 +573,7 @@ function SpeedTable({ exercises, progressions, onProgressionChange }) {
           </tbody>
         </table>
       </div>
-    </Card>
+    </TableShell>
   );
 }
 
@@ -1007,18 +1014,19 @@ export default function UnifiedExerciseTable({
   expandedOverride,
   initialRows,
   initialData,
+  embedded = false,
 }) {
   const prog = progressions || allProgressions;
 
   switch (mode) {
     case 'volume':
-      return <VolumeTable title={title} exercises={exercises} progressions={prog} initialWeek={initialWeek} resetTrigger={resetTrigger} onProgressionChange={onProgressionChange} />;
+      return <VolumeTable title={title} exercises={exercises} progressions={prog} initialWeek={initialWeek} resetTrigger={resetTrigger} onProgressionChange={onProgressionChange} embedded={embedded} />;
     case 'iso':
-      return <IsoTable title={title} exercises={exercises} programData={programData} progressions={prog} initialWeek={initialWeek} resetTrigger={resetTrigger} onProgressionChange={onProgressionChange} />;
+      return <IsoTable title={title} exercises={exercises} programData={programData} progressions={prog} initialWeek={initialWeek} resetTrigger={resetTrigger} onProgressionChange={onProgressionChange} embedded={embedded} />;
     case 'maxday':
-      return <MaxDayTable exercise={exercise} programData={programData} progressions={prog} initialWeek={initialWeek} resetTrigger={resetTrigger} onProgressionChange={onProgressionChange} />;
+      return <MaxDayTable exercise={exercise} programData={programData} progressions={prog} initialWeek={initialWeek} resetTrigger={resetTrigger} onProgressionChange={onProgressionChange} embedded={embedded} />;
     case 'speed':
-      return <SpeedTable exercises={exercises} progressions={prog} onProgressionChange={onProgressionChange} />;
+      return <SpeedTable exercises={exercises} progressions={prog} onProgressionChange={onProgressionChange} embedded={embedded} />;
     case 'hypertrophy-grid':
       return <HypertrophyGrid exercises={exercises} onRowsChange={onRowsChange} onProgressionChange={onProgressionChange} setsByExercise={setsByExercise} allProgressions={prog} />;
     case 'hypertrophy-card':

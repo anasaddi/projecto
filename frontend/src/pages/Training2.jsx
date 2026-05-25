@@ -7,6 +7,7 @@ import TodayCard from '../components/training/TodayCard';
 import { AppLogo } from '../components/AppLogo';
 
 import UnifiedExerciseTable from '../components/training/UnifiedExerciseTable';
+import AwUnifiedPanel from '../components/training/AwUnifiedPanel';
 import { AW_PROGRAM_FALLBACK } from '../components/training/AWProgramReference';
 import FocusMode from '../components/training/FocusMode';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -482,47 +483,15 @@ export default function Training2() {
 
                   {awEx.length > 0 && (
                     <ErrorBoundary>
-                      <section className="min-w-0 space-y-3">
-                        <div className="flex items-center gap-3 px-2 mb-2">
-                          <div className="p-2 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
-                            <Target size={16} className="text-amber-600 dark:text-amber-400" />
-                          </div>
-                          <span className="text-sm font-black uppercase tracking-[0.25em] text-zinc-800 dark:text-zinc-200 bg-clip-text text-transparent bg-gradient-to-r from-amber-600 to-orange-600 dark:from-amber-400 dark:to-orange-400">Armwrestling</span>
-                        </div>
-                        {awGroups.vol1.length > 0 && (
-                          <UnifiedExerciseTable mode="volume" title="Volume 1" exercises={awGroups.vol1} progressions={allProgressions}
-                            onProgressionChange={handleProgressionChange} initialWeek={getActiveWeek(allProgressions[awGroups.vol1[0]?.exercise_id])} resetTrigger={selectedDate} />
-                        )}
-                        {awGroups.vol2.length > 0 && (
-                          <UnifiedExerciseTable mode="volume" title="Volume 2" exercises={awGroups.vol2} progressions={allProgressions}
-                            onProgressionChange={handleProgressionChange} initialWeek={getActiveWeek(allProgressions[awGroups.vol2[0]?.exercise_id])} resetTrigger={selectedDate} />
-                        )}
-                        {awGroups.isoLight.length > 0 && (
-                          <UnifiedExerciseTable mode="iso" title="Isometria Leggera" exercises={awGroups.isoLight} programData={awProgram?.light} progressions={allProgressions}
-                            onProgressionChange={handleProgressionChange} initialWeek={getActiveWeek(allProgressions[awGroups.isoLight[0]?.exercise_id])} resetTrigger={selectedDate} />
-                        )}
-                        {awGroups.isoHeavy.length > 0 && (
-                          <UnifiedExerciseTable mode="iso" title="Isometria Pesante" exercises={awGroups.isoHeavy} programData={awProgram?.heavy} progressions={allProgressions}
-                            onProgressionChange={handleProgressionChange} initialWeek={getActiveWeek(allProgressions[awGroups.isoHeavy[0]?.exercise_id])} resetTrigger={selectedDate} />
-                        )}
-                        {awGroups.maxDay?.length > 0 && (
-                          <UnifiedExerciseTable
-                            mode="maxday"
-                            exercise={awGroups.maxDay[0]}
-                            programData={awProgram?.max_day}
-                            progressions={allProgressions}
-                            onProgressionChange={handleProgressionChange}
-                            initialWeek={getActiveWeek(allProgressions[awGroups.maxDay[0]?.exercise_id])}
-                            resetTrigger={selectedDate}
-                          />
-                        )}
-                        {awGroups.speed?.length > 0 && (
-                          <UnifiedExerciseTable mode="speed" exercises={awGroups.speed} progressions={allProgressions} onProgressionChange={handleProgressionChange} />
-                        )}
-                        {awGroups.others.map(ex => (
-                          <UnifiedExerciseTable key={ex.exercise_id} mode="generic" exercise={ex} onRowsChange={handleRowsChange}
-                            initialData={allProgressions[ex.exercise_id]} onProgressionChange={handleProgressionChange} />
-                        ))}
+                      <section className="min-w-0">
+                        <AwUnifiedPanel
+                          awGroups={awGroups}
+                          allProgressions={allProgressions}
+                          awProgram={awProgram}
+                          selectedDate={selectedDate}
+                          onProgressionChange={handleProgressionChange}
+                          onRowsChange={handleRowsChange}
+                        />
                       </section>
                     </ErrorBoundary>
                   )}
