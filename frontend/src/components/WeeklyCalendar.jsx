@@ -16,18 +16,22 @@ import { PAGE } from './training/trainingDesignSystem';
 // --- Costanti ---
 const GIORNI = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
 
-function AwCalendarChip({ type, title, week, awProgram }) {
-  const protoW = (((week || 1) - 1) % 5) + 1;
-  const maxNames = type === 'max' && awProgram
-    ? (awProgram?.max_day?.weeks?.find(w => w.week === protoW)?.exercises || []).map(e => e.name).join(' · ')
-    : null;
+const CALENDAR_MAX_CHIPS = 2;
+
+function AwCalendarChip({ type, title, week }) {
   return (
     <CalendarExerciseChip
       name={title}
       accent="aw"
-      subtitle={type === 'max' && maxNames ? maxNames.slice(0, 28) : `W${week}`}
+      subtitle={type === 'max' ? `Sett. ${week}` : undefined}
     />
   );
+}
+
+function shortExerciseName(name) {
+  if (!name) return '—';
+  const n = name.trim();
+  return n.length > 22 ? `${n.slice(0, 20)}…` : n;
 }
 
 function getAwCardProps(ex) {
@@ -176,18 +180,29 @@ function WeeklyCalendar({ onSelectDay, progressions, schedule, loading, onEditAc
 
                 {/* FORZA (Row 2) */}
                 <div className={`px-2 py-2 z-10 flex flex-col gap-1 transition-all border-x border-transparent ${isSelected ? 'bg-indigo-500/[0.02] dark:bg-indigo-500/[0.04] border-indigo-500/10' : ''} ${isToday ? 'scale-[1.01]' : ''}`} style={{ gridColumn: col, gridRow: 2 }}>
-                  <div className="flex items-center gap-1 px-1 opacity-40">
-                    <Zap size={9} className="text-blue-500" />
-                    <span className="text-xs scale-75 font-bold tracking-widest text-zinc-500 uppercase">FORZA</span>
+                  <div className="flex items-center gap-1 px-1">
+                    <Zap size={10} className="text-blue-500" />
+                    <span className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">Forza</span>
                   </div>
-                  <div className="flex flex-col gap-2.5 h-full">
-                    {getExercises('strength').map((ex, eIdx) => (
-                      isEditMode ? (
-                        <CompactExerciseCard key={`str-${eIdx}`} exercise={ex} showMuscleNames={showMuscleNames} progressions={progressions} date={day.date || day.date_} isEditMode onEditAction={(a, ex) => handleEditAction(a, ex, day.template_id)} />
-                      ) : (
-                        <CalendarExerciseChip key={`str-${eIdx}`} name={ex.exercise_name || ex.name} accent="strength" subtitle={showMuscleNames ? ex.muscle_group : undefined} />
-                      )
-                    ))}
+                  <div className="flex flex-col gap-2 h-full">
+                    {(() => {
+                      const list = getExercises('strength');
+                      if (isEditMode) {
+                        return list.map((ex, eIdx) => (
+                          <CompactExerciseCard key={`str-${eIdx}`} exercise={ex} showMuscleNames={showMuscleNames} progressions={progressions} date={day.date || day.date_} isEditMode onEditAction={(a, ex) => handleEditAction(a, ex, day.template_id)} />
+                        ));
+                      }
+                      const shown = list.slice(0, CALENDAR_MAX_CHIPS);
+                      const extra = list.length - shown.length;
+                      return (
+                        <>
+                          {shown.map((ex, eIdx) => (
+                            <CalendarExerciseChip key={`str-${eIdx}`} name={shortExerciseName(ex.exercise_name || ex.name)} accent="strength" />
+                          ))}
+                          {extra > 0 && <CalendarExerciseChip name={`+${extra} esercizi`} accent="strength" />}
+                        </>
+                      );
+                    })()}
                     {getExercises('strength').length === 0 && (
                       <div className="flex-1 min-h-[80px] rounded-[1.25rem] border border-dashed border-zinc-200 dark:border-zinc-800/60 flex items-center justify-center opacity-40">
                         <span className="text-xs font-black uppercase tracking-widest text-zinc-400">Rest</span>
@@ -198,14 +213,14 @@ function WeeklyCalendar({ onSelectDay, progressions, schedule, loading, onEditAc
 
                 {/* AW (Row 3) */}
                 <div className={`px-2 py-2 z-10 flex flex-col gap-1 transition-all border-x border-transparent ${isSelected ? 'bg-indigo-500/[0.02] dark:bg-indigo-500/[0.04] border-indigo-500/10' : ''} ${isToday ? 'scale-[1.01]' : ''}`} style={{ gridColumn: col, gridRow: 3 }}>
-                  <div className="flex items-center gap-1 px-1 opacity-40">
-                    <Target size={9} className="text-amber-500" />
-                    <span className="text-xs scale-75 font-bold tracking-widest text-zinc-500 uppercase">AW</span>
+                  <div className="flex items-center gap-1 px-1">
+                    <Target size={10} className="text-amber-500" />
+                    <span className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">AW</span>
                   </div>
-                  <div className="flex flex-col gap-2.5 h-full">
+                  <div className="flex flex-col gap-2 h-full">
                     {!isEditMode ? getExercises('aw').map((ex, eIdx) => {
                       const props = getAwCardProps(ex);
-                      return <AwCalendarChip key={`aw-${eIdx}`} type={props.type} title={props.title} week={currentMaxDayWeek || 1} awProgram={awProgram} />;
+                      return <AwCalendarChip key={`aw-${eIdx}`} type={props.type} title={props.title} week={currentMaxDayWeek || 1} />;
                     }) : getExercises('aw').map((ex, eIdx) => (
                       <CompactExerciseCard key={`aw-${eIdx}`} exercise={ex} showMuscleNames={showMuscleNames} progressions={progressions} date={day.date || day.date_} isEditMode={isEditMode} onEditAction={(a, ex) => handleEditAction(a, ex, day.template_id)} />
                     ))}
@@ -219,18 +234,29 @@ function WeeklyCalendar({ onSelectDay, progressions, schedule, loading, onEditAc
 
                 {/* IPER (Row 4) */}
                 <div className={`px-2 pt-2 pb-4 z-10 flex flex-col gap-1 transition-all border-x border-transparent rounded-b-2xl ${isSelected ? 'bg-indigo-500/[0.02] dark:bg-indigo-500/[0.04] border-indigo-500/10' : ''} ${isToday ? 'scale-[1.01]' : ''}`} style={{ gridColumn: col, gridRow: 4 }}>
-                  <div className="flex items-center gap-1 px-1 opacity-40">
-                    <Dumbbell size={9} className="text-emerald-500" />
-                    <span className="text-xs scale-75 font-bold tracking-widest text-zinc-500 uppercase">IPER</span>
+                  <div className="flex items-center gap-1 px-1">
+                    <Dumbbell size={10} className="text-emerald-500" />
+                    <span className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">Ipertrofia</span>
                   </div>
-                  <div className="flex flex-col gap-2.5 h-full">
-                    {getExercises('hyper').map((ex, eIdx) => (
-                      isEditMode ? (
-                        <CompactExerciseCard key={`hyp-${eIdx}`} exercise={ex} showMuscleNames={showMuscleNames} progressions={progressions} date={day.date || day.date_} isEditMode onEditAction={(a, ex) => handleEditAction(a, ex, day.template_id)} />
-                      ) : (
-                        <CalendarExerciseChip key={`hyp-${eIdx}`} name={ex.exercise_name || ex.name} accent="hyp" />
-                      )
-                    ))}
+                  <div className="flex flex-col gap-2 h-full">
+                    {(() => {
+                      const list = getExercises('hyper');
+                      if (isEditMode) {
+                        return list.map((ex, eIdx) => (
+                          <CompactExerciseCard key={`hyp-${eIdx}`} exercise={ex} showMuscleNames={showMuscleNames} progressions={progressions} date={day.date || day.date_} isEditMode onEditAction={(a, ex) => handleEditAction(a, ex, day.template_id)} />
+                        ));
+                      }
+                      const shown = list.slice(0, CALENDAR_MAX_CHIPS);
+                      const extra = list.length - shown.length;
+                      return (
+                        <>
+                          {shown.map((ex, eIdx) => (
+                            <CalendarExerciseChip key={`hyp-${eIdx}`} name={shortExerciseName(ex.exercise_name || ex.name)} accent="hyp" />
+                          ))}
+                          {extra > 0 && <CalendarExerciseChip name={`+${extra} esercizi`} accent="hyp" />}
+                        </>
+                      );
+                    })()}
                     {getExercises('hyper').length === 0 && (
                       <div className="flex-1 min-h-[80px] rounded-[1.25rem] border border-dashed border-zinc-200 dark:border-zinc-800/60 flex items-center justify-center opacity-40">
                         <span className="text-xs font-black uppercase tracking-widest text-zinc-400">Rest</span>

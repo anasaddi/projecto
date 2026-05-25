@@ -18,7 +18,7 @@ export const PAGE = {
   surfaceFlat:
     'rounded-2xl border border-zinc-200/60 dark:border-zinc-800/70 bg-zinc-50/50 dark:bg-zinc-900/20 overflow-hidden',
   surfacePadding: 'px-0',
-  columnWidth: '148px',
+  columnWidth: '172px',
 } as const;
 
 export const BRAND = {
@@ -31,16 +31,16 @@ export const BRAND = {
 /** Shared grid for session rows (TodayCard, Hyp table body as div, etc.) */
 export const ROW = {
   grid:
-    'grid items-center gap-x-2 sm:gap-x-3 px-3 py-2.5 text-xs transition-colors',
+    'grid items-center gap-x-2 sm:gap-x-4 px-3 py-3 sm:py-3.5 text-sm transition-colors',
   gridCols:
-    'grid-cols-[1.75rem_minmax(0,1fr)_minmax(0,auto)]',
+    'grid-cols-[2rem_minmax(0,1fr)_minmax(0,auto)] max-sm:grid-cols-[2rem_minmax(0,1fr)] max-sm:[&>*:last-child]:col-span-2 max-sm:[&>*:last-child]:justify-self-stretch',
   gridColsHistory:
-    'grid-cols-[1.75rem_minmax(0,1fr)_minmax(0,auto)_1.75rem]',
-  index: 'text-[10px] font-black text-zinc-400 tabular-nums text-center',
-  name: 'text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate leading-tight',
-  badge: 'text-[9px] font-black uppercase tracking-wider text-white px-1.5 py-0.5 rounded shrink-0',
-  athleteBlock: 'flex items-center gap-1 justify-end',
-  athleteLabel: 'text-[9px] font-black uppercase w-8 text-center shrink-0',
+    'grid-cols-[2rem_minmax(0,1fr)_minmax(0,auto)_2rem] max-sm:grid-cols-[2rem_minmax(0,1fr)_2rem]',
+  index: 'text-[11px] font-black text-zinc-400 tabular-nums text-center',
+  name: 'text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate leading-snug',
+  badge: 'text-[10px] font-bold uppercase tracking-wide text-white px-1.5 py-0.5 rounded shrink-0',
+  athleteBlock: 'flex items-center gap-1.5 justify-end max-sm:justify-center max-sm:flex-wrap',
+  athleteLabel: 'text-[10px] font-bold uppercase w-9 text-center shrink-0',
   done: 'bg-emerald-50/70 dark:bg-emerald-950/20',
   divider: 'border-b border-zinc-100/90 dark:border-zinc-800/50 last:border-b-0',
 } as const;

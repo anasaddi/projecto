@@ -52,13 +52,13 @@ export const ACCENT = {
 
 export const TABLE = {
   wrap: 'overflow-x-auto custom-scrollbar',
-  table: 'w-full text-left border-collapse text-xs',
+  table: 'w-full text-left border-collapse text-sm',
   thead: 'bg-zinc-50/90 dark:bg-zinc-800/70',
-  theadRow: 'text-[10px] font-bold uppercase tracking-widest text-zinc-400 border-b border-zinc-200/60 dark:border-zinc-800/80',
-  th: 'py-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400',
-  thAnas: 'py-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-center text-blue-500 w-[118px]',
-  thFlavio: 'py-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-center text-emerald-500 w-[118px]',
-  thSxDx: 'py-1.5 px-1 text-[10px] font-bold uppercase tracking-widest text-center w-14',
+  theadRow: 'text-[11px] font-bold uppercase tracking-wide text-zinc-500 border-b border-zinc-200/60 dark:border-zinc-800/80',
+  th: 'py-2 px-2 text-[11px] font-bold uppercase tracking-wide text-zinc-500',
+  thAnas: 'py-2 px-2 text-[11px] font-bold uppercase tracking-wide text-center text-blue-500 min-w-[128px]',
+  thFlavio: 'py-2 px-2 text-[11px] font-bold uppercase tracking-wide text-center text-emerald-500 min-w-[128px]',
+  thSxDx: 'py-2 px-1.5 text-[11px] font-bold uppercase tracking-wide text-center min-w-[3rem]',
   tr: 'transition-colors',
   td: 'py-1 px-2 border-r border-zinc-100/80 dark:border-zinc-800/50 last:border-r-0',
   tdAthlete: 'py-1 px-2 border-r border-zinc-100/80 dark:border-zinc-800/50 last:border-r-0 w-[118px]',
@@ -67,10 +67,10 @@ export const TABLE = {
 } as const;
 
 export const COMPACT_INPUT =
-  'h-7 w-9 min-w-0 rounded-lg border border-zinc-200/80 bg-zinc-50 px-1 text-center text-[11px] font-bold text-zinc-900 outline-none transition-colors placeholder:text-zinc-300 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-100 dark:placeholder:text-zinc-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20';
+  'h-8 w-11 min-w-0 rounded-lg border border-zinc-200/80 bg-zinc-50 px-1 text-center text-xs font-bold text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-100 dark:placeholder:text-zinc-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20';
 
 export const COMPACT_INPUT_SM =
-  'h-7 w-7 min-w-0 rounded-lg border border-zinc-200/80 bg-zinc-50 px-1 text-center text-[11px] font-bold text-zinc-900 outline-none transition-colors placeholder:text-zinc-300 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-100 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20';
+  'h-8 w-9 min-w-0 rounded-lg border border-zinc-200/80 bg-zinc-50 px-1 text-center text-xs font-bold text-zinc-900 outline-none transition-colors placeholder:text-zinc-400 dark:border-white/10 dark:bg-white/[0.03] dark:text-zinc-100 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20';
 
 export const PERIOD_TRACK =
   'flex items-center gap-0.5 bg-zinc-100/80 dark:bg-zinc-800/60 p-0.5 rounded-lg overflow-x-auto custom-scrollbar';

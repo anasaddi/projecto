@@ -149,36 +149,39 @@ function VolumeTable({ title, exercises, progressions, initialWeek, resetTrigger
         subtitle={`Settimana ${currentWeek}`}
         currentWeek={currentWeek}
         onWeekChange={setCurrentWeek}
+        compactWeek={embedded}
       />
 
-      <TrainingTableWrap className="border-b border-zinc-200/60 dark:border-zinc-800/60">
-        <TrainingTable>
-          <TrainingThead>
-            <tr className={TABLE.theadRow}>
-              <TrainingTh>Esercizio</TrainingTh>
-              <TrainingTh center className="w-14">Peso</TrainingTh>
-              {[1, 2, 3, 4, 5].map(w => (
-                <TrainingTh key={w} center className={`w-14 ${currentWeek === w ? AW.subtitle : ''}`}>W{w}</TrainingTh>
-              ))}
-            </tr>
-          </TrainingThead>
-          <tbody className={TABLE.tbody}>
-            {exercises.map(ex => {
-              const cfg = AW_VOL_CONFIG[ex.exercise_id] || { label: ex.exercise_name, weight: '—', pattern: 'std' };
-              const targets = cfg.pattern === 'alt' ? AW_ALT : AW_STD;
-              return (
-                <TrainingTr key={ex.exercise_id} accent="aw">
-                  <TrainingTd className="py-2 font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-tight text-center">{cfg.label}</TrainingTd>
-                  <TrainingTd className="text-center font-bold text-amber-600 dark:text-amber-400">{cfg.weight}kg</TrainingTd>
-                  {targets.map((t, i) => (
-                    <TrainingTd key={i} className={`text-center text-xs font-semibold ${currentWeek === i + 1 ? AW.weekHighlight : 'text-zinc-400'}`}>{t}</TrainingTd>
-                  ))}
-                </TrainingTr>
-              );
-            })}
-          </tbody>
-        </TrainingTable>
-      </TrainingTableWrap>
+      {!embedded && (
+        <TrainingTableWrap className="border-b border-zinc-200/60 dark:border-zinc-800/60">
+          <TrainingTable>
+            <TrainingThead>
+              <tr className={TABLE.theadRow}>
+                <TrainingTh>Esercizio</TrainingTh>
+                <TrainingTh center className="w-14">Peso</TrainingTh>
+                {[1, 2, 3, 4, 5].map(w => (
+                  <TrainingTh key={w} center className={`w-14 ${currentWeek === w ? AW.subtitle : ''}`}>W{w}</TrainingTh>
+                ))}
+              </tr>
+            </TrainingThead>
+            <tbody className={TABLE.tbody}>
+              {exercises.map(ex => {
+                const cfg = AW_VOL_CONFIG[ex.exercise_id] || { label: ex.exercise_name, weight: '—', pattern: 'std' };
+                const targets = cfg.pattern === 'alt' ? AW_ALT : AW_STD;
+                return (
+                  <TrainingTr key={ex.exercise_id} accent="aw">
+                    <TrainingTd className="py-2 font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-tight text-center">{cfg.label}</TrainingTd>
+                    <TrainingTd className="text-center font-bold text-amber-600 dark:text-amber-400">{cfg.weight}kg</TrainingTd>
+                    {targets.map((t, i) => (
+                      <TrainingTd key={i} className={`text-center text-xs font-semibold ${currentWeek === i + 1 ? AW.weekHighlight : 'text-zinc-400'}`}>{t}</TrainingTd>
+                    ))}
+                  </TrainingTr>
+                );
+              })}
+            </tbody>
+          </TrainingTable>
+        </TrainingTableWrap>
+      )}
 
       <TrainingTableWrap>
         <TrainingTable>
@@ -452,12 +455,12 @@ function MaxDayTable({ exercise, programData, progressions, initialWeek, resetTr
     <TableShell embedded={embedded}>
       <AwSectionHeader
         title="Max Day"
-        subtitle={`30-36 Rep · W${currentWeek} · C${cycleOf(currentWeek) + 1}`}
+        subtitle={`W${currentWeek} · ciclo ${cycleOf(currentWeek) + 1}`}
         currentWeek={currentWeek}
         onWeekChange={setCurrentWeek}
         weekCount={20}
         cycleDividers
-        weekBelow
+        weekBelow={embedded}
         compactWeek
       />
 

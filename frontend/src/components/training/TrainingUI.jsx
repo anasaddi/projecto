@@ -295,7 +295,7 @@ export function TrainingSessionHeader({ title, subtitle, progressPercent, right 
             {subtitle}
           </span>
         )}
-        <h2 className="text-lg sm:text-xl font-black text-zinc-900 dark:text-zinc-50 capitalize tracking-tight mt-0.5 truncate">
+        <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-50 capitalize tracking-tight mt-0.5 truncate">
           {title}
         </h2>
       </div>
@@ -463,11 +463,11 @@ export function TrainingDayHeader({
 export function CalendarExerciseChip({ name, accent = 'strength', subtitle }) {
   const a = ACCENT[accent] || ACCENT.neutral;
   return (
-    <div className={cn('rounded-lg border px-2 py-1.5 text-center min-h-[2.75rem] flex flex-col justify-center', a.cardBorder, a.headerBg)}>
-      <span className="text-[9px] font-bold uppercase tracking-tight text-zinc-800 dark:text-zinc-200 line-clamp-2 leading-tight">
+    <div className={cn('rounded-lg border px-2 py-2 text-center min-h-[3rem] flex flex-col justify-center', a.cardBorder, a.headerBg)}>
+      <span className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-100 line-clamp-2 leading-snug">
         {name}
       </span>
-      {subtitle && <span className={cn('text-[8px] font-semibold mt-0.5', a.subtitle)}>{subtitle}</span>}
+      {subtitle && <span className={cn('text-[10px] font-medium mt-0.5 line-clamp-1', a.subtitle)}>{subtitle}</span>}
     </div>
   );
 }

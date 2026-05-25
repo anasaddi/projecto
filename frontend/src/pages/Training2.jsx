@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { api } from '../api/client';
 import WeeklyCalendar from '../components/WeeklyCalendar';
 import { Target, X, SkipForward, ChevronDown, ChevronUp } from 'lucide-react';
-import TodayCard from '../components/training/TodayCard';
 import { AppLogo } from '../components/AppLogo';
 import DayDetailPanel from '../components/training/DayDetailPanel';
 import { TrainingPageLayout, TrainingSurface, TrainingSessionHeader } from '../components/training/TrainingUI';
@@ -31,7 +30,7 @@ export default function Training2() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [calendarVisible, setCalendarVisible] = useState(true);
-  const [calendarOpen, setCalendarOpen] = useState(true);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   // Focus Mode State
   const [isFocusMode, setIsFocusMode] = useState(false);
@@ -148,9 +147,6 @@ export default function Training2() {
 
   const progressPercent = useMemo(() => Math.min(100, Math.round((totalCompletedSets / totalExpectedSets) * 100)) || 0, [totalCompletedSets, totalExpectedSets]);
   const awGroups = useMemo(() => groupAwExercises(awEx), [awEx]);
-
-  const todayDateStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const isToday = useMemo(() => selectedDate?.slice(0, 10) === todayDateStr, [selectedDate, todayDateStr]);
 
   useEffect(() => {
     if (calendarVisible) {
@@ -389,30 +385,38 @@ export default function Training2() {
         </header>
 
         <TrainingPageLayout>
-          {selectedDay && (
-            <TodayCard
-              selectedDay={selectedDay}
-              allProgressions={allProgressions}
-              selectedDate={selectedDate}
-              progressPercent={progressPercent}
-              isToday={isToday}
-              onProgressionChange={handleProgressionChange}
-              awProgram={awProgram}
-            />
-          )}
+          <DayDetailPanel
+            dayName={selectedDay?.day_name}
+            selectedDate={selectedDate}
+            strengthEx={strengthEx}
+            awGroups={awGroups}
+            awEx={awEx}
+            hypEx={hypEx}
+            allProgressions={allProgressions}
+            awProgram={awProgram}
+            onProgressionChange={handleProgressionChange}
+            onRowsChange={handleRowsChange}
+            setsByExercise={setsByExercise}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            canUndo={historyIndex > 0}
+            canRedo={historyIndex < history.length - 1}
+            onOpenCalendar={() => setCalendarOpen(true)}
+          />
 
           <TrainingSurface>
             <TrainingSessionHeader
               title="Calendario · 3 settimane"
-              subtitle="Seleziona un giorno"
+              subtitle={calendarOpen ? 'Tocca un giorno per cambiare sessione' : 'Chiuso — apri per navigare'}
               right={
                 <button
                   type="button"
                   onClick={() => setCalendarOpen(o => !o)}
-                  className="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-indigo-500 transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-indigo-500 transition-colors"
                   aria-expanded={calendarOpen}
                 >
-                  {calendarOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  {calendarOpen ? 'Nascondi' : 'Apri'}
+                  {calendarOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                 </button>
               }
             />
@@ -421,7 +425,7 @@ export default function Training2() {
                 <WeeklyCalendar
                   schedule={weekData}
                   progressions={allProgressions}
-                  onSelectDay={handleDaySelect}
+                  onSelectDay={(day, date) => { handleDaySelect(day, date); setCalendarOpen(false); }}
                   onEditAction={handleUpdateTemplate}
                   onToggleComplete={handleToggleDayComplete}
                   awProgram={awProgram}
@@ -433,25 +437,6 @@ export default function Training2() {
               </ErrorBoundary>
             )}
           </TrainingSurface>
-
-          <DayDetailPanel
-            dayName={selectedDay?.day_name}
-            strengthEx={strengthEx}
-            awGroups={awGroups}
-            awEx={awEx}
-            hypEx={hypEx}
-            allProgressions={allProgressions}
-            awProgram={awProgram}
-            selectedDate={selectedDate}
-            onProgressionChange={handleProgressionChange}
-            onRowsChange={handleRowsChange}
-            setsByExercise={setsByExercise}
-            progressPercent={progressPercent}
-            onUndo={handleUndo}
-            onRedo={handleRedo}
-            canUndo={historyIndex > 0}
-            canRedo={historyIndex < history.length - 1}
-          />
         </TrainingPageLayout>
       </div> {/* Fine relative z-10 */}
 
