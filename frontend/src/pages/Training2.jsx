@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { api } from '../api/client';
 import WeeklyCalendar from '../components/WeeklyCalendar';
-import { Target, X, SkipForward, ChevronDown, ChevronUp } from 'lucide-react';
+import { Target, X, SkipForward } from 'lucide-react';
 import { AppLogo } from '../components/AppLogo';
 import DayDetailPanel from '../components/training/DayDetailPanel';
-import { TrainingPageLayout, TrainingSurface, TrainingSessionHeader } from '../components/training/TrainingUI';
+import TodayCard from '../components/training/TodayCard';
+import { TrainingPageLayout, TrainingSurface, CollapsibleBlock } from '../components/training/TrainingUI';
 import { AW_PROGRAM_FALLBACK } from '../components/training/AWProgramReference';
 import FocusMode from '../components/training/FocusMode';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -147,6 +148,10 @@ export default function Training2() {
 
   const progressPercent = useMemo(() => Math.min(100, Math.round((totalCompletedSets / totalExpectedSets) * 100)) || 0, [totalCompletedSets, totalExpectedSets]);
   const awGroups = useMemo(() => groupAwExercises(awEx), [awEx]);
+  const isToday = useMemo(() => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    return selectedDate?.slice(0, 10) === todayStr;
+  }, [selectedDate]);
 
   useEffect(() => {
     if (calendarVisible) {
@@ -385,6 +390,43 @@ export default function Training2() {
         </header>
 
         <TrainingPageLayout>
+          {selectedDay && activeExercises.length > 0 && (
+            <TodayCard
+              selectedDay={selectedDay}
+              allProgressions={allProgressions}
+              selectedDate={selectedDate}
+              isToday={isToday}
+              onProgressionChange={handleProgressionChange}
+              awProgram={awProgram}
+            />
+          )}
+
+          <TrainingSurface>
+            <CollapsibleBlock
+              title="Calendario · 3 settimane"
+              subtitle="Seleziona un giorno"
+              defaultOpen={calendarOpen}
+              open={calendarOpen}
+              onOpenChange={setCalendarOpen}
+              bodyClassName="pb-4"
+            >
+              <ErrorBoundary>
+                <WeeklyCalendar
+                  schedule={weekData}
+                  progressions={allProgressions}
+                  onSelectDay={(day, date) => { handleDaySelect(day, date); setCalendarOpen(false); }}
+                  onEditAction={handleUpdateTemplate}
+                  onToggleComplete={handleToggleDayComplete}
+                  awProgram={awProgram}
+                  currentMaxDayWeek={getActiveWeek(allProgressions['aw_max']) || 1}
+                  onRefreshWeek={() => loadWeekData(false)}
+                  loading={loading}
+                  selectedDate={selectedDate}
+                />
+              </ErrorBoundary>
+            </CollapsibleBlock>
+          </TrainingSurface>
+
           <DayDetailPanel
             dayName={selectedDay?.day_name}
             selectedDate={selectedDate}
@@ -403,40 +445,6 @@ export default function Training2() {
             canRedo={historyIndex < history.length - 1}
             onOpenCalendar={() => setCalendarOpen(true)}
           />
-
-          <TrainingSurface>
-            <TrainingSessionHeader
-              title="Calendario · 3 settimane"
-              subtitle={calendarOpen ? 'Tocca un giorno per cambiare sessione' : 'Chiuso — apri per navigare'}
-              right={
-                <button
-                  type="button"
-                  onClick={() => setCalendarOpen(o => !o)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-indigo-500 transition-colors"
-                  aria-expanded={calendarOpen}
-                >
-                  {calendarOpen ? 'Nascondi' : 'Apri'}
-                  {calendarOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                </button>
-              }
-            />
-            {calendarOpen && (
-              <ErrorBoundary>
-                <WeeklyCalendar
-                  schedule={weekData}
-                  progressions={allProgressions}
-                  onSelectDay={(day, date) => { handleDaySelect(day, date); setCalendarOpen(false); }}
-                  onEditAction={handleUpdateTemplate}
-                  onToggleComplete={handleToggleDayComplete}
-                  awProgram={awProgram}
-                  currentMaxDayWeek={getActiveWeek(allProgressions['aw_max']) || 1}
-                  onRefreshWeek={() => loadWeekData(false)}
-                  loading={loading}
-                  selectedDate={selectedDate}
-                />
-              </ErrorBoundary>
-            )}
-          </TrainingSurface>
         </TrainingPageLayout>
       </div> {/* Fine relative z-10 */}
 

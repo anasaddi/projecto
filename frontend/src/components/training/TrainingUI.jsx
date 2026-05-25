@@ -1,4 +1,5 @@
-﻿import React from 'react';
+﻿import React, { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Card as DashboardCard } from '../dashboard/Card';
 import {
@@ -12,6 +13,7 @@ import {
   PAGE,
   BRAND,
   ROW,
+  COLLAPSE,
   SCROLLBAR_CSS,
 } from './trainingDesignSystem';
 
@@ -46,7 +48,7 @@ export function TrainingBlockHeader({
 }) {
   const a = ACCENT[accent] || ACCENT.neutral;
   return (
-    <div className={cn('px-3 py-2.5', a.headerBg, stacked && 'space-y-2', className)}>
+    <div className={cn('px-4 py-3.5', a.headerBg, stacked && 'space-y-2', className)}>
       <div className={cn('flex gap-2', stacked ? 'flex-col' : 'flex-row items-center justify-between')}>
         <div className="flex items-center gap-2.5 min-w-0">
           <div className={cn('w-1 h-7 rounded-full shrink-0', a.headerBar)} />
@@ -286,18 +288,25 @@ export function TrainingSurface({ children, className = '', flat = false }) {
   );
 }
 
-export function TrainingSessionHeader({ title, subtitle, progressPercent, right }) {
+export function TrainingSessionHeader({ title, subtitle, progressPercent, right, badge }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 px-4 py-3 border-b border-zinc-200/60 dark:border-zinc-800/80">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3.5 border-b border-zinc-200/60 dark:border-zinc-800/80">
       <div className="min-w-0">
         {subtitle && (
           <span className={cn('text-[10px] font-black uppercase tracking-[0.2em]', BRAND.label)}>
             {subtitle}
           </span>
         )}
-        <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-50 capitalize tracking-tight mt-0.5 truncate">
-          {title}
-        </h2>
+        <div className="flex items-center gap-2 flex-wrap mt-0.5">
+          <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-50 capitalize tracking-tight truncate">
+            {title}
+          </h2>
+          {badge && (
+            <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 shrink-0">
+              {badge}
+            </span>
+          )}
+        </div>
       </div>
       <div className="flex items-center gap-3 shrink-0">
         {progressPercent != null && (
@@ -316,11 +325,124 @@ export function TrainingSessionHeader({ title, subtitle, progressPercent, right 
   );
 }
 
-export function TrainingSection({ accent = 'neutral', title, subtitle, right, children, className = '', noBorder }) {
+export function CollapsibleBlock({
+  title,
+  subtitle,
+  count,
+  defaultOpen = true,
+  open: controlledOpen,
+  onOpenChange,
+  right,
+  children,
+  className = '',
+  bodyClassName = '',
+}) {
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+
+  const setOpen = (next) => {
+    if (!isControlled) setInternalOpen(next);
+    onOpenChange?.(next);
+  };
+
+  return (
+    <div className={cn('overflow-hidden', className)}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={cn(COLLAPSE.header, COLLAPSE.headerPy, 'border-b border-zinc-200/60 dark:border-zinc-800/80 w-full')}
+        aria-expanded={open}
+      >
+        <div className="min-w-0 flex-1">
+          {subtitle && (
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 block">{subtitle}</span>
+          )}
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{title}</span>
+            {count != null && (
+              <span className="text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
+                {count}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
+          {right}
+          <ChevronDown size={18} className={cn(COLLAPSE.chevron, open && 'rotate-180')} />
+        </div>
+      </button>
+      <div
+        className={cn(
+          'grid transition-[grid-template-rows] duration-200 ease-out',
+          open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+        )}
+      >
+        <div className="overflow-hidden min-h-0">
+          <div className={cn(COLLAPSE.contentPx, COLLAPSE.contentPb, bodyClassName)}>{children}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function TrainingSection({
+  accent = 'neutral',
+  title,
+  subtitle,
+  count,
+  right,
+  children,
+  className = '',
+  noBorder,
+  collapsible = false,
+  defaultOpen = true,
+  open,
+  onOpenChange,
+}) {
+  if (collapsible) {
+    return (
+      <div className={cn(!noBorder && 'border-b border-zinc-200/60 dark:border-zinc-800/80 last:border-b-0', className)}>
+        <CollapsibleBlock
+          title={title}
+          subtitle={subtitle}
+          count={count}
+          defaultOpen={defaultOpen}
+          open={open}
+          onOpenChange={onOpenChange}
+          right={right}
+        >
+          {children}
+        </CollapsibleBlock>
+      </div>
+    );
+  }
+
   return (
     <div className={cn(!noBorder && 'border-b border-zinc-200/60 dark:border-zinc-800/80 last:border-b-0', className)}>
       <TrainingBlockHeader accent={accent} title={title} subtitle={subtitle} right={right} />
       {children}
+    </div>
+  );
+}
+
+/** Column labels for TodayCard / session rows */
+export function SessionColumnHeader({ showReps = false, className = '' }) {
+  return (
+    <div
+      className={cn(
+        ROW.grid,
+        ROW.gridCols,
+        'px-3 py-2 border-b border-zinc-200/60 dark:border-zinc-800/80 bg-zinc-50/80 dark:bg-zinc-900/40 text-[10px] font-bold uppercase tracking-wide text-zinc-500',
+        className
+      )}
+    >
+      <span className="text-center">#</span>
+      <span>Esercizio</span>
+      <div className="flex items-center justify-end gap-4 sm:gap-6 min-w-0">
+        <span className="text-blue-500 w-[7.5rem] text-center">Anas {showReps ? 'kg·r·✓' : 'kg·✓'}</span>
+        <span className="text-emerald-500 w-[7.5rem] text-center">Flavio {showReps ? 'kg·r·✓' : 'kg·✓'}</span>
+      </div>
     </div>
   );
 }
@@ -333,12 +455,16 @@ export function AthleteInputs({
   onReps,
   onToggle,
   athlete = 'anas',
+  showAthleteNames = false,
 }) {
   const checkColor = athlete === 'anas' ? 'accent-blue-500' : 'accent-emerald-500';
+  const label = showAthleteNames
+    ? (athlete === 'anas' ? 'Anas' : 'Flavio')
+    : (athlete === 'anas' ? 'A' : 'F');
   return (
-    <div className={ROW.athleteBlock}>
-      <span className={cn(ROW.athleteLabel, athlete === 'anas' ? 'text-blue-500' : 'text-emerald-500')}>
-        {athlete === 'anas' ? 'A' : 'F'}
+    <div className={cn(ROW.athleteBlock, 'min-w-0')}>
+      <span className={cn(ROW.athleteLabel, showAthleteNames && 'w-11', athlete === 'anas' ? 'text-blue-500' : 'text-emerald-500')}>
+        {label}
       </span>
       <CompactInput value={weight} onChange={onWeight} placeholder="kg" type="number" step="0.5" />
       {onReps && <CompactInput value={reps} onChange={onReps} size="sm" placeholder="r" />}
@@ -366,6 +492,7 @@ export function AthleteSessionRow({
   onFlavioToggle,
   trailing,
   className = '',
+  showAthleteNames = false,
 }) {
   const a = ACCENT[accent] || ACCENT.neutral;
   const bothDone = anasCompleted && flavioCompleted;
@@ -391,7 +518,7 @@ export function AthleteSessionRow({
         <span className={cn(ROW.name, bothDone && 'text-zinc-400 dark:text-zinc-600')}>{exerciseName}</span>
         {badge && <span className={cn(ROW.badge, badgeBg)}>{badge}</span>}
       </div>
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-4 shrink-0 min-w-0 max-sm:w-full max-sm:justify-end">
         <AthleteInputs
           athlete="anas"
           weight={anasWeight}
@@ -400,6 +527,7 @@ export function AthleteSessionRow({
           onWeight={onAnasWeight}
           onReps={onAnasReps}
           onToggle={onAnasToggle}
+          showAthleteNames={showAthleteNames}
         />
         <AthleteInputs
           athlete="flavio"
@@ -409,6 +537,7 @@ export function AthleteSessionRow({
           onWeight={onFlavioWeight}
           onReps={onFlavioReps}
           onToggle={onFlavioToggle}
+          showAthleteNames={showAthleteNames}
         />
       </div>
       {trailing && <div className="flex justify-center">{trailing}</div>}
@@ -474,7 +603,7 @@ export function CalendarExerciseChip({ name, accent = 'strength', subtitle }) {
 
 export function TrainingPageLayout({ children }) {
   return (
-    <div className={cn(PAGE.maxWidth, 'mx-auto', PAGE.sectionGap, 'px-4 py-4 pb-10')}>
+    <div className={cn(PAGE.maxWidth, 'mx-auto', PAGE.sectionGap, 'px-4 sm:px-5', PAGE.layoutPy)}>
       {children}
       <style dangerouslySetInnerHTML={{ __html: SCROLLBAR_CSS }} />
     </div>
@@ -492,5 +621,6 @@ export {
   PAGE,
   BRAND,
   ROW,
+  COLLAPSE,
   SCROLLBAR_CSS,
 };

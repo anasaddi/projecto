@@ -70,7 +70,15 @@ export default function DayDetailPanel({
       />
 
       {strengthEx?.length > 0 && (
-        <TrainingSection accent="strength" title="Forza" subtitle={`${strengthEx.length} esercizi`} noBorder={false}>
+        <TrainingSection
+          accent="strength"
+          title="Forza"
+          subtitle="Pesi e completamenti"
+          count={strengthEx.length}
+          collapsible
+          defaultOpen
+          noBorder={false}
+        >
           <div className="divide-y divide-zinc-100/90 dark:divide-zinc-800/50">
             {strengthEx.map(ex => (
               <ErrorBoundary key={`str-${ex.exercise_id}`}>
@@ -89,7 +97,14 @@ export default function DayDetailPanel({
       )}
 
       {awEx?.length > 0 && (
-        <TrainingSection accent="aw" title="Armwrestling" subtitle="Tab: Volume · Iso · Max · Speed">
+        <TrainingSection
+          accent="aw"
+          title="Armwrestling"
+          subtitle="Volume · Iso · Max · Speed"
+          count={awEx.length}
+          collapsible
+          defaultOpen
+        >
           <ErrorBoundary>
             <AwUnifiedPanel
               embedded
@@ -105,7 +120,15 @@ export default function DayDetailPanel({
       )}
 
       {hypEx?.length > 0 && (
-        <TrainingSection accent="hyp" title="Ipertrofia" subtitle={`${hypEx.length} esercizi`} noBorder>
+        <TrainingSection
+          accent="hyp"
+          title="Ipertrofia"
+          subtitle="Accessori e volume"
+          count={hypEx.length}
+          collapsible
+          defaultOpen
+          noBorder
+        >
           <ErrorBoundary>
             <UnifiedExerciseTable
               mode="hypertrophy-grid"

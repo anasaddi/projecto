@@ -12,7 +12,8 @@ export {
 
 export const PAGE = {
   maxWidth: 'max-w-6xl',
-  sectionGap: 'space-y-6',
+  sectionGap: 'space-y-5',
+  layoutPy: 'py-5 pb-12',
   surface:
     'rounded-2xl border border-zinc-200/70 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/40 overflow-hidden',
   surfaceFlat:
@@ -43,6 +44,14 @@ export const ROW = {
   athleteLabel: 'text-[10px] font-bold uppercase w-9 text-center shrink-0',
   done: 'bg-emerald-50/70 dark:bg-emerald-950/20',
   divider: 'border-b border-zinc-100/90 dark:border-zinc-800/50 last:border-b-0',
+} as const;
+
+export const COLLAPSE = {
+  header: 'flex w-full items-center justify-between gap-3 text-left transition-colors hover:bg-zinc-50/80 dark:hover:bg-white/[0.02]',
+  headerPy: 'px-4 py-3.5',
+  contentPx: 'px-0',
+  contentPb: 'pb-4',
+  chevron: 'text-zinc-400 shrink-0 transition-transform duration-200',
 } as const;
 
 export const SCROLLBAR_CSS = `

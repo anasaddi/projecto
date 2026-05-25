@@ -97,7 +97,7 @@ function AwSectionHeader({
 
 function TableShell({ embedded, children }) {
   if (embedded) {
-    return <div className="border-t border-zinc-100/80 dark:border-zinc-800/60">{children}</div>;
+    return <div className="min-w-0">{children}</div>;
   }
   return <TrainingCard accent="aw">{children}</TrainingCard>;
 }

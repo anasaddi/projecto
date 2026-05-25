@@ -129,7 +129,7 @@ export default function AwUnifiedPanel({
         />
       )}
       {embedded && (
-        <div className="px-3 py-2 border-b border-zinc-100/90 dark:border-zinc-800/50">{tabsBar}</div>
+        <div className="px-4 py-2.5 border-b border-zinc-100/90 dark:border-zinc-800/50">{tabsBar}</div>
       )}
 
       <div className={embedded ? '' : 'bg-white/50 dark:bg-zinc-900/20'}>
