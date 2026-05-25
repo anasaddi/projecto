@@ -1,15 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Target } from 'lucide-react';
-import { Card } from './TrainingUI';
+import { TrainingCard, TrainingBlockHeader, ACCENT, PERIOD_TRACK, PERIOD_BTN, PERIOD_BTN_IDLE } from './TrainingUI';
+import { cn } from '../../lib/utils';
 import UnifiedExerciseTable from './UnifiedExerciseTable';
 import { getActiveWeek } from '../../utils/trainingUtils';
-
-const TAB_BASE =
-  'shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border border-transparent';
-const TAB_ACTIVE =
-  'bg-amber-500 text-white border-amber-600/30 shadow-sm shadow-amber-500/20';
-const TAB_IDLE =
-  'bg-zinc-100 dark:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-300';
 
 export default function AwUnifiedPanel({
   awGroups,
@@ -93,6 +86,7 @@ export default function AwUnifiedPanel({
   }, [awGroups, allProgressions, awProgram]);
 
   const [active, setActive] = useState(tabs[0]?.id);
+  const aw = ACCENT.aw;
 
   useEffect(() => {
     if (!tabs.length) return;
@@ -104,36 +98,33 @@ export default function AwUnifiedPanel({
   const current = tabs.find(t => t.id === active) || tabs[0];
 
   return (
-    <Card className="border-amber-500/35 dark:border-amber-500/40 overflow-hidden ring-1 ring-amber-500/10">
-      <div className="px-4 py-3 bg-gradient-to-r from-amber-500/[0.12] via-amber-500/[0.04] to-transparent border-b border-amber-500/15 dark:border-amber-500/20">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-amber-500/15 border border-amber-500/25">
-            <Target size={16} className="text-amber-600 dark:text-amber-400" />
+    <TrainingCard accent="aw">
+      <TrainingBlockHeader
+        accent="aw"
+        title="Armwrestling"
+        subtitle={`Un pannello · ${tabs.length} blocchi`}
+        stacked
+        right={
+          <div className={cn(PERIOD_TRACK, 'gap-1.5 p-1')}>
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActive(tab.id)}
+                className={cn(
+                  PERIOD_BTN,
+                  'px-3 h-7 rounded-lg text-[10px] uppercase tracking-wider',
+                  active === tab.id ? aw.pillActive : PERIOD_BTN_IDLE
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
-          <div>
-            <h2 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900 dark:text-zinc-100">
-              Armwrestling
-            </h2>
-            <p className="text-[10px] font-semibold text-amber-600/80 dark:text-amber-400/80 mt-0.5">
-              Un pannello · {tabs.length} blocchi programma
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-1.5 mt-3 overflow-x-auto custom-scrollbar pb-0.5">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActive(tab.id)}
-              className={`${TAB_BASE} ${active === tab.id ? TAB_ACTIVE : TAB_IDLE}`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+        }
+      />
 
-      <div className="bg-white/50 dark:bg-zinc-900/30">
+      <div className="bg-white/50 dark:bg-zinc-900/20">
         {current.mode === 'others' ? (
           <div className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
             {current.exercises.map(ex => (
@@ -164,6 +155,6 @@ export default function AwUnifiedPanel({
           />
         )}
       </div>
-    </Card>
+    </TrainingCard>
   );
 }

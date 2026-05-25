@@ -2,7 +2,26 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronUp, History as HistoryIcon } from 'lucide-react';
 import { api } from '../../api/client';
-import { Card, ColHeader, ModernInput, ModernCheckbox, AthleteAvatar } from './TrainingUI';
+import {
+  TrainingCard,
+  TrainingBlockHeader,
+  TrainingTableWrap,
+  TrainingTable,
+  TrainingThead,
+  TrainingTh,
+  TrainingTr,
+  TrainingTd,
+  AthleteColumnHeaders,
+  CompactInput,
+  ModernCheckbox,
+  PeriodPills,
+  ColHeader,
+  ModernInput,
+  AthleteAvatar,
+  ACCENT,
+  TABLE,
+} from './TrainingUI';
+import { cn } from '../../lib/utils';
 import WeekSelector from './WeekSelector';
 import { AthleteCell } from './AthleteInputRow';
 import { useDebouncedSave } from '../../hooks/useDebouncedSave';
@@ -20,16 +39,7 @@ import {
   SPEED_CONFIG,
 } from '../../constants/trainingConstants';
 
-// ─── Shared design tokens ────────────────────────────────────────────────────
-
-const CARD_BORDER = 'border-amber-500/20 dark:border-amber-500/25';
-const HEADER_BG = 'bg-gradient-to-r from-amber-500/[0.06] to-transparent dark:from-amber-500/10 border-b border-zinc-200/60 dark:border-zinc-800/80';
-const TABLE_WRAP = 'overflow-x-auto custom-scrollbar';
-const THEAD = 'bg-zinc-50/80 dark:bg-zinc-800/60';
-const TH = 'py-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400';
-const TH_ANAS = `${TH} text-center text-blue-500 w-[118px]`;
-const TH_FLAVIO = `${TH} text-center text-emerald-500 w-[118px]`;
-const TD_ATHLETE = 'py-1 px-2 border-r border-zinc-100 dark:border-zinc-800/50 last:border-r-0 w-[118px]';
+const AW = ACCENT.aw;
 
 const format1RM = (weight, reps) => {
   const rm = calc1RM(weight, reps);
@@ -62,48 +72,32 @@ function AwSectionHeader({
   compactWeek = false,
 }) {
   return (
-    <div className={`px-3 py-2.5 ${HEADER_BG} ${weekBelow ? 'space-y-2' : ''}`}>
-      <div className={`flex ${weekBelow ? 'flex-col' : 'flex-row items-center justify-between'} gap-2`}>
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-1 h-7 bg-amber-500 rounded-full shrink-0" />
-          <div className="min-w-0">
-            <h3 className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider truncate">{title}</h3>
-            {subtitle && (
-              <span className="inline-block mt-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                {subtitle}
-              </span>
-            )}
-          </div>
-        </div>
-        {onWeekChange && (
+    <TrainingBlockHeader
+      accent="aw"
+      title={title}
+      subtitle={subtitle}
+      stacked={weekBelow}
+      right={
+        onWeekChange ? (
           <WeekSelector
             weeks={weekCount}
             current={currentWeek}
             onChange={onWeekChange}
             cycleDividers={cycleDividers}
             compact={compactWeek}
-            className={weekBelow ? 'w-full' : 'shrink-0'}
+            className={weekBelow ? 'w-full' : ''}
           />
-        )}
-      </div>
-    </div>
+        ) : null
+      }
+    />
   );
 }
 
-function AthletePairHeader({ suffix = 'kg/r' }) {
-  return (
-    <>
-      <th className={TH_ANAS}>Anas{suffix ? ` (${suffix})` : ''}</th>
-      <th className={TH_FLAVIO}>Flavio{suffix ? ` (${suffix})` : ''}</th>
-    </>
-  );
-}
-
-function TableShell({ embedded, children, className = CARD_BORDER }) {
+function TableShell({ embedded, children }) {
   if (embedded) {
     return <div className="border-t border-zinc-100/80 dark:border-zinc-800/60">{children}</div>;
   }
-  return <Card className={className}>{children}</Card>;
+  return <TrainingCard accent="aw">{children}</TrainingCard>;
 }
 
 function SlotInput({ exerciseId, slotKey, athlete, mode, defaults, progressions, onProgressionChange }) {
@@ -155,46 +149,46 @@ function VolumeTable({ title, exercises, progressions, initialWeek, resetTrigger
         onWeekChange={setCurrentWeek}
       />
 
-      <div className="overflow-x-auto custom-scrollbar border-b border-gray-100 dark:border-zinc-800/60">
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-50/80 dark:bg-zinc-800/60">
-            <tr className="text-xs font-bold uppercase tracking-tighter text-gray-400 border-b border-gray-100 dark:border-zinc-800">
-              <th className="py-2 px-3">Esercizio</th>
-              <th className="py-2 px-2 text-center w-14">Peso</th>
+      <TrainingTableWrap className="border-b border-zinc-200/60 dark:border-zinc-800/60">
+        <TrainingTable>
+          <TrainingThead>
+            <tr className={TABLE.theadRow}>
+              <TrainingTh>Esercizio</TrainingTh>
+              <TrainingTh center className="w-14">Peso</TrainingTh>
               {[1, 2, 3, 4, 5].map(w => (
-                <th key={w} className={`py-2 px-2 text-center w-14 ${currentWeek === w ? 'text-amber-600 dark:text-amber-400' : ''}`}>W{w}</th>
+                <TrainingTh key={w} center className={`w-14 ${currentWeek === w ? AW.subtitle : ''}`}>W{w}</TrainingTh>
               ))}
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/30">
+          </TrainingThead>
+          <tbody className={TABLE.tbody}>
             {exercises.map(ex => {
               const cfg = AW_VOL_CONFIG[ex.exercise_id] || { label: ex.exercise_name, weight: '—', pattern: 'std' };
               const targets = cfg.pattern === 'alt' ? AW_ALT : AW_STD;
               return (
-                <tr key={ex.exercise_id} className="hover:bg-amber-50/10 dark:hover:bg-amber-900/5 text-xs">
-                  <td className="py-2 px-3 font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight text-center">{cfg.label}</td>
-                  <td className="py-2 px-2 text-center font-bold text-amber-600 dark:text-amber-400">{cfg.weight}kg</td>
+                <TrainingTr key={ex.exercise_id} accent="aw">
+                  <TrainingTd className="py-2 font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-tight text-center">{cfg.label}</TrainingTd>
+                  <TrainingTd className="text-center font-bold text-amber-600 dark:text-amber-400">{cfg.weight}kg</TrainingTd>
                   {targets.map((t, i) => (
-                    <td key={i} className={`py-2 px-2 text-center text-xs font-semibold ${currentWeek === i + 1 ? 'text-amber-700 dark:text-amber-300 font-black bg-amber-50/60 dark:bg-amber-900/20' : 'text-gray-400'}`}>{t}</td>
+                    <TrainingTd key={i} className={`text-center text-xs font-semibold ${currentWeek === i + 1 ? AW.weekHighlight : 'text-zinc-400'}`}>{t}</TrainingTd>
                   ))}
-                </tr>
+                </TrainingTr>
               );
             })}
           </tbody>
-        </table>
-      </div>
+        </TrainingTable>
+      </TrainingTableWrap>
 
-      <div className="overflow-x-auto custom-scrollbar">
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-50/60 dark:bg-zinc-800/40">
-            <tr className="text-xs font-bold uppercase tracking-tighter text-gray-400 border-b border-gray-100 dark:border-zinc-800">
-              <th className="py-2 px-3">Esercizio</th>
-              <th className="py-2 px-1 w-8 text-center" />
-              <th className="py-2 px-1 w-8 text-center" />
-              <AthletePairHeader />
+      <TrainingTableWrap>
+        <TrainingTable>
+          <TrainingThead>
+            <tr className={TABLE.theadRow}>
+              <TrainingTh>Esercizio</TrainingTh>
+              <TrainingTh center className="w-8" />
+              <TrainingTh center className="w-8" />
+              <AthleteColumnHeaders />
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/20">
+          </TrainingThead>
+          <tbody className={TABLE.tbody}>
             {exercises.flatMap(ex => {
               const cfg = AW_VOL_CONFIG[ex.exercise_id] || { label: ex.exercise_name, pattern: 'std', weight: '' };
               const targets = cfg.pattern === 'alt' ? AW_ALT : AW_STD;
@@ -203,21 +197,21 @@ function VolumeTable({ title, exercises, progressions, initialWeek, resetTrigger
               const defaultReps = targetStr.includes('×') ? targetStr.split('×')[1] : '';
 
               return Array.from({ length: sets }).map((_, s) => (
-                <tr key={`${ex.exercise_id}-${s}`} className="hover:bg-amber-50/20 dark:hover:bg-amber-900/10 transition-colors text-xs">
+                <TrainingTr key={`${ex.exercise_id}-${s}`} accent="aw">
                   {s === 0 && (
-                    <td rowSpan={sets} className="py-2 px-3 border-r border-gray-100 dark:border-zinc-800/50 align-middle font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight text-center">
+                    <TrainingTd rowSpan={sets} className="py-2 align-middle font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-tight text-center">
                       {cfg.label}
-                    </td>
+                    </TrainingTd>
                   )}
-                  <td className="py-1 px-1 text-center border-r border-gray-100 dark:border-zinc-800/50 w-14">
+                  <TrainingTd className="text-center w-14">
                     {s === 0 && (
-                      <span className="text-xs scale-90 font-black px-1 py-0.5 rounded bg-amber-100/60 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">{targetStr}</span>
+                      <span className={`text-xs font-black px-1 py-0.5 rounded ${AW.badge}`}>{targetStr}</span>
                     )}
-                  </td>
-                  <td className="py-1 px-1 text-center border-r border-gray-100 dark:border-zinc-800/50">
-                    <span className="text-xs font-black text-gray-400">{s + 1}</span>
-                  </td>
-                  <td className="py-1.5 px-2 border-r border-gray-100 dark:border-zinc-800/50">
+                  </TrainingTd>
+                  <TrainingTd className="text-center">
+                    <span className="text-xs font-black text-zinc-400">{s + 1}</span>
+                  </TrainingTd>
+                  <TrainingTd athlete>
                     <SlotInput
                       exerciseId={ex.exercise_id}
                       slotKey={`w${currentWeek}_s${s + 1}`}
@@ -227,8 +221,8 @@ function VolumeTable({ title, exercises, progressions, initialWeek, resetTrigger
                       progressions={progressions}
                       onProgressionChange={onProgressionChange}
                     />
-                  </td>
-                  <td className="py-1.5 px-2">
+                  </TrainingTd>
+                  <TrainingTd athlete>
                     <SlotInput
                       exerciseId={ex.exercise_id}
                       slotKey={`w${currentWeek}_s${s + 1}`}
@@ -238,13 +232,13 @@ function VolumeTable({ title, exercises, progressions, initialWeek, resetTrigger
                       progressions={progressions}
                       onProgressionChange={onProgressionChange}
                     />
-                  </td>
-                </tr>
+                  </TrainingTd>
+                </TrainingTr>
               ));
             })}
           </tbody>
-        </table>
-      </div>
+        </TrainingTable>
+      </TrainingTableWrap>
     </TableShell>
   );
 }
@@ -299,73 +293,75 @@ function IsoTable({ title, exercises, programData, progressions, initialWeek, re
         weekBelow
       />
 
-      <div className={`${TABLE_WRAP} border-b border-zinc-200/60 dark:border-zinc-800/60`}>
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-50/80 dark:bg-zinc-800/60">
-            <tr className="text-xs font-bold uppercase tracking-widest text-zinc-400 border-b border-gray-100 dark:border-zinc-800">
-              <th className="py-2 px-3">Esercizio</th>
-              <th className="py-2 px-2 text-center w-14">Peso</th>
+      <TrainingTableWrap className="border-b border-zinc-200/60 dark:border-zinc-800/60">
+        <TrainingTable>
+          <TrainingThead>
+            <tr className={TABLE.theadRow}>
+              <TrainingTh>Esercizio</TrainingTh>
+              <TrainingTh center className="w-14">Peso</TrainingTh>
               {[1, 2, 3, 4, 5].map(w => (
-                <th key={w} className={`py-2 px-2 text-center w-12 ${currentWeek === w ? 'text-amber-600 dark:text-amber-400' : ''}`}>W{w}</th>
+                <TrainingTh key={w} center className={`w-12 ${currentWeek === w ? AW.subtitle : ''}`}>W{w}</TrainingTh>
               ))}
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/30">
+          </TrainingThead>
+          <tbody className={TABLE.tbody}>
             {displayExercises.map((ex, i) => {
               const cfg = getIsoCfg(ex.exercise_id, ex.exercise_name, isHeavy, i);
               const target = cfg.target.split('×')[1] || cfg.target;
               return (
-                <tr key={ex.exercise_id} className="hover:bg-amber-50/10 dark:hover:bg-amber-900/5 text-xs">
-                  <td className="py-2 px-3 font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight">{cfg.label}</td>
-                  <td className="py-2 px-2 text-center font-bold text-amber-600 dark:text-amber-400">{cfg.weight}kg</td>
+                <TrainingTr key={ex.exercise_id} accent="aw">
+                  <TrainingTd className="py-2 font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-tight">{cfg.label}</TrainingTd>
+                  <TrainingTd className="text-center font-bold text-amber-600 dark:text-amber-400">{cfg.weight}kg</TrainingTd>
                   {[1, 2, 3, 4, 5].map(w => (
-                    <td key={w} className={`py-2 px-2 text-center text-xs font-semibold ${currentWeek === w ? 'text-amber-700 dark:text-amber-300 font-black bg-amber-50/60 dark:bg-amber-900/20' : 'text-gray-400'}`}>{target}</td>
+                    <TrainingTd key={w} className={`text-center text-xs font-semibold ${currentWeek === w ? AW.weekHighlight : 'text-zinc-400'}`}>{target}</TrainingTd>
                   ))}
-                </tr>
+                </TrainingTr>
               );
             })}
           </tbody>
-        </table>
-      </div>
+        </TrainingTable>
+      </TrainingTableWrap>
 
-      <div className="overflow-x-auto custom-scrollbar">
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-50/60 dark:bg-zinc-800/40">
-            <tr className="text-xs font-bold uppercase tracking-widest text-zinc-400 border-b border-gray-100 dark:border-zinc-800">
-              <th className="py-2 px-3">Esercizio</th>
-              <th className="py-2 px-1 w-8 text-center" />
-              <AthletePairHeader suffix="kg/s" />
+      <TrainingTableWrap>
+        <TrainingTable>
+          <TrainingThead>
+            <tr className={TABLE.theadRow}>
+              <TrainingTh>Esercizio</TrainingTh>
+              <TrainingTh center className="w-8" />
+              <AthleteColumnHeaders suffix="kg/s" />
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/20">
+          </TrainingThead>
+          <tbody className={TABLE.tbody}>
             {displayExercises.flatMap((ex, exIdx) => {
               const cfg = getIsoCfg(ex.exercise_id, ex.exercise_name, isHeavy, exIdx);
               const sets = parseInt(cfg.target.split('×')[0]) || 2;
               const defaultSecs = cfg.target.split('×')[1]?.replace('s', '') || '';
               return Array.from({ length: sets }).map((_, s) => (
-                <tr key={`${ex.exercise_id}-${s}`} className="hover:bg-amber-50/20 dark:hover:bg-amber-900/10 transition-colors text-xs">
+                <TrainingTr key={`${ex.exercise_id}-${s}`} accent="aw">
                   {s === 0 && (
-                    <td rowSpan={sets} className="py-2 px-3 border-r border-gray-100 dark:border-zinc-800/50 align-middle font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight text-center">{cfg.label}</td>
+                    <TrainingTd rowSpan={sets} className="py-2 align-middle font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-tight text-center">
+                      {cfg.label}
+                    </TrainingTd>
                   )}
-                  <td className="py-1 px-1 text-center border-r border-gray-100 dark:border-zinc-800/50">
-                    <span className="text-xs font-black text-gray-400">{s + 1}</span>
-                  </td>
-                  <td className="py-1.5 px-2 border-r border-gray-100 dark:border-zinc-800/50">
+                  <TrainingTd className="text-center">
+                    <span className="text-xs font-black text-zinc-400">{s + 1}</span>
+                  </TrainingTd>
+                  <TrainingTd athlete>
                     <SlotInput exerciseId={ex.exercise_id} slotKey={`w${currentWeek}_s${s + 1}`} athlete="anas" mode="weight-secs"
                       defaults={{ weight: String(cfg.weight), secs: defaultSecs, completed: false }}
                       progressions={progressions} onProgressionChange={onProgressionChange} />
-                  </td>
-                  <td className="py-1.5 px-2">
+                  </TrainingTd>
+                  <TrainingTd athlete>
                     <SlotInput exerciseId={ex.exercise_id} slotKey={`w${currentWeek}_s${s + 1}`} athlete="flavio" mode="weight-secs"
                       defaults={{ weight: String(cfg.weight), secs: defaultSecs, completed: false }}
                       progressions={progressions} onProgressionChange={onProgressionChange} />
-                  </td>
-                </tr>
+                  </TrainingTd>
+                </TrainingTr>
               ));
             })}
           </tbody>
-        </table>
-      </div>
+        </TrainingTable>
+      </TrainingTableWrap>
     </TableShell>
   );
 }
@@ -419,22 +415,23 @@ function MaxDayRow({ week, slot, exName, refAnas, refFlavio, exerciseId, savedDa
   }, [data]);
 
   const upd = (field, val) => setData(prev => ({ ...prev, [field]: val }));
-  const cell = 'py-1.5 px-1 border-r border-gray-100 dark:border-zinc-800/50';
 
   return (
-    <tr className="hover:bg-amber-50/20 dark:hover:bg-amber-900/10 transition-colors text-xs">
-      <td className={`${cell} py-2 font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight text-xs leading-tight max-w-[90px] text-center`}>{exName}</td>
-      <td className={cell}><ModernInput type="text" value={data.anas_sx} onChange={v => upd('anas_sx', v)} className="w-10 py-1 text-xs" placeholder="sx" /></td>
-      <td className={cell}><ModernInput type="text" value={data.anas_dx} onChange={v => upd('anas_dx', v)} className="w-10 py-1 text-xs" placeholder="dx" /></td>
-      <td className={cell}><ModernInput type="text" value={data.flavio_sx} onChange={v => upd('flavio_sx', v)} className="w-10 py-1 text-xs" placeholder="sx" /></td>
-      <td className={cell}><ModernInput type="text" value={data.flavio_dx} onChange={v => upd('flavio_dx', v)} className="w-10 py-1 text-xs" placeholder="dx" /></td>
-      <td className="py-1.5 px-1 text-center border-r border-gray-100 dark:border-zinc-800/50">
+    <TrainingTr accent="aw">
+      <TrainingTd className="py-2 font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-tight text-xs leading-tight max-w-[90px] text-center">
+        {exName}
+      </TrainingTd>
+      <TrainingTd className="text-center"><CompactInput value={data.anas_sx} onChange={v => upd('anas_sx', v)} placeholder="sx" /></TrainingTd>
+      <TrainingTd className="text-center"><CompactInput value={data.anas_dx} onChange={v => upd('anas_dx', v)} placeholder="dx" /></TrainingTd>
+      <TrainingTd className="text-center"><CompactInput value={data.flavio_sx} onChange={v => upd('flavio_sx', v)} placeholder="sx" /></TrainingTd>
+      <TrainingTd className="text-center"><CompactInput value={data.flavio_dx} onChange={v => upd('flavio_dx', v)} placeholder="dx" /></TrainingTd>
+      <TrainingTd className="text-center">
         <ModernCheckbox checked={data.anas_completed} onChange={() => upd('anas_completed', !data.anas_completed)} colorClass="accent-blue-500" />
-      </td>
-      <td className="py-1.5 px-1 text-center">
+      </TrainingTd>
+      <TrainingTd className="text-center">
         <ModernCheckbox checked={data.flavio_completed} onChange={() => upd('flavio_completed', !data.flavio_completed)} colorClass="accent-emerald-500" />
-      </td>
-    </tr>
+      </TrainingTd>
+    </TrainingTr>
   );
 }
 
@@ -462,20 +459,15 @@ function MaxDayTable({ exercise, programData, progressions, initialWeek, resetTr
         compactWeek
       />
 
-      <div className={TABLE_WRAP}>
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-50/95 dark:bg-zinc-800/95">
-            <tr className="text-xs font-bold uppercase tracking-tighter border-b border-gray-100 dark:border-zinc-800">
-              <th className="py-2 px-2 text-gray-400">Esercizio</th>
-              <th className="py-2 px-1 text-center text-blue-500 w-14">A SX</th>
-              <th className="py-2 px-1 text-center text-blue-500 w-14">A DX</th>
-              <th className="py-2 px-1 text-center text-emerald-500 w-14">F SX</th>
-              <th className="py-2 px-1 text-center text-emerald-500 w-14">F DX</th>
-              <th className="py-2 px-1 text-center text-blue-500 w-9">A ✓</th>
-              <th className="py-2 px-1 text-center text-emerald-500 w-9">F ✓</th>
+      <TrainingTableWrap>
+        <TrainingTable>
+          <TrainingThead>
+            <tr className={TABLE.theadRow}>
+              <TrainingTh>Esercizio</TrainingTh>
+              <AthleteColumnHeaders mode="sxdx" />
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/30">
+          </TrainingThead>
+          <tbody className={TABLE.tbody}>
             {weekExercises.length === 0 ? (
               <tr><td colSpan={7} className="py-6 text-center text-xs text-gray-400">Nessun esercizio per la settimana {currentWeek}</td></tr>
             ) : weekExercises.map((ex, i) => (
@@ -494,8 +486,8 @@ function MaxDayTable({ exercise, programData, progressions, initialWeek, resetTr
               />
             ))}
           </tbody>
-        </table>
-      </div>
+        </TrainingTable>
+      </TrainingTableWrap>
     </TableShell>
   );
 }
@@ -534,18 +526,18 @@ function SpeedRow({ baseExerciseId, cfg, progressions, onProgressionChange }) {
   }, [anasW, flavioW, anasDone, flavioDone]);
 
   return (
-    <tr className="hover:bg-amber-50/20 dark:hover:bg-amber-900/10 transition-colors text-xs">
-      <td className="py-2 px-3 font-bold text-gray-800 dark:text-gray-200 uppercase tracking-tight text-center">{cfg.label}</td>
-      <td className="py-2 px-2 text-center font-bold text-amber-600 dark:text-amber-400">{cfg.weight}kg</td>
-      <td className="py-1.5 px-2 border-r border-gray-100 dark:border-zinc-800/50">
+    <TrainingTr accent="aw">
+      <TrainingTd className="py-2 font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-tight text-center">{cfg.label}</TrainingTd>
+      <TrainingTd className="text-center font-bold text-amber-600 dark:text-amber-400">{cfg.weight}kg</TrainingTd>
+      <TrainingTd athlete>
         <AthleteCell mode="weight-only" values={{ weight: anasW, completed: anasDone }} athlete="anas"
           onChange={(f, v) => { if (f === 'weight') setAnasW(v); else setAnasDone(v); }} />
-      </td>
-      <td className="py-1.5 px-2">
+      </TrainingTd>
+      <TrainingTd athlete>
         <AthleteCell mode="weight-only" values={{ weight: flavioW, completed: flavioDone }} athlete="flavio"
           onChange={(f, v) => { if (f === 'weight') setFlavioW(v); else setFlavioDone(v); }} />
-      </td>
-    </tr>
+      </TrainingTd>
+    </TrainingTr>
   );
 }
 
@@ -557,22 +549,22 @@ function SpeedTable({ exercises, progressions, onProgressionChange, embedded = f
     <TableShell embedded={embedded}>
       <AwSectionHeader title="Speed" subtitle="50% 1RM + BANDS · 6×6" />
 
-      <div className={TABLE_WRAP}>
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-50/80 dark:bg-zinc-800/60">
-            <tr className="text-xs font-bold uppercase tracking-tighter text-gray-400 border-b border-gray-100 dark:border-zinc-800">
-              <th className="py-2 px-3">Esercizio</th>
-              <th className="py-2 px-2 text-center w-14">Peso</th>
-              <AthletePairHeader suffix="kg" />
+      <TrainingTableWrap>
+        <TrainingTable>
+          <TrainingThead>
+            <tr className={TABLE.theadRow}>
+              <TrainingTh>Esercizio</TrainingTh>
+              <TrainingTh center className="w-14">Peso</TrainingTh>
+              <AthleteColumnHeaders suffix="kg" />
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-zinc-800/30">
+          </TrainingThead>
+          <tbody className={TABLE.tbody}>
             {SPEED_CONFIG.map(cfg => (
               <SpeedRow key={cfg.id} baseExerciseId={baseId} cfg={cfg} progressions={progressions} onProgressionChange={onProgressionChange} />
             ))}
           </tbody>
-        </table>
-      </div>
+        </TrainingTable>
+      </TrainingTableWrap>
     </TableShell>
   );
 }
@@ -599,21 +591,33 @@ function GenericTable({ exercise, onRowsChange, expandedOverride = false, initia
   const currentRow = rows.find(r => r.set === currentSet);
 
   return (
-    <Card className="border-zinc-200/60 dark:border-white/[0.06]">
-      <div onClick={() => setExpanded(!expanded)} className="px-3 py-2 flex flex-col items-center justify-center cursor-pointer bg-zinc-50/50 dark:bg-white/[0.02] border-b border-zinc-100 dark:border-white/[0.06]">
-        <h3 className="text-xs font-bold text-zinc-900 dark:text-gray-100 tracking-tight text-center">{exercise_name}</h3>
-        <span className="text-xs font-bold text-indigo-500 uppercase tracking-tighter mt-0.5">{base_sets} Serie {base_reps ? `× ${base_reps}` : ''}</span>
+    <TrainingCard accent="neutral">
+      <div
+        onClick={() => setExpanded(!expanded)}
+        className="px-3 py-2 flex flex-col items-center justify-center cursor-pointer border-b border-zinc-200/60 dark:border-zinc-800/80"
+        role="button"
+        tabIndex={0}
+        onKeyDown={e => e.key === 'Enter' && setExpanded(!expanded)}
+      >
+        <h3 className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100 tracking-tight text-center uppercase">{exercise_name}</h3>
+        <span className={cn('text-[10px] font-semibold mt-0.5 px-1.5 py-0.5 rounded', ACCENT.neutral.badge)}>
+          {base_sets} Serie {base_reps ? `× ${base_reps}` : ''}
+        </span>
       </div>
       <AnimatePresence initial={false}>
         {!expanded && currentRow ? (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <div className="p-3 border-t border-zinc-100 dark:border-white/[0.06]">
               <div className="flex flex-wrap gap-3 items-center justify-between">
-                <div className="flex items-center gap-0.5 bg-zinc-100/50 dark:bg-white/[0.04] p-0.5 rounded-lg">
-                  {rows.map(r => (
-                    <button key={r.id} type="button" onClick={() => setCurrentSet(r.set)} className={`w-6 h-6 rounded text-xs font-bold transition-all ${currentSet === r.set ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>{r.set}</button>
-                  ))}
-                </div>
+                <PeriodPills
+                  accent="neutral"
+                  count={rows.length}
+                  current={currentSet}
+                  onChange={setCurrentSet}
+                  start={rows[0]?.set ?? 1}
+                  label={n => String(n)}
+                  compact
+                />
                 <div className="flex items-center gap-4">
                   {['anas', 'flavio'].map(athlete => (
                     <div key={athlete} className={`flex items-center gap-2 p-1.5 rounded-lg border ${athlete === 'anas' ? 'bg-blue-50/10 dark:bg-blue-500/5 border-blue-500/10' : 'bg-emerald-50/10 dark:bg-emerald-500/5 border-emerald-500/10'}`}>
@@ -653,29 +657,11 @@ function GenericTable({ exercise, onRowsChange, expandedOverride = false, initia
           </motion.div>
         )}
       </AnimatePresence>
-    </Card>
+    </TrainingCard>
   );
 }
 
 // ─── Hypertrophy helpers ─────────────────────────────────────────────────────
-
-function TinyInput({ value, onChange, placeholder }) {
-  return (
-    <input type="text" inputMode="decimal" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-      className="h-8 w-full rounded-lg border border-zinc-200 bg-white px-2 text-center text-xs font-semibold text-zinc-900 outline-none transition-colors dark:border-zinc-700/70 dark:bg-zinc-950/70 dark:text-zinc-100" />
-  );
-}
-
-function TinyCheck({ checked, onChange, accent }) {
-  const color = accent === 'blue'
-    ? checked ? 'bg-blue-500 border-blue-500' : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-600'
-    : checked ? 'bg-emerald-500 border-emerald-500' : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-600';
-  return (
-    <button type="button" onClick={onChange} className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${color}`}>
-      {checked && <svg viewBox="0 0 12 12" fill="none" className="w-3 h-3"><polyline points="2,6 5,9 10,3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-    </button>
-  );
-}
 
 const buildHypDefault = (baseReps) => ({
   anas: { w: '', r: baseReps ? String(baseReps) : '', completed: false },
@@ -797,15 +783,15 @@ function HypertrophyRow({ exercise, index, onRowsChange, onProgressionChange, in
         <div className="flex items-center justify-center">
           <div className={`w-10 h-7 rounded-lg flex items-center justify-center text-xs font-black shadow-sm transition-all ${doneA ? 'bg-blue-500 text-white scale-110' : 'bg-blue-100/50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-500/20'}`}>ANAS</div>
         </div>
-        <div className="flex items-center justify-center"><TinyInput value={data.anas.w} onChange={v => upd('anas', 'w', v)} placeholder="kg" /></div>
-        <div className="flex items-center justify-center"><TinyInput value={data.anas.r} onChange={v => upd('anas', 'r', v)} placeholder="r" /></div>
-        <div className="flex items-center justify-center"><TinyCheck checked={doneA} onChange={() => tog('anas')} accent="blue" /></div>
+        <div className="flex items-center justify-center"><CompactInput value={data.anas.w} onChange={v => upd('anas', 'w', v)} placeholder="kg" /></div>
+        <div className="flex items-center justify-center"><CompactInput value={data.anas.r} onChange={v => upd('anas', 'r', v)} size="sm" placeholder="r" /></div>
+        <div className="flex items-center justify-center"><ModernCheckbox checked={doneA} onChange={() => tog('anas')} colorClass="accent-blue-500" /></div>
         <div className="flex items-center justify-center">
           <div className={`w-10 h-7 rounded-lg flex items-center justify-center text-xs font-black shadow-sm transition-all ${doneF ? 'bg-emerald-500 text-white scale-110' : 'bg-emerald-100/50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'}`}>FLAVIO</div>
         </div>
-        <div className="flex items-center justify-center"><TinyInput value={data.flavio.w} onChange={v => upd('flavio', 'w', v)} placeholder="kg" /></div>
-        <div className="flex items-center justify-center"><TinyInput value={data.flavio.r} onChange={v => upd('flavio', 'r', v)} placeholder="r" /></div>
-        <div className="flex items-center justify-center"><TinyCheck checked={doneF} onChange={() => tog('flavio')} accent="emerald" /></div>
+        <div className="flex items-center justify-center"><CompactInput value={data.flavio.w} onChange={v => upd('flavio', 'w', v)} placeholder="kg" /></div>
+        <div className="flex items-center justify-center"><CompactInput value={data.flavio.r} onChange={v => upd('flavio', 'r', v)} size="sm" placeholder="r" /></div>
+        <div className="flex items-center justify-center"><ModernCheckbox checked={doneF} onChange={() => tog('flavio')} colorClass="accent-emerald-500" /></div>
         {showHistory && (
           <div className="flex items-center justify-center">
             <button type="button" onClick={() => setExpanded(p => !p)} className="p-1 rounded-lg text-zinc-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors flex items-center justify-center">
@@ -843,31 +829,49 @@ function HypertrophyRow({ exercise, index, onRowsChange, onProgressionChange, in
 
 function HypertrophyGrid({ exercises, onRowsChange, onProgressionChange, setsByExercise, allProgressions }) {
   if (!exercises?.length) return null;
+  const hyp = ACCENT.hyp;
 
   return (
     <section className="min-w-0">
-      <Card className="min-w-0">
-        <div className="flex flex-col items-center justify-center px-4 py-3 border-b border-gray-100 dark:border-zinc-800/80 bg-gradient-to-b from-emerald-50/50 to-transparent dark:from-emerald-500/10 dark:to-transparent">
-          <h3 className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-widest">Ipertrofia & Accessori</h3>
-          <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100/50 dark:bg-emerald-500/20 px-1.5 py-0.5 rounded">Isolamento e volume</p>
-        </div>
-        <div className="hidden md:grid items-center gap-x-3 text-xs font-black uppercase tracking-[0.15em] text-zinc-400
-          grid-cols-[1.5rem_minmax(0,1fr)_3.5rem_4.2rem_4.2rem_1.75rem_4.2rem_4.2rem_1.75rem_1.75rem]
-          px-4 py-2 border-b border-gray-100 dark:border-zinc-800/60 bg-zinc-50/50 dark:bg-white/[0.01]">
+      <TrainingCard accent="hyp" className="min-w-0">
+        <TrainingBlockHeader accent="hyp" title="Ipertrofia & Accessori" subtitle="Isolamento e volume" />
+        <div
+          className={cn(
+            'hidden md:grid items-center gap-x-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400',
+            'grid-cols-[1.5rem_minmax(0,1fr)_3.5rem_4.2rem_4.2rem_1.75rem_4.2rem_4.2rem_1.75rem_1.75rem]',
+            'px-4 py-2 border-b',
+            hyp.headerBg
+          )}
+        >
           <span /><span />
-          <div className="flex justify-center items-center gap-1.5 py-1 px-2 rounded-lg bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/20"><span className="text-blue-600 dark:text-blue-400">ANAS</span></div>
-          <span className="text-center">Kg</span><span className="text-center">Rep</span><span className="text-center">✓</span>
-          <div className="flex justify-center items-center gap-1.5 py-1 px-2 rounded-lg bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20"><span className="text-emerald-600 dark:text-emerald-400">FLAVIO</span></div>
-          <span className="text-center">Kg</span><span className="text-center">Rep</span><span className="text-center">✓</span>
+          <div className="flex justify-center items-center gap-1.5 py-1 px-2 rounded-lg bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/20">
+            <span className="text-blue-600 dark:text-blue-400">ANAS</span>
+          </div>
+          <span className="text-center">Kg</span>
+          <span className="text-center">Rep</span>
+          <span className="text-center">✓</span>
+          <div className="flex justify-center items-center gap-1.5 py-1 px-2 rounded-lg bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20">
+            <span className="text-emerald-600 dark:text-emerald-400">FLAVIO</span>
+          </div>
+          <span className="text-center">Kg</span>
+          <span className="text-center">Rep</span>
+          <span className="text-center">✓</span>
         </div>
-        <div className="divide-y divide-gray-100 dark:divide-zinc-800/30">
+        <div className={TABLE.tbody}>
           {exercises.map((ex, idx) => (
-            <HypertrophyRow key={ex.exercise_id} index={idx} exercise={ex} isOdd={idx % 2 !== 0}
-              onRowsChange={onRowsChange} onProgressionChange={onProgressionChange}
-              initialRows={setsByExercise?.[ex.exercise_id]} initialData={allProgressions?.[ex.exercise_id]} />
+            <HypertrophyRow
+              key={ex.exercise_id}
+              index={idx}
+              exercise={ex}
+              isOdd={idx % 2 !== 0}
+              onRowsChange={onRowsChange}
+              onProgressionChange={onProgressionChange}
+              initialRows={setsByExercise?.[ex.exercise_id]}
+              initialData={allProgressions?.[ex.exercise_id]}
+            />
           ))}
         </div>
-      </Card>
+      </TrainingCard>
     </section>
   );
 }
@@ -930,18 +934,23 @@ function HypertrophyCard({ exercise, onRowsChange, onProgressionChange, initialR
   }, [expanded, exercise_id]);
 
   return (
-    <Card className="border-zinc-200/60 dark:border-white/10 group">
-      <div onClick={() => setExpanded(!expanded)} className="px-4 py-3 flex items-center justify-between cursor-pointer border-b border-zinc-100 dark:border-white/5 transition-all hover:bg-zinc-50 dark:hover:bg-white/[0.01]">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-1.5 h-6 bg-emerald-500/20 rounded-full group-hover:bg-emerald-500/40 transition-colors" />
-          <span className="text-sm font-black tracking-tight text-zinc-900 dark:text-zinc-100 uppercase truncate">{exercise_name}</span>
+    <TrainingCard accent="hyp" className="group">
+      <div
+        onClick={() => setExpanded(!expanded)}
+        className="px-3 py-2 flex items-center justify-between cursor-pointer border-b border-zinc-200/60 dark:border-zinc-800/80"
+        role="button"
+        tabIndex={0}
+        onKeyDown={e => e.key === 'Enter' && setExpanded(!expanded)}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className={cn('w-1 h-7 rounded-full shrink-0', ACCENT.hyp.headerBar)} />
+          <span className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider truncate">{exercise_name}</span>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-100 dark:border-emerald-500/10">
-            <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">2 Sets</span>
-            <span className="text-xs font-bold text-emerald-600/60 dark:text-emerald-400/60 uppercase tracking-tighter">{base_reps || 'VAR'} Reps</span>
-          </div>
-          <ChevronUp size={14} className={`transform transition-transform duration-300 ${expanded ? '' : 'rotate-180'} text-zinc-400`} />
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={cn('text-[10px] font-semibold px-1.5 py-0.5 rounded', ACCENT.hyp.badge)}>
+            2× {base_reps || 'VAR'} rep
+          </span>
+          <ChevronUp size={14} className={cn('text-zinc-400 transition-transform', expanded ? '' : 'rotate-180')} />
         </div>
       </div>
       <div className="p-2 space-y-1">
@@ -992,7 +1001,7 @@ function HypertrophyCard({ exercise, onRowsChange, onProgressionChange, initialR
           </motion.div>
         )}
       </div>
-    </Card>
+    </TrainingCard>
   );
 }
 

@@ -1,8 +1,5 @@
 import React from 'react';
-import { ModernInput, ModernCheckbox } from './TrainingUI';
-
-const COMPACT_INPUT = 'w-9 h-7 py-0 text-[11px]';
-const COMPACT_INPUT_SM = 'w-7 h-7 py-0 text-[11px]';
+import { CompactInput, ModernCheckbox } from './TrainingUI';
 
 const ACCENTS = {
   anas: 'accent-blue-500',
@@ -22,18 +19,16 @@ export function AthleteCell({
     const prefix = athlete === 'anas' ? 'anas' : 'flavio';
     return (
       <div className={`flex items-center gap-0.5 justify-center ${className}`}>
-        <ModernInput
-          type="text"
+        <CompactInput
           value={values[`${prefix}_sx`] ?? ''}
           onChange={v => onChange(`${prefix}_sx`, v)}
-          className={`${COMPACT_INPUT} ${className}`}
+          className={className}
           placeholder="sx"
         />
-        <ModernInput
-          type="text"
+        <CompactInput
           value={values[`${prefix}_dx`] ?? ''}
           onChange={v => onChange(`${prefix}_dx`, v)}
-          className={`${COMPACT_INPUT} ${className}`}
+          className={className}
           placeholder="dx"
         />
         <ModernCheckbox
@@ -48,20 +43,8 @@ export function AthleteCell({
   if (mode === 'weight-secs') {
     return (
       <div className={`flex items-center gap-0.5 justify-center ${className}`}>
-        <ModernInput
-          type="text"
-          value={values.weight ?? ''}
-          onChange={v => onChange('weight', v)}
-          className={COMPACT_INPUT}
-          placeholder="kg"
-        />
-        <ModernInput
-          type="text"
-          value={values.secs ?? ''}
-          onChange={v => onChange('secs', v)}
-          className={COMPACT_INPUT_SM}
-          placeholder="sec"
-        />
+        <CompactInput value={values.weight ?? ''} onChange={v => onChange('weight', v)} placeholder="kg" />
+        <CompactInput value={values.secs ?? ''} onChange={v => onChange('secs', v)} size="sm" placeholder="sec" />
         <ModernCheckbox
           checked={!!values.completed}
           onChange={() => onChange('completed', !values.completed)}
@@ -74,13 +57,7 @@ export function AthleteCell({
   if (mode === 'weight-only') {
     return (
       <div className={`flex items-center gap-0.5 justify-center ${className}`}>
-        <ModernInput
-          type="text"
-          value={values.weight ?? ''}
-          onChange={v => onChange('weight', v)}
-          className={`${COMPACT_INPUT} ${className}`}
-          placeholder="kg"
-        />
+        <CompactInput value={values.weight ?? ''} onChange={v => onChange('weight', v)} className={className} placeholder="kg" />
         <ModernCheckbox
           checked={!!values.completed}
           onChange={() => onChange('completed', !values.completed)}
@@ -92,20 +69,8 @@ export function AthleteCell({
 
   return (
     <div className={`flex items-center gap-0.5 justify-center ${className}`}>
-      <ModernInput
-        type="text"
-        value={values.weight ?? ''}
-        onChange={v => onChange('weight', v)}
-        className={COMPACT_INPUT}
-        placeholder="kg"
-      />
-      <ModernInput
-        type="text"
-        value={values.reps ?? ''}
-        onChange={v => onChange('reps', v)}
-        className={COMPACT_INPUT_SM}
-        placeholder="r"
-      />
+      <CompactInput value={values.weight ?? ''} onChange={v => onChange('weight', v)} placeholder="kg" />
+      <CompactInput value={values.reps ?? ''} onChange={v => onChange('reps', v)} size="sm" placeholder="r" />
       <ModernCheckbox
         checked={!!values.completed}
         onChange={() => onChange('completed', !values.completed)}
@@ -115,11 +80,4 @@ export function AthleteCell({
   );
 }
 
-export function AthleteHeader({ className = '' }) {
-  return (
-    <>
-      <th className={`py-2 px-2 text-center text-blue-500 ${className}`}>Anas (kg/r)</th>
-      <th className={`py-2 px-2 text-center text-emerald-500 ${className}`}>Flavio (kg/r)</th>
-    </>
-  );
-}
+export { AthleteColumnHeaders as AthleteHeader } from './TrainingUI';

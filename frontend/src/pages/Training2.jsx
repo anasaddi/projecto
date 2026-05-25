@@ -8,6 +8,7 @@ import { AppLogo } from '../components/AppLogo';
 
 import UnifiedExerciseTable from '../components/training/UnifiedExerciseTable';
 import AwUnifiedPanel from '../components/training/AwUnifiedPanel';
+import { CategorySectionTitle } from '../components/training/TrainingUI';
 import { AW_PROGRAM_FALLBACK } from '../components/training/AWProgramReference';
 import FocusMode from '../components/training/FocusMode';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -461,12 +462,7 @@ export default function Training2() {
                   {strengthEx.length > 0 && (
                     <ErrorBoundary>
                       <section className="min-w-0 space-y-3">
-                        <div className="flex items-center gap-3 px-2 mb-2">
-                          <div className="p-2 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.15)]">
-                            <Swords size={16} className="text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <span className="text-sm font-black uppercase tracking-[0.25em] text-zinc-800 dark:text-zinc-200 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">Forza</span>
-                        </div>
+                        <CategorySectionTitle icon={Swords} label="Forza" accent="strength" />
                         {strengthEx.map(ex => (
                           <StrengthTable2
                             key={`v2-${ex.exercise_id}`}
@@ -500,12 +496,7 @@ export default function Training2() {
                 {hypEx.length > 0 && (
                   <div className="pt-6">
                     <ErrorBoundary>
-                      <div className="flex items-center gap-3 px-2 mb-4">
-                        <div className="p-2 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
-                          <Dumbbell size={16} className="text-emerald-600 dark:text-emerald-400" />
-                        </div>
-                        <span className="text-sm font-black uppercase tracking-[0.25em] text-zinc-800 dark:text-zinc-200 bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400">Ipertrofia</span>
-                      </div>
+                      <CategorySectionTitle icon={Dumbbell} label="Ipertrofia" accent="hyp" />
                       <UnifiedExerciseTable
                         mode="hypertrophy-grid"
                         exercises={hypEx}

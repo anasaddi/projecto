@@ -1,6 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card, ModernInput, ModernCheckbox } from './training/TrainingUI';
+import {
+  TrainingCard,
+  TrainingBlockHeader,
+  PeriodPills,
+  TrainingTableWrap,
+  TrainingTable,
+  TrainingThead,
+  TrainingTh,
+  CompactInput,
+  ModernCheckbox,
+  TABLE,
+  ACCENT,
+} from './training/TrainingUI';
+import { cn } from '../lib/utils';
 import { api } from '../api/client';
 
 import { calc1RM } from '../utils/trainingUtils';
@@ -32,15 +45,6 @@ const createMonthData = () => WEEK_CONFIGS.map(cfg => ({
 }));
 
 const STORAGE_KEY = (id) => `strength_v2_${id}`;
-
-const Checkbox = ({ checked, onChange, colorClass = 'accent-indigo-500' }) => (
-  <input
-    type="checkbox"
-    checked={checked}
-    onChange={onChange}
-    className={`w-4 h-4 rounded border border-zinc-300 dark:border-white/[0.1] bg-white dark:bg-zinc-950 transition-all cursor-pointer ${colorClass}`}
-  />
-);
 
 // --- Main Component ---
 export default function StrengthTable2({ exercise, onRowsChange, onProgressionChange, initialMonth, resetTrigger }) {
@@ -317,165 +321,80 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
   const totalVolumeA = data.reduce((a, r, i) => a + getVolume('anas', r.anas, WEEK_CONFIGS[i]), 0);
   const totalVolumeF = data.reduce((a, r, i) => a + getVolume('flavio', r.flavio, WEEK_CONFIGS[i]), 0);
 
+  const str = ACCENT.strength;
+
+  const tmPlaceholder = (athlete) => {
+    const prevAmrap = dataByMonth[currentMonth - 2]?.[2];
+    if (!prevAmrap) return 'TM';
+    const isPullup = exercise_id === 'pu_str';
+    const bw = BODYWEIGHTS[athlete];
+    const w = parseFloat(prevAmrap[athlete].weight) || 0;
+    const totalW = isPullup ? (w + bw) : w;
+    const rmTotal = calc1RM(totalW, prevAmrap[athlete].reps || getDefaultReps(WEEK_CONFIGS[2]));
+    if (rmTotal == null) return 'TM';
+    const displayRM = isPullup ? (rmTotal - bw) : rmTotal;
+    return roundToHalf(displayRM);
+  };
+
+  const tmControls = (
+    <div className="flex items-center gap-4 shrink-0" onClick={e => e.stopPropagation()}>
+      {currentMonth === 1 ? (
+        <>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-bold text-blue-500 uppercase">A</span>
+            <CompactInput type="number" step="0.5" value={tmAnas} onChange={v => setTmAnasWithSync(v)} className="w-12" placeholder="TM" />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-bold text-emerald-500 uppercase">F</span>
+            <CompactInput type="number" step="0.5" value={tmFlavio} onChange={v => setTmFlavioWithSync(v)} className="w-12" placeholder="TM" />
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-bold text-blue-500 uppercase">A</span>
+            <CompactInput type="number" step="0.5" value={tmByMonth[currentMonth - 2]?.anas || ''}
+              onChange={v => updateTmForMonth(currentMonth - 1, 'anas', v)} className="w-12" placeholder={tmPlaceholder('anas')} />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-bold text-emerald-500 uppercase">F</span>
+            <CompactInput type="number" step="0.5" value={tmByMonth[currentMonth - 2]?.flavio || ''}
+              onChange={v => updateTmForMonth(currentMonth - 1, 'flavio', v)} className="w-12" placeholder={tmPlaceholder('flavio')} />
+          </div>
+        </>
+      )}
+    </div>
+  );
+
   return (
-    <Card className="overflow-hidden border-blue-100/60 dark:border-blue-900/20">
-      {/* Header */}
-      <div className="px-3 py-2 flex items-center justify-between bg-zinc-50/50 dark:bg-white/[0.02] border-b border-zinc-100 dark:border-white/[0.06]">
-        <div className="flex flex-col">
-          <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">{exercise_name}</h3>
-          <span className="text-xs font-bold text-indigo-500 uppercase tracking-tighter">Mese {currentMonth}</span>
-        </div>
-
-        {/* TM Input - centered below title if needed, or keeping them in a row */}
-        <div className="flex items-center gap-4 shrink-0" onClick={e => e.stopPropagation()}>
-          {currentMonth === 1 ? (
-            <>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-blue-500 uppercase">A</span>
-                <ModernInput
-                  type="number"
-                  step="0.5"
-                  value={tmAnas}
-                  onChange={e => setTmAnasWithSync(e.target.value)}
-                  className="w-12 text-center h-7"
-                  placeholder="TM"
-                  small
-                />
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-emerald-500 uppercase">F</span>
-                <ModernInput
-                  type="number"
-                  step="0.5"
-                  value={tmFlavio}
-                  onChange={e => setTmFlavioWithSync(e.target.value)}
-                  className="w-12 text-center h-7"
-                  placeholder="TM"
-                  small
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-blue-500 uppercase">A</span>
-                <ModernInput
-                  type="number"
-                  step="0.5"
-                  value={tmByMonth[currentMonth - 2]?.anas || ''}
-                  onChange={e => updateTmForMonth(currentMonth - 1, 'anas', e.target.value)}
-                  className="w-12 text-center h-7"
-                  placeholder={(() => {
-                    const prevAmrap = dataByMonth[currentMonth - 2]?.[2];
-                    if (!prevAmrap) return 'TM';
-
-                    const isPullup = exercise_id === 'pu_str';
-                    const bw = BODYWEIGHTS.anas;
-                    const w = parseFloat(prevAmrap.anas.weight) || 0;
-                    const totalW = isPullup ? (w + bw) : w;
-                    const rmTotal = calc1RM(totalW, prevAmrap.anas.reps || getDefaultReps(WEEK_CONFIGS[2]));
-                    if (rmTotal == null) return 'TM';
-                    const displayRM = isPullup ? (rmTotal - bw) : rmTotal;
-                    return roundToHalf(displayRM);
-                  })()}
-                  small
-                />
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-emerald-500 uppercase">F</span>
-                <ModernInput
-                  type="number"
-                  step="0.5"
-                  value={tmByMonth[currentMonth - 2]?.flavio || ''}
-                  onChange={e => updateTmForMonth(currentMonth - 1, 'flavio', e.target.value)}
-                  className="w-12 text-center h-7"
-                  placeholder={(() => {
-                    const prevAmrap = dataByMonth[currentMonth - 2]?.[2];
-                    if (!prevAmrap) return 'TM';
-
-                    const isPullup = exercise_id === 'pu_str';
-                    const bw = BODYWEIGHTS.flavio;
-                    const w = parseFloat(prevAmrap.flavio.weight) || 0;
-                    const totalW = isPullup ? (w + bw) : w;
-                    const rmTotal = calc1RM(totalW, prevAmrap.flavio.reps || getDefaultReps(WEEK_CONFIGS[2]));
-                    if (rmTotal == null) return 'TM';
-                    const displayRM = isPullup ? (rmTotal - bw) : rmTotal;
-                    return roundToHalf(displayRM);
-                  })()}
-                  small
-                />
-              </div>
-            </>
-          )}
-        </div>
+    <TrainingCard accent="strength">
+      <TrainingBlockHeader
+        accent="strength"
+        title={exercise_name}
+        subtitle={`Mese ${currentMonth}`}
+        right={tmControls}
+      />
+      <div className="px-3 py-1.5 border-b border-zinc-200/60 dark:border-zinc-800/80">
+        <PeriodPills accent="strength" count={6} current={currentMonth} onChange={setCurrentMonth} label={m => `M${m}`} className="w-full" />
       </div>
 
-      {/* Month Selector */}
-      <div className="px-3 py-1.5 border-b border-zinc-100 dark:border-white/[0.06]">
-        <div className="flex items-center gap-0.5 bg-zinc-100/50 dark:bg-white/[0.04] p-0.5 rounded-lg">
-          {[1, 2, 3, 4, 5, 6].map(m => (
-            <button
-              key={m}
-              onClick={() => setCurrentMonth(m)}
-              className={`flex-1 h-6 rounded text-xs font-bold transition-all ${currentMonth === m
-                ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-600'
-                : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'
-                }`}
-            >
-              M{m}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Main Table */}
       <div className="p-3">
-        <div className="rounded-2xl overflow-hidden border border-zinc-200/60 dark:border-white/10 shadow-lg shadow-black/[0.02]">
-          <table className="w-full text-xs border-collapse">
-            <thead>
-              <tr className="bg-zinc-50/80 dark:bg-white/[0.02] border-b border-zinc-200/60 dark:border-white/10">
-                <th className="py-2 px-1 w-6 text-center">
-                  <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">W</span>
-                </th>
-                <th className="py-2 px-1 w-12 text-center">
-                  <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">SCH</span>
-                </th>
-                <th className="py-2 px-1 w-8 text-center">
-                  <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">%</span>
-                </th>
-                <th className="py-2 px-1 text-center font-black">
-                  <div className="flex flex-col items-center">
-                    <span className="text-xs scale-75 text-zinc-400 uppercase tracking-widest mb-0.5">Anas</span>
-                    <span className="text-xs scale-90 text-indigo-500 font-black">KG</span>
-                  </div>
-                </th>
-                <th className="py-2 px-1 text-center font-black">
-                  <div className="flex flex-col items-center">
-                    <span className="text-xs scale-75 text-zinc-400 uppercase tracking-widest mb-0.5">Anas</span>
-                    <span className="text-xs scale-90 text-indigo-500 font-black">1RM</span>
-                  </div>
-                </th>
-                <th className="py-2 px-1 w-8 text-center">
-                  <span className="text-xs font-black text-indigo-400/50">✓</span>
-                </th>
-                <th className="py-2 px-1 text-center font-black">
-                  <div className="flex flex-col items-center">
-                    <span className="text-xs scale-75 text-zinc-400 uppercase tracking-widest mb-0.5">Flavio</span>
-                    <span className="text-xs scale-90 text-indigo-500 font-black">KG</span>
-                  </div>
-                </th>
-                <th className="py-2 px-1 text-center font-black">
-                  <div className="flex flex-col items-center">
-                    <span className="text-xs scale-75 text-zinc-400 uppercase tracking-widest mb-0.5">Flavio</span>
-                    <span className="text-xs scale-90 text-indigo-500 font-black">1RM</span>
-                  </div>
-                </th>
-                <th className="py-2 px-1 w-8 text-center">
-                  <span className="text-xs font-black text-indigo-400/50">✓</span>
-                </th>
+        <div className={TABLE.inner}>
+          <TrainingTable>
+            <TrainingThead>
+              <tr className={TABLE.theadRow}>
+                <TrainingTh center className="w-6">W</TrainingTh>
+                <TrainingTh center className="w-12">SCH</TrainingTh>
+                <TrainingTh center className="w-8">%</TrainingTh>
+                <TrainingTh center className="text-blue-500">Anas KG</TrainingTh>
+                <TrainingTh center className="text-blue-500">Anas 1RM</TrainingTh>
+                <TrainingTh center className="w-8">✓</TrainingTh>
+                <TrainingTh center className="text-emerald-500">Flavio KG</TrainingTh>
+                <TrainingTh center className="text-emerald-500">Flavio 1RM</TrainingTh>
+                <TrainingTh center className="w-8">✓</TrainingTh>
               </tr>
-            </thead>
-            <tbody>
+            </TrainingThead>
+            <tbody className={TABLE.tbody}>
               {data.map((r, idx) => {
                 const cfg = WEEK_CONFIGS[idx];
                 const isAmrap = cfg.targetReps === 'AMRAP';
@@ -499,8 +418,7 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
                   <motion.tr
                     key={idx}
                     initial={false}
-                    whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.04)' }}
-                    className="border-t border-gray-100 dark:border-zinc-700/50 transition-colors"
+                    className={cn(TABLE.tr, str.rowHover, 'border-t border-zinc-100/80 dark:border-zinc-800/50')}
                   >
                     <td className="py-1.5 px-1 text-center">
                       <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{r.week}</span>
@@ -519,13 +437,12 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
 
                     {/* Anas kg */}
                     <td className="py-1.5 px-1 text-center">
-                      <ModernInput
+                      <CompactInput
                         type="number"
                         step="0.5"
                         value={r.anas.weight}
-                        onChange={e => updateAthlete(currentMonth - 1, idx, 'anas', 'weight', e.target.value)}
-                        className="w-10 text-center"
-                        small
+                        onChange={v => updateAthlete(currentMonth - 1, idx, 'anas', 'weight', v)}
+                        className="w-10"
                       />
                     </td>
 
@@ -564,6 +481,7 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
                       <div className="flex flex-col items-center gap-1">
                         <ModernCheckbox
                           checked={r.anas.completed}
+                          colorClass="accent-blue-500"
                           onChange={() => {
                             toggleComplete(currentMonth - 1, idx, 'anas');
                             if (!r.anas.completed) import('canvas-confetti').then(m => m.default({ particleCount: 40, spread: 60, origin: { y: 0.8 } }));
@@ -584,13 +502,12 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
 
                     {/* Flavio kg */}
                     <td className="py-1.5 px-1 text-center border-l border-gray-100 dark:border-zinc-700/50">
-                      <ModernInput
+                      <CompactInput
                         type="number"
                         step="0.5"
                         value={r.flavio.weight}
-                        onChange={e => updateAthlete(currentMonth - 1, idx, 'flavio', 'weight', e.target.value)}
-                        className="w-10 text-center"
-                        small
+                        onChange={v => updateAthlete(currentMonth - 1, idx, 'flavio', 'weight', v)}
+                        className="w-10"
                       />
                     </td>
 
@@ -629,6 +546,7 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
                       <div className="flex flex-col items-center gap-1">
                         <ModernCheckbox
                           checked={r.flavio.completed}
+                          colorClass="accent-emerald-500"
                           onChange={() => {
                             toggleComplete(currentMonth - 1, idx, 'flavio');
                             if (!r.flavio.completed) import('canvas-confetti').then(m => m.default({ particleCount: 40, spread: 60, origin: { y: 0.8 }, colors: ['#10b981', '#34d399'] }));
@@ -650,14 +568,13 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
                 );
               })}
             </tbody>
-          </table>
+          </TrainingTable>
         </div>
       </div>
 
-      {/* Footer - Volume Summary */}
-      <div className="px-3 py-2 bg-gradient-to-r from-gray-50 via-gray-100/50 to-gray-50 dark:from-zinc-800/80 dark:via-zinc-800/60 dark:to-zinc-800/80 border-t border-gray-100 dark:border-zinc-700/50">
+      <div className={cn('px-3 py-2 border-t', str.headerBg)}>
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
             Volume M{currentMonth}
           </span>
           <div className="flex items-center gap-3">
@@ -676,6 +593,6 @@ export default function StrengthTable2({ exercise, onRowsChange, onProgressionCh
           </div>
         </div>
       </div>
-    </Card>
+    </TrainingCard>
   );
 }
